@@ -23,9 +23,9 @@ jobs:
             mkdir -p ${{ secrets.TARGET_DIR }} &&
             cd ${{ secrets.TARGET_DIR }} &&
             if [ -d .git ]; then
-              git pull origin master;
+              sudo git pull origin master;
             else
               sudo rm -rf * &&
-              git clone https://github.com/austenstrine/austenstrine_portfolio.git .;
+              sudo git clone https://github.com/austenstrine/austenstrine_portfolio.git .;
             fi
           "
