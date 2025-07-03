@@ -20,12 +20,13 @@ jobs:
           ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts || { echo "ssh-keyscan failed with exit code $?"; exit 1; }
           echo "Deploying to EC2"
           ssh -v -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} "
-            mkdir -p ${{ secrets.TARGET_DIR }} &&
+            sudo mkdir -p ${{ secrets.TARGET_DIR }} &&
+            sudo chown www-data:www-data ${{ secrets.TARGET_DIR }} &&
             cd ${{ secrets.TARGET_DIR }} &&
             if [ -d .git ]; then
-              sudo git pull origin master;
+              sudo -u www-data git pull origin master;
             else
-              sudo rm -rf * &&
-              sudo git clone https://github.com/austenstrine/austenstrine_portfolio.git .;
+              sudo -u www-data rm -rf * &&
+              sudo -u www-data git clone https://github.com/austenstrine/austenstrine_portfolio.git .;
             fi
           "
