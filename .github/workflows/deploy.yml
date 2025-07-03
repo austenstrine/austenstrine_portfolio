@@ -25,7 +25,7 @@ jobs:
             if [ -d .git ]; then
               git pull origin master;
             else
-              rm -rf * &&
+              sudo rm -rf * &&
               git clone https://github.com/austenstrine/austenstrine_portfolio.git .;
             fi
           "
