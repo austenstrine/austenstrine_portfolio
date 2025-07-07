@@ -171,6 +171,8 @@ section {
 }
 
 .about-text {
+	padding-left: 1rem;
+	padding-right: 1rem;
 	font-size: 1.1rem;
 	line-height: 1.8;
 }
