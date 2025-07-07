@@ -283,12 +283,16 @@ section {
 }
 
 /* Contact Section */
+section.contact {
+	padding-top: 40px;;
+}
 .contact {
 	background: linear-gradient(135deg, #2c3e50 0%, #34495e 50%, #2c3e50 100%);
 	color: white;
 }
 
 .contact .section-title {
+	padding-top: 40px;
 	color: white;
 }
 
