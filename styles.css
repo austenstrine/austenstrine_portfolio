@@ -304,6 +304,8 @@ section {
 }
 
 .contact-info {
+	padding-left: 1rem;
+	padding-right: 1rem;
 	font-size: 1.1rem;
 	line-height: 1.8;
 }
@@ -421,6 +423,11 @@ footer {
 	.contact-content {
 		grid-template-columns: 1fr;
 		gap: 2rem;
+	}
+
+	.about-image {
+		top: 0;
+		transform: translateY(0);
 	}
 
 	.contact-method {
