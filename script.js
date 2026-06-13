@@ -12,6 +12,17 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
 	});
 });
 
+// Copy-to-clipboard buttons
+document.querySelectorAll('.copy-btn').forEach(btn => {
+	btn.addEventListener('click', () => {
+		navigator.clipboard.writeText(btn.dataset.copy).then(() => {
+			btn.classList.add('copied');
+			setTimeout(() => btn.classList.remove('copied'), 1800);
+		});
+	});
+});
+
+
 // Header background change on scroll
 window.addEventListener('scroll', () => {
 	const header = document.querySelector('header');
