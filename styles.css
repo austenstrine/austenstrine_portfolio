@@ -479,7 +479,10 @@ section.contact {
 	background: linear-gradient(135deg, #1e5a47 0%, #257257 100%);
 }
 
-.cv-banner-link {
+.cv-banner-link,
+.cv-banner-link:visited,
+.cv-banner-link:hover,
+.cv-banner-link:active {
 	display: block;
 	text-decoration: none;
 	color: white;
