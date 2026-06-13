@@ -476,7 +476,8 @@ section.contact {
 
 /* CV Banner */
 .cv-banner {
-	background: linear-gradient(135deg, #1e5a47 0%, #257257 100%);
+	background: linear-gradient(135deg, #2c3e50 0%, #34495e 50%, #2c3e50 100%);
+	padding: 0 2rem;
 }
 
 .cv-banner-link,
@@ -486,12 +487,7 @@ section.contact {
 	display: block;
 	text-decoration: none;
 	color: white;
-	padding: 3rem 2rem;
 	transition: background 0.3s ease;
-}
-
-.cv-banner-link:hover {
-	background: rgba(0, 0, 0, 0.1);
 }
 
 .cv-banner-content {
@@ -500,39 +496,40 @@ section.contact {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
-	gap: 1.5rem;
+	padding: 1.5rem;
+	background: rgba(255, 255, 255, 0.1);
+	border-radius: 10px;
+	border: 1px solid rgba(255, 255, 255, 0.2);
+	transition: background 0.3s ease;
+	margin-top: 2rem;
+	margin-bottom: 2rem;
 }
 
-.cv-banner-text {
-	display: flex;
-	flex-direction: column;
-	gap: 0.3rem;
+.cv-banner-link:hover .cv-banner-content {
+	background: rgba(255, 255, 255, 0.15);
 }
 
-.cv-banner-label {
-	font-size: 1rem;
+.cv-banner-text h3 {
+	margin: 0 0 0.25rem 0;
+	font-size: 1.2rem;
+}
+
+.cv-banner-text p {
+	margin: 0;
 	opacity: 0.8;
-	letter-spacing: 0.03em;
+	font-size: 0.9rem;
 }
 
-.cv-banner-title {
-	font-size: 2.2rem;
-	font-weight: 700;
-	letter-spacing: -0.5px;
-	line-height: 1.1;
+.cv-banner-caret {
+	font-size: 1.6rem;
+	opacity: 0.5;
+	line-height: 1;
+	transition: opacity 0.2s, transform 0.2s;
 }
 
-.cv-banner-arrow {
-	width: 3rem;
-	height: 3rem;
-	flex-shrink: 0;
-	opacity: 0.85;
-	transition: transform 0.25s ease, opacity 0.25s ease;
-}
-
-.cv-banner-link:hover .cv-banner-arrow {
-	transform: translateX(6px);
+.cv-banner-link:hover .cv-banner-caret {
 	opacity: 1;
+	transform: translateX(3px);
 }
 
 /* Footer */
