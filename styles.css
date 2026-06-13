@@ -33,6 +33,14 @@ nav {
 	padding: 0 2rem;
 }
 
+.logo a,
+.logo a:visited,
+.logo a:hover,
+.logo a:active {
+	text-decoration: none;
+	color: #2c3e50;
+}
+
 .logo {
 	font-size: 1.5rem;
 	font-weight: bold;
