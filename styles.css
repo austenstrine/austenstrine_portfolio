@@ -474,6 +474,64 @@ section.contact {
 	transform: translateX(3px);
 }
 
+/* CV Banner */
+.cv-banner {
+	background: linear-gradient(135deg, #1e5a47 0%, #257257 100%);
+}
+
+.cv-banner-link {
+	display: block;
+	text-decoration: none;
+	color: white;
+	padding: 3rem 2rem;
+	transition: background 0.3s ease;
+}
+
+.cv-banner-link:hover {
+	background: rgba(0, 0, 0, 0.1);
+}
+
+.cv-banner-content {
+	max-width: 1200px;
+	margin: 0 auto;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 1.5rem;
+}
+
+.cv-banner-text {
+	display: flex;
+	flex-direction: column;
+	gap: 0.3rem;
+}
+
+.cv-banner-label {
+	font-size: 1rem;
+	opacity: 0.8;
+	letter-spacing: 0.03em;
+}
+
+.cv-banner-title {
+	font-size: 2.2rem;
+	font-weight: 700;
+	letter-spacing: -0.5px;
+	line-height: 1.1;
+}
+
+.cv-banner-arrow {
+	width: 3rem;
+	height: 3rem;
+	flex-shrink: 0;
+	opacity: 0.85;
+	transition: transform 0.25s ease, opacity 0.25s ease;
+}
+
+.cv-banner-link:hover .cv-banner-arrow {
+	transform: translateX(6px);
+	opacity: 1;
+}
+
 /* Footer */
 footer {
 	background: linear-gradient(135deg, #1a252f 0%, #2c3e50 100%);
