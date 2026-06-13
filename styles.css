@@ -474,64 +474,6 @@ section.contact {
 	transform: translateX(3px);
 }
 
-/* CV Banner */
-.cv-banner {
-	background: linear-gradient(135deg, #2c3e50 0%, #34495e 50%, #2c3e50 100%);
-	padding: 0 2rem;
-}
-
-.cv-banner-link,
-.cv-banner-link:visited,
-.cv-banner-link:hover,
-.cv-banner-link:active {
-	display: block;
-	text-decoration: none;
-	color: white;
-	transition: background 0.3s ease;
-}
-
-.cv-banner-content {
-	max-width: 1200px;
-	margin: 0 auto;
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	padding: 1.5rem;
-	background: rgba(255, 255, 255, 0.1);
-	border-radius: 10px;
-	border: 1px solid rgba(255, 255, 255, 0.2);
-	transition: background 0.3s ease;
-	margin-top: 2rem;
-	margin-bottom: 2rem;
-}
-
-.cv-banner-link:hover .cv-banner-content {
-	background: rgba(255, 255, 255, 0.15);
-}
-
-.cv-banner-text h3 {
-	margin: 0 0 0.25rem 0;
-	font-size: 1.2rem;
-}
-
-.cv-banner-text p {
-	margin: 0;
-	opacity: 0.8;
-	font-size: 0.9rem;
-}
-
-.cv-banner-caret {
-	font-size: 1.6rem;
-	opacity: 0.5;
-	line-height: 1;
-	transition: opacity 0.2s, transform 0.2s;
-}
-
-.cv-banner-link:hover .cv-banner-caret {
-	opacity: 1;
-	transform: translateX(3px);
-}
-
 /* Footer */
 footer {
 	background: linear-gradient(135deg, #1a252f 0%, #2c3e50 100%);
