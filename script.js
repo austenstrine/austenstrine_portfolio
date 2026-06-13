@@ -13,11 +13,26 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
 });
 
 // Copy-to-clipboard buttons
+const toast = document.createElement('div');
+toast.className = 'copy-toast';
+toast.textContent = 'Copied to clipboard';
+document.body.appendChild(toast);
+
+let toastTimer;
 document.querySelectorAll('.copy-btn').forEach(btn => {
+	btn.querySelector('.copy-tooltip').textContent = 'Copy to clipboard';
+
 	btn.addEventListener('click', () => {
 		navigator.clipboard.writeText(btn.dataset.copy).then(() => {
-			btn.classList.add('copied');
-			setTimeout(() => btn.classList.remove('copied'), 1800);
+			// swap tooltip text briefly
+			const tip = btn.querySelector('.copy-tooltip');
+			tip.textContent = 'Copied!';
+			setTimeout(() => { tip.textContent = 'Copy to clipboard'; }, 1800);
+
+			// show toast
+			clearTimeout(toastTimer);
+			toast.classList.add('visible');
+			toastTimer = setTimeout(() => toast.classList.remove('visible'), 2000);
 		});
 	});
 });

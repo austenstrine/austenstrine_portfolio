@@ -351,7 +351,7 @@ section.contact {
 
 .copy-tooltip {
 	position: absolute;
-	bottom: calc(100% + 4px);
+	bottom: calc(100% + 6px);
 	left: 50%;
 	transform: translateX(-50%);
 	background: rgba(0, 0, 0, 0.75);
@@ -362,11 +362,34 @@ section.contact {
 	border-radius: 3px;
 	pointer-events: none;
 	opacity: 0;
-	transition: opacity 0.2s;
+	transition: opacity 0.15s;
 }
 
-.copy-btn.copied .copy-tooltip {
+.copy-btn:hover .copy-tooltip {
 	opacity: 1;
+}
+
+/* toast */
+.copy-toast {
+	position: fixed;
+	bottom: 1.75rem;
+	left: 50%;
+	transform: translateX(-50%) translateY(0.5rem);
+	background: #2c3e50;
+	color: #fff;
+	font-size: 0.875rem;
+	padding: 0.55rem 1.2rem;
+	border-radius: 6px;
+	box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+	pointer-events: none;
+	opacity: 0;
+	transition: opacity 0.2s, transform 0.2s;
+	z-index: 9999;
+}
+
+.copy-toast.visible {
+	opacity: 1;
+	transform: translateX(-50%) translateY(0);
 }
 
 
