@@ -320,14 +320,7 @@ section.contact {
 	margin-bottom: 1rem;
 }
 
-.contact-info a {
-	color: rgba(255, 255, 255, 0.9);
-}
 
-.contact-info a:hover {
-	color: #ffffff;
-	text-decoration: underline;
-}
 
 .contact-icon {
 	margin-right: 1rem;
@@ -394,6 +387,19 @@ section.contact {
 	margin: 0;
 	opacity: 0.8;
 	font-size: 0.9rem;
+}
+
+.contact-method-caret {
+	margin-left: auto;
+	font-size: 1.6rem;
+	opacity: 0.5;
+	line-height: 1;
+	transition: opacity 0.2s, transform 0.2s;
+}
+
+.contact-method:hover .contact-method-caret {
+	opacity: 1;
+	transform: translateX(3px);
 }
 
 /* Footer */
