@@ -19,19 +19,23 @@ toast.textContent = 'Copied to clipboard';
 document.body.appendChild(toast);
 
 function copyText(text) {
-	if (navigator.clipboard && window.isSecureContext) {
-		return navigator.clipboard.writeText(text);
-	}
-	// fallback for file:// and non-secure contexts
+	// execCommand is synchronous and reliable inside a click handler across all browsers
 	const ta = document.createElement('textarea');
 	ta.value = text;
-	ta.style.cssText = 'position:fixed;top:-9999px;left:-9999px;opacity:0';
+	ta.style.cssText = 'position:fixed;top:0;left:0;width:1px;height:1px;opacity:0;pointer-events:none';
 	document.body.appendChild(ta);
 	ta.focus();
 	ta.select();
-	const ok = document.execCommand('copy');
+	let ok = false;
+	try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
 	document.body.removeChild(ta);
-	return ok ? Promise.resolve() : Promise.reject();
+
+	if (ok) return Promise.resolve();
+
+	// fallback to async Clipboard API if execCommand isn't available
+	if (navigator.clipboard) return navigator.clipboard.writeText(text);
+
+	return Promise.reject(new Error('Copy not supported'));
 }
 
 let toastTimer;
