@@ -1,0 +1,145 @@
+HEADLINE
+
+Full-stack force-multiplier - nucleation point to build a team around.
+
+
+
+ABOUT
+
+Everyone will not "just" (even if you tell them to)
+Let's not bikeshed, we have better things to talk about
+Coding is documenting
+Keep it simple, samurai
+Everything is permissible in a hotfix that works
+Code isn't finished until it works without my attention or explanation
+
+I love Jesus (even if you don't, it's okay, we can get along), I like the lamb vindaloo from Bombay Cafe in Cedar City, and I'm pretty good at Asuka in Tekken 7
+
+
+
+EXPERIENCE
+
+Full-stack Developer
+
+Lumber Marketplace · Full-time
+
+Jan 2024 - Jun 2025 · 1 yr 6 mos
+
+Colombia, Tennessee, United States · Remote
+
+Startup - High pressure, high workload, extreme agility and productivity needed.
+Built a custom, industry specific regex synthesis engine and regex library for raw/dirty textual data processing, inventory upload, and search keyword harvesting.
+
+Built a suite of bash scripts for convenient postgres data backups, debugging with live data, and admin tasks, including an API for the scripts to interact with.
+
+Completely rebuilt frontend and backend "Product" feature that was poorly designed and implemented by a temp worker. (They were literally naming variables a, b, c etc., it was a nightmare to rebuild.)
+
+Built generators into prisma that synthesized a full suite of classes and helper constants for every model defined in the prisma schema, with complete class-validator, class-transformer, and swagger integration, to reduce nearly all of the implementation and maintenance cost of DTOs, entities, and other database related model files.
+
+Also built a suite of helper functions that make coercing DTO data into prisma clauses both painless and seamless.
+
+Spent a lot of time working out problems introduced by generations of project direction changes to enable agile development for my coworkers.
+
+Extremely responsive hotfixes for site-breaking errors.
+
+I worked most of the time without a CTO, in direct collaboration with co-workers, marketing/salespeople, and reporting directly to the owners. I acted as an unofficial CTO - keeping the team together, excited about the project, optimistic, and focused on both immediate and long-term goals.
+
+In this position, I showed unusual adaptability, fast skill broadening, cement-strength team retention skills, and powerful team force multiplication. Almost every project I invested time into improved architecture in a way that made programming 5-10x easier and faster for my coworkers.
+
+Senior Application Developer
+
+GO Green Enterprises · Full-time
+
+Nov 2018 - Nov 2023 · 5 yrs 1 mo
+
+South West Utah · On-site
+
+Senior developer coordinating with coworkers to build, maintain, design, and update web applications (PHP/Laravel, JavaScript, CSS, HTML, jQuery), including but not limited to adamsandco.net, plumbersstock.com, and swplumbing.com. Sole/lead developer for adamsandco.net. Sole/lead developer for in-house iOS order processing app (Swift, SQLite). Sole/lead developer for both in-house and 3rd-party search solutions (Elasticsearch, Unbxd). Junior server admin (Apache/Ubuntu, Bash, crontab, artisan). Junior database admin (MongoDB, aggregation pipeline, MySQL). Repository pull-request coordinator for US office (BitBucket, GitKraken, git). Regularly involved in training junior devs (voluntarily, I enjoy it).
+Other skills developed during this period: Dart/Flutter, TypeScript, Node.js, React.js
+
+In this position, I demonstrated an ability to work in extremely technologically hostile environments - deprecated code, systems that are no longer maintained, 15 year old functions that support the entire company but that nobody looked at since they were written, that's the MO I'm accustomed to working within. Much tougher than I seem, I can handle a crisis like almost nobody else.
+
+The most important skills I picked up from this job were deep teamwork and leadership skills in an environment with broad diversity of thought and approach to programming.
+
+ Web Development, Laravel and +16 skills
+
+Anderson Merchandisers logo
+Territory Sales Lead
+
+Anderson Merchandisers
+
+Jul 2018 - Nov 2018 · 5 mos
+
+South West Utah
+
+Work with Walmart management in two locations to facilitate and participate in product placement, resets, and pulls for Anderson clients, including associated administrative tasks(start/end time, personnel required, logistics, etc.) Adjust to understaffed working conditions (about 32 hours/week short) by developing sharp delegation, time management, decision making, and prioritization skills to meet the challenge, and to make deadlines. Communicate with and train the associates on my team to ensure they are meeting their goals and deadlines. Sell product features, endcaps, pallets, corragate, and other displays to Walmart management for Anderson clients.
+
+ Leadership
+
+Smart Secure Specialist
+
+Vivint Smart Home
+
+Oct 2017 - Dec 2017 · 3 mos
+
+Cedar City, UT
+
+Responsible for inbound tech support, assisting customers with smart devices and security systems including their installation and troubleshooting, updating firmware, reporting bugs, and general assistance over the phone, responsible for assisting customers with billing concerns, applying credits for mishaps, etc.
+Trained on 2GIG panels & associated equipment, and Vivint proprietary panels/equipment.
+
+Infowest Inc logo
+Tech Support
+
+Infowest Inc
+
+Mar 2016 - Sep 2017 · 1 yr 7 mos
+
+Cedar City, Utah
+
+InfoWest is a Wireless ISP that works with Ubiquity brand equipment. I'm familiar with troubleshooting both customer units and the access points on our towers, as well as the basic concepts behind their function. I started at basic troubleshooting on the customer level over the phone, multi-brand router set-up, dealing with wi-fi interference, bypassing routers, setting up PPPoE, and more on both Apple and PC devices. Also became familiar with setting up e-mail on POP and IMAP servers for most any device or third party client. Can do most basic networking tasks. Also gained limited experience with Cisco VoIP ATA troubleshooting and set-up. Gained additional insights into computer repair and cleaning methods and tools. Some limited experience with Mimosa brand equipment. Created a troubleshooting flow program for the company, reached beta testing and basic functionality. That program, named WISP-T, can be found on my GitHub profile.
+
+ Technical Support, Troubleshooting and +2 skills
+
+Utah Shakespeare Festival logo
+House Management
+
+Utah Shakespeare Festival
+
+Jun 2015 - Nov 2015 · 6 mos
+
+Cedar City, Utah
+
+Responsible for all guest experiences for assigned shows. Coordinated with volunteer ushers for seating of guests and oversaw any ticket/seating issues. Helped disabled guests with courtesy wheelchairs etc. Provided guest conveniences such as Assistive listening devices, blankets, cushions. Ensured that any passers-by stayed outside of the restricted areas, occasionally had to chase folks down.
+
+Sales Representative
+
+Gateway Management Group
+
+Oct 2013 - Jun 2014 · 9 mos
+
+Chico, CA
+
+Trained in sales, customer service, and basic public relations. Achieved Sales quota for leadership, and passed leadership exam. Ranked #1 in the nation for installs on the weekly national printout. Ranked within the top 10 on the national printouts multiple times. Trained junior sales reps and built my team, most of which were on-track for leadership at the time of my departure. 
+
+Gap Inc./Old Navy logo
+Salesman, Casheir
+
+Gap Inc./Old Navy
+
+Oct 2012 - Jan 2013 · 4 mos
+
+Chico, California, United States
+
+Responsible for re-stocking merchandise, service blitz’ on the sales floor, quick check outs/casheir duties, maintaining high conversion rates/units per transaction/money per transaction,  serving the customer with a proactive attitude, selling Old Navy Cards, store recovery, and developing customer relationships.
+
+Chartwells (Higher Education Division) logo
+Dishwasher/Floor man
+
+Chartwells (Higher Education Division)
+
+2012 - 2012 · Less than a year
+
+Duties included keeping dish area clear, sweeping, mopping, emptying trash, minor dishwasher maintenance. Responsible for closing down the cafeteria at night. Worked on call and with a regular schedule.
+
+
+The most notable aspects of this user's skills are not actually their technical skills, so much as their soft skills. They truly are the type of person whose attitude and interaction with the team will determine the success of the team - a force multiplier and a team glue, if you will.
