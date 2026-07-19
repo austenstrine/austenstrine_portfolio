@@ -99,12 +99,12 @@ nav {
 }
 
 .hero-profile {
-	width: 150px;
-	height: 150px;
+	width: clamp(220px, 28vw, 320px);
+	height: clamp(220px, 28vw, 320px);
 	border-radius: 50%;
 	object-fit: cover;
-	border: 4px solid rgba(255, 255, 255, 0.3);
-	box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+	border: 7px solid rgba(255, 255, 255, 0.4);
+	box-shadow: 0 24px 60px rgba(0, 0, 0, 0.38);
 	animation: fadeInUp 1s ease;
 }
 
@@ -514,8 +514,8 @@ footer {
 	}
 
 	.hero-profile {
-		width: 120px;
-		height: 120px;
+		width: clamp(180px, 55vw, 240px);
+		height: clamp(180px, 55vw, 240px);
 	}
 
 	.about-content,
