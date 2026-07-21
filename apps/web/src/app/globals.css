@@ -1,0 +1,17 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+body {
+  @apply bg-frost text-ink antialiased;
+}
+
+.main-grid {
+  background-image: radial-gradient(circle at 25px 25px, rgba(13, 27, 42, 0.08) 2%, transparent 0%),
+    radial-gradient(circle at 75px 75px, rgba(13, 27, 42, 0.08) 2%, transparent 0%);
+  background-size: 100px 100px;
+}
