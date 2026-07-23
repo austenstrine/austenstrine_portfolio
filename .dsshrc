@@ -1,0 +1,18 @@
+# Target aliases for dssh.
+#
+# Use simple shell assignments so the config stays easy to read and source.
+#
+# Required:
+#   <target>=<project root or app root>
+#
+# Optional overrides:
+#   <target>_dockerfile=<custom Dockerfile path>
+#   <target>_context=<custom Docker build context>
+#   <target>_image=<custom image name>
+#   <target>_workdir=<custom container workdir>
+
+backend=./apps/api
+backend_image=portfolio-api
+
+frontend=./apps/web
+frontend_image=portfolio-web

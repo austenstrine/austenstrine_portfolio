@@ -1,5 +1,6 @@
 FROM node:20-alpine
 WORKDIR /app
+RUN apk add --no-cache bash
 COPY package*.json ./
 COPY apps/web/package*.json ./apps/web/
 RUN npm ci

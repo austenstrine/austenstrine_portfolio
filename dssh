@@ -1,0 +1,189 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+config_file="${DSSH_CONFIG_FILE:-$script_dir/.dsshrc}"
+default_target="${DSSH_DEFAULT_TARGET:-}"
+
+if [[ -f "$config_file" ]]; then
+  # shellcheck disable=SC1090
+  source "$config_file"
+fi
+
+usage() {
+  cat <<'EOF'
+Usage:
+  ./dssh <target> [build|<command...>]
+
+Examples:
+  ./dssh backend build
+  ./dssh backend npx prisma migrate dev
+  ./dssh backend
+
+Targets are defined in .dsshrc as simple shell assignments:
+  backend=./apps/api
+  backend_image=portfolio-api
+
+Optional overrides:
+  <target>_dockerfile  custom Dockerfile path relative to the repo root
+  <target>_context     custom build context relative to the repo root
+  <target>_image       custom image name
+  <target>_workdir     custom container workdir
+EOF
+}
+
+detect_shell() {
+  local image_name="$1"
+
+  if docker run --rm "$image_name" sh -lc 'command -v bash >/dev/null 2>&1'; then
+    printf '%s\n' bash
+  else
+    printf '%s\n' sh
+  fi
+}
+
+resolve_path() {
+  local path="$1"
+  if [[ "$path" == /* ]]; then
+    printf '%s\n' "$path"
+  else
+    (cd "$script_dir" && cd "$path" && pwd)
+  fi
+}
+
+parse_workdir() {
+  local dockerfile_path="$1"
+  awk 'BEGIN { workdir = "" } toupper($1) == "WORKDIR" { workdir = $2 } END { print workdir }' "$dockerfile_path"
+}
+
+build_image() {
+  local image_name="$1"
+  local dockerfile_path="$2"
+  local context_path="$3"
+  shift 3
+
+  docker build "$@" -f "$dockerfile_path" -t "$image_name" "$context_path"
+}
+
+seed_node_modules_volume() {
+  local image_name="$1"
+  local volume_name="$2"
+
+  if ! docker volume inspect "$volume_name" >/dev/null 2>&1; then
+    docker volume create "$volume_name" >/dev/null
+  fi
+
+  if docker run --rm -v "$volume_name:/node_modules" "$image_name" sh -lc 'test -n "$(ls -A /node_modules 2>/dev/null)"' >/dev/null 2>&1; then
+    return 0
+  fi
+
+  docker run --rm -v "$volume_name:/node_modules" "$image_name" sh -lc 'cp -a /app/node_modules/. /node_modules/'
+}
+
+run_container() {
+  local image_name="$1"
+  local context_path="$2"
+  local workdir_path="$3"
+  local interactive="$4"
+  shift 4
+  local env_args=()
+  local node_modules_volume="dssh-${image_name//[^a-zA-Z0-9_.-]/-}-node_modules"
+
+  if [[ -f "$script_dir/.env" ]]; then
+    env_args+=(--env-file "$script_dir/.env")
+  fi
+
+  seed_node_modules_volume "$image_name" "$node_modules_volume"
+
+  local run_args=(--rm)
+  if [[ "$interactive" == "1" ]]; then
+    run_args+=(-it)
+  fi
+
+  docker run "${run_args[@]}" \
+    --network host \
+    "${env_args[@]}" \
+    -v "$context_path:$workdir_path" \
+    -v "$node_modules_volume:$workdir_path/node_modules" \
+    -w "$workdir_path" \
+    "$image_name" \
+    "$@"
+}
+
+if [[ $# -lt 1 ]]; then
+  usage
+  exit 1
+fi
+
+target_name="$1"
+shift
+
+target_path_var="$target_name"
+target_path="${!target_path_var-}"
+
+if [[ -z "$target_path" ]]; then
+  if [[ -d "$script_dir/$target_name" ]]; then
+    target_path="$target_name"
+  else
+    echo "Unknown target: $target_name" >&2
+    usage
+    exit 1
+  fi
+fi
+
+dockerfile_var="${target_name}_dockerfile"
+context_var="${target_name}_context"
+image_var="${target_name}_image"
+workdir_var="${target_name}_workdir"
+
+target_abs_path="$(resolve_path "$target_path")"
+dockerfile_path="${!dockerfile_var-}"
+if [[ -n "$dockerfile_path" ]]; then
+  dockerfile_path="$(resolve_path "$dockerfile_path")"
+else
+  dockerfile_path="$target_abs_path/Dockerfile"
+fi
+
+if [[ ! -f "$dockerfile_path" ]]; then
+  echo "Dockerfile not found for target '$target_name': $dockerfile_path" >&2
+  exit 1
+fi
+
+context_path="${!context_var-}"
+if [[ -n "$context_path" ]]; then
+  context_path="$(resolve_path "$context_path")"
+else
+  context_path="$script_dir"
+fi
+
+image_name="${!image_var-}"
+if [[ -z "$image_name" ]]; then
+  image_name="dssh-${target_name}"
+fi
+
+workdir_path="${!workdir_var-}"
+if [[ -z "$workdir_path" ]]; then
+  workdir_path="$(parse_workdir "$dockerfile_path")"
+fi
+if [[ -z "$workdir_path" ]]; then
+  workdir_path="/app"
+fi
+
+if [[ $# -eq 0 ]]; then
+  interactive_mode=1
+  set -- "$(detect_shell "$image_name")"
+else
+  interactive_mode=0
+fi
+
+if [[ "$1" == "build" ]]; then
+  shift
+  build_image "$image_name" "$dockerfile_path" "$context_path" "$@"
+  exit 0
+fi
+
+if ! docker image inspect "$image_name" >/dev/null 2>&1; then
+  build_image "$image_name" "$dockerfile_path" "$context_path"
+fi
+
+run_container "$image_name" "$context_path" "$workdir_path" "$interactive_mode" "$@"
