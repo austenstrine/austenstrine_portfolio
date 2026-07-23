@@ -12,3 +12,6 @@ pnpm-debug.log*
 .DS_Store
 apps/api/generated/
 *.tsbuildinfo
+
+# Local TLS certs generated for dssh/nginx development proxy
+ops/nginx/certs/
