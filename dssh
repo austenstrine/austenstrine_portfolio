@@ -13,10 +13,18 @@ fi
 usage() {
   cat <<'EOF'
 Usage:
-  ./dssh <target> [build|<command...>]
+  ./dssh <global-action>
+  ./dssh <target> [build|<action>|<command...>]
+
+Global actions:
+  stop      stop dssh app containers and local infra
+  status    show dssh app containers and local infra status
 
 Examples:
+  ./dssh stop
+  ./dssh status
   ./dssh backend build
+  ./dssh backend start
   ./dssh backend npx prisma migrate dev
   ./dssh backend
 
@@ -29,6 +37,18 @@ Optional overrides:
   <target>_context     custom build context relative to the repo root
   <target>_image       custom image name
   <target>_workdir     custom container workdir
+
+Optional actions from .dsshrc:
+  <target>_<action>_local   command to run on the host first
+  <target>_<action>         command to run inside the container
+
+Example:
+  backend_start_local="docker compose up -d postgres redis opensearch"
+  backend_start="npm run dev -w apps/api"
+
+Optional global overrides:
+  dssh_stop_local="..."
+  dssh_status_local="..."
 EOF
 }
 
@@ -85,7 +105,8 @@ run_container() {
   local context_path="$2"
   local workdir_path="$3"
   local interactive="$4"
-  shift 4
+  local container_name="$5"
+  shift 5
   local env_args=()
   local node_modules_volume="dssh-${image_name//[^a-zA-Z0-9_.-]/-}-node_modules"
 
@@ -99,6 +120,10 @@ run_container() {
   if [[ "$interactive" == "1" ]]; then
     run_args+=(-it)
   fi
+  if [[ -n "$container_name" ]]; then
+    run_args+=(--name "$container_name")
+  fi
+  run_args+=(--label "dssh.image=$image_name")
 
   docker run "${run_args[@]}" \
     --network host \
@@ -110,9 +135,59 @@ run_container() {
     "$@"
 }
 
+run_container_shell() {
+  local image_name="$1"
+  local context_path="$2"
+  local workdir_path="$3"
+  local interactive="$4"
+  local container_name="$5"
+  local shell_cmd="$6"
+
+  run_container "$image_name" "$context_path" "$workdir_path" "$interactive" "$container_name" bash -lc "$shell_cmd"
+}
+
+run_local_shell() {
+  local shell_cmd="$1"
+  bash -lc "$shell_cmd"
+}
+
+run_global_action() {
+  local action_name="$1"
+  local action_var="dssh_${action_name}_local"
+  local override_cmd="${!action_var-}"
+
+  if [[ -n "$override_cmd" ]]; then
+    run_local_shell "$override_cmd"
+    return 0
+  fi
+
+  if [[ "$action_name" == "stop" ]]; then
+    docker ps -q --filter "name=^/dssh-" | xargs -r docker rm -f >/dev/null 2>&1 || true
+    docker compose stop postgres redis opensearch >/dev/null 2>&1 || true
+    echo "Stopped dssh app containers and compose infra services."
+    return 0
+  fi
+
+  if [[ "$action_name" == "status" ]]; then
+    echo "=== dssh app containers ==="
+    docker ps --filter "name=^/dssh-" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+    echo
+    echo "=== compose infra services ==="
+    docker compose ps postgres redis opensearch 2>/dev/null || docker compose ps
+    return 0
+  fi
+
+  return 1
+}
+
 if [[ $# -lt 1 ]]; then
   usage
   exit 1
+fi
+
+if [[ "$1" == "stop" || "$1" == "status" ]]; then
+  run_global_action "$1"
+  exit 0
 fi
 
 target_name="$1"
@@ -182,8 +257,34 @@ if [[ "$1" == "build" ]]; then
   exit 0
 fi
 
+action_name="$1"
+action_local_var="${target_name}_${action_name}_local"
+action_container_var="${target_name}_${action_name}"
+action_local_cmd="${!action_local_var-}"
+action_container_cmd="${!action_container_var-}"
+
+if [[ -n "$action_local_cmd" || -n "$action_container_cmd" ]]; then
+  shift
+
+  if [[ -n "$action_local_cmd" ]]; then
+    run_local_shell "$action_local_cmd"
+  fi
+
+  if [[ -n "$action_container_cmd" ]]; then
+    if ! docker image inspect "$image_name" >/dev/null 2>&1; then
+      build_image "$image_name" "$dockerfile_path" "$context_path"
+    fi
+    action_container_name="dssh-${target_name}-${action_name}"
+    docker rm -f "$action_container_name" >/dev/null 2>&1 || true
+    run_container_shell "$image_name" "$context_path" "$workdir_path" "1" "$action_container_name" "$action_container_cmd"
+    exit 0
+  fi
+
+  exit 0
+fi
+
 if ! docker image inspect "$image_name" >/dev/null 2>&1; then
   build_image "$image_name" "$dockerfile_path" "$context_path"
 fi
 
-run_container "$image_name" "$context_path" "$workdir_path" "$interactive_mode" "$@"
+run_container "$image_name" "$context_path" "$workdir_path" "$interactive_mode" "" "$@"

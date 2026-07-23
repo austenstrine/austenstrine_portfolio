@@ -11,8 +11,18 @@
 #   <target>_image=<custom image name>
 #   <target>_workdir=<custom container workdir>
 
+# Optional global actions:
+#   dssh_stop_local=<host command>
+#   dssh_status_local=<host command>
+
+dssh_stop_local="docker ps -q --filter name=^/dssh- | xargs -r docker rm -f >/dev/null 2>&1 || true; docker compose stop postgres redis opensearch >/dev/null 2>&1 || true; echo 'Stopped dssh app containers and compose infra services.'"
+dssh_status_local="echo '=== dssh app containers ==='; docker ps --filter name=^/dssh- --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}'; echo; echo '=== compose infra services ==='; docker compose ps postgres redis opensearch"
+
 backend=./apps/api
 backend_image=portfolio-api
+backend_start_local="docker ps -q --filter ancestor=portfolio-api | xargs -r docker rm -f >/dev/null 2>&1 || true; docker compose up -d postgres redis opensearch"
+backend_start="npm run prisma:generate -w apps/api && npm run dev -w apps/api"
 
 frontend=./apps/web
 frontend_image=portfolio-web
+frontend_start="npm run dev -w apps/web"
