@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { CopyField } from '../CopyField';
 import { DocumentIcon } from '../icons/DocumentIcon';
 import { EmailIcon } from '../icons/EmailIcon';
@@ -8,7 +9,7 @@ type ContactMethod = {
   href: string;
   title: string;
   summary: string;
-  icon: React.ReactNode;
+  icon: ReactNode;
 };
 
 const methods: ContactMethod[] = [
