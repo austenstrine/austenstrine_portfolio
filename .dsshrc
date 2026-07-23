@@ -22,7 +22,17 @@ backend=./apps/api
 backend_image=portfolio-api
 backend_start_local="docker ps -q --filter ancestor=portfolio-api | xargs -r docker rm -f >/dev/null 2>&1 || true; docker compose up -d postgres redis opensearch"
 backend_start="npm run prisma:generate -w apps/api && npm run dev -w apps/api"
+backend_stop_local="docker rm -f dssh-backend-start >/dev/null 2>&1 || true"
 
 frontend=./apps/web
 frontend_image=portfolio-web
 frontend_start="npm run dev -w apps/web"
+frontend_stop_local="docker rm -f dssh-frontend-start >/dev/null 2>&1 || true"
+
+proxy=./ops/nginx
+proxy_image=portfolio-proxy
+proxy_context=./ops/nginx
+proxy_mount_node_modules=0
+proxy_start_local="./ops/nginx/init-local-tls.sh"
+proxy_start="nginx -c /app/nginx.conf -g 'daemon off;'"
+proxy_stop_local="docker rm -f dssh-proxy-start >/dev/null 2>&1 || true"

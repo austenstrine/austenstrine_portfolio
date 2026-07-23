@@ -16,7 +16,11 @@ export function AboutSection() {
             <p key={paragraph}>{paragraph}</p>
           ))}
         </div>
-        <div className="mx-auto h-60 w-60 rounded-full border-4 border-emerald-700 bg-gradient-to-br from-sky to-ink" />
+        <img
+          src="/pp5_sq_sm.jpg"
+          alt="Austen Strine portrait"
+          className="mx-auto h-60 w-60 rounded-full border-4 border-emerald-700 object-cover shadow-xl"
+        />
       </div>
     </section>
   );

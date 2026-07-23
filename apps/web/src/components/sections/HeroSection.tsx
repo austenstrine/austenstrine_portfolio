@@ -2,9 +2,11 @@ export function HeroSection() {
   return (
     <section className="rounded-3xl bg-gradient-to-br from-ink via-sky to-emerald-800 px-8 py-16 text-white shadow-2xl">
       <div className="grid items-center gap-8 md:grid-cols-[220px,1fr]">
-        <div className="mx-auto flex h-52 w-52 items-center justify-center rounded-full border-4 border-white/40 bg-white/10 text-5xl font-bold">
-          AS
-        </div>
+        <img
+          src="/pp1_sq_sm.jpg"
+          alt="Austen Strine profile"
+          className="mx-auto h-52 w-52 rounded-full border-4 border-white/40 object-cover shadow-2xl"
+        />
         <div>
           <h1 className="text-4xl font-semibold tracking-tight md:text-5xl">Austen Strine</h1>
           <p className="mt-4 max-w-2xl text-lg text-slate-100">
