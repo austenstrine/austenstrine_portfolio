@@ -3,6 +3,7 @@
 import type { ReactNode } from 'react';
 
 type ContactMethodRowProps = {
+	rowId?: string;
 	copyLabel: string;
 	copyValue: string;
 	href: string;
@@ -13,6 +14,7 @@ type ContactMethodRowProps = {
 };
 
 export function ContactMethodRow({
+	rowId,
 	copyLabel,
 	copyValue,
 	href,
@@ -41,6 +43,7 @@ export function ContactMethodRow({
 
 	return (
 		<div
+			id={rowId}
 			className="
 				grid
 				items-stretch

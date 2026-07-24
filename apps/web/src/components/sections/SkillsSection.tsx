@@ -23,10 +23,11 @@ export function SkillsSection() {
 			id="skills"
 			className="
 				rounded-2xl
-				bg-gradient-to-br
-				from-slate-100
-				to-slate-200
+				border
+				border-slate-200
+				bg-white
 				p-8
+				shadow-sm
 			"
 		>
 			<h2
@@ -52,9 +53,10 @@ export function SkillsSection() {
 							key={skill.title}
 							className="
 								rounded-xl
-								bg-white
+								border
+								border-slate-200
+								bg-slate-50
 								p-5
-								shadow-sm
 							"
 						>
 							<h3

@@ -9,6 +9,7 @@ import { LinkedInIcon } from '../icons/LinkedInIcon';
 import { ContactMethodRow } from './ContactMethodRow';
 
 type ContactMethod = {
+	rowId?: string;
 	copyLabel: string;
 	copyValue: string;
 	href: string;
@@ -55,6 +56,7 @@ const methods: ContactMethod[] = [
 		),
 	},
 	{
+		rowId: 'contact-cv-row',
 		copyLabel: 'CV',
 		copyValue: 'austenstrine.dev/cv.html',
 		href: '/cv.html',
@@ -123,6 +125,7 @@ export function ContactSection() {
 					methods.map((method) => (
 						<ContactMethodRow
 							key={method.href}
+							rowId={method.rowId}
 							copyLabel={method.copyLabel}
 							copyValue={method.copyValue}
 							href={method.href}

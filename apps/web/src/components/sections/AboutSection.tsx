@@ -16,6 +16,9 @@ export function AboutSection() {
 				border-slate-200
 				bg-white
 				p-8
+				md:grid
+				md:grid-cols-[1fr,240px]
+				md:gap-x-8
 				shadow-sm
 			"
 		>
@@ -24,6 +27,7 @@ export function AboutSection() {
 					text-3xl
 					font-semibold
 					text-ink
+					md:col-start-1
 				"
 			>
 				About Me
@@ -31,38 +35,41 @@ export function AboutSection() {
 			<div
 				className="
 					mt-6
-					grid
-					gap-8
-					md:grid-cols-[1fr,240px]
+					space-y-4
+					text-slate-700
+					md:col-start-1
 				"
 			>
-				<div className="space-y-4 text-slate-700">
-					{
-						paragraphs.map((paragraph) => (
-							<p key={paragraph}>
-								{paragraph}
-							</p>
-						))
-					}
-				</div>
-				<img
-					src="/pp5_sq_sm.jpg"
-					alt="Austen Strine portrait"
-					className="
-						mx-auto
-						h-60
-						w-60
-						md:sticky
-						md:top-[calc(50vh-7.5rem)]
-						md:self-start
-						rounded-full
-						border-4
-						border-emerald-700
-						object-cover
-						shadow-xl
-					"
-				/>
+				{
+					paragraphs.map((paragraph) => (
+						<p key={paragraph}>
+							{paragraph}
+						</p>
+					))
+				}
 			</div>
+			<img
+				src="/pp5_sq_sm.jpg"
+				alt="Austen Strine portrait"
+				className="
+					mx-auto
+					mt-6
+					h-60
+					w-60
+					rounded-full
+					border-4
+					border-emerald-700
+					object-cover
+					shadow-xl
+					md:col-start-2
+					md:row-span-2
+					md:row-start-1
+					md:mt-0
+					md:self-start
+					md:sticky
+					md:top-[calc(50vh-7.5rem)]
+				"
+			/>
 		</section>
 	);
 }

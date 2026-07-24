@@ -4,11 +4,8 @@ import { HeroSection } from '../components/sections/HeroSection';
 import { ProjectsSection } from '../components/sections/ProjectsSection';
 import { SiteFooter } from '../components/sections/SiteFooter';
 import { SkillsSection } from '../components/sections/SkillsSection';
-import { getProjects } from '../lib/api';
 
-export default async function Home() {
-	const projects = await getProjects();
-
+export default function Home() {
 	return (
 		<main className="main-grid min-h-screen">
 			<div
@@ -26,9 +23,7 @@ export default async function Home() {
 				<HeroSection />
 				<AboutSection />
 				<SkillsSection />
-				<ProjectsSection
-					projects={projects}
-				/>
+				<ProjectsSection />
 				<ContactSection />
 				<SiteFooter />
 			</div>
