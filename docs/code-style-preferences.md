@@ -39,6 +39,12 @@ This file tracks personal formatting preferences for this project so they are ea
 - For statement chains such as `if` / `else if` / `else` and `try` / `catch` / `finally`, place each new block on its own line rather than attaching it to the preceding closing brace.
 - For statement keywords with conditions or operands, prefer no space between the keyword and the opening parenthesis: `if(...)`, `else if(...)`, `switch(...)`, `catch(...)`.
 
+## TS String Quotes
+
+- In TypeScript and script-like TypeScript expressions, prefer single quotes over double quotes.
+- Avoid mixing quote styles when it can be avoided; if a string contains an apostrophe, escape it rather than switching the whole string to double quotes.
+- JSX and HTML-like attribute syntax are the visual exception and may continue using double quotes.
+
 ## Delimiter Layout
 
 - In most cases, avoid stacking opening/closing delimiters (`{}`, `()`, `[]`) tightly on the same line when readability suffers.
