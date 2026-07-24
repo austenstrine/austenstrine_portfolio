@@ -1,21 +1,17 @@
 const skills = [
 	{
-		icon: '🚀',
 		title: 'Frontend Development',
 		summary: 'Next.js, TypeScript, Tailwind CSS, MUI, React, HTML5/CSS3, Responsive Design',
 	},
 	{
-		icon: '⚡',
 		title: 'Backend Development',
 		summary: 'Node.js, Nest.js, PHP, Laravel, REST APIs, Prisma, PostgreSQL, MySQL, MongoDB',
 	},
 	{
-		icon: '📱',
 		title: 'Mobile & Native',
 		summary: 'Swift (iOS), Mobile-first Design, App Store Deployment',
 	},
 	{
-		icon: '☁️',
 		title: 'Cloud & Infrastructure',
 		summary: 'AWS, OpenSearch, Elasticsearch, Ubuntu/Apache, Bash, Git, CI/CD Pipelines',
 	},
@@ -61,12 +57,8 @@ export function SkillsSection() {
 								shadow-sm
 							"
 						>
-							<div className="text-3xl">
-								{skill.icon}
-							</div>
 							<h3
 								className="
-									mt-2
 									text-lg
 									font-semibold
 									text-ink

@@ -52,6 +52,9 @@ export function AboutSection() {
 						mx-auto
 						h-60
 						w-60
+						md:sticky
+						md:top-[calc(50vh-7.5rem)]
+						md:self-start
 						rounded-full
 						border-4
 						border-emerald-700
