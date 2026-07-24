@@ -31,7 +31,9 @@ export default async function Home() {
 				<HeroSection />
 				<AboutSection />
 				<SkillsSection />
-				<ProjectsSection projects={projects} />
+				<ProjectsSection
+					projects={projects}
+				/>
 				<ContactSection />
 				<SiteFooter />
 			</div>

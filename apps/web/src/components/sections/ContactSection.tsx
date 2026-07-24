@@ -17,25 +17,41 @@ const methods: ContactMethod[] = [
 		href: 'mailto:austen.strine.dev@gmail.com?subject=Portfolio Inquiry',
 		title: 'Email Me',
 		summary: 'Send me a direct email',
-		icon: <EmailIcon className="h-5 w-5" />,
+		icon: (
+			<EmailIcon
+				className="h-5 w-5"
+			/>
+		),
 	},
 	{
 		href: 'https://www.linkedin.com/in/austen-loren-strine/',
 		title: 'LinkedIn',
 		summary: 'Connect with me professionally',
-		icon: <LinkedInIcon className="h-5 w-5" />,
+		icon: (
+			<LinkedInIcon
+				className="h-5 w-5"
+			/>
+		),
 	},
 	{
 		href: 'https://github.com/austenstrine',
 		title: 'GitHub',
 		summary: 'Check out my code',
-		icon: <GithubIcon className="h-5 w-5" />,
+		icon: (
+			<GithubIcon
+				className="h-5 w-5"
+			/>
+		),
 	},
 	{
 		href: '/cv.html',
 		title: 'View CV',
 		summary: 'Printable full work history',
-		icon: <DocumentIcon className="h-5 w-5" />,
+		icon: (
+			<DocumentIcon
+				className="h-5 w-5"
+			/>
+		),
 	},
 ];
 
@@ -85,9 +101,18 @@ export function ContactSection() {
 						space-y-3
 					"
 				>
-					<CopyField label="Email" value="austen.strine.dev@gmail.com" />
-					<CopyField label="LinkedIn" value="linkedin.com/in/austen-loren-strine" />
-					<CopyField label="GitHub" value="github.com/austenstrine" />
+					<CopyField 
+						label="Email" 
+						value="austen.strine.dev@gmail.com" 
+					/>
+					<CopyField 
+						label="LinkedIn" 
+						value="linkedin.com/in/austen-loren-strine" 
+					/>
+					<CopyField 
+						label="GitHub" 
+						value="github.com/austenstrine" 
+					/>
 				</div>
 
 				<div
@@ -100,13 +125,17 @@ export function ContactSection() {
 						<a
 							key={method.title}
 							href={method.href}
-							target={method.href.startsWith('http')
+							target={
+								(method.href.startsWith('http')
 									? '_blank'
 									: undefined
+								)
 							}
-							rel={method.href.startsWith('http')
+							rel={
+								(method.href.startsWith('http')
 									? 'noreferrer'
 									: undefined
+								)
 							}
 							className="
 								group

@@ -7,6 +7,7 @@ This file tracks personal formatting preferences for this project so they are ea
 - Prefer opening tags, content, and closing tags on separate lines for readability.
 - Keep tags split across lines unless they are self-closing elements.
 - Acceptable exception: self-closing tags such as `<br />` and other empty elements.
+- For self-closing tags that include attributes, prefer placing attributes on their own lines with one-level indentation.
 - Prefer attributes to be stacked vertically when a tag becomes long or dense.
 - Prefer attributes to be stacked vertically when a tag has more than 2 attributes.
 - Prefer code width to stay within the visible editor viewport to avoid horizontal scrolling.
@@ -44,7 +45,9 @@ This file tracks personal formatting preferences for this project so they are ea
 
 - In TSX, prefer ternary operators with `?` and `:` starting on new lines.
 - Keep the condition line at a lower indentation level than the `?` and `:` operand lines.
+- Keep ternary `?` and `:` operand lines indented exactly one level deeper than the ternary's enclosing delimiter level.
 - When a ternary is wrapped by a delimiter (`{` or `(`), keep the condition on the same line as that opening delimiter.
+- For ternaries in JSX attribute braces, prefer starting the expression on a new line and wrapping the ternary in parentheses.
 - When the ternary is not already wrapped by a clean delimiter (for example JSX `{ ... }`), prefer wrapping the full expression in parentheses.
 - For wrapped ternaries, place the opening parenthesis on the same line as the condition start and align the final closing parenthesis with the expression boundary indentation.
 - Keep ternary expression wrappers visually balanced: the closing `}` or `)` should be on its own line aligned with the opening wrapper when the expression spans multiple lines.
