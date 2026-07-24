@@ -8,9 +8,12 @@ This file tracks personal formatting preferences for this project so they are ea
 - Keep tags split across lines unless they are self-closing elements.
 - Acceptable exception: self-closing tags such as `<br />` and other empty elements.
 - Prefer attributes to be stacked vertically when a tag becomes long or dense.
+- Prefer attributes to be stacked vertically when a tag has more than 2 attributes.
 - Prefer code width to stay within the visible editor viewport to avoid horizontal scrolling.
 - For long attribute values (especially `className`), allow multiline formatting inside the value when it improves readability.
 - Do not place a closing quote directly next to the closing angle bracket on wrapped attributes; keep wrapped quote/caret boundaries visually distinct.
+- Prefer `className` values with more than 2 class tokens to be split across multiple lines.
+- If a tag contains a multiline `className` value, place attributes on separate lines and place `className` first.
 
 ### Tailwind Safety
 
@@ -43,6 +46,7 @@ This file tracks personal formatting preferences for this project so they are ea
 - Keep the condition line at a lower indentation level than the `?` and `:` operand lines.
 - When the ternary is not already wrapped by a clean delimiter (for example JSX `{ ... }`), prefer wrapping the full expression in parentheses.
 - For wrapped ternaries, place the opening parenthesis on the same line as the condition start and align the final closing parenthesis with the expression boundary indentation.
+- Keep ternary expression wrappers visually balanced: the closing `}` or `)` should be on its own line aligned with the opening wrapper when the expression spans multiple lines.
 
 ### Context Note
 
