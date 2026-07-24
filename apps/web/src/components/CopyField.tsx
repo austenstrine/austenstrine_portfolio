@@ -15,7 +15,8 @@ export function CopyField({ label, value }: CopyFieldProps) {
 			await navigator.clipboard.writeText(value);
 			setCopied(true);
 			setTimeout(() => setCopied(false), 1400);
-		} catch {
+		}
+		catch {
 			setCopied(false);
 		}
 	};

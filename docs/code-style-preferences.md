@@ -34,6 +34,11 @@ This file tracks personal formatting preferences for this project so they are ea
 
 - Use spaces where the syntax/tooling requires it (for example, some YAML contexts and strict external format requirements).
 
+## TS Statement Layout
+
+- For statement chains such as `if` / `else if` / `else` and `try` / `catch` / `finally`, place each new block on its own line rather than attaching it to the preceding closing brace.
+- For statement keywords with conditions or operands, prefer no space between the keyword and the opening parenthesis: `if(...)`, `else if(...)`, `switch(...)`, `catch(...)`.
+
 ## Delimiter Layout
 
 - In most cases, avoid stacking opening/closing delimiters (`{}`, `()`, `[]`) tightly on the same line when readability suffers.
