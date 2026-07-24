@@ -121,83 +121,85 @@ export function ContactSection() {
 						gap-3
 					"
 				>
-					{methods.map((method) => (
-						<a
-							key={method.title}
-							href={method.href}
-							target={
-								(method.href.startsWith('http')
-									? '_blank'
-									: undefined
-								)
-							}
-							rel={
-								(method.href.startsWith('http')
-									? 'noreferrer'
-									: undefined
-								)
-							}
-							className="
-								group
-								flex
-								items-center
-								justify-between
-								rounded-xl
-								border
-								border-white/20
-								bg-white/10
-								px-4
-								py-3
-								transition
-								hover:-translate-y-0.5
-								hover:bg-white/20
-							"
-						>
-							<div
+					{
+						methods.map((method) => (
+							<a
+								key={method.title}
+								href={method.href}
+								target={
+									(method.href.startsWith('http')
+										? '_blank'
+										: undefined
+									)
+								}
+								rel={
+									(method.href.startsWith('http')
+										? 'noreferrer'
+										: undefined
+									)
+								}
 								className="
+									group
 									flex
 									items-center
-									gap-3
+									justify-between
+									rounded-xl
+									border
+									border-white/20
+									bg-white/10
+									px-4
+									py-3
+									transition
+									hover:-translate-y-0.5
+									hover:bg-white/20
 								"
 							>
-								<span
+								<div
 									className="
-										rounded-md
-										bg-white/15
-										p-2
+										flex
+										items-center
+										gap-3
 									"
 								>
-									{method.icon}
-								</span>
-								<div>
-									<p
+									<span
 										className="
-											font-semibold
+											rounded-md
+											bg-white/15
+											p-2
 										"
 									>
-										{method.title}
-									</p>
-									<p
-										className="
-											text-sm
-											text-slate-200
-										"
-									>
-										{method.summary}
-									</p>
+										{method.icon}
+									</span>
+									<div>
+										<p
+											className="
+												font-semibold
+											"
+										>
+											{method.title}
+										</p>
+										<p
+											className="
+												text-sm
+												text-slate-200
+											"
+										>
+											{method.summary}
+										</p>
+									</div>
 								</div>
-							</div>
-							<span
-								className="
-									text-xl
-									transition
-									group-hover:translate-x-0.5
-								"
-							>
-								›
-							</span>
-						</a>
-					))}
+								<span
+									className="
+										text-xl
+										transition
+										group-hover:translate-x-0.5
+									"
+								>
+									›
+								</span>
+							</a>
+						))
+					}
 				</div>
 			</div>
 		</section>
