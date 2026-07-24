@@ -36,17 +36,14 @@ export function AboutSection() {
 					md:grid-cols-[1fr,240px]
 				"
 			>
-				<div
-					className="
-						space-y-4
-						text-slate-700
-					"
-				>
-					{paragraphs.map((paragraph) => (
-						<p key={paragraph}>
-							{paragraph}
-						</p>
-					))}
+				<div className="space-y-4 text-slate-700">
+					{
+						paragraphs.map((paragraph) => (
+							<p key={paragraph}>
+								{paragraph}
+							</p>
+						))
+					}
 				</div>
 				<img
 					src="/pp5_sq_sm.jpg"

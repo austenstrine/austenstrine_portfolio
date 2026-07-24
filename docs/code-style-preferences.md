@@ -6,6 +6,8 @@ This file tracks personal formatting preferences for this project so they are ea
 
 - Prefer opening tags, content, and closing tags on separate lines for readability.
 - Keep tags split across lines unless they are self-closing elements.
+- For tags with opening and closing tags, keep the opening tag on one line when it has only one simple attribute.
+- For tags with opening and closing tags, prefer stacked attributes when there are 2 or more attributes, or when the single attribute value itself needs multiline formatting.
 - Acceptable exception: self-closing tags such as `<br />` and other empty elements.
 - For self-closing tags that include attributes, prefer placing attributes on their own lines with one-level indentation.
 - Prefer attributes to be stacked vertically when a tag becomes long or dense.
@@ -14,6 +16,7 @@ This file tracks personal formatting preferences for this project so they are ea
 - For long attribute values (especially `className`), allow multiline formatting inside the value when it improves readability.
 - Do not place a closing quote directly next to the closing angle bracket on wrapped attributes; keep wrapped quote/caret boundaries visually distinct.
 - Prefer `className` values with more than 2 class tokens to be split across multiple lines.
+- Keep `className` values with 1 or 2 class tokens on a single line.
 - If a tag contains a multiline `className` value, place attributes on separate lines and place `className` first.
 
 ### Tailwind Safety
@@ -35,11 +38,13 @@ This file tracks personal formatting preferences for this project so they are ea
 
 - In most cases, avoid stacking opening/closing delimiters (`{}`, `()`, `[]`) tightly on the same line when readability suffers.
 - Prefer introducing a newline and indentation instead of dense delimiter stacking.
+- Do not compound indentation jumps on a single newline; each new line should indent by at most one structural level.
 - Keep delimiter structure visually easy to scan, especially in nested JSX/TSX and nested expressions.
 
 ### Exception
 
 - Stacked parentheses are acceptable when they belong to the same fat-arrow expression and improve clarity of that single expression.
+- When a fat-arrow expression appears inside JSX braces, place the full fat-arrow expression on a new indented line so the `{` does not stack with the expression's opening `(`.
 
 ## TSX Ternary Layout
 

@@ -50,44 +50,42 @@ export function SkillsSection() {
 					md:grid-cols-2
 				"
 			>
-				{skills.map((skill) => (
-					<article
-						key={skill.title}
-						className="
-							rounded-xl
-							bg-white
-							p-5
-							shadow-sm
-						"
-					>
-						<div
+				{
+					skills.map((skill) => (
+						<article
+							key={skill.title}
 							className="
-								text-3xl
+								rounded-xl
+								bg-white
+								p-5
+								shadow-sm
 							"
 						>
-							{skill.icon}
-						</div>
-						<h3
-							className="
-								mt-2
-								text-lg
-								font-semibold
-								text-ink
-							"
-						>
-							{skill.title}
-						</h3>
-						<p
-							className="
-								mt-2
-								text-sm
-								text-slate-700
-							"
-						>
-							{skill.summary}
-						</p>
-					</article>
-				))}
+							<div className="text-3xl">
+								{skill.icon}
+							</div>
+							<h3
+								className="
+									mt-2
+									text-lg
+									font-semibold
+									text-ink
+								"
+							>
+								{skill.title}
+							</h3>
+							<p
+								className="
+									mt-2
+									text-sm
+									text-slate-700
+								"
+							>
+								{skill.summary}
+							</p>
+						</article>
+					))
+				}
 			</div>
 		</section>
 	);

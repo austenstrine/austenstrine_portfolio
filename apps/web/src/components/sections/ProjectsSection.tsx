@@ -87,21 +87,23 @@ export function ProjectsSection({ projects }: ProjectsSectionProps) {
 										gap-2
 									"
 								>
-									{project.tags.map((tag) => (
-										<span
-											key={`${project.id}-${tag}`}
-											className="
-												rounded-md
-												bg-white
-												px-2
-												py-1
-												text-xs
-												text-slate-700
-											"
-										>
-											{tag}
-										</span>
-									))}
+									{
+										project.tags.map((tag) => (
+											<span
+												key={`${project.id}-${tag}`}
+												className="
+													rounded-md
+													bg-white
+													px-2
+													py-1
+													text-xs
+													text-slate-700
+												"
+											>
+												{tag}
+											</span>
+										))
+									}
 								</div>
 							</article>
 						))

@@ -10,12 +10,7 @@ export default async function Home() {
 	const projects = await getProjects();
 
 	return (
-		<main
-			className="
-				main-grid
-				min-h-screen
-			"
-		>
+		<main className="main-grid min-h-screen">
 			<div
 				className="
 					mx-auto

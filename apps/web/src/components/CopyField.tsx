@@ -46,12 +46,7 @@ export function CopyField({ label, value }: CopyFieldProps) {
 				>
 					{label}
 				</p>
-				<p
-					className="
-						text-sm
-						text-slate-800
-					"
-				>
+				<p className="text-sm text-slate-800">
 					{value}
 				</p>
 			</div>

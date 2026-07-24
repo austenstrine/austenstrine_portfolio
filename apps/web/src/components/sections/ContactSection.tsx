@@ -69,12 +69,7 @@ export function ContactSection() {
 				shadow-xl
 			"
 		>
-			<h2
-				className="
-					text-3xl
-					font-semibold
-				"
-			>
+			<h2 className="text-3xl font-semibold">
 				Get In Touch
 			</h2>
 			<p
@@ -96,11 +91,7 @@ export function ContactSection() {
 					md:grid-cols-2
 				"
 			>
-				<div
-					className="
-						space-y-3
-					"
-				>
+				<div className="space-y-3">
 					<CopyField 
 						label="Email" 
 						value="austen.strine.dev@gmail.com" 
@@ -115,12 +106,7 @@ export function ContactSection() {
 					/>
 				</div>
 
-				<div
-					className="
-						grid
-						gap-3
-					"
-				>
+				<div className="grid gap-3">
 					{
 						methods.map((method) => (
 							<a
@@ -171,19 +157,10 @@ export function ContactSection() {
 										{method.icon}
 									</span>
 									<div>
-										<p
-											className="
-												font-semibold
-											"
-										>
+										<p className="font-semibold">
 											{method.title}
 										</p>
-										<p
-											className="
-												text-sm
-												text-slate-200
-											"
-										>
+										<p className="text-sm text-slate-200">
 											{method.summary}
 										</p>
 									</div>
