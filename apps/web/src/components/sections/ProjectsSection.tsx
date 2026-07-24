@@ -34,8 +34,8 @@ export function ProjectsSection({ projects }: ProjectsSectionProps) {
 					md:grid-cols-2
 				"
 			>
-				{
-					projects.length === 0 ? (
+				{projects.length === 0 
+					? (
 						<article 
 							className="
 								rounded-xl 
@@ -48,7 +48,8 @@ export function ProjectsSection({ projects }: ProjectsSectionProps) {
 						>
 							No projects found yet. Seed the database and refresh.
 						</article>
-					) : (
+					) 
+					: (
 						projects.map((project) => (
 							<article 
 								key={project.id} 

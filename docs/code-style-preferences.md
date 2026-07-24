@@ -37,6 +37,17 @@ This file tracks personal formatting preferences for this project so they are ea
 
 - Stacked parentheses are acceptable when they belong to the same fat-arrow expression and improve clarity of that single expression.
 
+## TSX Ternary Layout
+
+- In TSX, prefer ternary operators with `?` and `:` starting on new lines.
+- Keep the condition line at a lower indentation level than the `?` and `:` operand lines.
+- When the ternary is not already wrapped by a clean delimiter (for example JSX `{ ... }`), prefer wrapping the full expression in parentheses.
+- For wrapped ternaries, place the opening parenthesis on the same line as the condition start and align the final closing parenthesis with the expression boundary indentation.
+
+### Context Note
+
+- If the ternary already lives inside clean JSX braces, extra wrapper parentheses are optional.
+
 ## Notes
 
 - These are preference rules, not hard requirements of the app runtime.
