@@ -27,6 +27,16 @@ This file tracks personal formatting preferences for this project so they are ea
 
 - Use spaces where the syntax/tooling requires it (for example, some YAML contexts and strict external format requirements).
 
+## Delimiter Layout
+
+- In most cases, avoid stacking opening/closing delimiters (`{}`, `()`, `[]`) tightly on the same line when readability suffers.
+- Prefer introducing a newline and indentation instead of dense delimiter stacking.
+- Keep delimiter structure visually easy to scan, especially in nested JSX/TSX and nested expressions.
+
+### Exception
+
+- Stacked parentheses are acceptable when they belong to the same fat-arrow expression and improve clarity of that single expression.
+
 ## Notes
 
 - These are preference rules, not hard requirements of the app runtime.
