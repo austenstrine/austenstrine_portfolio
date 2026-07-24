@@ -17,6 +17,16 @@ This file tracks personal formatting preferences for this project so they are ea
 - Keep Tailwind class tokens as static string literals (no runtime-generated class names).
 - Multiline static class strings are allowed, but class tokens must remain plain text in the source so Tailwind can detect them.
 
+## Indentation
+
+- Prefer tabs over spaces for indentation by default.
+- Rationale: tabs let each developer choose visual tab width without rewriting file whitespace.
+- Keep indentation style consistent within a file once established.
+
+### Practical Exceptions
+
+- Use spaces where the syntax/tooling requires it (for example, some YAML contexts and strict external format requirements).
+
 ## Notes
 
 - These are preference rules, not hard requirements of the app runtime.
