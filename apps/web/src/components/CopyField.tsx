@@ -70,10 +70,9 @@ export function CopyField({ label, value }: CopyFieldProps) {
 					hover:bg-sky
 				"
 			>
-				{
-					copied
-						? 'Copied'
-						: 'Copy'
+				{copied
+					? 'Copied'
+					: 'Copy'
 				}
 			</button>
 		</div>

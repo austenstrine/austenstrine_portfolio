@@ -100,13 +100,11 @@ export function ContactSection() {
 						<a
 							key={method.title}
 							href={method.href}
-							target={
-								method.href.startsWith('http')
+							target={method.href.startsWith('http')
 									? '_blank'
 									: undefined
 							}
-							rel={
-								method.href.startsWith('http')
+							rel={method.href.startsWith('http')
 									? 'noreferrer'
 									: undefined
 							}
