@@ -2,6 +2,7 @@
 "use client";
 
 import { useRef, useState } from 'react';
+import { CurrentHighlightCard, type CurrentHighlightBody } from './CurrentHighlightCard';
 
 type HighlightFeature = {
 	id: string;
@@ -13,6 +14,12 @@ type HighlightFeature = {
 	codeHref: string;
 	codeLabel: string;
 	notes: string[];
+};
+
+type HighlightPreviewCardProps = {
+	label: string;
+	title: string;
+	summary: string;
 };
 
 const features: HighlightFeature[] = [
@@ -93,10 +100,72 @@ const features: HighlightFeature[] = [
 	},
 ];
 
+const highlightBaseBody = {
+	stackId: 'featured-build-stack',
+	stackTitle: 'Stack and direction',
+	stackItems: ['Next.js', 'NestJS', 'Prisma', 'Redis', 'OpenSearch', 'Docker'],
+	actions: [
+		{
+			label: 'Frontend code',
+			href: 'https://github.com/austenstrine/austenstrine_portfolio/tree/master_nestjs/apps/web',
+		},
+		{
+			label: 'API code',
+			href: 'https://github.com/austenstrine/austenstrine_portfolio/tree/master_nestjs/apps/api',
+			variant: 'outline' as const,
+		},
+	],
+};
+
+function HighlightPreviewCard({
+	label,
+	title,
+	summary,
+}: HighlightPreviewCardProps) {
+	return (
+		<article
+			className="
+				rounded-xl
+				border
+				border-white/25
+				bg-white/10
+				p-4
+			"
+		>
+			<p
+				className="
+					text-[11px]
+					font-semibold
+					uppercase
+					tracking-[0.18em]
+					text-slate-100
+				"
+			>
+				{label}
+			</p>
+			<h4 className="mt-1 text-base font-semibold text-white">
+				{title}
+			</h4>
+			<p className="mt-2 text-sm text-slate-100">
+				{summary}
+			</p>
+		</article>
+	);
+}
+
 export function ProjectsSection() {
 	const [activeFeatureId, setActiveFeatureId] = useState(features[0].id);
 	const highlightTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 	const activeFeature = features.find((feature) => feature.id === activeFeatureId) ?? features[0];
+	const currentHighlightBody: CurrentHighlightBody = {
+		title: activeFeature.title,
+		detail: activeFeature.detail,
+		notes: activeFeature.notes,
+		stackId: highlightBaseBody.stackId,
+		stackTitle: highlightBaseBody.stackTitle,
+		stackItems: highlightBaseBody.stackItems,
+		actions: highlightBaseBody.actions,
+	};
 
 	const runFeature = (feature: HighlightFeature) => {
 		setActiveFeatureId(feature.id);
@@ -317,155 +386,13 @@ export function ProjectsSection() {
 						lg:self-start
 					"
 				>
-					<div
-						className="
-							rounded-2xl
-							bg-gradient-to-br
-							from-ink
-							via-sky
-							to-emerald-800
-							p-6
-							text-white
-							shadow-xl
-						"
-					>
-						<p
-							className="
-								text-xs
-								font-semibold
-								uppercase
-								tracking-[0.22em]
-								text-slate-100
-							"
-						>
-							Current highlight
-						</p>
-						<h3
-							className="
-								mt-3
-								text-2xl
-								font-semibold
-							"
-						>
-							{activeFeature.title}
-						</h3>
-						<p
-							className="
-								mt-3
-								text-sm
-								leading-6
-								text-slate-100
-							"
-						>
-							{activeFeature.detail}
-						</p>
-						<div
-							id="featured-build-stack"
-							className="
-								mt-5
-								rounded-xl
-								border
-								border-white/20
-								bg-white/10
-								p-4
-							"
-						>
-							<p
-								className="
-									text-[11px]
-									font-semibold
-									uppercase
-									tracking-[0.18em]
-									text-slate-100
-								"
-							>
-								Stack and direction
-							</p>
-							<div
-								className="
-									mt-3
-									flex
-									flex-wrap
-									gap-2
-								"
-							>
-								{
-									['Next.js', 'NestJS', 'Prisma', 'Redis', 'OpenSearch', 'Docker'].map((item) => (
-										<span
-											key={item}
-											className="
-												rounded-full
-												bg-white/15
-												px-3
-												py-1
-												text-xs
-												font-medium
-												text-white
-											"
-										>
-											{item}
-										</span>
-									))
-								}
-							</div>
-						</div>
-						<div className="mt-5 space-y-2 text-sm text-slate-100">
-							{
-								activeFeature.notes.map((note) => (
-									<p key={note}>
-										{note}
-									</p>
-								))
-							}
-						</div>
-						<div
-							className="
-								mt-6
-								flex
-								flex-wrap
-								gap-3
-							"
-						>
-							<a
-								href="https://github.com/austenstrine/austenstrine_portfolio/tree/master_nestjs/apps/web"
-								target="_blank"
-								rel="noreferrer"
-								className="
-									rounded-full
-									bg-white
-									px-4
-									py-2
-									text-sm
-									font-semibold
-									text-ink
-									transition
-									hover:-translate-y-0.5
-									hover:bg-frost
-								"
-							>
-								Frontend code
-							</a>
-							<a
-								href="https://github.com/austenstrine/austenstrine_portfolio/tree/master_nestjs/apps/api"
-								target="_blank"
-								rel="noreferrer"
-								className="
-									rounded-full
-									border
-									border-white/30
-									px-4
-									py-2
-									text-sm
-									font-semibold
-									text-white
-									transition
-									hover:bg-white/10
-								"
-							>
-								API code
-							</a>
-						</div>
-					</div>
+					<CurrentHighlightCard body={currentHighlightBody}>
+						<HighlightPreviewCard
+							label={activeFeature.label}
+							title={activeFeature.title}
+							summary={activeFeature.summary}
+						/>
+					</CurrentHighlightCard>
 				</div>
 			</div>
 		</section>
