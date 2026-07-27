@@ -1,7 +1,10 @@
+import { AccountMenu } from '../AccountMenu';
+
 export function HeroSection() {
 	return (
 		<section
 			className="
+				relative
 				rounded-3xl
 				bg-gradient-to-br
 				from-ink
@@ -13,6 +16,8 @@ export function HeroSection() {
 				shadow-2xl
 			"
 		>
+			<AccountMenu />
+
 			<div
 				className="
 					grid
