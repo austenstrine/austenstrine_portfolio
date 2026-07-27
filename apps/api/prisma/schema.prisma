@@ -33,3 +33,57 @@ model ContactMessage {
 
   @@index([createdAt])
 }
+
+model User {
+  id                  String    @id @default(uuid())
+  email               String    @unique
+  passwordHash        String?
+  googleId            String?   @unique
+  emailVerifiedAt     DateTime?
+  failedLoginAttempts Int       @default(0)
+  lockedUntil         DateTime?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  refreshTokens RefreshToken[]
+  emailOtps     EmailOtp[]
+
+  @@index([createdAt])
+}
+
+model RefreshToken {
+  id                  String    @id @default(uuid())
+  userId              String
+  user                User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash           String    @unique
+  familyId            String
+  expiresAt           DateTime
+  revokedAt           DateTime?
+  replacedByTokenHash String?
+  userAgent           String?
+  ipAddress           String?
+  createdAt           DateTime  @default(now())
+
+  @@index([userId])
+  @@index([familyId])
+}
+
+enum EmailOtpPurpose {
+  EMAIL_VERIFICATION
+  LOGIN_2FA
+}
+
+model EmailOtp {
+  id         String          @id @default(uuid())
+  userId     String
+  user       User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  purpose    EmailOtpPurpose
+  codeHash   String
+  expiresAt  DateTime
+  consumedAt DateTime?
+  attempts   Int             @default(0)
+  createdAt  DateTime        @default(now())
+
+  @@index([userId, purpose])
+}
+
