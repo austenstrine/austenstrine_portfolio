@@ -19,12 +19,14 @@ export type CurrentHighlightBody = {
 type CurrentHighlightCardProps = {
 	body: CurrentHighlightBody;
 	showWrapper?: boolean;
+	onClose?: () => void;
 	children?: ReactNode;
 };
 
 export function CurrentHighlightCard({
 	body,
 	showWrapper = true,
+	onClose,
 	children,
 }: CurrentHighlightCardProps) {
 	if (!showWrapper) {
@@ -34,6 +36,8 @@ export function CurrentHighlightCard({
 	return (
 		<div
 			className="
+				relative
+				-mx-4
 				rounded-2xl
 				bg-gradient-to-br
 				from-ink
@@ -44,6 +48,21 @@ export function CurrentHighlightCard({
 				shadow-xl
 			"
 		>
+			{
+				onClose && (
+					<button
+						type="button"
+						onClick={onClose}
+						aria-label="Disable current highlight"
+						className="absolute right-3 top-3 rounded-full border border-white/25 bg-white/10 p-2 text-white transition hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/60"
+					>
+						<span aria-hidden="true" className="block text-sm leading-none">
+							×
+						</span>
+					</button>
+				)
+			}
+
 			<p
 				className="
 					text-xs
