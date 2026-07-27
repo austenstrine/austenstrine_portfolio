@@ -55,19 +55,31 @@ export function CurrentHighlightCard({
 					<button
 						type="button"
 						onClick={onClose}
-						aria-label="Disable current highlight"
+						aria-label="Dismiss current highlight"
 						tabIndex={showWrapper ? 0 : -1}
 						className={`
 							absolute right-3 top-3 z-10
-							rounded-full border border-white/25 bg-white/10 p-2 text-white
-							transition-opacity duration-300 ease-out
-							hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/60
+							rounded-full p-1.5 text-slate-200
+							transition-colors duration-200 ease-out
+							hover:bg-white/10 hover:text-white
+							focus:outline-none focus:ring-2 focus:ring-white/40
 							${showWrapper ? 'opacity-100' : 'pointer-events-none opacity-0'}
 						`}
 					>
-						<span aria-hidden="true" className="block text-sm leading-none">
-							×
-						</span>
+						<svg
+							aria-hidden="true"
+							viewBox="0 0 16 16"
+							width="16"
+							height="16"
+							fill="none"
+						>
+							<path
+								d="M4 4l8 8M12 4l-8 8"
+								stroke="currentColor"
+								strokeWidth="1.5"
+								strokeLinecap="round"
+							/>
+						</svg>
 					</button>
 				)
 			}
