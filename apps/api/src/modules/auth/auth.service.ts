@@ -20,9 +20,9 @@ import type {
 } from './interfaces/jwt-payload.interface';
 import { SecurityService } from './security/security.service';
 
-const ACCESS_TOKEN_TTL_SECONDS = 15 * 60;
+const ACCESS_TOKEN_TTL_SECONDS = 7 * 24 * 60 * 60;
 const PENDING_TOKEN_TTL_SECONDS = 10 * 60;
-const REFRESH_TOKEN_TTL_DAYS = 30;
+const REFRESH_TOKEN_TTL_DAYS = 90;
 const OTP_TTL_MINUTES = 10;
 const MAX_OTP_ATTEMPTS = 5;
 const MAX_LOGIN_ATTEMPTS = 5;

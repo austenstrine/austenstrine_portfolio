@@ -12,6 +12,11 @@ function LoginForm() {
 	const router = useRouter();
 	const searchParams = useSearchParams();
 	const googleError = searchParams.get('error') === 'google';
+	const nextRaw = searchParams.get('next');
+	const nextPath =
+		nextRaw && nextRaw.startsWith('/') && !nextRaw.startsWith('//')
+			? nextRaw
+			: '/';
 
 	const [email, setEmail] = useState('');
 	const [password, setPassword] = useState('');
@@ -27,7 +32,11 @@ function LoginForm() {
 
 		try {
 			const { pendingToken } = await loginUser(email, password);
-			router.push(`/auth/verify?pendingToken=${encodeURIComponent(pendingToken)}`);
+			const verifyQuery = new URLSearchParams({
+				pendingToken,
+				next: nextPath,
+			});
+			router.push(`/auth/verify?${verifyQuery.toString()}`);
 		} catch (submitError) {
 			setError(
 				submitError instanceof AuthApiError

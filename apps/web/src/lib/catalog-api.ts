@@ -1,4 +1,4 @@
-import { API_BASE_URL } from './api';
+import { authedFetch } from './auth-api';
 
 export type CatalogProductSummary = {
 	id: string;
@@ -21,35 +21,36 @@ export type CatalogProductSummary = {
 	}>;
 };
 
-export type CatalogProductDetail = CatalogProductSummary & {
+export type CatalogOfferingDetail = {
+	id: string;
+	role: string;
+	priceCents: number;
+	currency: string;
+	qtyOnHand: string;
+	availableQty: string;
+	tracksOwnQty: boolean;
+	uom: { code: string; label: string; dimensionKey: string };
+	packLink: {
+		pieceOfferingId: string;
+		pieceQtyPerPack: string;
+		pieceUom: string;
+	} | null;
+	pieceLink: {
+		packOfferingId: string;
+		pieceQtyPerPack: string;
+		packUom: string;
+	} | null;
+};
+
+export type CatalogProductDetail = Omit<CatalogProductSummary, 'offerings'> & {
 	attributes: Array<{ key: string; value: string; sortOrder: number }>;
-	offerings: Array<{
-		id: string;
-		role: string;
-		priceCents: number;
-		currency: string;
-		qtyOnHand: string;
-		availableQty: string;
-		tracksOwnQty: boolean;
-		uom: { code: string; label: string; dimensionKey: string };
-		packLink: {
-			pieceOfferingId: string;
-			pieceQtyPerPack: string;
-			pieceUom: string;
-		} | null;
-		pieceLink: {
-			packOfferingId: string;
-			pieceQtyPerPack: string;
-			packUom: string;
-		} | null;
-	}>;
+	offerings: CatalogOfferingDetail[];
 	permissions: { canEdit: boolean };
 };
 
 async function catalogRequest<T>(path: string, options: RequestInit = {}): Promise<T> {
-	const response = await fetch(`${API_BASE_URL}/catalog${path}`, {
+	const response = await authedFetch(`/catalog${path}`, {
 		...options,
-		credentials: 'include',
 		headers: {
 			'Content-Type': 'application/json',
 			...options.headers,
@@ -110,8 +111,32 @@ export function updateCatalogProduct(
 	});
 }
 
-export function listCatalogCategories(): Promise<Array<{ id: string; slug: string; name: string }>> {
+export function listCatalogCategories(): Promise<
+	Array<{
+		id: string;
+		slug: string;
+		name: string;
+		parentId?: string | null;
+		parent?: { id: string; name: string; slug: string } | null;
+		_count?: { products: number; children: number };
+	}>
+> {
 	return catalogRequest('/categories');
+}
+
+export function createCatalogCategory(payload: {
+	name: string;
+	slug: string;
+	parentId?: string;
+}): Promise<{
+	id: string;
+	slug: string;
+	name: string;
+}> {
+	return catalogRequest('/categories', {
+		method: 'POST',
+		body: JSON.stringify(payload),
+	});
 }
 
 export type VendorSummary = {
@@ -144,6 +169,57 @@ export function getMyVendor(vendorId: string): Promise<VendorDetail> {
 
 export function createVendor(payload: { name: string; slug: string }): Promise<VendorSummary> {
 	return catalogRequest<VendorSummary>('/vendors', {
+		method: 'POST',
+		body: JSON.stringify(payload),
+	});
+}
+
+export type UnitOfMeasure = {
+	id: string;
+	code: string;
+	label: string;
+	dimensionKey: string;
+	factorToReference: string;
+};
+
+export function listUoms(): Promise<UnitOfMeasure[]> {
+	return catalogRequest<UnitOfMeasure[]>('/uoms');
+}
+
+export function createUom(payload: {
+	code: string;
+	label: string;
+	dimensionKey: string;
+	factorToReference: string;
+}): Promise<UnitOfMeasure> {
+	return catalogRequest<UnitOfMeasure>('/uoms', {
+		method: 'POST',
+		body: JSON.stringify(payload),
+	});
+}
+
+export type CreateProductPayload = {
+	vendorId: string;
+	categoryId?: string;
+	sku: string;
+	slug: string;
+	title: string;
+	description?: string;
+	inventoryFromAllocations?: boolean;
+	attributes?: Array<{ key: string; value: string; sortOrder?: number }>;
+	offerings: Array<{
+		uomId: string;
+		role: 'STANDALONE' | 'PACK' | 'PIECE';
+		priceCents: number;
+		currency?: string;
+		qtyOnHand?: string;
+		tracksOwnQty?: boolean;
+	}>;
+	packPieceLink?: { pieceQtyPerPack: string };
+};
+
+export function createCatalogProduct(payload: CreateProductPayload): Promise<CatalogProductDetail> {
+	return catalogRequest<CatalogProductDetail>('/products', {
 		method: 'POST',
 		body: JSON.stringify(payload),
 	});

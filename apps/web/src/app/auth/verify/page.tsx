@@ -11,6 +11,11 @@ function VerifyLoginForm() {
 	const router = useRouter();
 	const searchParams = useSearchParams();
 	const pendingToken = searchParams.get('pendingToken');
+	const nextRaw = searchParams.get('next');
+	const nextPath =
+		nextRaw && nextRaw.startsWith('/') && !nextRaw.startsWith('//')
+			? nextRaw
+			: '/';
 
 	const [code, setCode] = useState('');
 	const [error, setError] = useState<string | null>(
@@ -30,7 +35,7 @@ function VerifyLoginForm() {
 
 		try {
 			await verifyLoginOtp(pendingToken, code);
-			router.push('/');
+			router.push(nextPath);
 		} catch (submitError) {
 			setError(
 				submitError instanceof AuthApiError

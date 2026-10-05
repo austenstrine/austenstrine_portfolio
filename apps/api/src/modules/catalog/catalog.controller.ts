@@ -16,6 +16,8 @@ import { OptionalJwtAuthGuard } from '../auth/guards/optional-jwt-auth.guard';
 import { CatalogService } from './catalog.service';
 import { CreateBrokenPackDto } from './dto/create-broken-pack.dto';
 import { CreateCatalogProductDto } from './dto/create-catalog-product.dto';
+import { CreateCategoryDto } from './dto/create-category.dto';
+import { CreateUomDto } from './dto/create-uom.dto';
 import { CreateVendorDto } from './dto/create-vendor.dto';
 import { TrimInventoryDto } from './dto/trim-inventory.dto';
 import { UpdateCatalogProductDto } from './dto/update-catalog-product.dto';
@@ -38,9 +40,21 @@ export class CatalogController {
     return this.catalog.listUoms();
   }
 
+  @UseGuards(JwtAuthGuard)
+  @Post('uoms')
+  createUom(@Body() dto: CreateUomDto) {
+    return this.catalog.createUom(dto);
+  }
+
   @Get('categories')
   listCategories() {
     return this.catalog.listCategories();
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('categories')
+  createCategory(@Body() dto: CreateCategoryDto) {
+    return this.catalog.createCategory(dto);
   }
 
   @UseGuards(JwtAuthGuard)

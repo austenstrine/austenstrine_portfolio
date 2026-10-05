@@ -25,12 +25,24 @@ export default function ShopLayout({ children }: { children: ReactNode }) {
 					<a href="/shop" className="text-lg font-semibold tracking-tight">
 						Marketplace
 					</a>
-					<nav className="flex items-center gap-4 text-sm font-semibold">
+					<nav className="flex flex-wrap items-center gap-4 text-sm font-semibold">
+						<a href="/shop/start" className="text-sky hover:underline">
+							Start
+						</a>
 						<a href="/shop/search" className="text-sky hover:underline">
 							Search
 						</a>
 						<a href="/shop/vendors" className="text-sky hover:underline">
 							Vendors
+						</a>
+						<a href="/shop/uoms" className="text-sky hover:underline">
+							UOMs
+						</a>
+						<a href="/shop/categories" className="text-sky hover:underline">
+							Categories
+						</a>
+						<a href="/shop/products/new" className="text-sky hover:underline">
+							New product
 						</a>
 						<a href="/shop/manage" className="text-sky hover:underline">
 							Manage

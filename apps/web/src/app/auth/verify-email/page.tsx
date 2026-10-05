@@ -10,6 +10,13 @@ import { AuthApiError, verifyEmail } from '../../../lib/auth-api';
 function VerifyEmailForm() {
 	const router = useRouter();
 	const searchParams = useSearchParams();
+	const nextPath = (() => {
+		const raw = searchParams.get('next');
+		if(!raw || !raw.startsWith('/') || raw.startsWith('//')) {
+			return '/';
+		}
+		return raw;
+	})();
 	const [email, setEmail] = useState(searchParams.get('email') ?? '');
 	const [code, setCode] = useState('');
 	const [error, setError] = useState<string | null>(null);
@@ -22,7 +29,7 @@ function VerifyEmailForm() {
 
 		try {
 			await verifyEmail(email, code);
-			router.push('/');
+			router.push(nextPath);
 		} catch (submitError) {
 			setError(
 				submitError instanceof AuthApiError

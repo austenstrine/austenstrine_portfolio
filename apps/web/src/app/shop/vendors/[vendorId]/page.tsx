@@ -59,7 +59,7 @@ export default function VendorDetailPage() {
 							{vendor.myRole}
 						</p>
 						<h1 className="mt-1 text-3xl font-semibold tracking-tight">{vendor.name}</h1>
-						<p className="mt-1 text-slate-600">{vendor.slug}</p>
+						<p className="mt-1 text-slate-600">/shop/{vendor.slug}</p>
 					</div>
 
 					<section

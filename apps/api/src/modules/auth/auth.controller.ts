@@ -48,6 +48,7 @@ export class AuthController {
     res.cookie(REFRESH_COOKIE, session.refreshToken, {
       ...this.baseCookieOptions(),
       path: '/api/auth',
+      maxAge: this.authService.refreshTokenTtlMs,
       expires: session.refreshTokenExpiresAt,
     });
   }

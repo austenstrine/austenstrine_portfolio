@@ -11,7 +11,7 @@ import {
 function ShopSearchForm() {
 	const searchParams = useSearchParams();
 	const [query, setQuery] = useState('');
-	const [category, setCategory] = useState('');
+	const [category, setCategory] = useState(searchParams.get('category') ?? '');
 	const [vendor, setVendor] = useState(searchParams.get('vendor') ?? '');
 	const [categories, setCategories] = useState<Array<{ slug: string; name: string }>>([]);
 	const [results, setResults] = useState<CatalogProductSummary[]>([]);
