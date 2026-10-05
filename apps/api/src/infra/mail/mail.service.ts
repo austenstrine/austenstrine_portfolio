@@ -45,21 +45,32 @@ export class MailService implements OnModuleInit {
     }
   }
 
-  async sendOtpEmail(to: string, code: string, purpose: 'verify' | 'login'): Promise<void> {
-    const subject = purpose === 'verify'
-      ? 'Confirm your email address'
-      : 'Your sign-in code';
-
-    const intro = purpose === 'verify'
-      ? 'Use this code to confirm your email address:'
-      : 'Use this code to finish signing in:';
+  async sendOtpEmail(
+    to: string,
+    code: string,
+    purpose: 'verify' | 'login' | 'reset',
+  ): Promise<void> {
+    const copy = {
+      verify: {
+        subject: 'Confirm your email address',
+        intro: 'Use this code to confirm your email address:',
+      },
+      login: {
+        subject: 'Your sign-in code',
+        intro: 'Use this code to finish signing in:',
+      },
+      reset: {
+        subject: 'Reset your password',
+        intro: 'Use this code to reset your password:',
+      },
+    }[purpose];
 
     await this.sendMail({
       to,
-      subject,
-      text: `${intro}\n\n${code}\n\nThis code expires in 10 minutes. If you did not request this, you can ignore this email.`,
+      subject: copy.subject,
+      text: `${copy.intro}\n\n${code}\n\nThis code expires in 10 minutes. If you did not request this, you can ignore this email.`,
       html: `
-          <p>${intro}</p>
+          <p>${copy.intro}</p>
           <p style="font-size:28px;font-weight:700;letter-spacing:4px;">${code}</p>
           <p>This code expires in 10 minutes. If you did not request this, you can ignore this email.</p>
         `,

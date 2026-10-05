@@ -71,6 +71,7 @@ model RefreshToken {
 enum EmailOtpPurpose {
   EMAIL_VERIFICATION
   LOGIN_2FA
+  PASSWORD_RESET
 }
 
 model EmailOtp {

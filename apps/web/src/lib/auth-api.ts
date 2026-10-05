@@ -76,6 +76,24 @@ export function loginUser(email: string, password: string): Promise<PendingLogin
 	});
 }
 
+export function requestPasswordReset(email: string): Promise<RegisterResponse> {
+	return request<RegisterResponse>('/auth/forgot-password', {
+		method: 'POST',
+		body: JSON.stringify({ email }),
+	});
+}
+
+export function resetPassword(
+	email: string,
+	code: string,
+	password: string,
+): Promise<RegisterResponse> {
+	return request<RegisterResponse>('/auth/reset-password', {
+		method: 'POST',
+		body: JSON.stringify({ email, code, password }),
+	});
+}
+
 export function verifyLoginOtp(pendingToken: string, code: string): Promise<SessionResponse> {
 	return request<SessionResponse>('/auth/login/verify', {
 		method: 'POST',

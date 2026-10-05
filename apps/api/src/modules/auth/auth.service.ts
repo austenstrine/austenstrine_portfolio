@@ -1,6 +1,5 @@
 import {
   BadRequestException,
-  ConflictException,
   ForbiddenException,
   Injectable,
   UnauthorizedException,
@@ -9,8 +8,10 @@ import { JwtService } from '@nestjs/jwt';
 import { EmailOtpPurpose, User } from '@prisma/client';
 import { MailService } from '../../infra/mail/mail.service';
 import { PrismaService } from '../../infra/prisma/prisma.service';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
 import { VerifyEmailDto } from './dto/verify-email.dto';
 import { VerifyLoginOtpDto } from './dto/verify-login-otp.dto';
 import type {
@@ -31,6 +32,8 @@ const LOCKOUT_MINUTES = 15;
 const GENERIC_REGISTER_MESSAGE =
   'If that email can be registered, a verification code has been sent.';
 const GENERIC_LOGIN_ERROR = 'Invalid email or password.';
+const GENERIC_FORGOT_PASSWORD_MESSAGE =
+  'If that account exists, a password reset code has been sent.';
 
 export type SessionMeta = {
   userAgent?: string;
@@ -154,6 +157,49 @@ export class AuthService {
           : null,
       },
     });
+  }
+
+  // ---------- Forgot / reset password ----------
+
+  async forgotPassword(dto: ForgotPasswordDto): Promise<{ message: string }> {
+    const email = this.security.normalizeEmail(dto.email);
+    const user = await this.prisma.user.findUnique({ where: { email } });
+
+    if (user?.emailVerifiedAt) {
+      await this.issueOtp(user.id, EmailOtpPurpose.PASSWORD_RESET);
+    }
+
+    return { message: GENERIC_FORGOT_PASSWORD_MESSAGE };
+  }
+
+  async resetPassword(dto: ResetPasswordDto): Promise<{ message: string }> {
+    const email = this.security.normalizeEmail(dto.email);
+    const user = await this.prisma.user.findUnique({ where: { email } });
+
+    if (!user?.emailVerifiedAt) {
+      throw new BadRequestException('Invalid or expired code.');
+    }
+
+    await this.consumeOtp(user.id, EmailOtpPurpose.PASSWORD_RESET, dto.code);
+
+    const passwordHash = await this.security.hashPassword(dto.password);
+
+    await this.prisma.$transaction([
+      this.prisma.user.update({
+        where: { id: user.id },
+        data: {
+          passwordHash,
+          failedLoginAttempts: 0,
+          lockedUntil: null,
+        },
+      }),
+      this.prisma.refreshToken.updateMany({
+        where: { userId: user.id, revokedAt: null },
+        data: { revokedAt: new Date() },
+      }),
+    ]);
+
+    return { message: 'Password updated. You can sign in with your new password.' };
   }
 
   // ---------- Email 2FA (second factor, required every session) ----------
@@ -344,6 +390,18 @@ export class AuthService {
 
   // ---------- OTP helpers ----------
 
+  private otpMailPurpose(
+    purpose: EmailOtpPurpose,
+  ): 'verify' | 'login' | 'reset' {
+    if (purpose === EmailOtpPurpose.EMAIL_VERIFICATION) {
+      return 'verify';
+    }
+    if (purpose === EmailOtpPurpose.PASSWORD_RESET) {
+      return 'reset';
+    }
+    return 'login';
+  }
+
   private async issueOtp(userId: string, purpose: EmailOtpPurpose): Promise<void> {
     const code = this.security.generateOtpCode();
     const codeHash = this.security.hashOtpCode(code);
@@ -362,7 +420,7 @@ export class AuthService {
 
     if (user) {
       await this.mail
-        .sendOtpEmail(user.email, code, purpose === EmailOtpPurpose.EMAIL_VERIFICATION ? 'verify' : 'login')
+        .sendOtpEmail(user.email, code, this.otpMailPurpose(purpose))
         .catch(() => undefined);
     }
   }

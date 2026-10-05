@@ -69,6 +69,12 @@ function LoginForm() {
 					autoComplete="current-password"
 				/>
 
+				<div className="-mt-2 text-right">
+					<a href="/auth/forgot-password" className="text-sm font-semibold text-sky hover:underline">
+						Forgot password?
+					</a>
+				</div>
+
 				<ErrorText message={error} />
 
 				<button
