@@ -10,7 +10,8 @@
     "test": "jest",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
-    "prisma:seed": "prisma db seed"
+    "prisma:seed": "prisma db seed",
+    "mail:test": "ts-node --transpile-only scripts/send-test-email.ts"
   },
   "prisma": {
     "seed": "ts-node prisma/seed.ts"
