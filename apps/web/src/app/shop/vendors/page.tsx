@@ -7,6 +7,7 @@ import {
 	type VendorSummary,
 } from '../../../lib/catalog-api';
 import { useSession } from '../../../lib/useSession';
+import { UrlSlugField } from '../../../components/catalog/UrlSlugField';
 
 function slugify(value: string): string {
 	return value
@@ -143,33 +144,17 @@ export default function VendorManagePage() {
 								/>
 							</label>
 
-							<label className="block text-sm">
-								<span className="font-semibold">Slug</span>
-								<input
-									value={slug}
-									onChange={(event) => {
-										setSlugTouched(true);
-										setSlug(slugify(event.target.value));
-									}}
-									required
-									minLength={2}
-									maxLength={80}
-									pattern="[a-z0-9]+(?:-[a-z0-9]+)*"
-									placeholder="demo-supply"
-									className="
-										mt-1
-										w-full
-										rounded-lg
-										border
-										border-slate-300
-										px-3
-										py-2
-									"
-								/>
-								<span className="mt-1 block text-xs text-slate-500">
-									Used in product URLs, e.g. /shop/{slug || 'your-slug'}/…
-								</span>
-							</label>
+							<UrlSlugField
+								label="Store URL"
+								value={slug}
+								onChange={(next) => {
+									setSlugTouched(true);
+									setSlug(slugify(next));
+								}}
+								prefixPath="/shop"
+								placeholder="demo-supply"
+								helpText="Choose a short public address for your store. Product pages will look like …/shop/your-store/product-name."
+							/>
 
 							{error ? <p className="text-sm text-red-700">{error}</p> : null}
 
@@ -218,7 +203,9 @@ export default function VendorManagePage() {
 								<div className="flex flex-wrap items-center justify-between gap-2">
 									<div>
 										<p className="font-semibold">{vendor.name}</p>
-										<p className="text-sm text-slate-600">{vendor.slug}</p>
+										<p className="text-sm text-slate-600">
+											/shop/{vendor.slug}
+										</p>
 									</div>
 									<span
 										className="

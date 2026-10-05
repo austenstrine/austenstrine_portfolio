@@ -61,25 +61,52 @@ export function HeroSection() {
 					>
 						Full-Stack Developer who makes teams sharper, steadier, and faster.
 					</p>
-					<a
-						href="#contact"
+					<div
 						className="
 							mt-8
-							inline-block
-							rounded-full
-							bg-white
-							px-6
-							py-3
-							text-sm
-							font-semibold
-							text-ink
-							transition
-							hover:-translate-y-0.5
-							hover:bg-frost
+							flex
+							flex-wrap
+							gap-3
 						"
 					>
-						Get In Touch
-					</a>
+						<a
+							href="/shop/start"
+							className="
+								inline-block
+								rounded-full
+								bg-white
+								px-6
+								py-3
+								text-sm
+								font-semibold
+								text-ink
+								transition
+								hover:-translate-y-0.5
+								hover:bg-frost
+							"
+						>
+							Start marketplace walkthrough
+						</a>
+						<a
+							href="#contact"
+							className="
+								inline-block
+								rounded-full
+								border
+								border-white/60
+								px-6
+								py-3
+								text-sm
+								font-semibold
+								text-white
+								transition
+								hover:-translate-y-0.5
+								hover:bg-white/10
+							"
+						>
+							Get in touch
+						</a>
+					</div>
 				</div>
 			</div>
 		</section>

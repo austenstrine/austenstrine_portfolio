@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma, ProductOfferingRole } from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/library';
 import { PrismaService } from '../../infra/prisma/prisma.service';
@@ -6,6 +6,8 @@ import { InventoryService } from './inventory/inventory.service';
 import { VendorAccessService } from './vendor-access.service';
 import { CreateBrokenPackDto } from './dto/create-broken-pack.dto';
 import { CreateCatalogProductDto } from './dto/create-catalog-product.dto';
+import { CreateCategoryDto } from './dto/create-category.dto';
+import { CreateUomDto } from './dto/create-uom.dto';
 import { TrimInventoryDto } from './dto/trim-inventory.dto';
 import { UpdateCatalogProductDto } from './dto/update-catalog-product.dto';
 
@@ -34,8 +36,63 @@ export class CatalogService {
     return this.prisma.unitOfMeasure.findMany({ orderBy: { code: 'asc' } });
   }
 
+  async createUom(dto: CreateUomDto) {
+    const code = dto.code.trim().toUpperCase();
+    const existing = await this.prisma.unitOfMeasure.findUnique({ where: { code } });
+    if(existing) {
+      throw new ConflictException('A unit of measure with that code already exists.');
+    }
+
+    return this.prisma.unitOfMeasure.create({
+      data: {
+        code,
+        label: dto.label.trim(),
+        dimensionKey: dto.dimensionKey.trim().toLowerCase(),
+        factorToReference: new Decimal(dto.factorToReference),
+        metadata: dto.metadata as Prisma.InputJsonValue | undefined,
+      },
+    });
+  }
+
   listCategories() {
-    return this.prisma.catalogCategory.findMany({ orderBy: { name: 'asc' } });
+    return this.prisma.catalogCategory.findMany({
+      orderBy: { name: 'asc' },
+      include: {
+        parent: { select: { id: true, name: true, slug: true } },
+        _count: { select: { products: true, children: true } },
+      },
+    });
+  }
+
+  async createCategory(dto: CreateCategoryDto) {
+    const slug = dto.slug.trim().toLowerCase();
+    const name = dto.name.trim();
+
+    const existing = await this.prisma.catalogCategory.findUnique({ where: { slug } });
+    if(existing) {
+      throw new ConflictException('A category with that slug already exists.');
+    }
+
+    if(dto.parentId) {
+      const parent = await this.prisma.catalogCategory.findUnique({
+        where: { id: dto.parentId },
+      });
+      if(!parent) {
+        throw new NotFoundException('Parent category not found.');
+      }
+    }
+
+    return this.prisma.catalogCategory.create({
+      data: {
+        name,
+        slug,
+        parentId: dto.parentId,
+      },
+      include: {
+        parent: { select: { id: true, name: true, slug: true } },
+        _count: { select: { products: true, children: true } },
+      },
+    });
   }
 
   async searchProducts(query: {
