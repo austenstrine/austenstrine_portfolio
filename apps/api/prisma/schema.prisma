@@ -47,6 +47,7 @@ model User {
 
   refreshTokens RefreshToken[]
   emailOtps     EmailOtp[]
+  vendorMemberships VendorMember[]
 
   @@index([createdAt])
 }
@@ -86,5 +87,216 @@ model EmailOtp {
   createdAt  DateTime        @default(now())
 
   @@index([userId, purpose])
+}
+
+// --- Marketplace catalog & inventory ---
+
+enum VendorMemberRole {
+  OWNER
+  EDITOR
+  VIEWER
+}
+
+enum ProductOfferingRole {
+  STANDALONE
+  PACK
+  PIECE
+}
+
+enum BrokenPackStatus {
+  ACTIVE
+  DEPLETED
+}
+
+enum InventoryClaimStatus {
+  PENDING
+  FULFILLED
+  RELEASED
+}
+
+enum InventoryTrimStrategy {
+  WHOLE_UNITS_FIRST
+  SMALLEST_REMAINDER_FIRST
+  LARGEST_REMAINDER_FIRST
+}
+
+model Vendor {
+  id        String   @id @default(uuid())
+  slug      String   @unique
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  members  VendorMember[]
+  products CatalogProduct[]
+
+  @@index([name])
+}
+
+model VendorMember {
+  id        String           @id @default(uuid())
+  vendorId  String
+  vendor    Vendor           @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role      VendorMemberRole @default(EDITOR)
+  createdAt DateTime         @default(now())
+
+  @@unique([vendorId, userId])
+  @@index([userId])
+}
+
+model UnitOfMeasure {
+  id            String   @id @default(uuid())
+  code          String   @unique
+  label         String
+  /// Logical grouping for conversions, e.g. length, count, volume, weight, area, custom
+  dimensionKey  String
+  /// Multiply quantity in this UOM by factorToReference to reach the dimension reference unit
+  factorToReference Decimal @db.Decimal(24, 8)
+  metadata      Json?
+  createdAt     DateTime @default(now())
+
+  offerings ProductOffering[]
+}
+
+model CatalogCategory {
+  id        String   @id @default(uuid())
+  slug      String   @unique
+  name      String
+  parentId  String?
+  parent    CatalogCategory?  @relation("CategoryTree", fields: [parentId], references: [id])
+  children  CatalogCategory[] @relation("CategoryTree")
+  createdAt DateTime @default(now())
+
+  products CatalogProduct[]
+
+  @@index([parentId])
+}
+
+model CatalogProduct {
+  id          String   @id @default(uuid())
+  vendorId    String
+  vendor      Vendor   @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  categoryId  String?
+  category    CatalogCategory? @relation(fields: [categoryId], references: [id])
+  sku         String
+  slug        String
+  title       String
+  description String?
+  active      Boolean  @default(true)
+  /// When true, sellable qty for PIECE offerings is derived from pack/broken-pack inventory only
+  inventoryFromAllocations Boolean @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  attributes ProductAttribute[]
+  offerings  ProductOffering[]
+
+  @@unique([vendorId, sku])
+  @@unique([vendorId, slug])
+  @@index([categoryId])
+  @@index([active])
+  @@index([title])
+}
+
+model ProductAttribute {
+  id        String   @id @default(uuid())
+  productId String
+  product   CatalogProduct @relation(fields: [productId], references: [id], onDelete: Cascade)
+  key       String
+  value     String
+  sortOrder Int      @default(0)
+
+  @@unique([productId, key])
+  @@index([productId])
+}
+
+model ProductOffering {
+  id         String              @id @default(uuid())
+  productId  String
+  product    CatalogProduct      @relation(fields: [productId], references: [id], onDelete: Cascade)
+  uomId      String
+  uom        UnitOfMeasure       @relation(fields: [uomId], references: [id])
+  role       ProductOfferingRole @default(STANDALONE)
+  priceCents Int
+  currency   String              @default("USD")
+  /// On-hand count in this offering's UOM (e.g. number of spools). Often 0 for PIECE rows.
+  qtyOnHand  Decimal             @default(0) @db.Decimal(24, 8)
+  /// Cached unclaimed sellable qty in this offering's UOM (refreshed by inventory service)
+  availableQty Decimal           @default(0) @db.Decimal(24, 8)
+  /// When false, qtyOnHand is ignored; availability comes from linked pack/broken-pack math
+  tracksOwnQty Boolean           @default(true)
+  createdAt  DateTime            @default(now())
+  updatedAt  DateTime            @updatedAt
+
+  packLinksAsPack  PackPieceLink[] @relation("PackSide")
+  packLinksAsPiece PackPieceLink[] @relation("PieceSide")
+  brokenPacks      BrokenPack[]
+  claims           InventoryClaim[]
+
+  @@unique([productId, uomId, role])
+  @@index([productId])
+  @@index([role])
+}
+
+model PackPieceLink {
+  id                 String          @id @default(uuid())
+  packOfferingId     String
+  packOffering       ProductOffering @relation("PackSide", fields: [packOfferingId], references: [id], onDelete: Cascade)
+  pieceOfferingId    String
+  pieceOffering      ProductOffering @relation("PieceSide", fields: [pieceOfferingId], references: [id], onDelete: Cascade)
+  /// How much piece-UOM quantity one pack contains (e.g. 500 ft per spool)
+  pieceQtyPerPack    Decimal         @db.Decimal(24, 8)
+  createdAt          DateTime        @default(now())
+
+  @@unique([packOfferingId, pieceOfferingId])
+  @@index([pieceOfferingId])
+}
+
+model BrokenPack {
+  id              String          @id @default(uuid())
+  packOfferingId  String
+  packOffering    ProductOffering @relation(fields: [packOfferingId], references: [id], onDelete: Cascade)
+  label           String?
+  /// Remaining quantity in the linked piece offering's UOM
+  remainingQty    Decimal         @db.Decimal(24, 8)
+  status          BrokenPackStatus @default(ACTIVE)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  claims InventoryClaim[]
+
+  @@index([packOfferingId, status])
+}
+
+model MarketplaceOrder {
+  id        String   @id @default(uuid())
+  orderRef  String   @unique
+  buyerId   String?
+  createdAt DateTime @default(now())
+
+  claims InventoryClaim[]
+}
+
+model InventoryClaim {
+  id                 String               @id @default(uuid())
+  orderId            String
+  order              MarketplaceOrder     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  offeringId         String
+  offering           ProductOffering      @relation(fields: [offeringId], references: [id], onDelete: Cascade)
+  brokenPackId       String?
+  brokenPack         BrokenPack?          @relation(fields: [brokenPackId], references: [id])
+  /// Quantity claimed in the offering's UOM
+  quantity           Decimal              @db.Decimal(24, 8)
+  /// Same claim normalized to piece UOM when applicable
+  quantityInPieceUom Decimal?             @db.Decimal(24, 8)
+  status             InventoryClaimStatus @default(PENDING)
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+
+  @@index([orderId])
+  @@index([offeringId, status])
+  @@index([brokenPackId])
 }
 
