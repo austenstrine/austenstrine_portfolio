@@ -3,7 +3,7 @@ set -euo pipefail
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cert_dir="$script_dir/certs"
-domain="local.austenstrine.dssh"
+domain="local.austenstrine.dev"
 crt_path="$cert_dir/$domain.crt"
 key_path="$cert_dir/$domain.key"
 
