@@ -14,28 +14,53 @@ export type CatalogProductSummary = {
 	availableQty: string;
 	offerings: Array<{
 		id: string;
+		sku?: string;
 		role: string;
 		priceCents: number;
 		uom: string;
 		availableQty: string;
 	}>;
+	breakFeeMode?: string;
+	breakFeeCents?: number;
 };
 
 export type CatalogOfferingDetail = {
 	id: string;
+	sku?: string;
 	role: string;
 	priceCents: number;
 	currency: string;
 	qtyOnHand: string;
 	availableQty: string;
 	tracksOwnQty: boolean;
+	minUnbrokenQty?: string;
+	breakPoolAboveQty?: string;
+	inheritQtyToChildren?: boolean;
 	uom: { code: string; label: string; dimensionKey: string };
-	packLink: {
+	childContainments?: Array<{
+		id: string;
+		childOfferingId: string;
+		childSku: string;
+		childQtyPerParent: string;
+		breakFeeCents: number | null;
+		childUom: string;
+	}>;
+	parentContainments?: Array<{
+		id: string;
+		parentOfferingId: string;
+		parentSku: string;
+		childQtyPerParent: string;
+		breakFeeCents: number | null;
+		parentUom: string;
+	}>;
+	/** @deprecated Prefer containments */
+	packLink?: {
 		pieceOfferingId: string;
 		pieceQtyPerPack: string;
 		pieceUom: string;
 	} | null;
-	pieceLink: {
+	/** @deprecated Prefer containments */
+	pieceLink?: {
 		packOfferingId: string;
 		pieceQtyPerPack: string;
 		packUom: string;
@@ -201,19 +226,32 @@ export function createUom(payload: {
 export type CreateProductPayload = {
 	vendorId: string;
 	categoryId?: string;
-	sku: string;
+	sku?: string;
 	slug: string;
 	title: string;
 	description?: string;
 	inventoryFromAllocations?: boolean;
+	breakFeeMode?: 'OFF' | 'PER_PARENT_OPENED' | 'ONCE_PER_LINE' | 'PRODUCT_ONCE';
+	breakFeeCents?: number;
 	attributes?: Array<{ key: string; value: string; sortOrder?: number }>;
 	offerings: Array<{
+		clientKey?: string;
+		sku?: string;
 		uomId: string;
 		role: 'STANDALONE' | 'PACK' | 'PIECE';
 		priceCents: number;
 		currency?: string;
 		qtyOnHand?: string;
 		tracksOwnQty?: boolean;
+		minUnbrokenQty?: string;
+		breakPoolAboveQty?: string;
+		inheritQtyToChildren?: boolean;
+	}>;
+	containments?: Array<{
+		parentOfferingKey: string;
+		childOfferingKey: string;
+		childQtyPerParent: string;
+		breakFeeCents?: number;
 	}>;
 	packPieceLink?: { pieceQtyPerPack: string };
 };

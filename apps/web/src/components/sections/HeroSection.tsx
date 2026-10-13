@@ -27,8 +27,6 @@ export function HeroSection() {
 				"
 			>
 				<img
-					src="/pp1_sq_sm.jpg"
-					alt="Austen Strine profile"
 					className="
 						mx-auto
 						h-52
@@ -39,6 +37,8 @@ export function HeroSection() {
 						object-cover
 						shadow-2xl
 					"
+					src="/pp1_sq_sm.jpg"
+					alt="Austen Strine profile"
 				/>
 				<div>
 					<h1
@@ -70,7 +70,6 @@ export function HeroSection() {
 						"
 					>
 						<a
-							href="/shop/start"
 							className="
 								inline-block
 								rounded-full
@@ -84,11 +83,11 @@ export function HeroSection() {
 								hover:-translate-y-0.5
 								hover:bg-frost
 							"
+							href="/shop/start"
 						>
 							Start marketplace walkthrough
 						</a>
 						<a
-							href="#contact"
 							className="
 								inline-block
 								rounded-full
@@ -103,6 +102,7 @@ export function HeroSection() {
 								hover:-translate-y-0.5
 								hover:bg-white/10
 							"
+							href="#contact"
 						>
 							Get in touch
 						</a>

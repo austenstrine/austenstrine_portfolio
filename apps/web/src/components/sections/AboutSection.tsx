@@ -9,7 +9,6 @@ const paragraphs = [
 export function AboutSection() {
 	return (
 		<section
-			id="about"
 			className="
 				rounded-2xl
 				border
@@ -21,6 +20,7 @@ export function AboutSection() {
 				md:gap-x-8
 				shadow-sm
 			"
+			id="about"
 		>
 			<h2
 				className="
@@ -49,8 +49,6 @@ export function AboutSection() {
 				}
 			</div>
 			<img
-				src="/pp5_sq_sm.jpg"
-				alt="Austen Strine portrait"
 				className="
 					mx-auto
 					mt-6
@@ -69,6 +67,8 @@ export function AboutSection() {
 					md:sticky
 					md:top-[calc(50vh-7.5rem)]
 				"
+				src="/pp5_sq_sm.jpg"
+				alt="Austen Strine portrait"
 			/>
 		</section>
 	);

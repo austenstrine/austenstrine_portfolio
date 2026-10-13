@@ -6,53 +6,53 @@ const editorRoles: VendorMemberRole[] = [VendorMemberRole.OWNER, VendorMemberRol
 
 @Injectable()
 export class VendorAccessService {
-  constructor(private readonly prisma: PrismaService) {}
+	constructor(private readonly prisma: PrismaService) {}
 
-  async canEditProduct(userId: string | undefined, productId: string): Promise<boolean> {
-    if(!userId) {
-      return false;
-    }
+	async canEditProduct(userId: string | undefined, productId: string): Promise<boolean> {
+		if(!userId) {
+			return false;
+		}
 
-    const product = await this.prisma.catalogProduct.findUnique({
-      where: { id: productId },
-      select: { vendorId: true },
-    });
+		const product = await this.prisma.catalogProduct.findUnique({
+			where: { id: productId },
+			select: { vendorId: true },
+		});
 
-    if(!product) {
-      return false;
-    }
+		if(!product) {
+			return false;
+		}
 
-    const membership = await this.prisma.vendorMember.findUnique({
-      where: {
-        vendorId_userId: {
-          vendorId: product.vendorId,
-          userId,
-        },
-      },
-    });
+		const membership = await this.prisma.vendorMember.findUnique({
+			where: {
+				vendorId_userId: {
+					vendorId: product.vendorId,
+					userId,
+				},
+			},
+		});
 
-    return Boolean(membership && editorRoles.includes(membership.role));
-  }
+		return Boolean(membership && editorRoles.includes(membership.role));
+	}
 
-  async assertCanEditProduct(userId: string | undefined, productId: string): Promise<void> {
-    const allowed = await this.canEditProduct(userId, productId);
-    if(!allowed) {
-      throw new ForbiddenException('You do not have permission to edit this product.');
-    }
-  }
+	async assertCanEditProduct(userId: string | undefined, productId: string): Promise<void> {
+		const allowed = await this.canEditProduct(userId, productId);
+		if(!allowed) {
+			throw new ForbiddenException('You do not have permission to edit this product.');
+		}
+	}
 
-  async assertCanEditVendor(userId: string, vendorId: string): Promise<void> {
-    const membership = await this.prisma.vendorMember.findUnique({
-      where: {
-        vendorId_userId: {
-          vendorId,
-          userId,
-        },
-      },
-    });
+	async assertCanEditVendor(userId: string, vendorId: string): Promise<void> {
+		const membership = await this.prisma.vendorMember.findUnique({
+			where: {
+				vendorId_userId: {
+					vendorId,
+					userId,
+				},
+			},
+		});
 
-    if(!membership || !editorRoles.includes(membership.role)) {
-      throw new ForbiddenException('You do not have permission to manage this vendor.');
-    }
-  }
+		if(!membership || !editorRoles.includes(membership.role)) {
+			throw new ForbiddenException('You do not have permission to manage this vendor.');
+		}
+	}
 }

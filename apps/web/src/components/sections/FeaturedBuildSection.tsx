@@ -3,7 +3,6 @@ import { showcasePortals } from '../../lib/showcasePortals';
 export function FeaturedBuildSection() {
 	return (
 		<section
-			id="featured-build"
 			className="
 				rounded-2xl
 				border
@@ -12,8 +11,15 @@ export function FeaturedBuildSection() {
 				p-8
 				shadow-sm
 			"
+			id="featured-build"
 		>
-			<div className="flex flex-col gap-3">
+			<div
+				className="
+					flex
+					flex-col
+					gap-3
+				"
+			>
 				<p
 					className="
 						text-xs
@@ -55,7 +61,6 @@ export function FeaturedBuildSection() {
 			>
 				{showcasePortals.map((portal) => (
 					<article
-						key={portal.id}
 						className="
 							flex
 							flex-col
@@ -65,6 +70,7 @@ export function FeaturedBuildSection() {
 							bg-slate-50
 							p-5
 						"
+						key={portal.id}
 					>
 						<p
 							className="
@@ -108,11 +114,12 @@ export function FeaturedBuildSection() {
 							"
 						>
 							{portal.notes.map((note) => (
-								<li key={note}>· {note}</li>
+								<li key={note}>
+									· {note}
+								</li>
 							))}
 						</ul>
 						<a
-							href={portal.href}
 							className="
 								mt-5
 								inline-flex
@@ -128,6 +135,7 @@ export function FeaturedBuildSection() {
 								hover:-translate-y-0.5
 								hover:bg-sky
 							"
+							href={portal.href}
 						>
 							{portal.cta}
 						</a>

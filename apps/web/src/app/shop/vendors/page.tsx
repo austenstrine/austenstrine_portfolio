@@ -37,9 +37,11 @@ export default function VendorManagePage() {
 		setLoading(true);
 		try {
 			setVendors(await listMyVendors());
-		} catch {
+		}
+		catch {
 			setVendors([]);
-		} finally {
+		}
+		finally {
 			setLoading(false);
 		}
 	}, [user]);
@@ -66,172 +68,267 @@ export default function VendorManagePage() {
 			setSlug('');
 			setSlugTouched(false);
 			await refresh();
-		} catch (submitError) {
+		}
+		catch(submitError) {
 			setError(
 				submitError instanceof Error
 					? submitError.message
 					: 'Could not create vendor organization.',
 			);
-		} finally {
+		}
+		finally {
 			setSubmitting(false);
 		}
 	};
 
 	return (
-		<div className="flex flex-col gap-8">
+		<div
+			className="
+				flex
+				flex-col
+				gap-8
+			"
+		>
 			<div>
-				<h1 className="text-3xl font-semibold tracking-tight">Vendor organizations</h1>
-				<p className="mt-2 max-w-2xl text-slate-600">
+				<h1
+					className="
+						text-3xl
+						font-semibold
+						tracking-tight
+					"
+				>
+					Vendor organizations
+				</h1>
+				<p
+					className="
+						mt-2
+						max-w-2xl
+						text-slate-600
+					"
+				>
 					Create a vendor organization and become its owner. That membership unlocks product
 					management and quick edit for that vendor&apos;s catalog.
 				</p>
 			</div>
 
-			{sessionLoading ? <p className="text-sm text-slate-500">Checking session…</p> : null}
+			{sessionLoading
+				? (
+					<p className="text-sm text-slate-500">
+						Checking session…
+					</p>
+				)
+				: null}
 
-			{!sessionLoading && !user ? (
-				<div
-					className="
-						rounded-2xl
-						border
-						border-amber-200
-						bg-amber-50
-						p-5
-						text-sm
-						text-amber-900
-					"
-				>
-					<p>Sign in to create or manage vendor organizations.</p>
-					<a href="/auth/login" className="mt-2 inline-block font-semibold text-sky hover:underline">
-						Go to sign in
-					</a>
-				</div>
-			) : null}
-
-			{user ? (
-				<>
-					<p className="text-sm text-slate-600">Signed in as {user.email}</p>
-
-					<section
+			{!sessionLoading && !user
+				? (
+					<div
 						className="
 							rounded-2xl
 							border
-							border-slate-200
-							bg-white
+							border-amber-200
+							bg-amber-50
 							p-5
+							text-sm
+							text-amber-900
 						"
 					>
-						<h2 className="text-lg font-semibold">Create organization</h2>
-						<form onSubmit={onSubmit} className="mt-4 flex flex-col gap-4">
-							<label className="block text-sm">
-								<span className="font-semibold">Organization name</span>
-								<input
-									value={name}
-									onChange={(event) => onNameChange(event.target.value)}
-									required
-									minLength={2}
-									maxLength={120}
-									placeholder="Demo Supply Co."
-									className="
-										mt-1
-										w-full
-										rounded-lg
-										border
-										border-slate-300
-										px-3
-										py-2
-									"
-								/>
-							</label>
+						<p>
+							Sign in to create or manage vendor organizations.
+						</p>
+						<a
+							className="
+								mt-2
+								inline-block
+								font-semibold
+								text-sky
+								hover:underline
+							"
+							href="/auth/login"
+						>
+							Go to sign in
+						</a>
+					</div>
+				)
+				: null}
 
-							<UrlSlugField
-								label="Store URL"
-								value={slug}
-								onChange={(next) => {
-									setSlugTouched(true);
-									setSlug(slugify(next));
-								}}
-								prefixPath="/shop"
-								placeholder="demo-supply"
-								helpText="Choose a short public address for your store. Product pages will look like …/shop/your-store/product-name."
-							/>
+			{user
+				? (
+					<>
+						<p className="text-sm text-slate-600">
+							Signed in as {user.email}
+						</p>
 
-							{error ? <p className="text-sm text-red-700">{error}</p> : null}
-
-							<button
-								type="submit"
-								disabled={submitting}
+						<section
+							className="
+								rounded-2xl
+								border
+								border-slate-200
+								bg-white
+								p-5
+							"
+						>
+							<h2 className="text-lg font-semibold">
+								Create organization
+							</h2>
+							<form
 								className="
-									self-start
-									rounded-full
-									bg-ink
-									px-4
-									py-2.5
-									text-sm
-									font-semibold
-									text-white
-									hover:bg-sky
-									disabled:opacity-60
+									mt-4
+									flex
+									flex-col
+									gap-4
 								"
+								onSubmit={onSubmit}
 							>
-								{submitting ? 'Creating…' : 'Create vendor'}
-							</button>
-						</form>
-					</section>
-
-					<section className="flex flex-col gap-3">
-						<h2 className="text-lg font-semibold">Your organizations</h2>
-						{loading ? <p className="text-sm text-slate-500">Loading…</p> : null}
-						{!loading && vendors.length === 0 ? (
-							<p className="text-sm text-slate-500">
-								You are not a member of any vendor organization yet.
-							</p>
-						) : null}
-						{vendors.map((vendor) => (
-							<a
-								key={vendor.id}
-								href={`/shop/vendors/${vendor.id}`}
-								className="
-									rounded-xl
-									border
-									border-slate-200
-									bg-white
-									p-4
-									hover:border-sky
-								"
-							>
-								<div className="flex flex-wrap items-center justify-between gap-2">
-									<div>
-										<p className="font-semibold">{vendor.name}</p>
-										<p className="text-sm text-slate-600">
-											/shop/{vendor.slug}
-										</p>
-									</div>
-									<span
+								<label className="block text-sm">
+									<span className="font-semibold">
+										Organization name
+									</span>
+									<input
 										className="
-											rounded-full
-											bg-slate-100
+											mt-1
+											w-full
+											rounded-lg
+											border
+											border-slate-300
 											px-3
-											py-1
-											text-xs
-											font-semibold
-											uppercase
-											tracking-wide
-											text-slate-700
+											py-2
+										"
+										value={name}
+										onChange={(event) => onNameChange(event.target.value)}
+										required
+										minLength={2}
+										maxLength={120}
+										placeholder="Demo Supply Co."
+									/>
+								</label>
+
+								<UrlSlugField
+									label="Store URL"
+									value={slug}
+									onChange={(next) => {
+										setSlugTouched(true);
+										setSlug(slugify(next));
+									}}
+									prefixPath="/shop"
+									placeholder="demo-supply"
+									helpText="Choose a short public address for your store. Product pages will look like …/shop/your-store/product-name."
+								/>
+
+								{error
+									? (
+										<p className="text-sm text-red-700">
+											{error}
+										</p>
+									)
+									: null}
+
+								<button
+									className="
+										self-start
+										rounded-full
+										bg-ink
+										px-4
+										py-2.5
+										text-sm
+										font-semibold
+										text-white
+										hover:bg-sky
+										disabled:opacity-60
+									"
+									type="submit"
+									disabled={submitting}
+								>
+									{submitting ? 'Creating…' : 'Create vendor'}
+								</button>
+							</form>
+						</section>
+
+						<section
+							className="
+								flex
+								flex-col
+								gap-3
+							"
+						>
+							<h2 className="text-lg font-semibold">
+								Your organizations
+							</h2>
+							{loading
+								? (
+									<p className="text-sm text-slate-500">
+										Loading…
+									</p>
+								)
+								: null}
+							{!loading && vendors.length === 0
+								? (
+									<p className="text-sm text-slate-500">
+										You are not a member of any vendor organization yet.
+									</p>
+								)
+								: null}
+							{vendors.map((vendor) => (
+								<a
+									className="
+										rounded-xl
+										border
+										border-slate-200
+										bg-white
+										p-4
+										hover:border-sky
+									"
+									key={vendor.id}
+									href={`/shop/vendors/${vendor.id}`}
+								>
+									<div
+										className="
+											flex
+											flex-wrap
+											items-center
+											justify-between
+											gap-2
 										"
 									>
-										{vendor.myRole}
-									</span>
-								</div>
-								<p className="mt-2 text-xs text-slate-500">
-									{vendor.memberCount} member{vendor.memberCount === 1 ? '' : 's'} ·{' '}
-									{vendor.productCount} product{vendor.productCount === 1 ? '' : 's'}
-								</p>
-							</a>
-						))}
-					</section>
-				</>
-			) : null}
+										<div>
+											<p className="font-semibold">
+												{vendor.name}
+											</p>
+											<p className="text-sm text-slate-600">
+												/shop/{vendor.slug}
+											</p>
+										</div>
+										<span
+											className="
+												rounded-full
+												bg-slate-100
+												px-3
+												py-1
+												text-xs
+												font-semibold
+												uppercase
+												tracking-wide
+												text-slate-700
+											"
+										>
+											{vendor.myRole}
+										</span>
+									</div>
+									<p
+										className="
+											mt-2
+											text-xs
+											text-slate-500
+										"
+									>
+										{vendor.memberCount} member{vendor.memberCount === 1 ? '' : 's'} ·{' '}
+										{vendor.productCount} product{vendor.productCount === 1 ? '' : 's'}
+									</p>
+								</a>
+							))}
+						</section>
+					</>
+				)
+				: null}
 		</div>
 	);
 }

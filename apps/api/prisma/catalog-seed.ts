@@ -48,15 +48,14 @@ export async function seedCatalog(prisma: PrismaClient): Promise<void> {
 
   const product = await prisma.catalogProduct.upsert({
     where: {
-      vendorId_sku: {
+      vendorId_slug: {
         vendorId: vendor.id,
-        sku: 'WIRE-THHN-12-500',
+        slug: 'thhn-12-gauge-wire-500ft',
       },
     },
     create: {
       vendorId: vendor.id,
       categoryId: category.id,
-      sku: 'WIRE-THHN-12-500',
       slug: 'thhn-12-gauge-wire-500ft',
       title: 'THHN 12 AWG Copper Wire',
       description: 'Demo listing sold as full spools or by the foot with shared inventory.',
@@ -85,11 +84,15 @@ export async function seedCatalog(prisma: PrismaClient): Promise<void> {
     packOffering = await prisma.productOffering.create({
       data: {
         productId: product.id,
+        sku: 'WIRE-THHN-12-SPOOL',
         uomId: uomSpool.id,
         role: ProductOfferingRole.PACK,
         priceCents: 8999,
         qtyOnHand: new Decimal('2'),
         tracksOwnQty: true,
+        minUnbrokenQty: new Decimal('0'),
+        breakPoolAboveQty: new Decimal('0'),
+        inheritQtyToChildren: true,
       },
     });
   }
@@ -98,28 +101,32 @@ export async function seedCatalog(prisma: PrismaClient): Promise<void> {
     pieceOffering = await prisma.productOffering.create({
       data: {
         productId: product.id,
+        sku: 'WIRE-THHN-12-FT',
         uomId: uomFt.id,
         role: ProductOfferingRole.PIECE,
         priceCents: 22,
         qtyOnHand: new Decimal('0'),
         tracksOwnQty: false,
+        minUnbrokenQty: new Decimal('-1'),
+        breakPoolAboveQty: new Decimal('0'),
+        inheritQtyToChildren: false,
       },
     });
   }
 
-  await prisma.packPieceLink.upsert({
+  await prisma.offeringContainment.upsert({
     where: {
-      packOfferingId_pieceOfferingId: {
-        packOfferingId: packOffering.id,
-        pieceOfferingId: pieceOffering.id,
+      parentOfferingId_childOfferingId: {
+        parentOfferingId: packOffering.id,
+        childOfferingId: pieceOffering.id,
       },
     },
     create: {
-      packOfferingId: packOffering.id,
-      pieceOfferingId: pieceOffering.id,
-      pieceQtyPerPack: new Decimal('500'),
+      parentOfferingId: packOffering.id,
+      childOfferingId: pieceOffering.id,
+      childQtyPerParent: new Decimal('500'),
     },
-    update: { pieceQtyPerPack: new Decimal('500') },
+    update: { childQtyPerParent: new Decimal('500') },
   });
 
   const existingBroken = await prisma.brokenPack.count({

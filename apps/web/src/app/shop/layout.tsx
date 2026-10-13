@@ -2,7 +2,13 @@ import type { ReactNode } from 'react';
 
 export default function ShopLayout({ children }: { children: ReactNode }) {
 	return (
-		<div className="min-h-screen bg-frost text-ink">
+		<div
+			className="
+				min-h-screen
+				bg-frost
+				text-ink
+			"
+		>
 			<header
 				className="
 					border-b
@@ -22,10 +28,26 @@ export default function ShopLayout({ children }: { children: ReactNode }) {
 						py-4
 					"
 				>
-					<a href="/shop" className="text-lg font-semibold tracking-tight">
+					<a
+						className="
+							text-lg
+							font-semibold
+							tracking-tight
+						"
+						href="/shop"
+					>
 						Marketplace
 					</a>
-					<nav className="flex flex-wrap items-center gap-4 text-sm font-semibold">
+					<nav
+						className="
+							flex
+							flex-wrap
+							items-center
+							gap-4
+							text-sm
+							font-semibold
+						"
+					>
 						<a href="/shop/start" className="text-sky hover:underline">
 							Start
 						</a>
@@ -44,6 +66,12 @@ export default function ShopLayout({ children }: { children: ReactNode }) {
 						<a href="/shop/products/new" className="text-sky hover:underline">
 							New product
 						</a>
+						<a
+							href="/shop/products/configure"
+							className="text-sky hover:underline"
+						>
+							Inventory config
+						</a>
 						<a href="/shop/manage" className="text-sky hover:underline">
 							Manage
 						</a>
@@ -53,7 +81,16 @@ export default function ShopLayout({ children }: { children: ReactNode }) {
 					</nav>
 				</div>
 			</header>
-			<main className="mx-auto max-w-6xl px-6 py-10">{children}</main>
+			<main
+				className="
+					mx-auto
+					max-w-6xl
+					px-6
+					py-10
+				"
+			>
+				{children}
+			</main>
 		</div>
 	);
 }

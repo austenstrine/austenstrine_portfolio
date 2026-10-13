@@ -9,19 +9,19 @@ import { GoogleStrategy } from './strategies/google.strategy';
 import { JwtStrategy } from './strategies/jwt.strategy';
 
 const hasGoogleOAuthConfig = Boolean(
-  process.env.GOOGLE_CLIENT_ID &&
-    process.env.GOOGLE_CLIENT_SECRET &&
-    process.env.GOOGLE_CALLBACK_URL,
+	process.env.GOOGLE_CLIENT_ID &&
+		process.env.GOOGLE_CLIENT_SECRET &&
+		process.env.GOOGLE_CALLBACK_URL,
 );
 
 @Module({
-  imports: [PassportModule, JwtModule.register({})],
-  controllers: [AuthController],
-  providers: [
-    AuthService,
-    SecurityService,
-    JwtStrategy,
-    ...(hasGoogleOAuthConfig ? [GoogleStrategy] : []),
-  ],
+	imports: [PassportModule, JwtModule.register({})],
+	controllers: [AuthController],
+	providers: [
+		AuthService,
+		SecurityService,
+		JwtStrategy,
+		...(hasGoogleOAuthConfig ? [GoogleStrategy] : []),
+	],
 })
 export class AuthModule {}

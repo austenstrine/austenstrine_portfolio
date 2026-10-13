@@ -3,7 +3,6 @@ import { googleSignInUrl } from '../../lib/auth-api';
 export function GoogleButton() {
 	return (
 		<a
-			href={googleSignInUrl()}
 			className="
 				flex
 				w-full
@@ -22,6 +21,7 @@ export function GoogleButton() {
 				hover:border-sky
 				hover:text-sky
 			"
+			href={googleSignInUrl()}
 		>
 			<svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
 				<path

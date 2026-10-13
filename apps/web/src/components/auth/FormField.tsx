@@ -35,14 +35,6 @@ export function FormField({
 				{label}
 			</span>
 			<input
-				type={type}
-				value={value}
-				onChange={(event) => onChange(event.target.value)}
-				autoComplete={autoComplete}
-				placeholder={placeholder}
-				required={required}
-				maxLength={maxLength}
-				inputMode={inputMode}
 				className="
 					mt-2
 					w-full
@@ -59,6 +51,14 @@ export function FormField({
 					focus:ring-2
 					focus:ring-sky/30
 				"
+				type={type}
+				value={value}
+				onChange={(event) => onChange(event.target.value)}
+				autoComplete={autoComplete}
+				placeholder={placeholder}
+				required={required}
+				maxLength={maxLength}
+				inputMode={inputMode}
 			/>
 		</label>
 	);

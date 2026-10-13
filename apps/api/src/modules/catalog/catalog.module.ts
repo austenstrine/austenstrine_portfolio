@@ -9,16 +9,16 @@ import { VendorAccessService } from './vendor-access.service';
 import { VendorService } from './vendor.service';
 
 @Module({
-  imports: [AuthModule],
-  controllers: [CatalogController],
-  providers: [
-    CatalogService,
-    InventoryService,
-    VendorAccessService,
-    VendorService,
-    JwtAuthGuard,
-    OptionalJwtAuthGuard,
-  ],
-  exports: [CatalogService, InventoryService, VendorService],
+	imports: [AuthModule],
+	controllers: [CatalogController],
+	providers: [
+		CatalogService,
+		InventoryService,
+		VendorAccessService,
+		VendorService,
+		JwtAuthGuard,
+		OptionalJwtAuthGuard,
+	],
+	exports: [CatalogService, InventoryService, VendorService],
 })
 export class CatalogModule {}

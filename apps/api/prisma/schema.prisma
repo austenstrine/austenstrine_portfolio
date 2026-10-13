@@ -120,6 +120,13 @@ enum InventoryTrimStrategy {
   LARGEST_REMAINDER_FIRST
 }
 
+enum BreakFeeMode {
+  OFF
+  PER_PARENT_OPENED
+  ONCE_PER_LINE
+  PRODUCT_ONCE
+}
+
 model Vendor {
   id        String   @id @default(uuid())
   slug      String   @unique
@@ -180,20 +187,20 @@ model CatalogProduct {
   vendor      Vendor   @relation(fields: [vendorId], references: [id], onDelete: Cascade)
   categoryId  String?
   category    CatalogCategory? @relation(fields: [categoryId], references: [id])
-  sku         String
   slug        String
   title       String
   description String?
   active      Boolean  @default(true)
-  /// When true, sellable qty for PIECE offerings is derived from pack/broken-pack inventory only
+  /// Legacy; prefer offering inheritQtyToChildren + containment graph
   inventoryFromAllocations Boolean @default(false)
+  breakFeeMode BreakFeeMode @default(OFF)
+  breakFeeCents Int @default(0)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   attributes ProductAttribute[]
   offerings  ProductOffering[]
 
-  @@unique([vendorId, sku])
   @@unique([vendorId, slug])
   @@index([categoryId])
   @@index([active])
@@ -216,6 +223,7 @@ model ProductOffering {
   id         String              @id @default(uuid())
   productId  String
   product    CatalogProduct      @relation(fields: [productId], references: [id], onDelete: Cascade)
+  sku        String
   uomId      String
   uom        UnitOfMeasure       @relation(fields: [uomId], references: [id])
   role       ProductOfferingRole @default(STANDALONE)
@@ -225,33 +233,42 @@ model ProductOffering {
   qtyOnHand  Decimal             @default(0) @db.Decimal(24, 8)
   /// Cached unclaimed sellable qty in this offering's UOM (refreshed by inventory service)
   availableQty Decimal           @default(0) @db.Decimal(24, 8)
-  /// When false, qtyOnHand is ignored; availability comes from linked pack/broken-pack math
+  /// When false, qtyOnHand is ignored for own-qty availability; inheritance/broken still apply
   tracksOwnQty Boolean           @default(true)
+  /// -1 = no auto-break from wholes; >= 0 floor on remaining whole units after auto-break
+  minUnbrokenQty Decimal         @default(-1) @db.Decimal(24, 8)
+  /// Only wholes above this count enter auto-break / inheritance pool
+  breakPoolAboveQty Decimal      @default(0) @db.Decimal(24, 8)
+  /// When true, eligible parent wholes count toward child availableQty
+  inheritQtyToChildren Boolean   @default(false)
   createdAt  DateTime            @default(now())
   updatedAt  DateTime            @updatedAt
 
-  packLinksAsPack  PackPieceLink[] @relation("PackSide")
-  packLinksAsPiece PackPieceLink[] @relation("PieceSide")
+  containmentsAsParent OfferingContainment[] @relation("ParentSide")
+  containmentsAsChild  OfferingContainment[] @relation("ChildSide")
   brokenPacks      BrokenPack[]
   claims           InventoryClaim[]
 
   @@unique([productId, uomId, role])
+  @@unique([productId, sku])
   @@index([productId])
   @@index([role])
+  @@index([sku])
 }
 
-model PackPieceLink {
+model OfferingContainment {
   id                 String          @id @default(uuid())
-  packOfferingId     String
-  packOffering       ProductOffering @relation("PackSide", fields: [packOfferingId], references: [id], onDelete: Cascade)
-  pieceOfferingId    String
-  pieceOffering      ProductOffering @relation("PieceSide", fields: [pieceOfferingId], references: [id], onDelete: Cascade)
-  /// How much piece-UOM quantity one pack contains (e.g. 500 ft per spool)
-  pieceQtyPerPack    Decimal         @db.Decimal(24, 8)
+  parentOfferingId   String
+  parentOffering     ProductOffering @relation("ParentSide", fields: [parentOfferingId], references: [id], onDelete: Cascade)
+  childOfferingId    String
+  childOffering      ProductOffering @relation("ChildSide", fields: [childOfferingId], references: [id], onDelete: Cascade)
+  /// How much child-UOM quantity one parent unit contains (e.g. 500 ft per spool)
+  childQtyPerParent  Decimal         @db.Decimal(24, 8)
+  breakFeeCents      Int?
   createdAt          DateTime        @default(now())
 
-  @@unique([packOfferingId, pieceOfferingId])
-  @@index([pieceOfferingId])
+  @@unique([parentOfferingId, childOfferingId])
+  @@index([childOfferingId])
 }
 
 model BrokenPack {

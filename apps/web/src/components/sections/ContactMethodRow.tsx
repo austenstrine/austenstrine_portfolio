@@ -43,19 +43,16 @@ export function ContactMethodRow({
 
 	return (
 		<div
-			id={rowId}
 			className="
 				grid
 				items-stretch
 				gap-3
 				md:grid-cols-[minmax(0,1fr),minmax(0,1fr)]
 			"
+			id={rowId}
 		>
 			<div className="relative">
 				<button
-					type="button"
-					onClick={onCopy}
-					aria-label={`Copy ${copyLabel} to clipboard`}
 					className="
 						group
 						inline-flex
@@ -69,6 +66,9 @@ export function ContactMethodRow({
 						transition
 						hover:opacity-90
 					"
+					type="button"
+					onClick={onCopy}
+					aria-label={`Copy ${copyLabel} to clipboard`}
 				>
 					<div className="min-w-0">
 						<p
@@ -102,7 +102,6 @@ export function ContactMethodRow({
 							{copyValue}
 						</p>
 							<span
-								aria-hidden="true"
 								className="
 									shrink-0
 									text-slate-200
@@ -113,6 +112,7 @@ export function ContactMethodRow({
 									md:group-focus-visible:opacity-100
 									group-hover:text-white
 								"
+								aria-hidden="true"
 							>
 								<svg
 									viewBox="0 0 24 24"
@@ -131,9 +131,6 @@ export function ContactMethodRow({
 			</div>
 
 			<a
-				href={href}
-				target={linkTarget}
-				rel={linkRel}
 				className="
 					group
 					flex
@@ -149,6 +146,9 @@ export function ContactMethodRow({
 					hover:-translate-y-0.5
 					hover:bg-white/20
 				"
+				href={href}
+				target={linkTarget}
+				rel={linkRel}
 			>
 				<div
 					className="

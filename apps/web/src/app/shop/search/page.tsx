@@ -36,26 +36,44 @@ function ShopSearchForm() {
 	}, [query, category, vendor]);
 
 	return (
-		<div className="flex flex-col gap-6">
-			<h1 className="text-3xl font-semibold tracking-tight">Search catalog</h1>
+		<div
+			className="
+				flex
+				flex-col
+				gap-6
+			"
+		>
+			<h1
+				className="
+					text-3xl
+					font-semibold
+					tracking-tight
+				"
+			>
+				Search catalog
+			</h1>
 
-			<div className="grid gap-4 md:grid-cols-[1fr_240px]">
+			<div
+				className="
+					grid
+					gap-4
+					md:grid-cols-[1fr_240px]
+				"
+			>
 				<input
+					className="
+						rounded-xl
+						border
+						border-slate-300
+						px-4
+						py-3
+						text-sm
+					"
 					value={query}
 					onChange={(event) => setQuery(event.target.value)}
 					placeholder="Search by title, SKU, or description"
-					className="
-						rounded-xl
-						border
-						border-slate-300
-						px-4
-						py-3
-						text-sm
-					"
 				/>
 				<select
-					value={category}
-					onChange={(event) => setCategory(event.target.value)}
 					className="
 						rounded-xl
 						border
@@ -64,8 +82,12 @@ function ShopSearchForm() {
 						py-3
 						text-sm
 					"
+					value={category}
+					onChange={(event) => setCategory(event.target.value)}
 				>
-					<option value="">All categories</option>
+					<option value="">
+						All categories
+					</option>
 					{categories.map((row) => (
 						<option key={row.slug} value={row.slug}>
 							{row.name}
@@ -74,26 +96,40 @@ function ShopSearchForm() {
 				</select>
 			</div>
 
-			{vendor ? (
-				<p className="text-sm text-slate-600">
-					Filtered to vendor <span className="font-semibold">{vendor}</span>.{' '}
-					<button
-						type="button"
-						onClick={() => setVendor('')}
-						className="font-semibold text-sky hover:underline"
-					>
-						Clear vendor filter
-					</button>
-				</p>
-			) : null}
+			{vendor
+				? (
+					<p className="text-sm text-slate-600">
+						Filtered to vendor{' '}
+						<span className="font-semibold">
+							{vendor}
+						</span>
+						.{' '}
+						<button
+							className="
+								font-semibold
+								text-sky
+								hover:underline
+							"
+							type="button"
+							onClick={() => setVendor('')}
+						>
+							Clear vendor filter
+						</button>
+					</p>
+				)
+				: null}
 
-			{loading ? <p className="text-sm text-slate-500">Searching…</p> : null}
+			{loading
+				? (
+					<p className="text-sm text-slate-500">
+						Searching…
+					</p>
+				)
+				: null}
 
 			<div className="grid gap-3">
 				{results.map((product) => (
 					<a
-						key={product.id}
-						href={`/shop/${product.vendor.slug}/${product.slug}`}
 						className="
 							rounded-xl
 							border
@@ -102,8 +138,12 @@ function ShopSearchForm() {
 							p-4
 							hover:border-sky
 						"
+						key={product.id}
+						href={`/shop/${product.vendor.slug}/${product.slug}`}
 					>
-						<p className="font-semibold">{product.title}</p>
+						<p className="font-semibold">
+							{product.title}
+						</p>
 						<p className="text-sm text-slate-600">
 							{product.sku} · {product.availableQty} available
 						</p>

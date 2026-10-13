@@ -21,13 +21,15 @@ export default function ForgotPasswordPage() {
 		try {
 			await requestPasswordReset(email);
 			router.push(`/auth/reset-password?email=${encodeURIComponent(email)}`);
-		} catch (submitError) {
+		}
+		catch(submitError) {
 			setError(
 				submitError instanceof AuthApiError
 					? submitError.message
 					: 'Something went wrong. Please try again.',
 			);
-		} finally {
+		}
+		finally {
 			setSubmitting(false);
 		}
 	};
@@ -50,13 +52,27 @@ export default function ForgotPasswordPage() {
 				footer={
 					<p>
 						Remembered it?{' '}
-						<a href="/auth/login" className="font-semibold text-sky hover:underline">
+						<a
+							className="
+								font-semibold
+								text-sky
+								hover:underline
+							"
+							href="/auth/login"
+						>
 							Sign in
 						</a>
 					</p>
 				}
 			>
-				<form onSubmit={onSubmit} className="flex flex-col gap-4">
+				<form
+					className="
+						flex
+						flex-col
+						gap-4
+					"
+					onSubmit={onSubmit}
+				>
 					<FormField
 						label="Email address"
 						type="email"
@@ -69,8 +85,6 @@ export default function ForgotPasswordPage() {
 					<ErrorText message={error} />
 
 					<button
-						type="submit"
-						disabled={submitting}
 						className="
 							mt-2
 							rounded-full
@@ -85,6 +99,8 @@ export default function ForgotPasswordPage() {
 							disabled:cursor-not-allowed
 							disabled:opacity-60
 						"
+						type="submit"
+						disabled={submitting}
 					>
 						{submitting ? 'Sending code…' : 'Send reset code'}
 					</button>

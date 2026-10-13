@@ -68,15 +68,29 @@ export const showcasePortals: ShowcasePortal[] = [
 	{
 		id: 'product-create',
 		label: 'Catalog',
-		title: 'Create pack/piece product',
+		title: 'Standard listing',
 		summary:
-			'Create a product with two offerings (for example spool and foot) and link them as a pack/piece pair.',
-		href: '/shop/products/new?walkthrough=1',
-		cta: 'Create product',
+			'Default create flow: one offering or a simple pack + piece. Break floors, ceilings, and fees stay off this page.',
+		href: '/shop/products/new',
+		cta: 'Open standard listing',
 		notes: [
-			'One CatalogProduct, multiple ProductOfferings',
-			'Pack quantity convertible to piece UOM',
-			'Category assignment included',
+			'Everyone starts here',
+			'Walkthrough still uses this path',
+			'Switch to Inventory configuration when needed',
+		],
+	},
+	{
+		id: 'inventory-configuration',
+		label: 'Operations',
+		title: 'Inventory configuration',
+		summary:
+			'Nested pack chains, per-offering SKUs, auto-break floor/ceiling, qty inheritance, and break fees.',
+		href: '/shop/products/configure',
+		cta: 'Open inventory config',
+		notes: [
+			'Pallet → spool → foot chains',
+			'Pack-controlled break rules',
+			'Progressive disclosure from Standard listing',
 		],
 	},
 	{

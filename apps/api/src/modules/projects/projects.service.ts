@@ -4,15 +4,15 @@ import { CreateProjectDto } from './dto/create-project.dto';
 
 @Injectable()
 export class ProjectsService {
-  constructor(private readonly prisma: PrismaService) {}
+	constructor(private readonly prisma: PrismaService) {}
 
-  list() {
-    return this.prisma.project.findMany({
-      orderBy: [{ featured: 'desc' }, { createdAt: 'desc' }],
-    });
-  }
+	list() {
+		return this.prisma.project.findMany({
+			orderBy: [{ featured: 'desc' }, { createdAt: 'desc' }],
+		});
+	}
 
-  create(payload: CreateProjectDto) {
-    return this.prisma.project.create({ data: payload });
-  }
+	create(payload: CreateProjectDto) {
+		return this.prisma.project.create({ data: payload });
+	}
 }

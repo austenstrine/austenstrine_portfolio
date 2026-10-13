@@ -43,13 +43,15 @@ function RegisterForm() {
 				next: nextPath,
 			});
 			router.push(`/auth/verify-email?${verifyQuery.toString()}`);
-		} catch (submitError) {
+		}
+		catch(submitError) {
 			setError(
 				submitError instanceof AuthApiError
 					? submitError.message
 					: 'Something went wrong. Please try again.',
 			);
-		} finally {
+		}
+		finally {
 			setSubmitting(false);
 		}
 	};
@@ -62,15 +64,26 @@ function RegisterForm() {
 				<p>
 					Already have an account?{' '}
 					<a
+						className="
+							font-semibold
+							text-sky
+							hover:underline
+						"
 						href={`/auth/login?next=${encodeURIComponent(nextPath)}`}
-						className="font-semibold text-sky hover:underline"
 					>
 						Sign in
 					</a>
 				</p>
 			}
 		>
-			<form onSubmit={onSubmit} className="flex flex-col gap-4">
+			<form
+				className="
+					flex
+					flex-col
+					gap-4
+				"
+				onSubmit={onSubmit}
+			>
 				<FormField
 					label="Email address"
 					type="email"
@@ -98,8 +111,6 @@ function RegisterForm() {
 				<ErrorText message={error} />
 
 				<button
-					type="submit"
-					disabled={submitting}
 					className="
 						mt-2
 						rounded-full
@@ -114,14 +125,38 @@ function RegisterForm() {
 						disabled:cursor-not-allowed
 						disabled:opacity-60
 					"
+					type="submit"
+					disabled={submitting}
 				>
 					{submitting ? 'Creating account…' : 'Create account'}
 				</button>
 
-				<div className="flex items-center gap-3 text-xs uppercase tracking-wide text-slate-400">
-					<span className="h-px flex-1 bg-slate-200" />
+				<div
+					className="
+						flex
+						items-center
+						gap-3
+						text-xs
+						uppercase
+						tracking-wide
+						text-slate-400
+					"
+				>
+					<span
+						className="
+							h-px
+							flex-1
+							bg-slate-200
+						"
+					/>
 					or
-					<span className="h-px flex-1 bg-slate-200" />
+					<span
+						className="
+							h-px
+							flex-1
+							bg-slate-200
+						"
+					/>
 				</div>
 
 				<GoogleButton />

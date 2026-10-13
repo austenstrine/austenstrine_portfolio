@@ -6,30 +6,30 @@ import cookieParser from 'cookie-parser';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+	const app = await NestFactory.create(AppModule);
 
-  app.setGlobalPrefix('api');
-  app.enableCors({ origin: process.env.WEB_URL ?? true, credentials: true });
-  app.use(cookieParser());
-  app.useGlobalPipes(
-    new ValidationPipe({
-      whitelist: true,
-      forbidNonWhitelisted: true,
-      transform: true,
-    }),
-  );
+	app.setGlobalPrefix('api');
+	app.enableCors({ origin: process.env.WEB_URL ?? true, credentials: true });
+	app.use(cookieParser());
+	app.useGlobalPipes(
+		new ValidationPipe({
+			whitelist: true,
+			forbidNonWhitelisted: true,
+			transform: true,
+		}),
+	);
 
-  const config = new DocumentBuilder()
-    .setTitle('Portfolio API')
-    .setDescription('Portfolio backend with NestJS, Prisma, Redis, and OpenSearch')
-    .setVersion('1.0.0')
-    .build();
+	const config = new DocumentBuilder()
+		.setTitle('Portfolio API')
+		.setDescription('Portfolio backend with NestJS, Prisma, Redis, and OpenSearch')
+		.setVersion('1.0.0')
+		.build();
 
-  const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api/docs', app, document);
+	const document = SwaggerModule.createDocument(app, config);
+	SwaggerModule.setup('api/docs', app, document);
 
-  const port = Number(process.env.PORT ?? 4000);
-  await app.listen(port);
+	const port = Number(process.env.PORT ?? 4000);
+	await app.listen(port);
 }
 
 bootstrap();

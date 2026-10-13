@@ -21,7 +21,7 @@ function ResetPasswordForm() {
 		event.preventDefault();
 		setError(null);
 
-		if (password !== confirmPassword) {
+		if(password !== confirmPassword) {
 			setError('Passwords do not match.');
 			return;
 		}
@@ -31,13 +31,15 @@ function ResetPasswordForm() {
 		try {
 			await resetPassword(email, code, password);
 			router.push('/auth/login');
-		} catch (submitError) {
+		}
+		catch(submitError) {
 			setError(
 				submitError instanceof AuthApiError
 					? submitError.message
 					: 'Something went wrong. Please try again.',
 			);
-		} finally {
+		}
+		finally {
 			setSubmitting(false);
 		}
 	};
@@ -49,13 +51,27 @@ function ResetPasswordForm() {
 			footer={
 				<p>
 					Need a new code?{' '}
-					<a href="/auth/forgot-password" className="font-semibold text-sky hover:underline">
+					<a
+						className="
+							font-semibold
+							text-sky
+							hover:underline
+						"
+						href="/auth/forgot-password"
+					>
 						Request another
 					</a>
 				</p>
 			}
 		>
-			<form onSubmit={onSubmit} className="flex flex-col gap-4">
+			<form
+				className="
+					flex
+					flex-col
+					gap-4
+				"
+				onSubmit={onSubmit}
+			>
 				<FormField
 					label="Email address"
 					type="email"
@@ -91,8 +107,6 @@ function ResetPasswordForm() {
 				<ErrorText message={error} />
 
 				<button
-					type="submit"
-					disabled={submitting}
 					className="
 						mt-2
 						rounded-full
@@ -107,6 +121,8 @@ function ResetPasswordForm() {
 						disabled:cursor-not-allowed
 						disabled:opacity-60
 					"
+					type="submit"
+					disabled={submitting}
 				>
 					{submitting ? 'Updating…' : 'Update password'}
 				</button>

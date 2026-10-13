@@ -26,7 +26,7 @@ function VerifyLoginForm() {
 	const onSubmit = async (event: FormEvent) => {
 		event.preventDefault();
 
-		if (!pendingToken) {
+		if(!pendingToken) {
 			return;
 		}
 
@@ -36,13 +36,15 @@ function VerifyLoginForm() {
 		try {
 			await verifyLoginOtp(pendingToken, code);
 			router.push(nextPath);
-		} catch (submitError) {
+		}
+		catch(submitError) {
 			setError(
 				submitError instanceof AuthApiError
 					? submitError.message
 					: 'Something went wrong. Please try again.',
 			);
-		} finally {
+		}
+		finally {
 			setSubmitting(false);
 		}
 	};
@@ -52,7 +54,14 @@ function VerifyLoginForm() {
 			title="Enter your code"
 			subtitle="We sent a 6-digit code to your email to confirm this sign-in."
 		>
-			<form onSubmit={onSubmit} className="flex flex-col gap-4">
+			<form
+				className="
+					flex
+					flex-col
+					gap-4
+				"
+				onSubmit={onSubmit}
+			>
 				<FormField
 					label="Verification code"
 					value={code}
@@ -66,8 +75,6 @@ function VerifyLoginForm() {
 				<ErrorText message={error} />
 
 				<button
-					type="submit"
-					disabled={submitting || !pendingToken}
 					className="
 						mt-2
 						rounded-full
@@ -82,6 +89,8 @@ function VerifyLoginForm() {
 						disabled:cursor-not-allowed
 						disabled:opacity-60
 					"
+					type="submit"
+					disabled={submitting || !pendingToken}
 				>
 					{submitting ? 'Verifying…' : 'Verify and sign in'}
 				</button>

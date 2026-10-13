@@ -70,9 +70,11 @@ export async function refreshSession(): Promise<boolean> {
 			}
 			const body = await parseJson(response) as { user?: AuthUser } | null;
 			return Boolean(body?.user);
-		} catch {
+		}
+		catch {
 			return false;
-		} finally {
+		}
+		finally {
 			refreshInFlight = null;
 		}
 	})();
@@ -181,7 +183,8 @@ export async function getCurrentUser(): Promise<AuthUser | null> {
 	try {
 		const result = await request<{ user: AuthUser }>('/auth/me');
 		return result.user;
-	} catch {
+	}
+	catch {
 		return null;
 	}
 }

@@ -31,7 +31,9 @@ export function UrlSlugField({
 
 	return (
 		<label className="block text-sm">
-			<span className="font-semibold">{label}</span>
+			<span className="font-semibold">
+				{label}
+			</span>
 			<div
 				className="
 					mt-1
@@ -62,14 +64,6 @@ export function UrlSlugField({
 					{prefix}
 				</span>
 				<input
-					value={value}
-					onChange={(event) => onChange(event.target.value)}
-					required={required}
-					minLength={2}
-					maxLength={maxLength}
-					pattern="[a-z0-9]+(?:-[a-z0-9]+)*"
-					placeholder={placeholder}
-					aria-label={label}
 					className="
 						min-w-0
 						flex-1
@@ -79,13 +73,42 @@ export function UrlSlugField({
 						text-ink
 						outline-none
 					"
+					value={value}
+					onChange={(event) => onChange(event.target.value)}
+					required={required}
+					minLength={2}
+					maxLength={maxLength}
+					pattern="[a-z0-9]+(?:-[a-z0-9]+)*"
+					placeholder={placeholder}
+					aria-label={label}
 				/>
 			</div>
-			<span className="mt-1 block text-xs text-slate-500 sm:hidden">
+			<span
+				className="
+					mt-1
+					block
+					text-xs
+					text-slate-500
+					sm:hidden
+				"
+			>
 				Full URL: {prefix}
 				{value || placeholder}
 			</span>
-			{helpText ? <span className="mt-1 block text-xs text-slate-500">{helpText}</span> : null}
+			{helpText
+				? (
+					<span
+						className="
+							mt-1
+							block
+							text-xs
+							text-slate-500
+						"
+					>
+						{helpText}
+					</span>
+				)
+				: null}
 		</label>
 	);
 }

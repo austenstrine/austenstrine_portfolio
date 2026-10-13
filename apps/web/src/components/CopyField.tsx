@@ -52,8 +52,6 @@ export function CopyField({ label, value }: CopyFieldProps) {
 				</p>
 			</div>
 			<button
-				type="button"
-				onClick={onCopy}
 				className="
 					rounded-md
 					bg-ink
@@ -65,6 +63,8 @@ export function CopyField({ label, value }: CopyFieldProps) {
 					transition
 					hover:bg-sky
 				"
+				type="button"
+				onClick={onCopy}
 			>
 				{copied
 					? 'Copied'

@@ -3,13 +3,12 @@ type ErrorTextProps = {
 };
 
 export function ErrorText({ message }: ErrorTextProps) {
-	if (!message) {
+	if(!message) {
 		return null;
 	}
 
 	return (
 		<p
-			role="alert"
 			className="
 				rounded-lg
 				border
@@ -20,6 +19,7 @@ export function ErrorText({ message }: ErrorTextProps) {
 				text-sm
 				text-red-700
 			"
+			role="alert"
 		>
 			{message}
 		</p>

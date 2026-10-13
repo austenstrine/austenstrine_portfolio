@@ -180,9 +180,11 @@ function WalkthroughContent() {
 				});
 			}
 			await refresh();
-		} catch (submitError) {
+		}
+		catch(submitError) {
 			setError(submitError instanceof Error ? submitError.message : 'Could not create UOMs.');
-		} finally {
+		}
+		finally {
 			setBusy(false);
 		}
 	};
@@ -206,9 +208,11 @@ function WalkthroughContent() {
 			setVendorSlug('');
 			setVendorSlugTouched(false);
 			await refresh();
-		} catch (submitError) {
+		}
+		catch(submitError) {
 			setError(submitError instanceof Error ? submitError.message : 'Could not create vendor.');
-		} finally {
+		}
+		finally {
 			setBusy(false);
 		}
 	};
@@ -229,9 +233,11 @@ function WalkthroughContent() {
 				}),
 			);
 			await refresh();
-		} catch (submitError) {
+		}
+		catch(submitError) {
 			setError(submitError instanceof Error ? submitError.message : 'Could not create category.');
-		} finally {
+		}
+		finally {
 			setBusy(false);
 		}
 	};
@@ -246,30 +252,71 @@ function WalkthroughContent() {
 	}${state.categoryId ? `&categoryId=${encodeURIComponent(state.categoryId)}` : ''}`;
 
 	return (
-		<div className="flex flex-col gap-8">
+		<div
+			className="
+				flex
+				flex-col
+				gap-8
+			"
+		>
 			<div>
-				<p className="text-xs font-semibold uppercase tracking-[0.22em] text-sky">
+				<p
+					className="
+						text-xs
+						font-semibold
+						uppercase
+						tracking-[0.22em]
+						text-sky
+					"
+				>
 					Guided walkthrough
 				</p>
-				<h1 className="mt-2 text-3xl font-semibold tracking-tight">
+				<h1
+					className="
+						mt-2
+						text-3xl
+						font-semibold
+						tracking-tight
+					"
+				>
 					Build the marketplace from an empty database
 				</h1>
-				<p className="mt-2 max-w-3xl text-slate-600">
+				<p
+					className="
+						mt-2
+						max-w-3xl
+						text-slate-600
+					"
+				>
 					No seed data is required. Follow these steps to create an account, vendor, UOMs,
 					category, and a pack/piece product, then explore search and the product page with
 					quick-edit.
 				</p>
 			</div>
 
-			{done && productHref ? (
-				<div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-5 text-sm text-emerald-900">
-					<p className="font-semibold">Product created.</p>
-					<p className="mt-1">
-						Continue below to browse, search, and open the product page. Quick-edit shows because
-						you are the vendor OWNER.
-					</p>
-				</div>
-			) : null}
+			{done && productHref
+				? (
+					<div
+						className="
+							rounded-2xl
+							border
+							border-emerald-200
+							bg-emerald-50
+							p-5
+							text-sm
+							text-emerald-900
+						"
+					>
+						<p className="font-semibold">
+							Product created.
+						</p>
+						<p className="mt-1">
+							Continue below to browse, search, and open the product page. Quick-edit shows because
+							you are the vendor OWNER.
+						</p>
+					</div>
+				)
+				: null}
 
 			<ol className="grid gap-3">
 				{steps.map((step, index) => {
@@ -284,20 +331,52 @@ function WalkthroughContent() {
 
 					return (
 						<li
-							key={step.id}
 							className={
 								isActive
 									? 'rounded-2xl border border-sky bg-sky/5 p-5'
 									: 'rounded-2xl border border-slate-200 bg-white p-5'
 							}
+							key={step.id}
 						>
-							<div className="flex flex-wrap items-start justify-between gap-3">
+							<div
+								className="
+									flex
+									flex-wrap
+									items-start
+									justify-between
+									gap-3
+								"
+							>
 								<div>
-									<p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+									<p
+										className="
+											text-xs
+											font-semibold
+											uppercase
+											tracking-wide
+											text-slate-500
+										"
+									>
 										Step {index + 1}
 									</p>
-									<h2 className="mt-1 text-lg font-semibold">{step.title}</h2>
-									<p className="mt-1 text-sm text-slate-600">{step.summary}</p>
+									<h2
+										className="
+											mt-1
+											text-lg
+											font-semibold
+										"
+									>
+										{step.title}
+									</h2>
+									<p
+										className="
+											mt-1
+											text-sm
+											text-slate-600
+										"
+									>
+										{step.summary}
+									</p>
 								</div>
 								<span
 									className={
@@ -312,188 +391,412 @@ function WalkthroughContent() {
 								</span>
 							</div>
 
-							{isActive && step.id === 'account' ? (
-								<div className="mt-4 flex flex-wrap gap-3">
-									{sessionLoading ? (
-										<p className="text-sm text-slate-500">Checking session…</p>
-									) : (
-										<>
-											<a
-												href="/auth/register?next=%2Fshop%2Fstart"
-												className="rounded-full bg-ink px-4 py-2 text-sm font-semibold text-white hover:bg-sky"
-											>
-												Create account
-											</a>
-											<a
-												href="/auth/login?next=%2Fshop%2Fstart"
-												className="rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:border-sky hover:text-sky"
-											>
-												Sign in
-											</a>
-										</>
-									)}
-								</div>
-							) : null}
-
-							{isActive && step.id === 'vendor' ? (
-								<form onSubmit={onCreateVendor} className="mt-4 flex flex-col gap-3">
-									<label className="block text-sm">
-										<span className="font-semibold">Organization name</span>
-										<input
-											value={vendorName}
-											onChange={(event) => {
-												setVendorName(event.target.value);
-												if(!vendorSlugTouched) {
-													setVendorSlug(slugify(event.target.value));
-												}
-											}}
-											required
-											className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
-										/>
-									</label>
-									<UrlSlugField
-										label="Store URL"
-										value={vendorSlug}
-										onChange={(next) => {
-											setVendorSlugTouched(true);
-											setVendorSlug(slugify(next));
-										}}
-										prefixPath="/shop"
-										placeholder="your-store"
-										helpText="This becomes the public address for your storefront links."
-									/>
-									<button
-										type="submit"
-										disabled={busy}
-										className="self-start rounded-full bg-ink px-4 py-2 text-sm font-semibold text-white hover:bg-sky disabled:opacity-60"
+							{isActive && step.id === 'account'
+								? (
+									<div
+										className="
+											mt-4
+											flex
+											flex-wrap
+											gap-3
+										"
 									>
-										{busy ? 'Creating…' : 'Create vendor as OWNER'}
-									</button>
-								</form>
-							) : null}
+										{sessionLoading
+											? (
+												<p className="text-sm text-slate-500">
+													Checking session…
+												</p>
+											)
+											: (
+												<>
+													<a
+														className="
+															rounded-full
+															bg-ink
+															px-4
+															py-2
+															text-sm
+															font-semibold
+															text-white
+															hover:bg-sky
+														"
+														href="/auth/register?next=%2Fshop%2Fstart"
+													>
+														Create account
+													</a>
+													<a
+														className="
+															rounded-full
+															border
+															border-slate-300
+															px-4
+															py-2
+															text-sm
+															font-semibold
+															text-slate-700
+															hover:border-sky
+															hover:text-sky
+														"
+														href="/auth/login?next=%2Fshop%2Fstart"
+													>
+														Sign in
+													</a>
+												</>
+											)
+										}
+									</div>
+								)
+								: null}
 
-							{isActive && step.id === 'uoms' ? (
-								<div className="mt-4 flex flex-col gap-3">
-									<p className="text-sm text-slate-600">
-										Current UOMs: {uoms.length === 0 ? 'none' : uoms.map((row) => row.code).join(', ')}
-									</p>
-									<div className="flex flex-wrap gap-3">
+							{isActive && step.id === 'vendor'
+								? (
+									<form
+										className="
+											mt-4
+											flex
+											flex-col
+											gap-3
+										"
+										onSubmit={onCreateVendor}
+									>
+										<label className="block text-sm">
+											<span className="font-semibold">
+												Organization name
+											</span>
+											<input
+												className="
+													mt-1
+													w-full
+													rounded-lg
+													border
+													border-slate-300
+													px-3
+													py-2
+												"
+												value={vendorName}
+												onChange={(event) => {
+													setVendorName(event.target.value);
+													if(!vendorSlugTouched) {
+														setVendorSlug(slugify(event.target.value));
+													}
+												}}
+												required
+											/>
+										</label>
+										<UrlSlugField
+											label="Store URL"
+											value={vendorSlug}
+											onChange={(next) => {
+												setVendorSlugTouched(true);
+												setVendorSlug(slugify(next));
+											}}
+											prefixPath="/shop"
+											placeholder="your-store"
+											helpText="This becomes the public address for your storefront links."
+										/>
 										<button
-											type="button"
-											onClick={() => void ensureStarterUoms()}
+											className="
+												self-start
+												rounded-full
+												bg-ink
+												px-4
+												py-2
+												text-sm
+												font-semibold
+												text-white
+												hover:bg-sky
+												disabled:opacity-60
+											"
+											type="submit"
 											disabled={busy}
-											className="rounded-full bg-ink px-4 py-2 text-sm font-semibold text-white hover:bg-sky disabled:opacity-60"
 										>
-											{busy ? 'Creating…' : 'Add SPOOL + FT'}
+											{busy ? 'Creating…' : 'Create vendor as OWNER'}
 										</button>
-										<a
-											href="/shop/uoms"
-											className="rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:border-sky hover:text-sky"
+									</form>
+								)
+								: null}
+
+							{isActive && step.id === 'uoms'
+								? (
+									<div
+										className="
+											mt-4
+											flex
+											flex-col
+											gap-3
+										"
+									>
+										<p className="text-sm text-slate-600">
+											Current UOMs: {uoms.length === 0 ? 'none' : uoms.map((row) => row.code).join(', ')}
+										</p>
+										<div
+											className="
+												flex
+												flex-wrap
+												gap-3
+											"
 										>
-											Manage all UOMs
+											<button
+												className="
+													rounded-full
+													bg-ink
+													px-4
+													py-2
+													text-sm
+													font-semibold
+													text-white
+													hover:bg-sky
+													disabled:opacity-60
+												"
+												type="button"
+												onClick={() => void ensureStarterUoms()}
+												disabled={busy}
+											>
+												{busy ? 'Creating…' : 'Add SPOOL + FT'}
+											</button>
+											<a
+												className="
+													rounded-full
+													border
+													border-slate-300
+													px-4
+													py-2
+													text-sm
+													font-semibold
+													text-slate-700
+													hover:border-sky
+													hover:text-sky
+												"
+												href="/shop/uoms"
+											>
+												Manage all UOMs
+											</a>
+										</div>
+									</div>
+								)
+								: null}
+
+							{isActive && step.id === 'category'
+								? (
+									<form
+										className="
+											mt-4
+											flex
+											flex-col
+											gap-3
+										"
+										onSubmit={onCreateCategory}
+									>
+										<label className="block text-sm">
+											<span className="font-semibold">
+												Category name
+											</span>
+											<input
+												className="
+													mt-1
+													w-full
+													rounded-lg
+													border
+													border-slate-300
+													px-3
+													py-2
+												"
+												value={categoryName}
+												onChange={(event) => {
+													setCategoryName(event.target.value);
+													if(!categorySlugTouched) {
+														setCategorySlug(slugify(event.target.value));
+													}
+												}}
+												required
+											/>
+										</label>
+										<UrlSlugField
+											label="Category URL key"
+											value={categorySlug}
+											onChange={(next) => {
+												setCategorySlugTouched(true);
+												setCategorySlug(slugify(next));
+											}}
+											prefixPath="/shop/search?category="
+											placeholder="wire-and-cable"
+											helpText="Used when browsing or filtering by this category."
+										/>
+										<button
+											className="
+												self-start
+												rounded-full
+												bg-ink
+												px-4
+												py-2
+												text-sm
+												font-semibold
+												text-white
+												hover:bg-sky
+												disabled:opacity-60
+											"
+											type="submit"
+											disabled={busy}
+										>
+											{busy ? 'Creating…' : 'Create category'}
+										</button>
+									</form>
+								)
+								: null}
+
+							{isActive && step.id === 'product'
+								? (
+									<div
+										className="
+											mt-4
+											flex
+											flex-wrap
+											gap-3
+										"
+									>
+										<a
+											className="
+												rounded-full
+												bg-ink
+												px-4
+												py-2
+												text-sm
+												font-semibold
+												text-white
+												hover:bg-sky
+											"
+											href={productCreateHref}
+										>
+											Create pack/piece product
+										</a>
+										<a
+											className="
+												rounded-full
+												border
+												border-slate-300
+												px-4
+												py-2
+												text-sm
+												font-semibold
+												text-slate-700
+												hover:border-sky
+												hover:text-sky
+											"
+											href="/shop/products/new"
+										>
+											Open blank product form
 										</a>
 									</div>
-								</div>
-							) : null}
+								)
+								: null}
 
-							{isActive && step.id === 'category' ? (
-								<form onSubmit={onCreateCategory} className="mt-4 flex flex-col gap-3">
-									<label className="block text-sm">
-										<span className="font-semibold">Category name</span>
-										<input
-											value={categoryName}
-											onChange={(event) => {
-												setCategoryName(event.target.value);
-												if(!categorySlugTouched) {
-													setCategorySlug(slugify(event.target.value));
-												}
-											}}
-											required
-											className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
-										/>
-									</label>
-									<UrlSlugField
-										label="Category URL key"
-										value={categorySlug}
-										onChange={(next) => {
-											setCategorySlugTouched(true);
-											setCategorySlug(slugify(next));
-										}}
-										prefixPath="/shop/search?category="
-										placeholder="wire-and-cable"
-										helpText="Used when browsing or filtering by this category."
-									/>
-									<button
-										type="submit"
-										disabled={busy}
-										className="self-start rounded-full bg-ink px-4 py-2 text-sm font-semibold text-white hover:bg-sky disabled:opacity-60"
+							{isActive && step.id === 'explore'
+								? (
+									<div
+										className="
+											mt-4
+											flex
+											flex-wrap
+											gap-3
+										"
 									>
-										{busy ? 'Creating…' : 'Create category'}
-									</button>
-								</form>
-							) : null}
-
-							{isActive && step.id === 'product' ? (
-								<div className="mt-4 flex flex-wrap gap-3">
-									<a
-										href={productCreateHref}
-										className="rounded-full bg-ink px-4 py-2 text-sm font-semibold text-white hover:bg-sky"
-									>
-										Create pack/piece product
-									</a>
-									<a
-										href="/shop/products/new"
-										className="rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:border-sky hover:text-sky"
-									>
-										Open blank product form
-									</a>
-								</div>
-							) : null}
-
-							{isActive && step.id === 'explore' ? (
-								<div className="mt-4 flex flex-wrap gap-3">
-									{productHref ? (
+										{productHref
+											? (
+												<a
+													className="
+														rounded-full
+														bg-ink
+														px-4
+														py-2
+														text-sm
+														font-semibold
+														text-white
+														hover:bg-sky
+													"
+													href={productHref}
+												>
+													View product + quick-edit
+												</a>
+											)
+											: null}
 										<a
-											href={productHref}
-											className="rounded-full bg-ink px-4 py-2 text-sm font-semibold text-white hover:bg-sky"
+											className="
+												rounded-full
+												border
+												border-slate-300
+												px-4
+												py-2
+												text-sm
+												font-semibold
+												text-slate-700
+												hover:border-sky
+												hover:text-sky
+											"
+											href="/shop"
 										>
-											View product + quick-edit
+											Browse catalog
 										</a>
-									) : null}
-									<a
-										href="/shop"
-										className="rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:border-sky hover:text-sky"
-									>
-										Browse catalog
-									</a>
-									<a
-										href={
-											state.categorySlug
-												? `/shop/search?category=${encodeURIComponent(state.categorySlug)}`
-												: '/shop/search'
-										}
-										className="rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:border-sky hover:text-sky"
-									>
-										Search / browse by category
-									</a>
-									<a
-										href="/shop/manage"
-										className="rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:border-sky hover:text-sky"
-									>
-										Product management
-									</a>
-								</div>
-							) : null}
+										<a
+											className="
+												rounded-full
+												border
+												border-slate-300
+												px-4
+												py-2
+												text-sm
+												font-semibold
+												text-slate-700
+												hover:border-sky
+												hover:text-sky
+											"
+											href={
+												state.categorySlug
+													? `/shop/search?category=${encodeURIComponent(state.categorySlug)}`
+													: '/shop/search'
+											}
+										>
+											Search / browse by category
+										</a>
+										<a
+											className="
+												rounded-full
+												border
+												border-slate-300
+												px-4
+												py-2
+												text-sm
+												font-semibold
+												text-slate-700
+												hover:border-sky
+												hover:text-sky
+											"
+											href="/shop/manage"
+										>
+											Product management
+										</a>
+									</div>
+								)
+								: null}
 						</li>
 					);
 				})}
 			</ol>
 
-			{error ? <p className="text-sm text-red-700">{error}</p> : null}
+			{error
+				? (
+					<p className="text-sm text-red-700">
+						{error}
+					</p>
+				)
+				: null}
 
-			{user ? (
-				<p className="text-sm text-slate-500">Signed in as {user.email}</p>
-			) : null}
+			{user
+				? (
+					<p className="text-sm text-slate-500">
+						Signed in as {user.email}
+					</p>
+				)
+				: null}
 		</div>
 	);
 }

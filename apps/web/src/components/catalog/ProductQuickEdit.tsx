@@ -32,9 +32,11 @@ export function ProductQuickEdit({ product, onUpdated }: ProductQuickEditProps) 
 				})),
 			});
 			onUpdated(updated);
-		} catch (saveError) {
+		}
+		catch(saveError) {
 			setError(saveError instanceof Error ? saveError.message : 'Save failed.');
-		} finally {
+		}
+		finally {
 			setSaving(false);
 		}
 	};
@@ -49,15 +51,30 @@ export function ProductQuickEdit({ product, onUpdated }: ProductQuickEditProps) 
 				p-5
 			"
 		>
-			<h2 className="text-sm font-semibold uppercase tracking-wide text-amber-900">
+			<h2
+				className="
+					text-sm
+					font-semibold
+					uppercase
+					tracking-wide
+					text-amber-900
+				"
+			>
 				Quick edit
 			</h2>
-			<div className="mt-4 flex flex-col gap-3">
+			<div
+				className="
+					mt-4
+					flex
+					flex-col
+					gap-3
+				"
+			>
 				<label className="text-sm">
-					<span className="font-semibold">Title</span>
+					<span className="font-semibold">
+						Title
+					</span>
 					<input
-						value={title}
-						onChange={(event) => setTitle(event.target.value)}
 						className="
 							mt-1
 							w-full
@@ -67,30 +84,37 @@ export function ProductQuickEdit({ product, onUpdated }: ProductQuickEditProps) 
 							px-3
 							py-2
 						"
+						value={title}
+						onChange={(event) => setTitle(event.target.value)}
 					/>
 				</label>
 				<label className="text-sm">
-					<span className="font-semibold">Description</span>
+					<span className="font-semibold">
+						Description
+					</span>
 					<textarea
+						className="
+							mt-1
+							w-full
+							rounded-lg
+							border
+							border-amber-200
+							px-3
+							py-2
+						"
 						value={description}
 						onChange={(event) => setDescription(event.target.value)}
 						rows={4}
-						className="
-							mt-1
-							w-full
-							rounded-lg
-							border
-							border-amber-200
-							px-3
-							py-2
-						"
 					/>
 				</label>
-				{error ? <p className="text-sm text-red-700">{error}</p> : null}
+				{error
+					? (
+						<p className="text-sm text-red-700">
+							{error}
+						</p>
+					)
+					: null}
 				<button
-					type="button"
-					onClick={onSave}
-					disabled={saving}
 					className="
 						self-start
 						rounded-full
@@ -103,6 +127,9 @@ export function ProductQuickEdit({ product, onUpdated }: ProductQuickEditProps) 
 						hover:bg-sky
 						disabled:opacity-60
 					"
+					type="button"
+					onClick={onSave}
+					disabled={saving}
 				>
 					{saving ? 'Saving…' : 'Save changes'}
 				</button>
