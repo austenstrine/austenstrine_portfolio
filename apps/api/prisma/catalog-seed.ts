@@ -84,7 +84,9 @@ export async function seedCatalog(prisma: PrismaClient): Promise<void> {
     packOffering = await prisma.productOffering.create({
       data: {
         productId: product.id,
+        vendorId: vendor.id,
         sku: 'WIRE-THHN-12-SPOOL',
+        offeringKey: 'spool',
         uomId: uomSpool.id,
         role: ProductOfferingRole.PACK,
         priceCents: 8999,
@@ -101,7 +103,9 @@ export async function seedCatalog(prisma: PrismaClient): Promise<void> {
     pieceOffering = await prisma.productOffering.create({
       data: {
         productId: product.id,
+        vendorId: vendor.id,
         sku: 'WIRE-THHN-12-FT',
+        offeringKey: 'foot',
         uomId: uomFt.id,
         role: ProductOfferingRole.PIECE,
         priceCents: 22,

@@ -1,6 +1,7 @@
 import { ForbiddenException, Injectable } from '@nestjs/common';
 import { VendorMemberRole } from '@prisma/client';
 import { PrismaService } from '../../infra/prisma/prisma.service';
+import type { CatalogActor } from './catalog-actor';
 
 const editorRoles: VendorMemberRole[] = [VendorMemberRole.OWNER, VendorMemberRole.EDITOR];
 
@@ -54,5 +55,16 @@ export class VendorAccessService {
 		if(!membership || !editorRoles.includes(membership.role)) {
 			throw new ForbiddenException('You do not have permission to manage this vendor.');
 		}
+	}
+
+	async assertActorCanEditVendor(actor: CatalogActor, vendorId: string): Promise<void> {
+		if(actor.kind === 'app_password') {
+			if(actor.vendorId !== vendorId) {
+				throw new ForbiddenException('App password is not valid for this vendor.');
+			}
+			return;
+		}
+
+		await this.assertCanEditVendor(actor.userId, vendorId);
 	}
 }

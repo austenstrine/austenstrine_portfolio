@@ -34,6 +34,11 @@ class ProductOfferingInputDto {
 	@MaxLength(40)
 	clientKey?: string;
 
+	@IsOptional()
+	@IsString()
+	@MaxLength(80)
+	offeringKey?: string;
+
 	@IsString()
 	@MaxLength(80)
 	sku!: string;

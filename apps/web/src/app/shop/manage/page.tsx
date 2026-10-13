@@ -119,25 +119,44 @@ export default function ShopManagePage() {
 							)
 							: (
 								vendors.map((vendor) => (
-									<a
+									<div
 										className="
 											rounded-xl
 											border
 											border-slate-200
 											bg-white
 											p-4
-											hover:border-sky
 										"
 										key={vendor.id}
-										href={`/shop/vendors/${vendor.id}`}
 									>
-										<p className="font-semibold">
-											{vendor.name}
-										</p>
-										<p className="text-sm text-slate-600">
-											{vendor.myRole} · {vendor.productCount} products
-										</p>
-									</a>
+										<a
+											className="
+												block
+												hover:text-sky
+											"
+											href={`/shop/vendors/${vendor.id}`}
+										>
+											<p className="font-semibold">
+												{vendor.name}
+											</p>
+											<p className="text-sm text-slate-600">
+												{vendor.myRole} · {vendor.productCount} products
+											</p>
+										</a>
+										<a
+											className="
+												mt-2
+												inline-block
+												text-sm
+												font-semibold
+												text-sky
+												hover:underline
+											"
+											href={`/shop/vendors/${vendor.id}/import`}
+										>
+											Bulk CSV import
+										</a>
+									</div>
 								))
 							)
 						}

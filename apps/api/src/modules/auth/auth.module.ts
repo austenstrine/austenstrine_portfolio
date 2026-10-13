@@ -23,5 +23,6 @@ const hasGoogleOAuthConfig = Boolean(
 		JwtStrategy,
 		...(hasGoogleOAuthConfig ? [GoogleStrategy] : []),
 	],
+	exports: [AuthService, SecurityService, JwtModule, PassportModule],
 })
 export class AuthModule {}

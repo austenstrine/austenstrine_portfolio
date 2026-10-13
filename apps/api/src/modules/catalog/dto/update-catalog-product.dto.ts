@@ -38,6 +38,11 @@ class ProductOfferingPatchDto {
 	sku?: string;
 
 	@IsOptional()
+	@IsString()
+	@MaxLength(80)
+	offeringKey?: string;
+
+	@IsOptional()
 	@IsInt()
 	@Min(0)
 	priceCents?: number;

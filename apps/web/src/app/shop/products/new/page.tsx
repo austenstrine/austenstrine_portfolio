@@ -155,6 +155,7 @@ function NewProductForm() {
 		if(needsSingle) {
 			offerings.push({
 				clientKey: 'single',
+				offeringKey: 'single',
 				sku: singleSku,
 				uomId: singleUomId,
 				role: 'STANDALONE',
@@ -167,6 +168,7 @@ function NewProductForm() {
 		if(needsPack) {
 			offerings.push({
 				clientKey: 'pack',
+				offeringKey: 'pack',
 				sku: packSku,
 				uomId: packUomId,
 				role: 'PACK',
@@ -186,6 +188,7 @@ function NewProductForm() {
 		if(needsPiece) {
 			offerings.push({
 				clientKey: 'piece',
+				offeringKey: 'piece',
 				sku: pieceSku,
 				uomId: pieceUomId,
 				role: 'PIECE',

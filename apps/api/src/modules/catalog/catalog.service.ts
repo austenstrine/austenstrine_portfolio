@@ -167,7 +167,11 @@ export class CatalogService {
 	async createProduct(userId: string, dto: CreateCatalogProductDto) {
 		await this.vendorAccess.assertCanEditVendor(userId, dto.vendorId);
 
-		await this.assertOfferingSkusUniqueForVendor(dto.vendorId, dto.offerings.map((row) => row.sku));
+		const offeringIdentities = dto.offerings.map((row, index) => ({
+			sku: (row.sku || dto.sku || `${dto.slug}-${index + 1}`).trim(),
+			offeringKey: (row.offeringKey || row.clientKey || 'default').trim() || 'default',
+		}));
+		await this.assertOfferingIdentitiesUniqueForVendor(dto.vendorId, offeringIdentities);
 
 		const product = await this.prisma.catalogProduct.create({
 			data: {
@@ -188,7 +192,11 @@ export class CatalogService {
 				},
 				offerings: {
 					create: dto.offerings.map((offering, index) => ({
+						vendorId: dto.vendorId,
 						sku: offering.sku || dto.sku || `${dto.slug}-${index + 1}`,
+						offeringKey:
+							(offering.offeringKey || offering.clientKey || 'default').trim() ||
+							'default',
 						uomId: offering.uomId,
 						role: offering.role,
 						priceCents: offering.priceCents,
@@ -265,6 +273,7 @@ export class CatalogService {
 					where: { id: offering.id },
 					data: {
 						sku: offering.sku,
+						offeringKey: offering.offeringKey,
 						priceCents: offering.priceCents,
 						qtyOnHand: offering.qtyOnHand,
 						tracksOwnQty: offering.tracksOwnQty,
@@ -371,15 +380,25 @@ export class CatalogService {
 	}
 
 	private buildOfferingKeyMap(
-		created: Array<{ id: string; role: ProductOfferingRole; sku: string }>,
+		created: Array<{
+			id: string;
+			role: ProductOfferingRole;
+			sku: string;
+			offeringKey: string;
+		}>,
 		inputs: CreateCatalogProductDto['offerings'],
 	): Map<string, string> {
 		const map = new Map<string, string>();
 
 		created.forEach((offering, index) => {
 			const input = inputs[index];
-			const key = input?.clientKey ?? `${offering.role}-${index}`;
+			const key =
+				input?.clientKey ??
+				input?.offeringKey ??
+				offering.offeringKey ??
+				`${offering.role}-${index}`;
 			map.set(key, offering.id);
+			map.set(offering.offeringKey, offering.id);
 			map.set(offering.id, offering.id);
 			map.set(offering.sku, offering.id);
 		});
@@ -526,23 +545,42 @@ export class CatalogService {
 		}
 	}
 
-	private async assertOfferingSkusUniqueForVendor(vendorId: string, skus: string[]) {
-		const normalized = skus.map((row) => row.trim()).filter(Boolean);
-		const dup = normalized.find((sku, index) => normalized.indexOf(sku) !== index);
-		if(dup) {
-			throw new ConflictException(`Duplicate offering SKU in request: ${dup}`);
+	private async assertOfferingIdentitiesUniqueForVendor(
+		vendorId: string,
+		rows: Array<{ sku: string; offeringKey: string }>,
+	) {
+		const normalized = rows.map((row) => ({
+			sku: row.sku.trim(),
+			offeringKey: row.offeringKey.trim() || 'default',
+		}));
+		const seen = new Set<string>();
+		for(const row of normalized) {
+			const key = `${row.sku}::${row.offeringKey}`;
+			if(seen.has(key)) {
+				throw new ConflictException(
+					`Duplicate offering identity in request: sku=${row.sku} offering_key=${row.offeringKey}`,
+				);
+			}
+			seen.add(key);
 		}
 
-		const existing = await this.prisma.productOffering.findFirst({
-			where: {
-				sku: { in: normalized },
-				product: { vendorId },
-			},
-			select: { sku: true },
-		});
+		for(const row of normalized) {
+			const existing = await this.prisma.productOffering.findUnique({
+				where: {
+					vendorId_sku_offeringKey: {
+						vendorId,
+						sku: row.sku,
+						offeringKey: row.offeringKey,
+					},
+				},
+				select: { sku: true, offeringKey: true },
+			});
 
-		if(existing) {
-			throw new ConflictException(`Offering SKU already exists for this vendor: ${existing.sku}`);
+			if(existing) {
+				throw new ConflictException(
+					`Offering already exists for this vendor: sku=${existing.sku} offering_key=${existing.offeringKey}`,
+				);
+			}
 		}
 	}
 
@@ -581,6 +619,7 @@ export class CatalogService {
 			offerings: product.offerings.map((offering) => ({
 				id: offering.id,
 				sku: offering.sku,
+				offeringKey: offering.offeringKey,
 				role: offering.role,
 				priceCents: offering.priceCents,
 				uom: offering.uom.code,
@@ -609,6 +648,7 @@ export class CatalogService {
 			offerings: product.offerings.map((offering) => ({
 				id: offering.id,
 				sku: offering.sku,
+				offeringKey: offering.offeringKey,
 				role: offering.role,
 				priceCents: offering.priceCents,
 				currency: offering.currency,

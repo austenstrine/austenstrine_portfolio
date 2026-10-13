@@ -1,3 +1,4 @@
+import { API_BASE_URL } from './api';
 import { authedFetch } from './auth-api';
 
 export type CatalogProductSummary = {
@@ -15,6 +16,7 @@ export type CatalogProductSummary = {
 	offerings: Array<{
 		id: string;
 		sku?: string;
+		offeringKey?: string;
 		role: string;
 		priceCents: number;
 		uom: string;
@@ -27,6 +29,7 @@ export type CatalogProductSummary = {
 export type CatalogOfferingDetail = {
 	id: string;
 	sku?: string;
+	offeringKey?: string;
 	role: string;
 	priceCents: number;
 	currency: string;
@@ -236,6 +239,7 @@ export type CreateProductPayload = {
 	attributes?: Array<{ key: string; value: string; sortOrder?: number }>;
 	offerings: Array<{
 		clientKey?: string;
+		offeringKey?: string;
 		sku?: string;
 		uomId: string;
 		role: 'STANDALONE' | 'PACK' | 'PIECE';
@@ -258,6 +262,135 @@ export type CreateProductPayload = {
 
 export function createCatalogProduct(payload: CreateProductPayload): Promise<CatalogProductDetail> {
 	return catalogRequest<CatalogProductDetail>('/products', {
+		method: 'POST',
+		body: JSON.stringify(payload),
+	});
+}
+
+export type VendorAppPassword = {
+	id: string;
+	name: string;
+	tokenPrefix: string;
+	hint: string;
+	active: boolean;
+	lastUsedAt: string | null;
+	revokedAt: string | null;
+	createdAt: string;
+};
+
+export type CreatedVendorAppPassword = {
+	id: string;
+	name: string;
+	tokenPrefix: string;
+	hint: string;
+	token: string;
+	warning: string;
+	createdAt: string;
+};
+
+export function listVendorAppPasswords(vendorId: string): Promise<VendorAppPassword[]> {
+	return catalogRequest<VendorAppPassword[]>(`/vendors/${vendorId}/app-passwords`);
+}
+
+export function createVendorAppPassword(
+	vendorId: string,
+	name?: string,
+): Promise<CreatedVendorAppPassword> {
+	return catalogRequest<CreatedVendorAppPassword>(`/vendors/${vendorId}/app-passwords`, {
+		method: 'POST',
+		body: JSON.stringify({ name }),
+	});
+}
+
+export function revokeVendorAppPassword(
+	vendorId: string,
+	passwordId: string,
+): Promise<{ id: string; revokedAt: string | null }> {
+	return catalogRequest(`/vendors/${vendorId}/app-passwords/${passwordId}`, {
+		method: 'DELETE',
+	});
+}
+
+export type CatalogImportValidation = {
+	delimiter: ',' | '\t';
+	rowCount: number;
+	blockingErrorCount: number;
+	warningCount: number;
+	createProductCount: number;
+	updateProductCount: number;
+	createOfferingCount: number;
+	updateOfferingCount: number;
+	errors: Array<{
+		lineNumber: number;
+		column?: string;
+		message: string;
+		blocking: boolean;
+	}>;
+	ok: boolean;
+};
+
+export type CatalogImportJob = {
+	id: string;
+	status: 'PENDING' | 'RUNNING' | 'COMPLETED' | 'FAILED';
+	rowCount: number;
+	createdCount: number;
+	updatedCount: number;
+	errorCount: number;
+	errors: CatalogImportValidation['errors'] | null;
+	createdAt: string;
+	finishedAt: string | null;
+};
+
+export function validateCatalogImport(
+	vendorId: string,
+	csv: string,
+): Promise<CatalogImportValidation> {
+	return catalogRequest<CatalogImportValidation>(`/vendors/${vendorId}/imports/validate`, {
+		method: 'POST',
+		body: JSON.stringify({ csv, source: 'UI' }),
+	});
+}
+
+export function commitCatalogImport(
+	vendorId: string,
+	csv: string,
+): Promise<{ jobId: string; status: string }> {
+	return catalogRequest(`/vendors/${vendorId}/imports/commit`, {
+		method: 'POST',
+		body: JSON.stringify({ csv, source: 'UI' }),
+	});
+}
+
+export function getCatalogImportJob(
+	vendorId: string,
+	jobId: string,
+): Promise<CatalogImportJob> {
+	return catalogRequest<CatalogImportJob>(`/vendors/${vendorId}/imports/${jobId}`);
+}
+
+export function catalogImportTemplateUrl(): string {
+	return `${API_BASE_URL}/catalog/imports/template.csv`;
+}
+
+export type CatalogDeleteResult = {
+	archiveBatchId: string;
+	deletedCount: number;
+	productSlugs: string[];
+	emailedTo: string[];
+	csvAttached: boolean;
+};
+
+export function deleteCatalogProduct(productId: string): Promise<CatalogDeleteResult> {
+	return catalogRequest<CatalogDeleteResult>(`/products/${productId}`, {
+		method: 'DELETE',
+	});
+}
+
+export function deleteVendorCatalogProducts(
+	vendorId: string,
+	payload: { productIds?: string[]; productSlugs?: string[] },
+): Promise<CatalogDeleteResult> {
+	return catalogRequest<CatalogDeleteResult>(`/vendors/${vendorId}/products/delete`, {
 		method: 'POST',
 		body: JSON.stringify(payload),
 	});

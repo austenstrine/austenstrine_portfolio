@@ -1,7 +1,11 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import type { CatalogProductDetail } from '../../lib/catalog-api';
+import {
+	deleteCatalogProduct,
+	type CatalogProductDetail,
+} from '../../lib/catalog-api';
 import { ProductQuickEdit } from './ProductQuickEdit';
 
 type ProductDetailClientProps = {
@@ -9,7 +13,44 @@ type ProductDetailClientProps = {
 };
 
 export function ProductDetailClient({ initialProduct }: ProductDetailClientProps) {
+	const router = useRouter();
 	const [product, setProduct] = useState(initialProduct);
+	const [deleteBusy, setDeleteBusy] = useState(false);
+	const [deleteError, setDeleteError] = useState<string | null>(null);
+	const [deletedNotice, setDeletedNotice] = useState<string | null>(null);
+
+	async function onDelete() {
+		const confirmed = window.confirm(
+			`Delete "${product.title}"? Live rows are removed, a CSV receipt is emailed to vendor owners, and an archive copy is kept for 6 months.`,
+		);
+		if(!confirmed) {
+			return;
+		}
+
+		setDeleteBusy(true);
+		setDeleteError(null);
+		try {
+			const result = await deleteCatalogProduct(product.id);
+			const emailed =
+				result.emailedTo.length > 0
+					? ` Receipt emailed to ${result.emailedTo.join(', ')}.`
+					: ' No owner email was available for the CSV receipt.';
+			setDeletedNotice(
+				`Deleted. Archive batch ${result.archiveBatchId.slice(0, 8)}.${emailed}`,
+			);
+			window.setTimeout(() => {
+				router.push('/shop/manage');
+			}, 1800);
+		}
+		catch (error) {
+			setDeleteError(
+				error instanceof Error ? error.message : 'Could not delete product.',
+			);
+		}
+		finally {
+			setDeleteBusy(false);
+		}
+	}
 
 	return (
 		<div
@@ -91,9 +132,77 @@ export function ProductDetailClient({ initialProduct }: ProductDetailClientProps
 					gap-4
 				"
 			>
-				{product.permissions.canEdit
+				{product.permissions.canEdit && !deletedNotice
 					? (
-						<ProductQuickEdit product={product} onUpdated={setProduct} />
+						<>
+							<ProductQuickEdit product={product} onUpdated={setProduct} />
+							<div
+								className="
+									rounded-2xl
+									border
+									border-red-100
+									bg-red-50
+									p-4
+								"
+							>
+								<p className="text-sm text-red-900">
+									Deleting archives the product out of live indexes, emails owners a
+									CSV of what was removed, and auto-prunes that archive after 6 months.
+								</p>
+								{deleteError
+									? (
+										<p
+											className="
+												mt-2
+												text-sm
+												text-red-700
+											"
+										>
+											{deleteError}
+										</p>
+									)
+									: null}
+								<button
+									type="button"
+									disabled={deleteBusy}
+									className="
+										mt-3
+										rounded-full
+										border
+										border-red-300
+										bg-white
+										px-4
+										py-2
+										text-sm
+										font-semibold
+										text-red-700
+										hover:border-red-500
+										disabled:opacity-60
+									"
+									onClick={() => void onDelete()}
+								>
+									{deleteBusy ? 'Deleting…' : 'Delete product'}
+								</button>
+							</div>
+						</>
+					)
+					: null}
+
+				{deletedNotice
+					? (
+						<p
+							className="
+								rounded-2xl
+								border
+								border-emerald-200
+								bg-emerald-50
+								p-4
+								text-sm
+								text-emerald-900
+							"
+						>
+							{deletedNotice}
+						</p>
 					)
 					: null}
 

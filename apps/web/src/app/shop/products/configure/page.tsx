@@ -209,6 +209,7 @@ export default function InventoryConfigurationPage() {
 
 			return {
 				clientKey: level.key,
+				offeringKey: level.key,
 				sku: level.sku.trim(),
 				uomId: level.uomId,
 				role,

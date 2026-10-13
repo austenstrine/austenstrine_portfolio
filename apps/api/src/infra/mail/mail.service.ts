@@ -90,23 +90,46 @@ export class MailService implements OnModuleInit {
 		});
 	}
 
-	private async sendMail(options: {
-		to: string;
+	async sendMailWithAttachment(options: {
+		to: string | string[];
 		subject: string;
 		text: string;
 		html: string;
+		attachments?: Array<{
+			filename: string;
+			content: string | Buffer;
+			contentType?: string;
+		}>;
+	}): Promise<void> {
+		await this.sendMail(options);
+	}
+
+	private async sendMail(options: {
+		to: string | string[];
+		subject: string;
+		text: string;
+		html: string;
+		attachments?: Array<{
+			filename: string;
+			content: string | Buffer;
+			contentType?: string;
+		}>;
 	}): Promise<void> {
 		try {
 			await this.transporter.sendMail({
 				from: this.fromAddress,
 				replyTo: this.fromAddress,
 				envelope: this.smtpUser
-					? { from: this.smtpUser, to: options.to }
+					? {
+							from: this.smtpUser,
+							to: Array.isArray(options.to) ? options.to : [options.to],
+						}
 					: undefined,
 				to: options.to,
 				subject: options.subject,
 				text: options.text,
 				html: options.html,
+				attachments: options.attachments,
 			});
 		}
 		catch(error) {
