@@ -1,11 +1,14 @@
 'use client';
 
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import {
 	deleteCatalogProduct,
 	type CatalogProductDetail,
 } from '../../lib/catalog-api';
+import { upsertCartLine } from '../../lib/checkout-api';
+import { useSession } from '../../lib/useSession';
 import { ProductQuickEdit } from './ProductQuickEdit';
 
 type ProductDetailClientProps = {
@@ -14,10 +17,46 @@ type ProductDetailClientProps = {
 
 export function ProductDetailClient({ initialProduct }: ProductDetailClientProps) {
 	const router = useRouter();
+	const { user } = useSession();
 	const [product, setProduct] = useState(initialProduct);
 	const [deleteBusy, setDeleteBusy] = useState(false);
 	const [deleteError, setDeleteError] = useState<string | null>(null);
 	const [deletedNotice, setDeletedNotice] = useState<string | null>(null);
+	const [selectedOfferingId, setSelectedOfferingId] = useState(
+		initialProduct.offerings[0]?.id ?? '',
+	);
+	const [cartQty, setCartQty] = useState('1');
+	const [cartBusy, setCartBusy] = useState(false);
+	const [cartMessage, setCartMessage] = useState<string | null>(null);
+	const [cartError, setCartError] = useState<string | null>(null);
+
+	async function onAddToCart() {
+		if(!selectedOfferingId) {
+			return;
+		}
+		if(!user) {
+			router.push(
+				`/auth/login?next=${encodeURIComponent(window.location.pathname)}`,
+			);
+			return;
+		}
+
+		setCartBusy(true);
+		setCartError(null);
+		setCartMessage(null);
+		try {
+			await upsertCartLine(selectedOfferingId, cartQty || '1');
+			setCartMessage('Added to cart.');
+		}
+		catch (error) {
+			setCartError(
+				error instanceof Error ? error.message : 'Could not add to cart.',
+			);
+		}
+		finally {
+			setCartBusy(false);
+		}
+	}
 
 	async function onDelete() {
 		const confirmed = window.confirm(
@@ -90,6 +129,123 @@ export function ProductDetailClient({ initialProduct }: ProductDetailClientProps
 				<p className="text-slate-600">
 					{product.description}
 				</p>
+
+				{!deletedNotice
+					? (
+						<div
+							className="
+								mt-2
+								flex
+								flex-col
+								gap-3
+								rounded-2xl
+								border
+								border-slate-200
+								bg-white
+								p-4
+							"
+						>
+							<label className="text-sm">
+								<span className="font-semibold">
+									Offering
+								</span>
+								<select
+									className="
+										mt-1
+										w-full
+										rounded-lg
+										border
+										border-slate-300
+										px-3
+										py-2
+									"
+									value={selectedOfferingId}
+									onChange={(event) =>
+										setSelectedOfferingId(event.target.value)
+									}
+								>
+									{product.offerings.map((offering) => (
+										<option key={offering.id} value={offering.id}>
+											{offering.role} · {offering.sku ?? offering.id} ·{' '}
+											{(offering.priceCents / 100).toFixed(2)} ·{' '}
+											{offering.availableQty} avail
+										</option>
+									))}
+								</select>
+							</label>
+							<label className="text-sm">
+								<span className="font-semibold">
+									Quantity
+								</span>
+								<input
+									className="
+										mt-1
+										w-32
+										rounded-lg
+										border
+										border-slate-300
+										px-3
+										py-2
+									"
+									value={cartQty}
+									onChange={(event) => setCartQty(event.target.value)}
+								/>
+							</label>
+							<div
+								className="
+									flex
+									flex-wrap
+									items-center
+									gap-3
+								"
+							>
+								<button
+									type="button"
+									disabled={cartBusy || !selectedOfferingId}
+									className="
+										rounded-full
+										bg-ink
+										px-4
+										py-2.5
+										text-sm
+										font-semibold
+										text-white
+										hover:bg-sky
+										disabled:opacity-60
+									"
+									onClick={() => void onAddToCart()}
+								>
+									{cartBusy ? 'Adding…' : 'Add to cart'}
+								</button>
+								<Link
+									className="
+										text-sm
+										font-semibold
+										text-sky
+										hover:underline
+									"
+									href="/shop/cart"
+								>
+									View cart
+								</Link>
+							</div>
+							{cartMessage
+								? (
+									<p className="text-sm text-emerald-700">
+										{cartMessage}
+									</p>
+								)
+								: null}
+							{cartError
+								? (
+									<p className="text-sm text-red-700">
+										{cartError}
+									</p>
+								)
+								: null}
+						</div>
+					)
+					: null}
 
 				<dl
 					className="

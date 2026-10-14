@@ -5,6 +5,7 @@ import { InfraModule } from './infra/infra.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { HealthModule } from './modules/health/health.module';
 import { CatalogModule } from './modules/catalog/catalog.module';
+import { CheckoutModule } from './modules/checkout/checkout.module';
 import { ProjectsModule } from './modules/projects/projects.module';
 
 @Module({
@@ -15,6 +16,7 @@ import { ProjectsModule } from './modules/projects/projects.module';
 		HealthModule,
 		ProjectsModule,
 		CatalogModule,
+		CheckoutModule,
 	],
 	providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })

@@ -2,6 +2,7 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import {
 	BrokenPackStatus,
 	InventoryClaimStatus,
+	MarketplaceOrderStatus,
 	Prisma,
 } from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/library';
@@ -199,6 +200,8 @@ export class InventoryService {
 		offeringId: string;
 		quantity: Decimal;
 		brokenPackId?: string;
+		buyerId?: string;
+		orderId?: string;
 	}) {
 		const offering = await this.prisma.productOffering.findUnique({
 			where: { id: input.offeringId },
@@ -214,11 +217,19 @@ export class InventoryService {
 			quantityInPieceUom = input.quantity;
 		}
 
-		const order = await this.prisma.marketplaceOrder.upsert({
-			where: { orderRef: input.orderRef },
-			create: { orderRef: input.orderRef },
-			update: {},
-		});
+		const order = input.orderId
+			? await this.prisma.marketplaceOrder.findUniqueOrThrow({
+					where: { id: input.orderId },
+				})
+			: await this.prisma.marketplaceOrder.upsert({
+					where: { orderRef: input.orderRef },
+					create: {
+						orderRef: input.orderRef,
+						buyerId: input.buyerId,
+						status: MarketplaceOrderStatus.HOLD,
+					},
+					update: {},
+				});
 
 		const claim = await this.prisma.inventoryClaim.create({
 			data: {
@@ -231,15 +242,78 @@ export class InventoryService {
 			},
 		});
 
+		await this.refreshOfferingProduct(input.offeringId);
+		return claim;
+	}
+
+	async releaseClaimsForOrder(orderId: string) {
+		const claims = await this.prisma.inventoryClaim.findMany({
+			where: { orderId, status: InventoryClaimStatus.PENDING },
+		});
+
+		if(claims.length === 0) {
+			return { released: 0 };
+		}
+
+		await this.prisma.inventoryClaim.updateMany({
+			where: {
+				id: { in: claims.map((row) => row.id) },
+				status: InventoryClaimStatus.PENDING,
+			},
+			data: { status: InventoryClaimStatus.RELEASED },
+		});
+
+		const offeringIds = [...new Set(claims.map((row) => row.offeringId))];
+		for(const offeringId of offeringIds) {
+			await this.refreshOfferingProduct(offeringId);
+		}
+
+		return { released: claims.length };
+	}
+
+	async fulfillClaimsForOrder(orderId: string) {
+		const claims = await this.prisma.inventoryClaim.findMany({
+			where: {
+				orderId,
+				status: { in: [InventoryClaimStatus.PENDING, InventoryClaimStatus.FULFILLED] },
+			},
+		});
+
+		const pending = claims.filter((row) => row.status === InventoryClaimStatus.PENDING);
+		for(const claim of pending) {
+			await this.prisma.$transaction(async (tx) => {
+				await tx.inventoryClaim.update({
+					where: { id: claim.id },
+					data: { status: InventoryClaimStatus.FULFILLED },
+				});
+
+				const offering = await tx.productOffering.findUnique({
+					where: { id: claim.offeringId },
+				});
+				if(offering?.tracksOwnQty) {
+					const next = offering.qtyOnHand.sub(claim.quantity);
+					await tx.productOffering.update({
+						where: { id: offering.id },
+						data: {
+							qtyOnHand: next.lt(0) ? zero : next,
+						},
+					});
+				}
+			});
+			await this.refreshOfferingProduct(claim.offeringId);
+		}
+
+		return { fulfilled: pending.length };
+	}
+
+	private async refreshOfferingProduct(offeringId: string) {
 		const product = await this.prisma.catalogProduct.findFirst({
-			where: { offerings: { some: { id: input.offeringId } } },
+			where: { offerings: { some: { id: offeringId } } },
 			select: { id: true },
 		});
 		if(product) {
 			await this.refreshProductAvailability(product.id);
 		}
-
-		return claim;
 	}
 
 	private async loadOfferingForAvailability(

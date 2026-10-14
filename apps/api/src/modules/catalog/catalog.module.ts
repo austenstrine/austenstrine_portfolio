@@ -27,6 +27,6 @@ import { VendorService } from './vendor.service';
 		JwtAuthGuard,
 		OptionalJwtAuthGuard,
 	],
-	exports: [CatalogService, InventoryService, VendorService],
+	exports: [CatalogService, InventoryService, VendorService, VendorAccessService],
 })
 export class CatalogModule {}
