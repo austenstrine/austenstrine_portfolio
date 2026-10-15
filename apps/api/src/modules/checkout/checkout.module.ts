@@ -7,6 +7,7 @@ import { CheckoutController } from './checkout.controller';
 import { CheckoutService } from './checkout.service';
 import { ConnectService } from './connect.service';
 import { PayoutService } from './payout.service';
+import { RefundService } from './refund.service';
 import { ShippingService } from './shipping.service';
 import { StripeService } from './stripe.service';
 
@@ -18,10 +19,18 @@ import { StripeService } from './stripe.service';
 		CheckoutService,
 		ConnectService,
 		PayoutService,
+		RefundService,
 		ShippingService,
 		StripeService,
 		JwtAuthGuard,
 	],
-	exports: [CartService, CheckoutService, ShippingService, ConnectService, PayoutService],
+	exports: [
+		CartService,
+		CheckoutService,
+		ShippingService,
+		ConnectService,
+		PayoutService,
+		RefundService,
+	],
 })
 export class CheckoutModule {}

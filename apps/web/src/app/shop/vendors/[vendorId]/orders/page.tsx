@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import {
 	formatMoney,
 	listVendorOrders,
+	refundVendorOrder,
 	shipVendorOrder,
 	type ShopOrder,
 } from '../../../../../lib/checkout-api';
@@ -54,6 +55,37 @@ export default function VendorOrdersPage() {
 				shipError instanceof Error
 					? shipError.message
 					: 'Could not mark shipped.',
+			);
+		}
+		finally {
+			setBusyId(null);
+		}
+	}
+
+	async function onRefund(order: ShopOrder) {
+		if(!vendorId) {
+			return;
+		}
+		const confirmed = window.confirm(
+			`Refund ${formatMoney(order.totalCents, order.currency)} to the buyer for ${order.orderRef}?`,
+		);
+		if(!confirmed) {
+			return;
+		}
+
+		setBusyId(order.id);
+		setError(null);
+		try {
+			await refundVendorOrder(vendorId, order.id, {
+				asCancel: order.status !== 'SHIPPED',
+			});
+			await refresh();
+		}
+		catch (refundError) {
+			setError(
+				refundError instanceof Error
+					? refundError.message
+					: 'Could not refund order.',
 			);
 		}
 		finally {
@@ -156,30 +188,65 @@ export default function VendorOrdersPage() {
 													{order.shipTo.city}
 												</p>
 											</div>
-											{order.status === 'PAID' || order.status === 'FULFILLING'
-												? (
-													<button
-														type="button"
-														disabled={busyId === order.id}
-														className="
-															rounded-full
-															bg-ink
-															px-4
-															py-2
-															text-sm
-															font-semibold
-															text-white
-															hover:bg-sky
-															disabled:opacity-60
-														"
-														onClick={() => void onShip(order.id)}
-													>
-														{busyId === order.id
-															? 'Shipping…'
-															: 'Mark shipped'}
-													</button>
-												)
-												: null}
+											<div
+												className="
+													flex
+													flex-wrap
+													gap-2
+												"
+											>
+												{order.status === 'PAID' || order.status === 'FULFILLING'
+													? (
+														<button
+															className="
+																rounded-full
+																bg-ink
+																px-4
+																py-2
+																text-sm
+																font-semibold
+																text-white
+																hover:bg-sky
+																disabled:opacity-60
+															"
+															disabled={busyId === order.id}
+															onClick={() => void onShip(order.id)}
+															type="button"
+														>
+															{busyId === order.id
+																? 'Shipping…'
+																: 'Mark shipped'}
+														</button>
+													)
+													: null}
+												{order.canVendorRefund
+													? (
+														<button
+															className="
+																rounded-full
+																border
+																border-red-300
+																px-4
+																py-2
+																text-sm
+																font-semibold
+																text-red-700
+																hover:border-red-500
+																disabled:opacity-60
+															"
+															disabled={busyId === order.id}
+															onClick={() => void onRefund(order)}
+															type="button"
+														>
+															{busyId === order.id
+																? 'Working…'
+																: order.status === 'SHIPPED'
+																	? 'Refund buyer'
+																	: 'Cancel & refund'}
+														</button>
+													)
+													: null}
+											</div>
 										</div>
 										<ul
 											className="

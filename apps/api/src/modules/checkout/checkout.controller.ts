@@ -23,7 +23,9 @@ import {
 	AssignProductShippingDto,
 	UpsertShippingProfileDto,
 } from './dto/shipping-admin.dto';
+import { RefundOrderDto } from './dto/refund.dto';
 import { PayoutService } from './payout.service';
+import { RefundService } from './refund.service';
 import { ShippingService } from './shipping.service';
 import { StripeService } from './stripe.service';
 
@@ -40,6 +42,7 @@ export class CheckoutController {
 		private readonly stripe: StripeService,
 		private readonly connect: ConnectService,
 		private readonly payouts: PayoutService,
+		private readonly refunds: RefundService,
 	) {}
 
 	@UseGuards(JwtAuthGuard)
@@ -169,6 +172,30 @@ export class CheckoutController {
 		@Param('orderId') orderId: string,
 	) {
 		return this.checkout.markShipped(req.user!.id, vendorId, orderId);
+	}
+
+	@UseGuards(JwtAuthGuard)
+	@Post('orders/:orderId/cancel')
+	cancelBuyerOrder(
+		@Req() req: AuthedRequest,
+		@Param('orderId') orderId: string,
+		@Body() dto: RefundOrderDto,
+	) {
+		return this.refunds.cancelAsBuyer(req.user!.id, orderId, dto.note);
+	}
+
+	@UseGuards(JwtAuthGuard)
+	@Post('vendors/:vendorId/orders/:orderId/refund')
+	refundVendorOrder(
+		@Req() req: AuthedRequest,
+		@Param('vendorId') vendorId: string,
+		@Param('orderId') orderId: string,
+		@Body() dto: RefundOrderDto,
+	) {
+		return this.refunds.refundAsVendor(req.user!.id, vendorId, orderId, {
+			note: dto.note,
+			asCancel: dto.asCancel,
+		});
 	}
 
 	@UseGuards(JwtAuthGuard)

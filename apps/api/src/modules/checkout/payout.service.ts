@@ -273,6 +273,20 @@ export class PayoutService implements OnModuleInit, OnModuleDestroy {
 
 		let attempted = 0;
 		for(const payout of candidates) {
+			if(
+				payout.order.status === MarketplaceOrderStatus.REFUNDED ||
+				payout.order.status === MarketplaceOrderStatus.CANCELLED
+			) {
+				await this.prisma.vendorPayout.update({
+					where: { id: payout.id },
+					data: {
+						status: VendorPayoutStatus.CANCELLED,
+						lastError: 'Order was cancelled or refunded before transfer.',
+					},
+				});
+				continue;
+			}
+
 			const triggerMet =
 				payout.trigger === PayoutTrigger.ON_PAYMENT ||
 				payout.order.status === MarketplaceOrderStatus.SHIPPED ||
@@ -328,11 +342,25 @@ export class PayoutService implements OnModuleInit, OnModuleDestroy {
 		if(!payout) {
 			return null;
 		}
-		if(payout.status === VendorPayoutStatus.TRANSFERRED) {
+		if(
+			payout.status === VendorPayoutStatus.TRANSFERRED ||
+			payout.status === VendorPayoutStatus.SKIPPED ||
+			payout.status === VendorPayoutStatus.CANCELLED ||
+			payout.status === VendorPayoutStatus.REVERSED
+		) {
 			return payout;
 		}
-		if(payout.status === VendorPayoutStatus.SKIPPED) {
-			return payout;
+		if(
+			payout.order.status === MarketplaceOrderStatus.REFUNDED ||
+			payout.order.status === MarketplaceOrderStatus.CANCELLED
+		) {
+			return this.prisma.vendorPayout.update({
+				where: { id: payout.id },
+				data: {
+					status: VendorPayoutStatus.CANCELLED,
+					lastError: 'Order was cancelled or refunded before transfer.',
+				},
+			});
 		}
 		if(payout.stripeTransferId) {
 			return this.prisma.vendorPayout.update({

@@ -372,12 +372,17 @@ export class CheckoutService implements OnModuleInit, OnModuleDestroy {
 						MarketplaceOrderStatus.PAID,
 						MarketplaceOrderStatus.FULFILLING,
 						MarketplaceOrderStatus.SHIPPED,
+						MarketplaceOrderStatus.REFUNDED,
 					],
 				},
 			},
 			include: {
 				vendor: true,
 				lines: true,
+				refunds: {
+					orderBy: { createdAt: 'desc' },
+					take: 1,
+				},
 			},
 			orderBy: { createdAt: 'desc' },
 		});
@@ -391,6 +396,10 @@ export class CheckoutService implements OnModuleInit, OnModuleDestroy {
 			include: {
 				vendor: true,
 				lines: true,
+				refunds: {
+					orderBy: { createdAt: 'desc' },
+					take: 3,
+				},
 			},
 		});
 		if(!order) {
@@ -417,12 +426,17 @@ export class CheckoutService implements OnModuleInit, OnModuleDestroy {
 						MarketplaceOrderStatus.PAID,
 						MarketplaceOrderStatus.FULFILLING,
 						MarketplaceOrderStatus.SHIPPED,
+						MarketplaceOrderStatus.REFUNDED,
 					],
 				},
 			},
 			include: {
 				buyer: { select: { email: true } },
 				lines: true,
+				refunds: {
+					orderBy: { createdAt: 'desc' },
+					take: 1,
+				},
 			},
 			orderBy: { createdAt: 'desc' },
 		});
@@ -722,6 +736,8 @@ export class CheckoutService implements OnModuleInit, OnModuleDestroy {
 		merchandiseCents: number;
 		shippingCents: number;
 		totalCents: number;
+		feeCents?: number;
+		vendorNetCents?: number;
 		shippingLabel: string | null;
 		shipName: string | null;
 		shipLine1: string | null;
@@ -731,8 +747,19 @@ export class CheckoutService implements OnModuleInit, OnModuleDestroy {
 		shipPostal: string | null;
 		shipCountry: string | null;
 		shippedAt: Date | null;
+		refundedAt?: Date | null;
+		cancelledAt?: Date | null;
 		createdAt: Date;
 		vendor?: { id: string; slug: string; name: string } | null;
+		refunds?: Array<{
+			id: string;
+			reason: string;
+			status: string;
+			buyerRefundCents: number;
+			note: string | null;
+			succeededAt: Date | null;
+			createdAt: Date;
+		}>;
 		lines: Array<{
 			id: string;
 			offeringId: string;
@@ -744,6 +771,14 @@ export class CheckoutService implements OnModuleInit, OnModuleDestroy {
 			offeringKeySnapshot: string;
 		}>;
 	}) {
+		const canBuyerCancel =
+			order.status === MarketplaceOrderStatus.PAID ||
+			order.status === MarketplaceOrderStatus.FULFILLING;
+		const canVendorRefund =
+			order.status === MarketplaceOrderStatus.PAID ||
+			order.status === MarketplaceOrderStatus.FULFILLING ||
+			order.status === MarketplaceOrderStatus.SHIPPED;
+
 		return {
 			id: order.id,
 			orderRef: order.orderRef,
@@ -752,6 +787,8 @@ export class CheckoutService implements OnModuleInit, OnModuleDestroy {
 			merchandiseCents: order.merchandiseCents,
 			shippingCents: order.shippingCents,
 			totalCents: order.totalCents,
+			feeCents: order.feeCents ?? 0,
+			vendorNetCents: order.vendorNetCents ?? 0,
 			shippingLabel: order.shippingLabel,
 			shipTo: {
 				name: order.shipName,
@@ -763,7 +800,11 @@ export class CheckoutService implements OnModuleInit, OnModuleDestroy {
 				country: order.shipCountry,
 			},
 			shippedAt: order.shippedAt,
+			refundedAt: order.refundedAt ?? null,
+			cancelledAt: order.cancelledAt ?? null,
 			createdAt: order.createdAt,
+			canBuyerCancel,
+			canVendorRefund,
 			vendor: order.vendor
 				? {
 						id: order.vendor.id,
@@ -771,6 +812,15 @@ export class CheckoutService implements OnModuleInit, OnModuleDestroy {
 						name: order.vendor.name,
 					}
 				: null,
+			refunds: (order.refunds ?? []).map((row) => ({
+				id: row.id,
+				reason: row.reason,
+				status: row.status,
+				buyerRefundCents: row.buyerRefundCents,
+				note: row.note,
+				succeededAt: row.succeededAt,
+				createdAt: row.createdAt,
+			})),
 			lines: order.lines.map((line) => ({
 				id: line.id,
 				offeringId: line.offeringId,

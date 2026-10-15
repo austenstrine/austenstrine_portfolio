@@ -76,6 +76,16 @@ export type CheckoutSession = {
 	expiresAt: string | null;
 };
 
+export type ShopOrderRefund = {
+	id: string;
+	reason: string;
+	status: string;
+	buyerRefundCents: number;
+	note: string | null;
+	succeededAt: string | null;
+	createdAt: string;
+};
+
 export type ShopOrder = {
 	id: string;
 	orderRef: string;
@@ -84,6 +94,8 @@ export type ShopOrder = {
 	merchandiseCents: number;
 	shippingCents: number;
 	totalCents: number;
+	feeCents?: number;
+	vendorNetCents?: number;
 	shippingLabel: string | null;
 	shipTo: {
 		name: string | null;
@@ -95,9 +107,14 @@ export type ShopOrder = {
 		country: string | null;
 	};
 	shippedAt: string | null;
+	refundedAt?: string | null;
+	cancelledAt?: string | null;
 	createdAt: string;
+	canBuyerCancel?: boolean;
+	canVendorRefund?: boolean;
 	vendor: { id: string; slug: string; name: string } | null;
 	buyerEmail?: string | null;
+	refunds?: ShopOrderRefund[];
 	lines: Array<{
 		id: string;
 		offeringId: string;
@@ -108,6 +125,20 @@ export type ShopOrder = {
 		sku: string;
 		offeringKey: string;
 	}>;
+};
+
+export type OrderRefundResult = {
+	id: string;
+	orderId: string;
+	reason: string;
+	note: string | null;
+	status: string;
+	currency: string;
+	buyerRefundCents: number;
+	vendorReversalCents: number;
+	lastError: string | null;
+	succeededAt: string | null;
+	createdAt: string;
 };
 
 export type ShippingProfile = {
@@ -257,6 +288,30 @@ export function shipVendorOrder(vendorId: string, orderId: string): Promise<Shop
 		method: 'POST',
 		body: JSON.stringify({}),
 	});
+}
+
+export function cancelBuyerOrder(
+	orderId: string,
+	note?: string,
+): Promise<OrderRefundResult> {
+	return checkoutRequest<OrderRefundResult>(`/orders/${orderId}/cancel`, {
+		method: 'POST',
+		body: JSON.stringify({ note }),
+	});
+}
+
+export function refundVendorOrder(
+	vendorId: string,
+	orderId: string,
+	payload?: { note?: string; asCancel?: boolean },
+): Promise<OrderRefundResult> {
+	return checkoutRequest<OrderRefundResult>(
+		`/vendors/${vendorId}/orders/${orderId}/refund`,
+		{
+			method: 'POST',
+			body: JSON.stringify(payload ?? {}),
+		},
+	);
 }
 
 export function stripePublishableKeyFallback(): string {

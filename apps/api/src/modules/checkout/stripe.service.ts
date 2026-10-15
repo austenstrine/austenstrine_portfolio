@@ -1,18 +1,24 @@
 import { Injectable, Logger } from '@nestjs/common';
 import Stripe from 'stripe';
 
+type StripeClient = InstanceType<typeof Stripe>;
+
 @Injectable()
 export class StripeService {
 	private readonly logger = new Logger(StripeService.name);
-	private readonly client: Stripe | null;
+	private readonly client: StripeClient | null;
 
 	constructor() {
 		const key = process.env.STRIPE_SECRET_KEY;
 		this.client = key
-			? new Stripe(key, { apiVersion: '2025-02-24.acacia' })
+			? new Stripe(key, {
+					apiVersion: '2025-02-24.acacia',
+				})
 			: null;
 		if(!this.client) {
-			this.logger.warn('STRIPE_SECRET_KEY is not set; checkout payments will fail until configured.');
+			this.logger.warn(
+				'STRIPE_SECRET_KEY is not set; checkout payments will fail until configured.',
+			);
 		}
 	}
 
@@ -20,7 +26,7 @@ export class StripeService {
 		return Boolean(this.client);
 	}
 
-	requireClient(): Stripe {
+	requireClient(): StripeClient {
 		if(!this.client) {
 			throw new Error('Stripe is not configured (missing STRIPE_SECRET_KEY).');
 		}
@@ -112,5 +118,47 @@ export class StripeService {
 	async retrieveAccount(accountId: string) {
 		const stripe = this.requireClient();
 		return stripe.accounts.retrieve(accountId);
+	}
+
+	async createRefund(input: {
+		paymentIntentId: string;
+		amountCents: number;
+		orderId: string;
+		refundId: string;
+		reason?: 'requested_by_customer' | 'duplicate' | 'fraudulent';
+	}) {
+		const stripe = this.requireClient();
+		return stripe.refunds.create(
+			{
+				payment_intent: input.paymentIntentId,
+				amount: input.amountCents,
+				reason: input.reason,
+				metadata: {
+					orderId: input.orderId,
+					refundId: input.refundId,
+				},
+			},
+			{ idempotencyKey: `order-refund-${input.refundId}` },
+		);
+	}
+
+	async reverseTransfer(input: {
+		transferId: string;
+		amountCents: number;
+		orderId: string;
+		refundId: string;
+	}) {
+		const stripe = this.requireClient();
+		return stripe.transfers.createReversal(
+			input.transferId,
+			{
+				amount: input.amountCents,
+				metadata: {
+					orderId: input.orderId,
+					refundId: input.refundId,
+				},
+			},
+			{ idempotencyKey: `transfer-reversal-${input.refundId}` },
+		);
 	}
 }

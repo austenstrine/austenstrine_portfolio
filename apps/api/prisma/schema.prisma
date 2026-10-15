@@ -53,6 +53,7 @@ model User {
   carts Cart[]
   checkouts Checkout[]
   marketplaceOrders MarketplaceOrder[]
+  orderRefunds OrderRefund[]
 
   @@index([createdAt])
 }
@@ -158,6 +159,7 @@ enum MarketplaceOrderStatus {
   FULFILLING
   SHIPPED
   CANCELLED
+  REFUNDED
 }
 
 enum PayoutTrigger {
@@ -171,6 +173,20 @@ enum VendorPayoutStatus {
   TRANSFERRED
   FAILED
   SKIPPED
+  CANCELLED
+  REVERSED
+}
+
+enum OrderRefundStatus {
+  PENDING
+  SUCCEEDED
+  FAILED
+}
+
+enum OrderRefundReason {
+  BUYER_CANCEL
+  VENDOR_CANCEL
+  VENDOR_REFUND
 }
 
 model Vendor {
@@ -224,16 +240,46 @@ model VendorPayout {
   status           VendorPayoutStatus @default(PENDING)
   trigger          PayoutTrigger
   stripeTransferId String?
+  stripeTransferReversalId String?
   attemptCount     Int                @default(0)
   lastError        String?
   readyAt          DateTime?
   transferredAt    DateTime?
+  reversedAt       DateTime?
   createdAt        DateTime           @default(now())
   updatedAt        DateTime           @updatedAt
 
   @@index([vendorId, status])
   @@index([status, readyAt])
   @@index([checkoutId])
+}
+
+model OrderRefund {
+  id                       String            @id @default(uuid())
+  orderId                  String
+  order                    MarketplaceOrder  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  checkoutId               String?
+  initiatedByUserId        String?
+  initiatedBy              User?             @relation(fields: [initiatedByUserId], references: [id], onDelete: SetNull)
+  reason                   OrderRefundReason
+  note                     String?
+  status                   OrderRefundStatus @default(PENDING)
+  currency                 String            @default("USD")
+  merchandiseCents         Int
+  shippingCents            Int
+  feeCents                 Int               @default(0)
+  buyerRefundCents         Int
+  vendorReversalCents      Int               @default(0)
+  stripeRefundId           String?
+  stripeTransferReversalId String?
+  lastError                String?
+  succeededAt              DateTime?
+  createdAt                DateTime          @default(now())
+  updatedAt                DateTime          @updatedAt
+
+  @@index([orderId, status])
+  @@index([checkoutId])
+  @@index([initiatedByUserId])
 }
 
 model VendorAppPassword {
@@ -501,6 +547,7 @@ model Checkout {
   merchandiseCents     Int            @default(0)
   shippingCents         Int            @default(0)
   totalCents            Int            @default(0)
+  refundedCents         Int            @default(0)
   expiresAt             DateTime?
   createdAt             DateTime       @default(now())
   updatedAt             DateTime       @updatedAt
@@ -589,12 +636,15 @@ model MarketplaceOrder {
   vendorNetCents     Int                    @default(0)
   payoutTrigger      PayoutTrigger          @default(ON_PAYMENT)
   shippedAt          DateTime?
+  refundedAt         DateTime?
+  cancelledAt        DateTime?
   createdAt          DateTime               @default(now())
   updatedAt          DateTime               @updatedAt
 
-  claims InventoryClaim[]
-  lines  OrderLine[]
-  payout VendorPayout?
+  claims  InventoryClaim[]
+  lines   OrderLine[]
+  payout  VendorPayout?
+  refunds OrderRefund[]
 
   @@index([buyerId, createdAt])
   @@index([vendorId, status])

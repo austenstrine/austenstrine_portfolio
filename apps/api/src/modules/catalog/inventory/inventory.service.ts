@@ -306,6 +306,56 @@ export class InventoryService {
 		return { fulfilled: pending.length };
 	}
 
+	/** Restock fulfilled claims and release any still-pending holds for a refunded order. */
+	async restockClaimsForOrder(orderId: string) {
+		const claims = await this.prisma.inventoryClaim.findMany({
+			where: {
+				orderId,
+				status: {
+					in: [InventoryClaimStatus.PENDING, InventoryClaimStatus.FULFILLED],
+				},
+			},
+		});
+
+		let restocked = 0;
+		let released = 0;
+
+		for(const claim of claims) {
+			if(claim.status === InventoryClaimStatus.PENDING) {
+				await this.prisma.inventoryClaim.update({
+					where: { id: claim.id },
+					data: { status: InventoryClaimStatus.RELEASED },
+				});
+				released += 1;
+			}
+			else if(claim.status === InventoryClaimStatus.FULFILLED) {
+				await this.prisma.$transaction(async (tx) => {
+					await tx.inventoryClaim.update({
+						where: { id: claim.id },
+						data: { status: InventoryClaimStatus.RELEASED },
+					});
+
+					const offering = await tx.productOffering.findUnique({
+						where: { id: claim.offeringId },
+					});
+					if(offering?.tracksOwnQty) {
+						await tx.productOffering.update({
+							where: { id: offering.id },
+							data: {
+								qtyOnHand: offering.qtyOnHand.add(claim.quantity),
+							},
+						});
+					}
+				});
+				restocked += 1;
+			}
+
+			await this.refreshOfferingProduct(claim.offeringId);
+		}
+
+		return { restocked, released };
+	}
+
 	private async refreshOfferingProduct(offeringId: string) {
 		const product = await this.prisma.catalogProduct.findFirst({
 			where: { offerings: { some: { id: offeringId } } },
