@@ -54,6 +54,12 @@ export default function ShopLayout({ children }: { children: ReactNode }) {
 						<a href="/shop/search" className="text-sky hover:underline">
 							Search
 						</a>
+						<a href="/shop/cart" className="text-sky hover:underline">
+							Cart
+						</a>
+						<a href="/shop/orders" className="text-sky hover:underline">
+							Orders
+						</a>
 						<a href="/shop/vendors" className="text-sky hover:underline">
 							Vendors
 						</a>
