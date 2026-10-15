@@ -13,18 +13,29 @@ fi
 usage() {
   cat <<'EOF'
 Usage:
-  ./dssh <global-action>
-  ./dssh <target> [build|<action>|<command...>]
+  dssh <global-action>
+  dssh <target> [build|<action>|<command...>]
+
+dssh always uses the directory that contains this script (the project
+root), not your current working directory. It is safe to run from ~.
 
 Global actions:
   stop      stop dssh app containers and local infra
   status    show dssh app containers and local infra status
+  logs      follow logs for all dssh app containers
+  logs <t>  follow logs for one target's start container
+  help      show this help
 
 Examples:
   ./dssh stop
   ./dssh status
+  ./dssh logs backend
   ./dssh backend build
   ./dssh backend start
+  ./dssh mailtest
+  ./dssh mailtest you@example.com
+  ./dssh mailtest you@example.com "SMTP check" "Hello from local"
+  ./dssh backend mailtest
   ./dssh backend npx prisma migrate dev
   ./dssh backend
 
@@ -41,6 +52,7 @@ Optional overrides:
 Optional actions from .dsshrc:
   <target>_<action>_local   command to run on the host first
   <target>_<action>         command to run inside the container
+  Extra CLI args after <action> are appended to those commands.
 
 Example:
   backend_start_local="docker compose up -d postgres redis opensearch"
@@ -49,7 +61,24 @@ Example:
 Optional global overrides:
   dssh_stop_local="..."
   dssh_status_local="..."
+  dssh_logs_local="..."
 EOF
+}
+
+append_cli_args() {
+  local cmd="$1"
+  shift
+  if [[ $# -eq 0 ]]; then
+    printf '%s\n' "$cmd"
+    return
+  fi
+  local extra
+  printf -v extra ' %q' "$@"
+  printf '%s\n' "$cmd$extra"
+}
+
+use_tty() {
+  [[ -t 0 && -t 1 ]]
 }
 
 detect_shell() {
@@ -126,7 +155,7 @@ run_container() {
   local run_args=(--rm)
   if [[ "$detached" == "1" ]]; then
     run_args+=(-d)
-  elif [[ "$interactive" == "1" ]]; then
+  elif [[ "$interactive" == "1" ]] && use_tty; then
     run_args+=(-it)
   fi
   if [[ -n "$container_name" ]]; then
@@ -165,7 +194,13 @@ run_container_shell() {
 
 run_local_shell() {
   local shell_cmd="$1"
-  bash -lc "$shell_cmd"
+  local root
+  printf -v root '%q' "$script_dir"
+  bash -lc "cd $root && $shell_cmd"
+}
+
+compose() {
+  docker compose --project-directory "$script_dir" "$@"
 }
 
 run_global_action() {
@@ -174,13 +209,14 @@ run_global_action() {
   local override_cmd="${!action_var-}"
 
   if [[ -n "$override_cmd" ]]; then
-    run_local_shell "$override_cmd"
+    shift
+    run_local_shell "$(append_cli_args "$override_cmd" "$@")"
     return 0
   fi
 
   if [[ "$action_name" == "stop" ]]; then
     docker ps -q --filter "name=^/dssh-" | xargs -r docker rm -f >/dev/null 2>&1 || true
-    docker compose stop postgres redis opensearch >/dev/null 2>&1 || true
+    compose stop postgres redis opensearch >/dev/null 2>&1 || true
     echo "Stopped dssh app containers and compose infra services."
     return 0
   fi
@@ -190,7 +226,24 @@ run_global_action() {
     docker ps --filter "name=^/dssh-" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
     echo
     echo "=== compose infra services ==="
-    docker compose ps postgres redis opensearch 2>/dev/null || docker compose ps
+    compose ps postgres redis opensearch 2>/dev/null || compose ps
+    return 0
+  fi
+
+  if [[ "$action_name" == "logs" ]]; then
+    local target="${2-}"
+    if [[ -n "$target" ]]; then
+      docker logs -f "dssh-${target}-start"
+      return 0
+    fi
+    local ids
+    ids="$(docker ps -q --filter "name=^/dssh-")"
+    if [[ -z "$ids" ]]; then
+      echo "No dssh app containers are running."
+      return 0
+    fi
+    # shellcheck disable=SC2086
+    docker logs -f $ids
     return 0
   fi
 
@@ -202,8 +255,14 @@ if [[ $# -lt 1 ]]; then
   exit 1
 fi
 
-if [[ "$1" == "stop" || "$1" == "status" ]]; then
-  run_global_action "$1"
+if [[ "$1" == "help" || "$1" == "-h" || "$1" == "--help" ]]; then
+  usage
+  exit 0
+fi
+
+global_action_var="dssh_${1}_local"
+if [[ "$1" == "stop" || "$1" == "status" || "$1" == "logs" || -n "${!global_action_var-}" ]]; then
+  run_global_action "$@"
   exit 0
 fi
 
@@ -295,7 +354,7 @@ if [[ -n "$action_local_cmd" || -n "$action_container_cmd" ]]; then
   shift
 
   if [[ -n "$action_local_cmd" ]]; then
-    run_local_shell "$action_local_cmd"
+    run_local_shell "$(append_cli_args "$action_local_cmd" "$@")"
   fi
 
   if [[ -n "$action_container_cmd" ]]; then
@@ -304,7 +363,7 @@ if [[ -n "$action_local_cmd" || -n "$action_container_cmd" ]]; then
     fi
     action_container_name="dssh-${target_name}-${action_name}"
     docker rm -f "$action_container_name" >/dev/null 2>&1 || true
-    run_container_shell "$image_name" "$context_path" "$workdir_path" "$action_attach" "$action_container_name" "$mount_node_modules" "$action_detached" "$action_container_cmd"
+    run_container_shell "$image_name" "$context_path" "$workdir_path" "$action_attach" "$action_container_name" "$mount_node_modules" "$action_detached" "$(append_cli_args "$action_container_cmd" "$@")"
     exit 0
   fi
 
