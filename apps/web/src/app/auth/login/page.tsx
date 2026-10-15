@@ -12,6 +12,11 @@ function LoginForm() {
 	const router = useRouter();
 	const searchParams = useSearchParams();
 	const googleError = searchParams.get('error') === 'google';
+	const nextRaw = searchParams.get('next');
+	const nextPath =
+		nextRaw && nextRaw.startsWith('/') && !nextRaw.startsWith('//')
+			? nextRaw
+			: '/';
 
 	const [email, setEmail] = useState('');
 	const [password, setPassword] = useState('');
@@ -27,14 +32,20 @@ function LoginForm() {
 
 		try {
 			const { pendingToken } = await loginUser(email, password);
-			router.push(`/auth/verify?pendingToken=${encodeURIComponent(pendingToken)}`);
-		} catch (submitError) {
+			const verifyQuery = new URLSearchParams({
+				pendingToken,
+				next: nextPath,
+			});
+			router.push(`/auth/verify?${verifyQuery.toString()}`);
+		}
+		catch(submitError) {
 			setError(
 				submitError instanceof AuthApiError
 					? submitError.message
 					: 'Something went wrong. Please try again.',
 			);
-		} finally {
+		}
+		finally {
 			setSubmitting(false);
 		}
 	};
@@ -46,13 +57,27 @@ function LoginForm() {
 			footer={
 				<p>
 					Need an account?{' '}
-					<a href="/auth/register" className="font-semibold text-sky hover:underline">
+					<a
+						className="
+							font-semibold
+							text-sky
+							hover:underline
+						"
+						href="/auth/register"
+					>
 						Create one
 					</a>
 				</p>
 			}
 		>
-			<form onSubmit={onSubmit} className="flex flex-col gap-4">
+			<form
+				className="
+					flex
+					flex-col
+					gap-4
+				"
+				onSubmit={onSubmit}
+			>
 				<FormField
 					label="Email address"
 					type="email"
@@ -70,7 +95,15 @@ function LoginForm() {
 				/>
 
 				<div className="-mt-2 text-right">
-					<a href="/auth/forgot-password" className="text-sm font-semibold text-sky hover:underline">
+					<a
+						className="
+							text-sm
+							font-semibold
+							text-sky
+							hover:underline
+						"
+						href="/auth/forgot-password"
+					>
 						Forgot password?
 					</a>
 				</div>
@@ -78,8 +111,6 @@ function LoginForm() {
 				<ErrorText message={error} />
 
 				<button
-					type="submit"
-					disabled={submitting}
 					className="
 						mt-2
 						rounded-full
@@ -94,14 +125,38 @@ function LoginForm() {
 						disabled:cursor-not-allowed
 						disabled:opacity-60
 					"
+					type="submit"
+					disabled={submitting}
 				>
 					{submitting ? 'Signing in…' : 'Sign in'}
 				</button>
 
-				<div className="flex items-center gap-3 text-xs uppercase tracking-wide text-slate-400">
-					<span className="h-px flex-1 bg-slate-200" />
+				<div
+					className="
+						flex
+						items-center
+						gap-3
+						text-xs
+						uppercase
+						tracking-wide
+						text-slate-400
+					"
+				>
+					<span
+						className="
+							h-px
+							flex-1
+							bg-slate-200
+						"
+					/>
 					or
-					<span className="h-px flex-1 bg-slate-200" />
+					<span
+						className="
+							h-px
+							flex-1
+							bg-slate-200
+						"
+					/>
 				</div>
 
 				<GoogleButton />

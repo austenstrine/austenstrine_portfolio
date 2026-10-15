@@ -6,15 +6,15 @@ import { ProjectsService } from './projects.service';
 @ApiTags('projects')
 @Controller('projects')
 export class ProjectsController {
-  constructor(private readonly projectsService: ProjectsService) {}
+	constructor(private readonly projectsService: ProjectsService) {}
 
-  @Get()
-  list() {
-    return this.projectsService.list();
-  }
+	@Get()
+	list() {
+		return this.projectsService.list();
+	}
 
-  @Post()
-  create(@Body() payload: CreateProjectDto) {
-    return this.projectsService.create(payload);
-  }
+	@Post()
+	create(@Body() payload: CreateProjectDto) {
+		return this.projectsService.create(payload);
+	}
 }

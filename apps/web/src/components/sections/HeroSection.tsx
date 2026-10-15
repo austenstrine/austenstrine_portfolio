@@ -27,8 +27,6 @@ export function HeroSection() {
 				"
 			>
 				<img
-					src="/pp1_sq_sm.jpg"
-					alt="Austen Strine profile"
 					className="
 						mx-auto
 						h-52
@@ -39,6 +37,8 @@ export function HeroSection() {
 						object-cover
 						shadow-2xl
 					"
+					src="/pp1_sq_sm.jpg"
+					alt="Austen Strine profile"
 				/>
 				<div>
 					<h1
@@ -61,25 +61,52 @@ export function HeroSection() {
 					>
 						Full-Stack Developer who makes teams sharper, steadier, and faster.
 					</p>
-					<a
-						href="#contact"
+					<div
 						className="
 							mt-8
-							inline-block
-							rounded-full
-							bg-white
-							px-6
-							py-3
-							text-sm
-							font-semibold
-							text-ink
-							transition
-							hover:-translate-y-0.5
-							hover:bg-frost
+							flex
+							flex-wrap
+							gap-3
 						"
 					>
-						Get In Touch
-					</a>
+						<a
+							className="
+								inline-block
+								rounded-full
+								bg-white
+								px-6
+								py-3
+								text-sm
+								font-semibold
+								text-ink
+								transition
+								hover:-translate-y-0.5
+								hover:bg-frost
+							"
+							href="/shop/start"
+						>
+							Start marketplace walkthrough
+						</a>
+						<a
+							className="
+								inline-block
+								rounded-full
+								border
+								border-white/60
+								px-6
+								py-3
+								text-sm
+								font-semibold
+								text-white
+								transition
+								hover:-translate-y-0.5
+								hover:bg-white/10
+							"
+							href="#contact"
+						>
+							Get in touch
+						</a>
+					</div>
 				</div>
 			</div>
 		</section>

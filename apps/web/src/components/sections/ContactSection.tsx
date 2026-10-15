@@ -77,7 +77,7 @@ export function ContactSection() {
 	const onCopied = () => {
 		setShowToast(true);
 
-		if (toastTimeoutRef.current) {
+		if(toastTimeoutRef.current) {
 			clearTimeout(toastTimeoutRef.current);
 		}
 
@@ -89,7 +89,6 @@ export function ContactSection() {
 
 	return (
 		<section
-			id="contact"
 			className="
 				rounded-2xl
 				bg-gradient-to-br
@@ -99,6 +98,7 @@ export function ContactSection() {
 				text-white
 				shadow-xl
 			"
+			id="contact"
 		>
 			<h2 className="text-3xl font-semibold">
 				Get In Touch

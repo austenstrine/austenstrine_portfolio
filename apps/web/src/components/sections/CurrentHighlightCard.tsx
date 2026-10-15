@@ -38,7 +38,6 @@ export function CurrentHighlightCard({
 			`}
 		>
 			<div
-				aria-hidden="true"
 				className={`
 					pointer-events-none
 					absolute inset-0
@@ -48,15 +47,12 @@ export function CurrentHighlightCard({
 					transition-opacity duration-300 ease-out
 					${showWrapper ? 'opacity-100' : 'opacity-0'}
 				`}
+				aria-hidden="true"
 			/>
 
 			{
 				onClose && (
 					<button
-						type="button"
-						onClick={onClose}
-						aria-label="Dismiss current highlight"
-						tabIndex={showWrapper ? 0 : -1}
 						className={`
 							absolute right-3 top-3 z-10
 							rounded-full p-1.5 text-slate-200
@@ -65,6 +61,10 @@ export function CurrentHighlightCard({
 							focus:outline-none focus:ring-2 focus:ring-white/40
 							${showWrapper ? 'opacity-100' : 'pointer-events-none opacity-0'}
 						`}
+						type="button"
+						onClick={onClose}
+						aria-label="Dismiss current highlight"
+						tabIndex={showWrapper ? 0 : -1}
 					>
 						<svg
 							aria-hidden="true"
@@ -92,12 +92,12 @@ export function CurrentHighlightCard({
 				`}
 			>
 				<div
-					aria-hidden={!showWrapper}
 					className={`
 						grid
 						transition-[grid-template-rows] duration-300 ease-out
 						${showWrapper ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}
 					`}
+					aria-hidden={!showWrapper}
 				>
 					<div className="overflow-hidden">
 						<p
@@ -127,12 +127,12 @@ export function CurrentHighlightCard({
 				}
 
 				<div
-					aria-hidden={!showWrapper}
 					className={`
 						grid
 						transition-[grid-template-rows] duration-300 ease-out
 						${showWrapper ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}
 					`}
+					aria-hidden={!showWrapper}
 				>
 					<div className="overflow-hidden">
 						<div
@@ -163,7 +163,6 @@ export function CurrentHighlightCard({
 							</p>
 
 							<div
-								id={body.stackId}
 								className="
 									mt-5
 									rounded-xl
@@ -172,6 +171,7 @@ export function CurrentHighlightCard({
 									bg-white/10
 									p-4
 								"
+								id={body.stackId}
 							>
 								<p
 									className="
@@ -195,7 +195,6 @@ export function CurrentHighlightCard({
 									{
 										body.stackItems.map((item) => (
 											<span
-												key={item}
 												className="
 													rounded-full
 													bg-white/15
@@ -205,6 +204,7 @@ export function CurrentHighlightCard({
 													font-medium
 													text-white
 												"
+												key={item}
 											>
 												{item}
 											</span>
@@ -213,7 +213,14 @@ export function CurrentHighlightCard({
 								</div>
 							</div>
 
-							<div className="mt-5 space-y-2 text-sm text-slate-100">
+							<div
+								className="
+									mt-5
+									space-y-2
+									text-sm
+									text-slate-100
+								"
+							>
 								{
 									body.notes.map((note) => (
 										<p key={note}>
@@ -234,17 +241,17 @@ export function CurrentHighlightCard({
 								{
 									body.actions.map((action) => (
 										<a
-											key={action.href}
-											href={action.href}
-											target="_blank"
-											rel="noreferrer"
-											tabIndex={showWrapper ? 0 : -1}
 											className={
 												(action.variant === 'outline'
 													? 'rounded-full border border-white/30 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/10'
 													: 'rounded-full bg-white px-4 py-2 text-sm font-semibold text-ink transition hover:-translate-y-0.5 hover:bg-frost'
 												)
 											}
+											key={action.href}
+											href={action.href}
+											target="_blank"
+											rel="noreferrer"
+											tabIndex={showWrapper ? 0 : -1}
 										>
 											{action.label}
 										</a>

@@ -5,14 +5,13 @@ import { useSession } from '../lib/useSession';
 export function AccountMenu() {
 	const { user, loading, signOut } = useSession();
 
-	if (loading) {
+	if(loading) {
 		return null;
 	}
 
-	if (!user) {
+	if(!user) {
 		return (
 			<a
-				href="/auth/login"
 				className="
 					absolute
 					right-4
@@ -29,6 +28,7 @@ export function AccountMenu() {
 					transition
 					hover:bg-white/20
 				"
+				href="/auth/login"
 			>
 				Sign in
 			</a>
@@ -59,8 +59,6 @@ export function AccountMenu() {
 				{user.email}
 			</span>
 			<button
-				type="button"
-				onClick={() => void signOut()}
 				className="
 					rounded-full
 					bg-white/15
@@ -69,6 +67,8 @@ export function AccountMenu() {
 					transition
 					hover:bg-white/25
 				"
+				type="button"
+				onClick={() => void signOut()}
 			>
 				Sign out
 			</button>

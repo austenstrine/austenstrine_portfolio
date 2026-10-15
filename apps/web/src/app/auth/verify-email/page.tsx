@@ -10,6 +10,13 @@ import { AuthApiError, verifyEmail } from '../../../lib/auth-api';
 function VerifyEmailForm() {
 	const router = useRouter();
 	const searchParams = useSearchParams();
+	const nextPath = (() => {
+		const raw = searchParams.get('next');
+		if(!raw || !raw.startsWith('/') || raw.startsWith('//')) {
+			return '/';
+		}
+		return raw;
+	})();
 	const [email, setEmail] = useState(searchParams.get('email') ?? '');
 	const [code, setCode] = useState('');
 	const [error, setError] = useState<string | null>(null);
@@ -22,14 +29,16 @@ function VerifyEmailForm() {
 
 		try {
 			await verifyEmail(email, code);
-			router.push('/');
-		} catch (submitError) {
+			router.push(nextPath);
+		}
+		catch(submitError) {
 			setError(
 				submitError instanceof AuthApiError
 					? submitError.message
 					: 'Something went wrong. Please try again.',
 			);
-		} finally {
+		}
+		finally {
 			setSubmitting(false);
 		}
 	};
@@ -39,7 +48,14 @@ function VerifyEmailForm() {
 			title="Confirm your email"
 			subtitle="We sent a 6-digit code to your email address. Enter it below to finish creating your account."
 		>
-			<form onSubmit={onSubmit} className="flex flex-col gap-4">
+			<form
+				className="
+					flex
+					flex-col
+					gap-4
+				"
+				onSubmit={onSubmit}
+			>
 				<FormField
 					label="Email address"
 					type="email"
@@ -60,8 +76,6 @@ function VerifyEmailForm() {
 				<ErrorText message={error} />
 
 				<button
-					type="submit"
-					disabled={submitting}
 					className="
 						mt-2
 						rounded-full
@@ -76,6 +90,8 @@ function VerifyEmailForm() {
 						disabled:cursor-not-allowed
 						disabled:opacity-60
 					"
+					type="submit"
+					disabled={submitting}
 				>
 					{submitting ? 'Verifying…' : 'Verify email'}
 				</button>

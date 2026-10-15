@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client';
+import { seedCatalog } from './catalog-seed';
 
 const prisma = new PrismaClient();
 
@@ -43,6 +44,8 @@ async function main() {
 			update: project,
 		});
 	}
+
+	await seedCatalog(prisma);
 }
 
 main()

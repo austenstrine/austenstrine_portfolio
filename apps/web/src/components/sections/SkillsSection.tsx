@@ -20,7 +20,6 @@ const skills = [
 export function SkillsSection() {
 	return (
 		<section
-			id="skills"
 			className="
 				rounded-2xl
 				border
@@ -29,6 +28,7 @@ export function SkillsSection() {
 				p-8
 				shadow-sm
 			"
+			id="skills"
 		>
 			<h2
 				className="
@@ -50,7 +50,6 @@ export function SkillsSection() {
 				{
 					skills.map((skill) => (
 						<article
-							key={skill.title}
 							className="
 								rounded-xl
 								border
@@ -58,6 +57,7 @@ export function SkillsSection() {
 								bg-slate-50
 								p-5
 							"
+							key={skill.title}
 						>
 							<h3
 								className="

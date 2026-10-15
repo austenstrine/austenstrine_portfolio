@@ -6,7 +6,7 @@ import { RedisService } from './redis/redis.service';
 
 @Global()
 @Module({
-  providers: [PrismaService, RedisService, OpenSearchService, MailService],
-  exports: [PrismaService, RedisService, OpenSearchService, MailService],
+	providers: [PrismaService, RedisService, OpenSearchService, MailService],
+	exports: [PrismaService, RedisService, OpenSearchService, MailService],
 })
 export class InfraModule {}
