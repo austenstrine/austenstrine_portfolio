@@ -32,6 +32,7 @@ Examples:
   ./dssh logs backend
   ./dssh backend build
   ./dssh backend start
+  ./dssh backend start -nobuild
   ./dssh mailtest
   ./dssh mailtest you@example.com
   ./dssh mailtest you@example.com "SMTP check" "Hello from local"
@@ -57,6 +58,9 @@ Optional actions from .dsshrc:
 Example:
   backend_start_local="docker compose up -d postgres redis opensearch"
   backend_start="npm run dev -w apps/api"
+
+start always rebuilds the target image first. Pass -nobuild (or --nobuild)
+to skip that rebuild when you know the image is current.
 
 Optional global overrides:
   dssh_stop_local="..."
@@ -353,12 +357,29 @@ fi
 if [[ -n "$action_local_cmd" || -n "$action_container_cmd" ]]; then
   shift
 
+  skip_build=0
+  action_args=()
+  for arg in "$@"; do
+    case "$arg" in
+      -nobuild|--nobuild)
+        skip_build=1
+        ;;
+      *)
+        action_args+=("$arg")
+        ;;
+    esac
+  done
+  set -- "${action_args[@]+"${action_args[@]}"}"
+
   if [[ -n "$action_local_cmd" ]]; then
     run_local_shell "$(append_cli_args "$action_local_cmd" "$@")"
   fi
 
   if [[ -n "$action_container_cmd" ]]; then
-    if ! docker image inspect "$image_name" >/dev/null 2>&1; then
+    if [[ "$action_name" == "start" && "$skip_build" != "1" ]]; then
+      echo "Building $image_name before start (pass -nobuild to skip)..."
+      build_image "$image_name" "$dockerfile_path" "$context_path"
+    elif ! docker image inspect "$image_name" >/dev/null 2>&1; then
       build_image "$image_name" "$dockerfile_path" "$context_path"
     fi
     action_container_name="dssh-${target_name}-${action_name}"

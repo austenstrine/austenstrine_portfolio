@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "module": "Node16",
+    "module": "commonjs",
     "declaration": true,
     "removeComments": true,
     "emitDecoratorMetadata": true,
@@ -14,12 +14,8 @@
     "strict": true,
     "skipLibCheck": true,
     "esModuleInterop": true,
-    "moduleResolution": "node16",
-    "baseUrl": ".",
-    "paths": {
-      "stripe": ["../../node_modules/stripe"],
-      "stripe/*": ["../../node_modules/stripe/*"]
-    }
+    "moduleResolution": "node",
+    "baseUrl": "./"
   },
   "include": ["src", "test"]
 }
