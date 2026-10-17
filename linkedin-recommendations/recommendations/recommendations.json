@@ -1,0 +1,29 @@
+[
+  {
+    "name": "Brad Green",
+    "headline": "CIO, GoGreen / PlumbersStock.com",
+    "date": "August 18, 2025",
+    "relationship": "Brad managed Austen directly",
+    "profileUrl": "https://www.linkedin.com/in/bradgreenutah/",
+    "text": "Austen is a brilliant coder. His ability to discover, learn, and implement new ideas and concepts is amazing. He has a unique mind; he is self-motivated, takes initiative, and values honesty and integrity. Austen takes pride in his work, and is driven by a desire to complete difficult challenges. If he has a challenging assignment, clear expectations, and flexibility in methods, Austen will work tirelessly to complete it. He holds himself to the highest standards, and thrives on accountability.",
+    "image": "/recommendations/brad-green.png"
+  },
+  {
+    "name": "Cliff Kimber",
+    "headline": "Product Development Manager, GoGreen",
+    "date": "August 13, 2025",
+    "relationship": "Cliff worked with Austen but on different teams",
+    "profileUrl": "https://www.linkedin.com/in/cliff-kimber-01801099/",
+    "text": "I had the pleasure of working with Austen for a couple of years. During that time, he consistently demonstrated qualities that make him an a valuable team member.\nAusten approaches his work with genuine curiosity and a strong desire to understand the systems and technologies he works with. As a programmer, he exhibits a deep interest in getting to the root of issues, often analyzing problems thoroughly before offering solutions. His analytical mindset, coupled with his willingness to dive into complex challenges, makes him exceptionally effective in tackling both routine and extraordinary technical problems.\n\nWhat truly stands out about Austen is his positive attitude and eagerness to take initiative. Regardless of the task at hand, he remains approachable, solution-oriented, and enthusiastic about contributing wherever he can. Whether investigating a difficult bug or collaborating on new feature development, Austen brings a dependable energy to his environment. His combination of technical curiosity, problem-solving skills, and collaborative spirit makes Austen a strong asset for any organization.",
+    "image": "/recommendations/cliff-kimber.png"
+  },
+  {
+    "name": "Anthony Gallegos",
+    "headline": "Former COO, Lumber Marketplace",
+    "date": "June 30, 2025",
+    "relationship": "Anthony managed Austen directly",
+    "profileUrl": "https://www.linkedin.com/in/robertanthonygallegos/",
+    "text": "I had the privilege of hiring and working alongside Austen Strine as one of the very first developers at Lumber Marketplace, and I can confidently say he’s one of the most dedicated, hard-working, and genuinely good people I’ve had the pleasure of leading.\n\nFrom day one, Austen took on massive challenges and never once backed down. Whether it was complex backend architecture, launching new features under tight deadlines, or jumping in to solve unexpected fires, Austen was always dependable and steady. He truly cares about the product, the people he works with, and the mission behind the work. He became a foundational piece of not just our engineering culture, but the overall company culture, and earned the respect of the entire team.\n\nBeyond his technical talent, Austen is the kind of teammate every organization hopes for. He is humble, kind, collaborative, and full of integrity. He brought positivity and problem-solving to every situation he entered, and his loyalty was never contested, especially in the early, scrappy stages of our company.\n\nAny team would be lucky to have Austen on board. I’m excited to see where he lands next, and I know he’ll continue to make a meaningful impact wherever he goes.",
+    "image": "/recommendations/anthony-gallegos.png"
+  }
+]
