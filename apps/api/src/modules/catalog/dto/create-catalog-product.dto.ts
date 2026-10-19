@@ -159,6 +159,12 @@ export class CreateCatalogProductDto {
 	@IsArray()
 	attributes?: ProductAttributeInputDto[];
 
+	@IsOptional()
+	@IsArray()
+	@IsString({ each: true })
+	@MaxLength(60, { each: true })
+	tags?: string[];
+
 	@ValidateNested({ each: true })
 	@Type(() => ProductOfferingInputDto)
 	@IsArray()

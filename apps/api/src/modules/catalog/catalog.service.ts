@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { Prisma, ProductOfferingRole } from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/library';
+import { MailService } from '../../infra/mail/mail.service';
 import { PrismaService } from '../../infra/prisma/prisma.service';
 import { InventoryService } from './inventory/inventory.service';
 import { VendorAccessService } from './vendor-access.service';
@@ -13,6 +14,7 @@ import { CreateBrokenPackDto } from './dto/create-broken-pack.dto';
 import { CreateCatalogProductDto } from './dto/create-catalog-product.dto';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { CreateUomDto } from './dto/create-uom.dto';
+import { RequestCategoryDto } from './dto/request-category.dto';
 import { TrimInventoryDto } from './dto/trim-inventory.dto';
 import { UpdateCatalogProductDto } from './dto/update-catalog-product.dto';
 
@@ -39,6 +41,7 @@ export class CatalogService {
 		private readonly prisma: PrismaService,
 		private readonly inventory: InventoryService,
 		private readonly vendorAccess: VendorAccessService,
+		private readonly mail: MailService,
 	) {}
 
 	listUoms() {
@@ -73,7 +76,9 @@ export class CatalogService {
 		});
 	}
 
-	async createCategory(dto: CreateCategoryDto) {
+	async createCategory(userId: string, dto: CreateCategoryDto) {
+		await this.vendorAccess.assertIsSuperVendorMember(userId);
+
 		const slug = dto.slug.trim().toLowerCase();
 		const name = dto.name.trim();
 
@@ -102,6 +107,93 @@ export class CatalogService {
 				_count: { select: { products: true, children: true } },
 			},
 		});
+	}
+
+	async requestCategory(userId: string, userEmail: string, dto: RequestCategoryDto) {
+		const memberships = await this.prisma.vendorMember.findMany({
+			where: { userId },
+			include: { vendor: { select: { name: true, slug: true } } },
+			take: 10,
+		});
+		if(memberships.length === 0) {
+			throw new BadRequestException('Join a vendor organization before requesting categories.');
+		}
+
+		const to = process.env.CATEGORY_REQUEST_EMAIL ?? 'categories@austenstrine.dev';
+		const vendorLines = memberships
+			.map((row) => `- ${row.vendor.name} (/shop/${row.vendor.slug}) as ${row.role}`)
+			.join('\n');
+		const text = [
+			`Category request from ${userEmail}`,
+			'',
+			`Requested name: ${dto.name.trim()}`,
+			`Suggested parent: ${dto.suggestedParent?.trim() || '(none)'}`,
+			`Note: ${dto.note?.trim() || '(none)'}`,
+			'',
+			'Requester vendor memberships:',
+			vendorLines,
+		].join('\n');
+
+		await this.mail.sendMailWithAttachment({
+			to,
+			subject: `Category request: ${dto.name.trim()}`,
+			text,
+			html: `<pre style="font-family:inherit;white-space:pre-wrap;">${text}</pre>`,
+		});
+
+		return { message: 'Category request sent. The marketplace team will review it.' };
+	}
+
+	async listPopularTags(input: {
+		userId: string;
+		vendorId?: string;
+		limit?: number;
+	}) {
+		const limit = Math.min(Math.max(input.limit ?? 40, 1), 100);
+		const where: Prisma.CatalogProductWhereInput = { active: true };
+		if(input.vendorId) {
+			await this.vendorAccess.assertCanEditVendor(input.userId, input.vendorId);
+			where.vendorId = input.vendorId;
+		}
+
+		const products = await this.prisma.catalogProduct.findMany({
+			where,
+			select: { tags: true, vendorId: true },
+			take: 2000,
+		});
+
+		const counts = new Map<string, number>();
+		for(const product of products) {
+			for(const tag of product.tags) {
+				const key = tag.trim();
+				if(!key) {
+					continue;
+				}
+				counts.set(key, (counts.get(key) ?? 0) + 1);
+			}
+		}
+
+		return [...counts.entries()]
+			.sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+			.slice(0, limit)
+			.map(([tag, count]) => ({ tag, count }));
+	}
+
+	normalizeTags(tags: string[] | undefined): string[] | undefined {
+		if(tags === undefined) {
+			return undefined;
+		}
+		const seen = new Set<string>();
+		const normalized: string[] = [];
+		for(const raw of tags) {
+			const tag = raw.trim().replace(/\s+/g, ' ');
+			if(!tag || seen.has(tag)) {
+				continue;
+			}
+			seen.add(tag);
+			normalized.push(tag.slice(0, 60));
+		}
+		return normalized.slice(0, 40);
 	}
 
 	async searchProducts(query: {
@@ -173,6 +265,8 @@ export class CatalogService {
 		}));
 		await this.assertOfferingIdentitiesUniqueForVendor(dto.vendorId, offeringIdentities);
 
+		const tags = this.normalizeTags(dto.tags) ?? [];
+
 		const product = await this.prisma.catalogProduct.create({
 			data: {
 				vendorId: dto.vendorId,
@@ -180,6 +274,7 @@ export class CatalogService {
 				slug: dto.slug,
 				title: dto.title,
 				description: dto.description,
+				tags,
 				inventoryFromAllocations: dto.inventoryFromAllocations ?? false,
 				breakFeeMode: dto.breakFeeMode,
 				breakFeeCents: dto.breakFeeCents,
@@ -229,6 +324,8 @@ export class CatalogService {
 	async updateProduct(userId: string, productId: string, dto: UpdateCatalogProductDto) {
 		await this.vendorAccess.assertCanEditProduct(userId, productId);
 
+		const tags = this.normalizeTags(dto.tags);
+
 		await this.prisma.catalogProduct.update({
 			where: { id: productId },
 			data: {
@@ -239,6 +336,7 @@ export class CatalogService {
 				categoryId: dto.categoryId,
 				breakFeeMode: dto.breakFeeMode,
 				breakFeeCents: dto.breakFeeCents,
+				...(tags !== undefined ? { tags } : {}),
 			},
 		});
 
@@ -602,7 +700,11 @@ export class CatalogService {
 
 		return {
 			id: product.id,
-			vendor: { slug: product.vendor.slug, name: product.vendor.name },
+			vendor: {
+				id: product.vendor.id,
+				slug: product.vendor.slug,
+				name: product.vendor.name,
+			},
 			category: product.category
 				? { slug: product.category.slug, name: product.category.name }
 				: null,
@@ -610,6 +712,7 @@ export class CatalogService {
 			slug: product.slug,
 			title: product.title,
 			description: product.description,
+			tags: product.tags,
 			inventoryFromAllocations: product.inventoryFromAllocations,
 			breakFeeMode: product.breakFeeMode,
 			breakFeeCents: product.breakFeeCents,
@@ -633,7 +736,11 @@ export class CatalogService {
 	) {
 		return {
 			id: product.id,
-			vendor: { slug: product.vendor.slug, name: product.vendor.name },
+			vendor: {
+				id: product.vendor.id,
+				slug: product.vendor.slug,
+				name: product.vendor.name,
+			},
 			category: product.category
 				? { slug: product.category.slug, name: product.category.name }
 				: null,
@@ -641,6 +748,7 @@ export class CatalogService {
 			slug: product.slug,
 			title: product.title,
 			description: product.description,
+			tags: product.tags,
 			inventoryFromAllocations: product.inventoryFromAllocations,
 			breakFeeMode: product.breakFeeMode,
 			breakFeeCents: product.breakFeeCents,

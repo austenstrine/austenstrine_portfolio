@@ -67,4 +67,25 @@ export class VendorAccessService {
 
 		await this.assertCanEditVendor(actor.userId, vendorId);
 	}
+
+	async isSuperVendorMember(userId: string): Promise<boolean> {
+		const membership = await this.prisma.vendorMember.findFirst({
+			where: {
+				userId,
+				role: { in: editorRoles },
+				vendor: { isSuperVendor: true },
+			},
+			select: { id: true },
+		});
+		return Boolean(membership);
+	}
+
+	async assertIsSuperVendorMember(userId: string): Promise<void> {
+		const allowed = await this.isSuperVendorMember(userId);
+		if(!allowed) {
+			throw new ForbiddenException(
+				'Only the austenstrine.dev supervendor can manage marketplace categories.',
+			);
+		}
+	}
 }
