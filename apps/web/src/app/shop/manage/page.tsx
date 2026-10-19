@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import {
 	listMyVendors,
 	searchCatalogProducts,
@@ -8,9 +8,10 @@ import {
 	type VendorSummary,
 } from '../../../lib/catalog-api';
 import { useSession } from '../../../lib/useSession';
+import { RequireAccess } from '../../../components/auth/RequireAccess';
 
-export default function ShopManagePage() {
-	const { user, loading } = useSession();
+function ShopManageContent() {
+	const { user } = useSession();
 	const [products, setProducts] = useState<CatalogProductSummary[]>([]);
 	const [vendors, setVendors] = useState<VendorSummary[]>([]);
 
@@ -49,118 +50,11 @@ export default function ShopManagePage() {
 				vendor. Create a vendor organization first if you do not have one yet.
 			</p>
 
-			{loading
-				? (
-					<p className="text-sm text-slate-500">
-						Checking session…
-					</p>
-				)
-				: null}
 			{user
 				? (
 					<p className="text-sm text-slate-600">
 						Signed in as {user.email}
 					</p>
-				)
-				: (
-					<p className="text-sm text-amber-800">
-						Sign in to manage vendor organizations and edit products you are allowed to manage.
-					</p>
-				)
-			}
-
-			{user
-				? (
-					<section
-						className="
-							flex
-							flex-col
-							gap-3
-						"
-					>
-						<div
-							className="
-								flex
-								items-center
-								justify-between
-								gap-3
-							"
-						>
-							<h2 className="text-lg font-semibold">
-								Your vendors
-							</h2>
-							<a
-								className="
-									text-sm
-									font-semibold
-									text-sky
-									hover:underline
-								"
-								href="/shop/vendors"
-							>
-								Manage vendors
-							</a>
-						</div>
-						{vendors.length === 0
-							? (
-								<p className="text-sm text-slate-500">
-									No vendor memberships yet.{' '}
-									<a
-										className="
-											font-semibold
-											text-sky
-											hover:underline
-										"
-										href="/shop/vendors"
-									>
-										Create one
-									</a>
-								</p>
-							)
-							: (
-								vendors.map((vendor) => (
-									<div
-										className="
-											rounded-xl
-											border
-											border-slate-200
-											bg-white
-											p-4
-										"
-										key={vendor.id}
-									>
-										<a
-											className="
-												block
-												hover:text-sky
-											"
-											href={`/shop/vendors/${vendor.id}`}
-										>
-											<p className="font-semibold">
-												{vendor.name}
-											</p>
-											<p className="text-sm text-slate-600">
-												{vendor.myRole} · {vendor.productCount} products
-											</p>
-										</a>
-										<a
-											className="
-												mt-2
-												inline-block
-												text-sm
-												font-semibold
-												text-sky
-												hover:underline
-											"
-											href={`/shop/vendors/${vendor.id}/import`}
-										>
-											Bulk CSV import
-										</a>
-									</div>
-								))
-							)
-						}
-					</section>
 				)
 				: null}
 
@@ -171,9 +65,76 @@ export default function ShopManagePage() {
 					gap-3
 				"
 			>
+				<div
+					className="
+						flex
+						items-center
+						justify-between
+						gap-3
+					"
+				>
+					<h2 className="text-lg font-semibold">
+						Your vendors
+					</h2>
+					<a
+						className="
+							text-sm
+							font-semibold
+							text-sky
+							hover:underline
+						"
+						href="/shop/vendors"
+					>
+						Manage vendors
+					</a>
+				</div>
+				{vendors.length === 0
+					? (
+						<p className="text-sm text-slate-500">
+							No vendor memberships yet.
+						</p>
+					)
+					: null}
+				{vendors.map((vendor) => (
+					<a
+						className="
+							rounded-xl
+							border
+							border-slate-200
+							bg-white
+							p-4
+							hover:border-sky
+						"
+						key={vendor.id}
+						href={`/shop/vendors/${vendor.id}`}
+					>
+						<p className="font-semibold">
+							{vendor.name}
+						</p>
+						<p className="text-sm text-slate-600">
+							/shop/{vendor.slug} · {vendor.myRole}
+						</p>
+					</a>
+				))}
+			</section>
+
+			<section
+				className="
+					flex
+					flex-col
+					gap-3
+				"
+			>
 				<h2 className="text-lg font-semibold">
-					Catalog
+					Catalog products
 				</h2>
+				{products.length === 0
+					? (
+						<p className="text-sm text-slate-500">
+							No products in the catalog yet.
+						</p>
+					)
+					: null}
 				{products.map((product) => (
 					<a
 						className="
@@ -187,15 +148,39 @@ export default function ShopManagePage() {
 						key={product.id}
 						href={`/shop/${product.vendor.slug}/${product.slug}`}
 					>
-						<p className="font-semibold">
-							{product.title}
-						</p>
-						<p className="text-sm text-slate-600">
+						<p
+							className="
+								text-xs
+								font-semibold
+								uppercase
+								tracking-wide
+								text-slate-500
+							"
+						>
 							{product.vendor.name}
+						</p>
+						<p className="mt-1 font-semibold">
+							{product.title}
 						</p>
 					</a>
 				))}
 			</section>
 		</div>
+	);
+}
+
+export default function ShopManagePage() {
+	return (
+		<Suspense
+			fallback={
+				<p className="text-sm text-slate-500">
+					Loading…
+				</p>
+			}
+		>
+			<RequireAccess vendorRequired reasonKey="manage">
+				<ShopManageContent />
+			</RequireAccess>
+		</Suspense>
 	);
 }

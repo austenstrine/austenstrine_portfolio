@@ -1,6 +1,10 @@
 import { googleSignInUrl } from '../../lib/auth-api';
 
-export function GoogleButton() {
+type GoogleButtonProps = {
+	onBeforeNavigate?: () => void;
+};
+
+export function GoogleButton({ onBeforeNavigate }: GoogleButtonProps) {
 	return (
 		<a
 			className="
@@ -22,6 +26,9 @@ export function GoogleButton() {
 				hover:text-sky
 			"
 			href={googleSignInUrl()}
+			onClick={() => {
+				onBeforeNavigate?.();
+			}}
 		>
 			<svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
 				<path

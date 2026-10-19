@@ -15,6 +15,7 @@ import { dollarsToCents, slugify } from '../../../../lib/catalog-product-form';
 import { useSession } from '../../../../lib/useSession';
 import { CatalogWorkspaceSwitcher } from '../../../../components/catalog/CatalogWorkspaceSwitcher';
 import { UrlSlugField } from '../../../../components/catalog/UrlSlugField';
+import { RequireAccess } from '../../../../components/auth/RequireAccess';
 
 type OfferingMode = 'SINGLE' | 'PACK' | 'PIECE' | 'BOTH';
 
@@ -231,29 +232,10 @@ function NewProductForm() {
 		}
 	};
 
-	if(sessionLoading) {
+	if(sessionLoading || !user) {
 		return (
 			<p className="text-sm text-slate-500">
 				Checking session…
-			</p>
-		);
-	}
-
-	if(!user) {
-		return (
-			<p className="text-sm text-amber-800">
-				Sign in to create products.
-				{' '}
-				<a
-					className="
-						font-semibold
-						text-sky
-						hover:underline
-					"
-					href="/auth/login"
-				>
-					Sign in
-				</a>
 			</p>
 		);
 	}
@@ -949,7 +931,9 @@ export default function NewProductPage() {
 				</p>
 			}
 		>
-			<NewProductForm />
+			<RequireAccess vendorRequired reasonKey="products">
+				<NewProductForm />
+			</RequireAccess>
 		</Suspense>
 	);
 }

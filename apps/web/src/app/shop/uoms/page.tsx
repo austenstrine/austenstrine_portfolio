@@ -1,10 +1,11 @@
 'use client';
 
-import { useCallback, useEffect, useState, type FormEvent } from 'react';
+import { Suspense, useCallback, useEffect, useState, type FormEvent } from 'react';
 import { createUom, listUoms, type UnitOfMeasure } from '../../../lib/catalog-api';
+import { RequireAccess } from '../../../components/auth/RequireAccess';
 import { useSession } from '../../../lib/useSession';
 
-export default function UomManagePage() {
+function UomManagePageContent() {
 	const { user, loading: sessionLoading } = useSession();
 	const [uoms, setUoms] = useState<UnitOfMeasure[]>([]);
 	const [loading, setLoading] = useState(true);
@@ -87,24 +88,6 @@ export default function UomManagePage() {
 					before you price offerings.
 				</p>
 			</div>
-
-			{!sessionLoading && !user
-				? (
-					<p className="text-sm text-amber-800">
-						Sign in to create UOMs.{' '}
-						<a
-							className="
-								font-semibold
-								text-sky
-								hover:underline
-							"
-							href="/auth/login"
-						>
-							Sign in
-						</a>
-					</p>
-				)
-				: null}
 
 			{user
 				? (
@@ -290,5 +273,15 @@ export default function UomManagePage() {
 				))}
 			</section>
 		</div>
+	);
+}
+
+export default function UomManagePage() {
+	return (
+		<Suspense fallback={<p className="text-sm text-slate-500">Loading…</p>}>
+			<RequireAccess vendorRequired reasonKey="uoms">
+				<UomManagePageContent />
+			</RequireAccess>
+		</Suspense>
 	);
 }

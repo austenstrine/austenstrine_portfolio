@@ -8,6 +8,7 @@ import {
 	type CatalogProductDetail,
 } from '../../lib/catalog-api';
 import { upsertCartLine } from '../../lib/checkout-api';
+import { ACCESS_REASONS, buildLoginUrl } from '../../lib/accessGate';
 import { useSession } from '../../lib/useSession';
 import { ProductQuickEdit } from './ProductQuickEdit';
 
@@ -36,7 +37,10 @@ export function ProductDetailClient({ initialProduct }: ProductDetailClientProps
 		}
 		if(!user) {
 			router.push(
-				`/auth/login?next=${encodeURIComponent(window.location.pathname)}`,
+				buildLoginUrl({
+					next: window.location.pathname,
+					reason: ACCESS_REASONS.cart,
+				}),
 			);
 			return;
 		}

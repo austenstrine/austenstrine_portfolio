@@ -48,6 +48,7 @@ model User {
   refreshTokens RefreshToken[]
   emailOtps     EmailOtp[]
   vendorMemberships VendorMember[]
+  vendorInvitesSent VendorInvite[] @relation("VendorInvitesSent")
   vendorAppPasswordsCreated VendorAppPassword[]
   catalogImportJobs CatalogImportJob[]
   carts Cart[]
@@ -203,6 +204,7 @@ model Vendor {
   updatedAt                   DateTime  @updatedAt
 
   members  VendorMember[]
+  invites  VendorInvite[]
   products CatalogProduct[]
   appPasswords VendorAppPassword[]
   importJobs CatalogImportJob[]
@@ -214,6 +216,24 @@ model Vendor {
 
   @@index([name])
   @@index([stripeConnectAccountId])
+}
+
+model VendorInvite {
+  id              String           @id @default(uuid())
+  vendorId        String
+  vendor          Vendor           @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  email           String
+  role            VendorMemberRole @default(EDITOR)
+  token           String           @unique
+  invitedByUserId String
+  invitedBy       User             @relation("VendorInvitesSent", fields: [invitedByUserId], references: [id], onDelete: Cascade)
+  expiresAt       DateTime
+  acceptedAt      DateTime?
+  revokedAt       DateTime?
+  createdAt       DateTime         @default(now())
+
+  @@index([vendorId, email])
+  @@index([email])
 }
 
 model PlatformFeeConfig {

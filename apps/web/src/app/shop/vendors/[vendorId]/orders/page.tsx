@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import {
 	formatMoney,
 	listVendorOrders,
@@ -10,9 +10,10 @@ import {
 	shipVendorOrder,
 	type ShopOrder,
 } from '../../../../../lib/checkout-api';
+import { RequireAccess } from '../../../../../components/auth/RequireAccess';
 import { useSession } from '../../../../../lib/useSession';
 
-export default function VendorOrdersPage() {
+function VendorOrdersPageContent() {
 	const params = useParams<{ vendorId: string }>();
 	const vendorId = params.vendorId;
 	const { user, loading: sessionLoading } = useSession();
@@ -271,5 +272,15 @@ export default function VendorOrdersPage() {
 				)
 				: null}
 		</div>
+	);
+}
+
+export default function VendorOrdersPage() {
+	return (
+		<Suspense fallback={<p className="text-sm text-slate-500">Loading…</p>}>
+			<RequireAccess vendorRequired reasonKey="vendorOrders">
+				<VendorOrdersPageContent />
+			</RequireAccess>
+		</Suspense>
 	);
 }

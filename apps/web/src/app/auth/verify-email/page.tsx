@@ -6,17 +6,15 @@ import { AuthCard } from '../../../components/auth/AuthCard';
 import { ErrorText } from '../../../components/auth/ErrorText';
 import { FormField } from '../../../components/auth/FormField';
 import { AuthApiError, verifyEmail } from '../../../lib/auth-api';
+import {
+	resolvePostAuthDestination,
+	safeNextPath,
+} from '../../../lib/accessGate';
 
 function VerifyEmailForm() {
 	const router = useRouter();
 	const searchParams = useSearchParams();
-	const nextPath = (() => {
-		const raw = searchParams.get('next');
-		if(!raw || !raw.startsWith('/') || raw.startsWith('//')) {
-			return '/';
-		}
-		return raw;
-	})();
+	const nextPath = safeNextPath(searchParams.get('next'));
 	const [email, setEmail] = useState(searchParams.get('email') ?? '');
 	const [code, setCode] = useState('');
 	const [error, setError] = useState<string | null>(null);
@@ -29,7 +27,8 @@ function VerifyEmailForm() {
 
 		try {
 			await verifyEmail(email, code);
-			router.push(nextPath);
+			const destination = await resolvePostAuthDestination(nextPath);
+			router.push(destination);
 		}
 		catch(submitError) {
 			setError(

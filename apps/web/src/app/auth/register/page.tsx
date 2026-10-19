@@ -3,22 +3,22 @@
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useState, type FormEvent } from 'react';
 import { AuthCard } from '../../../components/auth/AuthCard';
+import { AuthReasonBanner } from '../../../components/auth/AuthReasonBanner';
 import { ErrorText } from '../../../components/auth/ErrorText';
 import { FormField } from '../../../components/auth/FormField';
 import { GoogleButton } from '../../../components/auth/GoogleButton';
 import { AuthApiError, registerUser } from '../../../lib/auth-api';
-
-function safeNextPath(raw: string | null): string {
-	if(!raw || !raw.startsWith('/') || raw.startsWith('//')) {
-		return '/';
-	}
-	return raw;
-}
+import {
+	buildLoginUrl,
+	safeNextPath,
+	stashAuthRedirect,
+} from '../../../lib/accessGate';
 
 function RegisterForm() {
 	const router = useRouter();
 	const searchParams = useSearchParams();
 	const nextPath = safeNextPath(searchParams.get('next'));
+	const reason = searchParams.get('reason');
 	const [email, setEmail] = useState('');
 	const [password, setPassword] = useState('');
 	const [confirmPassword, setConfirmPassword] = useState('');
@@ -42,6 +42,9 @@ function RegisterForm() {
 				email,
 				next: nextPath,
 			});
+			if(reason) {
+				verifyQuery.set('reason', reason);
+			}
 			router.push(`/auth/verify-email?${verifyQuery.toString()}`);
 		}
 		catch(submitError) {
@@ -69,13 +72,17 @@ function RegisterForm() {
 							text-sky
 							hover:underline
 						"
-						href={`/auth/login?next=${encodeURIComponent(nextPath)}`}
+						href={buildLoginUrl({
+							next: nextPath,
+							reason: reason ?? undefined,
+						})}
 					>
 						Sign in
 					</a>
 				</p>
 			}
 		>
+			<AuthReasonBanner reason={reason} />
 			<form
 				className="
 					flex
@@ -159,7 +166,11 @@ function RegisterForm() {
 					/>
 				</div>
 
-				<GoogleButton />
+				<GoogleButton
+					onBeforeNavigate={() => {
+						stashAuthRedirect(nextPath, reason ?? undefined);
+					}}
+				/>
 			</form>
 		</AuthCard>
 	);

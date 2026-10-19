@@ -3,20 +3,23 @@
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useState, type FormEvent } from 'react';
 import { AuthCard } from '../../../components/auth/AuthCard';
+import { AuthReasonBanner } from '../../../components/auth/AuthReasonBanner';
 import { ErrorText } from '../../../components/auth/ErrorText';
 import { FormField } from '../../../components/auth/FormField';
 import { GoogleButton } from '../../../components/auth/GoogleButton';
 import { AuthApiError, loginUser } from '../../../lib/auth-api';
+import {
+	buildRegisterUrl,
+	safeNextPath,
+	stashAuthRedirect,
+} from '../../../lib/accessGate';
 
 function LoginForm() {
 	const router = useRouter();
 	const searchParams = useSearchParams();
 	const googleError = searchParams.get('error') === 'google';
-	const nextRaw = searchParams.get('next');
-	const nextPath =
-		nextRaw && nextRaw.startsWith('/') && !nextRaw.startsWith('//')
-			? nextRaw
-			: '/';
+	const nextPath = safeNextPath(searchParams.get('next'));
+	const reason = searchParams.get('reason');
 
 	const [email, setEmail] = useState('');
 	const [password, setPassword] = useState('');
@@ -36,6 +39,9 @@ function LoginForm() {
 				pendingToken,
 				next: nextPath,
 			});
+			if(reason) {
+				verifyQuery.set('reason', reason);
+			}
 			router.push(`/auth/verify?${verifyQuery.toString()}`);
 		}
 		catch(submitError) {
@@ -63,13 +69,17 @@ function LoginForm() {
 							text-sky
 							hover:underline
 						"
-						href="/auth/register"
+						href={buildRegisterUrl({
+							next: nextPath,
+							reason: reason ?? undefined,
+						})}
 					>
 						Create one
 					</a>
 				</p>
 			}
 		>
+			<AuthReasonBanner reason={reason} />
 			<form
 				className="
 					flex
@@ -159,7 +169,11 @@ function LoginForm() {
 					/>
 				</div>
 
-				<GoogleButton />
+				<GoogleButton
+					onBeforeNavigate={() => {
+						stashAuthRedirect(nextPath, reason ?? undefined);
+					}}
+				/>
 			</form>
 		</AuthCard>
 	);

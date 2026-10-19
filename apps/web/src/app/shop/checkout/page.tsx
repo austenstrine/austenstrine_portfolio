@@ -9,7 +9,7 @@ import {
 import { loadStripe, type Stripe } from '@stripe/stripe-js';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
+import { Suspense, useEffect, useMemo, useState } from 'react';
 import {
 	createCheckoutSession,
 	formatMoney,
@@ -18,6 +18,7 @@ import {
 	type CheckoutPreview,
 } from '../../../lib/checkout-api';
 import { useSession } from '../../../lib/useSession';
+import { RequireAccess } from '../../../components/auth/RequireAccess';
 
 function PaymentForm({
 	onError,
@@ -86,7 +87,7 @@ function PaymentForm({
 	);
 }
 
-export default function CheckoutPage() {
+function CheckoutContent() {
 	const { user, loading: sessionLoading } = useSession();
 	const [preview, setPreview] = useState<CheckoutPreview | null>(null);
 	const [rateByGroup, setRateByGroup] = useState<Record<string, string>>({});
@@ -213,24 +214,6 @@ export default function CheckoutPage() {
 				? (
 					<p className="text-sm text-slate-500">
 						Checking session…
-					</p>
-				)
-				: null}
-
-			{!sessionLoading && !user
-				? (
-					<p className="text-sm text-amber-800">
-						Sign in to checkout.{' '}
-						<Link
-							className="
-								font-semibold
-								text-sky
-								hover:underline
-							"
-							href="/auth/login?next=%2Fshop%2Fcheckout"
-						>
-							Sign in
-						</Link>
 					</p>
 				)
 				: null}
@@ -478,5 +461,15 @@ export default function CheckoutPage() {
 				)
 				: null}
 		</div>
+	);
+}
+
+export default function CheckoutPage() {
+	return (
+		<Suspense fallback={<p className="text-sm text-slate-500">Loading…</p>}>
+			<RequireAccess reasonKey="checkout">
+				<CheckoutContent />
+			</RequireAccess>
+		</Suspense>
 	);
 }

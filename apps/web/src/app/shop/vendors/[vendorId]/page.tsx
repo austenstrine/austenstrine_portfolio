@@ -1,15 +1,19 @@
 'use client';
 
 import { useParams, useSearchParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import {
 	createVendorAppPassword,
+	createVendorInvite,
 	getMyVendor,
 	listVendorAppPasswords,
+	listVendorInvites,
 	revokeVendorAppPassword,
+	revokeVendorInvite,
 	type CreatedVendorAppPassword,
 	type VendorAppPassword,
 	type VendorDetail,
+	type VendorInviteSummary,
 } from '../../../../lib/catalog-api';
 import {
 	createVendorConnectAccountLink,
@@ -21,8 +25,9 @@ import {
 	type ShippingProfile,
 } from '../../../../lib/checkout-api';
 import { useSession } from '../../../../lib/useSession';
+import { RequireAccess } from '../../../../components/auth/RequireAccess';
 
-export default function VendorDetailPage() {
+function VendorDetailContent() {
 	const params = useParams<{ vendorId: string }>();
 	const searchParams = useSearchParams();
 	const vendorId = params.vendorId;
@@ -35,6 +40,12 @@ export default function VendorDetailPage() {
 	const [createdToken, setCreatedToken] = useState<CreatedVendorAppPassword | null>(null);
 	const [passwordBusy, setPasswordBusy] = useState(false);
 	const [passwordError, setPasswordError] = useState<string | null>(null);
+	const [invites, setInvites] = useState<VendorInviteSummary[]>([]);
+	const [inviteEmail, setInviteEmail] = useState('');
+	const [inviteRole, setInviteRole] = useState<'EDITOR' | 'VIEWER'>('EDITOR');
+	const [inviteBusy, setInviteBusy] = useState(false);
+	const [inviteError, setInviteError] = useState<string | null>(null);
+	const [inviteMessage, setInviteMessage] = useState<string | null>(null);
 	const [shippingProfiles, setShippingProfiles] = useState<ShippingProfile[]>([]);
 	const [shippingBusy, setShippingBusy] = useState(false);
 	const [shippingError, setShippingError] = useState<string | null>(null);
@@ -69,6 +80,12 @@ export default function VendorDetailPage() {
 					}
 					catch {
 						setShippingProfiles([]);
+					}
+					try {
+						setInvites(await listVendorInvites(vendorId));
+					}
+					catch {
+						setInvites([]);
 					}
 				}
 				if(detail.myRole === 'OWNER') {
@@ -225,24 +242,6 @@ export default function VendorDetailPage() {
 				)
 				: null}
 
-			{!sessionLoading && !user
-				? (
-					<p className="text-sm text-amber-800">
-						Sign in to view this vendor organization.{' '}
-						<a
-							className="
-								font-semibold
-								text-sky
-								hover:underline
-							"
-							href="/auth/login"
-						>
-							Sign in
-						</a>
-					</p>
-				)
-				: null}
-
 			{error
 				? (
 					<p className="text-sm text-red-700">
@@ -343,6 +342,199 @@ export default function VendorDetailPage() {
 								))}
 							</ul>
 						</section>
+
+						{vendor.myRole === 'OWNER' || vendor.myRole === 'EDITOR'
+							? (
+								<section
+									className="
+										rounded-2xl
+										border
+										border-slate-200
+										bg-white
+										p-5
+									"
+								>
+									<h2 className="text-lg font-semibold">
+										Invite members
+									</h2>
+									<p className="mt-2 text-sm text-slate-600">
+										Send an email invite so teammates can join this organization.
+									</p>
+									<form
+										className="
+											mt-4
+											flex
+											flex-col
+											gap-3
+											md:flex-row
+											md:items-end
+										"
+										onSubmit={(event) => {
+											event.preventDefault();
+											if(!vendorId) {
+												return;
+											}
+											setInviteBusy(true);
+											setInviteError(null);
+											setInviteMessage(null);
+											createVendorInvite(vendorId, {
+												email: inviteEmail.trim(),
+												role: inviteRole,
+											})
+												.then(async () => {
+													setInviteEmail('');
+													setInviteMessage('Invite sent.');
+													setInvites(await listVendorInvites(vendorId));
+												})
+												.catch((inviteErr) => {
+													setInviteError(
+														inviteErr instanceof Error
+															? inviteErr.message
+															: 'Could not send invite.',
+													);
+												})
+												.finally(() => setInviteBusy(false));
+										}}
+									>
+										<label className="block flex-1 text-sm">
+											<span className="font-semibold">
+												Email
+											</span>
+											<input
+												className="
+													mt-1
+													w-full
+													rounded-lg
+													border
+													border-slate-300
+													px-3
+													py-2
+												"
+												type="email"
+												required
+												value={inviteEmail}
+												onChange={(event) => setInviteEmail(event.target.value)}
+												placeholder="teammate@example.com"
+											/>
+										</label>
+										<label className="block text-sm md:w-40">
+											<span className="font-semibold">
+												Role
+											</span>
+											<select
+												className="
+													mt-1
+													w-full
+													rounded-lg
+													border
+													border-slate-300
+													px-3
+													py-2
+												"
+												value={inviteRole}
+												onChange={(event) =>
+													setInviteRole(event.target.value as 'EDITOR' | 'VIEWER')
+												}
+											>
+												<option value="EDITOR">
+													Editor
+												</option>
+												<option value="VIEWER">
+													Viewer
+												</option>
+											</select>
+										</label>
+										<button
+											className="
+												rounded-full
+												bg-ink
+												px-4
+												py-2.5
+												text-sm
+												font-semibold
+												text-white
+												hover:bg-sky
+												disabled:opacity-60
+											"
+											type="submit"
+											disabled={inviteBusy}
+										>
+											{inviteBusy ? 'Sending…' : 'Send invite'}
+										</button>
+									</form>
+									{inviteError
+										? (
+												<p className="mt-3 text-sm text-red-700">
+													{inviteError}
+												</p>
+											)
+										: null}
+									{inviteMessage
+										? (
+												<p className="mt-3 text-sm text-emerald-700">
+													{inviteMessage}
+												</p>
+											)
+										: null}
+									{invites.length > 0
+										? (
+												<ul className="mt-4 flex flex-col gap-2">
+													{invites.map((invite) => (
+														<li
+															className="
+																flex
+																flex-wrap
+																items-center
+																justify-between
+																gap-2
+																rounded-xl
+																border
+																border-slate-100
+																p-3
+																text-sm
+															"
+															key={invite.id}
+														>
+															<div>
+																<p className="font-semibold">
+																	{invite.email}
+																</p>
+																<p className="text-xs text-slate-500">
+																	{invite.role} · expires{' '}
+																	{new Date(invite.expiresAt).toLocaleDateString()}
+																</p>
+															</div>
+															<button
+																className="
+																	text-xs
+																	font-semibold
+																	uppercase
+																	tracking-wide
+																	text-red-700
+																	hover:underline
+																"
+																type="button"
+																onClick={() => {
+																	if(!vendorId) {
+																		return;
+																	}
+																	revokeVendorInvite(vendorId, invite.id)
+																		.then(async () => {
+																			setInvites(await listVendorInvites(vendorId));
+																		})
+																		.catch(() => undefined);
+																}}
+															>
+																Revoke
+															</button>
+														</li>
+													))}
+												</ul>
+											)
+										: null}
+								</section>
+							)
+							: null}
 
 						{vendor.myRole === 'OWNER'
 							? (
@@ -971,5 +1163,21 @@ export default function VendorDetailPage() {
 				)
 				: null}
 		</div>
+	);
+}
+
+export default function VendorDetailPage() {
+	return (
+		<Suspense
+			fallback={
+				<p className="text-sm text-slate-500">
+					Loading…
+				</p>
+			}
+		>
+			<RequireAccess vendorRequired reasonKey="vendorDetail">
+				<VendorDetailContent />
+			</RequireAccess>
+		</Suspense>
 	);
 }

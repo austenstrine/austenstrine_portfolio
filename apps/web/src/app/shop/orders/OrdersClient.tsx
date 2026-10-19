@@ -2,15 +2,16 @@
 
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import {
 	formatMoney,
 	listBuyerOrders,
 	type ShopOrder,
 } from '../../../lib/checkout-api';
 import { useSession } from '../../../lib/useSession';
+import { RequireAccess } from '../../../components/auth/RequireAccess';
 
-export function OrdersClient() {
+function OrdersContent() {
 	const { user, loading: sessionLoading } = useSession();
 	const searchParams = useSearchParams();
 	const paid = searchParams.get('paid') === '1';
@@ -70,24 +71,6 @@ export function OrdersClient() {
 				? (
 					<p className="text-sm text-slate-500">
 						Checking session…
-					</p>
-				)
-				: null}
-
-			{!sessionLoading && !user
-				? (
-					<p className="text-sm text-amber-800">
-						Sign in to view orders.{' '}
-						<Link
-							className="
-								font-semibold
-								text-sky
-								hover:underline
-							"
-							href="/auth/login?next=%2Fshop%2Forders"
-						>
-							Sign in
-						</Link>
 					</p>
 				)
 				: null}
@@ -169,5 +152,15 @@ export function OrdersClient() {
 				)
 				: null}
 		</div>
+	);
+}
+
+export default function OrdersClient() {
+	return (
+		<Suspense fallback={<p className="text-sm text-slate-500">Loading…</p>}>
+			<RequireAccess reasonKey="orders">
+				<OrdersContent />
+			</RequireAccess>
+		</Suspense>
 	);
 }
