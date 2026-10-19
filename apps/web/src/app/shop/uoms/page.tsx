@@ -265,7 +265,7 @@ export default function UomManagePage() {
 				{!loading && uoms.length === 0
 					? (
 						<p className="text-sm text-slate-500">
-							No units of measure yet. Create SPOOL and FT to continue the walkthrough.
+							No units of measure yet. Add units like SPOOL and FT for pack and piece offerings.
 						</p>
 					)
 					: null}

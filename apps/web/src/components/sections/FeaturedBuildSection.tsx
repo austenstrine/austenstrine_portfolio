@@ -1,5 +1,7 @@
 import { showcasePortals } from '../../lib/showcasePortals';
 
+const REPO_URL = 'https://github.com/austenstrine/austenstrine_portfolio';
+
 export function FeaturedBuildSection() {
 	return (
 		<section
@@ -29,7 +31,7 @@ export function FeaturedBuildSection() {
 						text-sky
 					"
 				>
-					Featured builds
+					Featured build
 				</p>
 				<h2
 					className="
@@ -38,7 +40,7 @@ export function FeaturedBuildSection() {
 						text-ink
 					"
 				>
-					Live marketplace portals
+					Live marketplace
 				</h2>
 				<p
 					className="
@@ -46,102 +48,107 @@ export function FeaturedBuildSection() {
 						text-slate-700
 					"
 				>
-					These are working surfaces, not mocks. Start from an empty database with the guided
-					walkthrough, or jump into any create/manage page directly.
+					The marketplace is the demonstration—real catalog, inventory, search, and checkout
+					surfaces, not mocks. Source is public on{' '}
+					<a
+						className="
+							font-semibold
+							text-sky
+							hover:underline
+						"
+						href={REPO_URL}
+						rel="noreferrer"
+						target="_blank"
+					>
+						GitHub
+					</a>
+					.
 				</p>
 			</div>
 
-			<div
+			<ul
 				className="
-					mt-6
-					grid
-					gap-4
-					md:grid-cols-2
+					mt-8
+					divide-y
+					divide-slate-200
+					border-y
+					border-slate-200
 				"
 			>
 				{showcasePortals.map((portal) => (
-					<article
-						className="
-							flex
-							flex-col
-							rounded-xl
-							border
-							border-slate-200
-							bg-slate-50
-							p-5
-						"
-						key={portal.id}
-					>
-						<p
+					<li key={portal.id}>
+						<a
 							className="
-								text-[11px]
-								font-semibold
-								uppercase
-								tracking-[0.18em]
-								text-slate-500
-							"
-						>
-							{portal.label}
-						</p>
-						<h3
-							className="
-								mt-1
-								text-lg
-								font-semibold
-								text-ink
-							"
-						>
-							{portal.title}
-						</h3>
-						<p
-							className="
-								mt-3
-								flex-1
-								text-sm
-								text-slate-700
-							"
-						>
-							{portal.summary}
-						</p>
-						<ul
-							className="
-								mt-4
+								group
 								flex
 								flex-col
 								gap-1
-								text-xs
-								text-slate-600
-							"
-						>
-							{portal.notes.map((note) => (
-								<li key={note}>
-									· {note}
-								</li>
-							))}
-						</ul>
-						<a
-							className="
-								mt-5
-								inline-flex
-								self-start
-								rounded-full
-								bg-ink
-								px-4
-								py-2
-								text-sm
-								font-semibold
-								text-white
+								py-4
 								transition
-								hover:-translate-y-0.5
-								hover:bg-sky
+								hover:bg-slate-50
+								sm:flex-row
+								sm:items-baseline
+								sm:justify-between
+								sm:gap-6
 							"
 							href={portal.href}
 						>
-							{portal.cta}
+							<div className="min-w-0">
+								<p
+									className="
+										text-base
+										font-semibold
+										text-ink
+										group-hover:text-sky
+									"
+								>
+									{portal.title}
+								</p>
+								<p
+									className="
+										mt-1
+										text-sm
+										text-slate-600
+									"
+								>
+									{portal.summary}
+								</p>
+							</div>
+							<span
+								className="
+									shrink-0
+									text-sm
+									font-semibold
+									text-sky
+								"
+							>
+								Open →
+							</span>
 						</a>
-					</article>
+					</li>
 				))}
-			</div>
+			</ul>
+
+			<p
+				className="
+					mt-6
+					text-sm
+					text-slate-600
+				"
+			>
+				<a
+					className="
+						font-semibold
+						text-sky
+						hover:underline
+					"
+					href="/shop"
+				>
+					Enter the marketplace
+				</a>
+				{' '}
+				or browse the full stack in the repository.
+			</p>
 		</section>
 	);
 }

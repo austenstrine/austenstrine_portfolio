@@ -54,26 +54,51 @@ export default async function ShopHomePage() {
 								text-slate-600
 							"
 						>
-							This app does not rely on seed data. Start the walkthrough to create a vendor,
-							UOMs, category, and your first pack/piece product.
+							No seed data—create a vendor, add units and categories, then list a product.
 						</p>
-						<a
+						<div
 							className="
 								mt-4
-								inline-flex
-								rounded-full
-								bg-ink
-								px-4
-								py-2
-								text-sm
-								font-semibold
-								text-white
-								hover:bg-sky
+								flex
+								flex-wrap
+								gap-3
 							"
-							href="/shop/start"
 						>
-							Start walkthrough
-						</a>
+							<a
+								className="
+									inline-flex
+									rounded-full
+									bg-ink
+									px-4
+									py-2
+									text-sm
+									font-semibold
+									text-white
+									hover:bg-sky
+								"
+								href="/shop/vendors"
+							>
+								Create a vendor
+							</a>
+							<a
+								className="
+									inline-flex
+									rounded-full
+									border
+									border-slate-300
+									px-4
+									py-2
+									text-sm
+									font-semibold
+									text-ink
+									hover:border-sky
+									hover:text-sky
+								"
+								href="/shop/products/new"
+							>
+								New product
+							</a>
+						</div>
 					</div>
 				)
 				: (

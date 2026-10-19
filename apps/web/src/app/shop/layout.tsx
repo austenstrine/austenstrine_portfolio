@@ -48,9 +48,6 @@ export default function ShopLayout({ children }: { children: ReactNode }) {
 							font-semibold
 						"
 					>
-						<a href="/shop/start" className="text-sky hover:underline">
-							Start
-						</a>
 						<a href="/shop/search" className="text-sky hover:underline">
 							Search
 						</a>
