@@ -8,6 +8,7 @@ import {
 	requestCatalogCategory,
 } from '../../../lib/catalog-api';
 import { useSession } from '../../../lib/useSession';
+import { TermHint } from '../../../components/catalog/TermHint';
 import { UrlSlugField } from '../../../components/catalog/UrlSlugField';
 import { ACCESS_REASONS, buildLoginUrl } from '../../../lib/accessGate';
 
@@ -172,7 +173,22 @@ export default function CategoryManagePage() {
 					"
 				>
 					Place et Marque categories are predefined for consistent browse and search.
-					Only the austenstrine.dev supervendor can add or change them. Vendors can
+					Only the austenstrine.dev
+					{' '}
+					<span
+						className="
+							inline-flex
+							items-center
+							gap-1
+						"
+					>
+						supervendor
+						<TermHint
+							termId="supervendor"
+						/>
+					</span>
+					{' '}
+					can add or change them. Vendors can
 					still free-tag products, and request new categories below.
 				</p>
 			</div>

@@ -9,6 +9,7 @@ import {
 	type VendorSummary,
 } from '../../../lib/catalog-api';
 import { RequireAccess } from '../../../components/auth/RequireAccess';
+import { TermHint } from '../../../components/catalog/TermHint';
 import { useSession } from '../../../lib/useSession';
 
 function UomManagePageContent() {
@@ -137,12 +138,18 @@ function UomManagePageContent() {
 			<div>
 				<h1
 					className="
+						flex
+						items-center
+						gap-2
 						text-3xl
 						font-semibold
 						tracking-tight
 					"
 				>
 					Units of measure
+					<TermHint
+						termId="uom"
+					/>
 				</h1>
 				<p
 					className="

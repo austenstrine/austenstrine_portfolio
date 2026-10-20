@@ -103,6 +103,12 @@ export default function PlaceEtMarqueLayout({ children }: { children: ReactNode 
 							Manage
 						</a>
 						<a
+							className="text-sky hover:underline"
+							href="/place-et-marque/guide"
+						>
+							Guide
+						</a>
+						<a
 							className="text-slate-500 hover:text-ink"
 							href="/"
 						>

@@ -15,6 +15,7 @@ import { dollarsToCents, slugify } from '../../../../lib/catalog-product-form';
 import { useSession } from '../../../../lib/useSession';
 import { CatalogWorkspaceSwitcher } from '../../../../components/catalog/CatalogWorkspaceSwitcher';
 import { ProductTagField } from '../../../../components/catalog/ProductTagField';
+import { TermHint } from '../../../../components/catalog/TermHint';
 import { UrlSlugField } from '../../../../components/catalog/UrlSlugField';
 import { RequireAccess } from '../../../../components/auth/RequireAccess';
 
@@ -350,10 +351,24 @@ function NewProductForm() {
 						gap-4
 					"
 				>
-					<label className="block text-sm">
-						<span className="font-semibold">
-							Offering mode
-						</span>
+					<div className="block text-sm">
+						<div
+							className="
+								flex
+								items-center
+								gap-1.5
+							"
+						>
+							<label
+								className="font-semibold"
+								htmlFor="offering-mode"
+							>
+								Offering mode
+							</label>
+							<TermHint
+								termId="offering"
+							/>
+						</div>
 						<select
 							className="
 								mt-1
@@ -364,6 +379,7 @@ function NewProductForm() {
 								px-3
 								py-2
 							"
+							id="offering-mode"
 							value={offeringMode}
 							onChange={(event) =>
 								setOfferingMode(
@@ -384,7 +400,7 @@ function NewProductForm() {
 								Pack + piece (linked)
 							</option>
 						</select>
-					</label>
+					</div>
 
 					<div
 						className="

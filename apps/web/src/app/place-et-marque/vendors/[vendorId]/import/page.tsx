@@ -13,6 +13,7 @@ import {
 	type VendorDetail,
 } from '../../../../../lib/catalog-api';
 import { RequireAccess } from '../../../../../components/auth/RequireAccess';
+import { TermHint } from '../../../../../components/catalog/TermHint';
 import { useSession } from '../../../../../lib/useSession';
 
 function VendorImportPageContent() {
@@ -174,7 +175,21 @@ function VendorImportPageContent() {
 					"
 				>
 					Upload a CSV (or paste sheet export) to add and update products by
-					product_slug and offerings by sku + offering_key. Nested pack/piece rows
+					product_slug and offerings by sku +
+					{' '}
+					<span
+						className="
+							inline-flex
+							items-center
+							gap-1
+						"
+					>
+						offering_key
+						<TermHint
+							termId="offering-key"
+						/>
+					</span>
+					. Nested pack/piece rows
 					use parent_offering_key and child_qty_per_parent. Prefer validating here
 					before commit; servers can call the same endpoints with a vendor app
 					password.
