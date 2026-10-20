@@ -79,14 +79,16 @@ function InventoryConfigurationForm() {
 			return;
 		}
 
-		Promise.all([listMyVendors(), listCatalogCategories(), listUoms()])
-			.then(([vendorRows, categoryRows, uomRows]) => {
+		Promise.all([listMyVendors(), listCatalogCategories()])
+			.then(async ([vendorRows, categoryRows]) => {
 				setVendors(vendorRows);
 				setCategories(categoryRows);
-				setUoms(uomRows);
-				if(vendorRows[0]) {
-					setVendorId(vendorRows[0].id);
+				const selected = vendorRows[0]?.id ?? '';
+				if(selected) {
+					setVendorId(selected);
 				}
+				const uomRows = await listUoms(selected || undefined).catch(() => []);
+				setUoms(uomRows);
 
 				const spool = uomRows.find((row) => row.code === 'SPOOL');
 				const foot = uomRows.find((row) => row.code === 'FT');

@@ -211,6 +211,7 @@ model Vendor {
   appPasswords VendorAppPassword[]
   importJobs CatalogImportJob[]
   offerings ProductOffering[]
+  uoms UnitOfMeasure[]
   shippingProfiles ShippingProfile[]
   marketplaceOrders MarketplaceOrder[]
   checkoutShipments CheckoutShipment[]
@@ -354,10 +355,22 @@ model VendorMember {
   @@index([userId])
 }
 
+enum UomMergePolicyStatus {
+  SKIP_ONCE
+  SKIP_FOREVER
+  MERGED
+}
+
 model UnitOfMeasure {
   id            String   @id @default(uuid())
-  code          String   @unique
+  /// Primary name (case-sensitive). Globals are unique on code; vendor UOMs unique per vendor.
+  code          String
   label         String
+  /// null = marketplace-global UOM; non-null = vendor-owned
+  vendorId      String?
+  vendor        Vendor?  @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  /// Alternate names that also count for duplicate detection (case-sensitive)
+  aliases       String[] @default([])
   /// Logical grouping for conversions, e.g. length, count, volume, weight, area, custom
   dimensionKey  String
   /// Multiply quantity in this UOM by factorToReference to reach the dimension reference unit
@@ -366,6 +379,20 @@ model UnitOfMeasure {
   createdAt     DateTime @default(now())
 
   offerings ProductOffering[]
+
+  @@index([vendorId])
+  @@index([code])
+}
+
+model UomMergePolicy {
+  id                 String               @id @default(uuid())
+  /// Case-sensitive colliding name/alias key
+  nameKey            String               @unique
+  status             UomMergePolicyStatus
+  /// UOM ids present when SKIP_ONCE was recorded; a new colliding id re-triggers email
+  lastNotifiedUomIds String[]             @default([])
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
 }
 
 model CatalogCategory {

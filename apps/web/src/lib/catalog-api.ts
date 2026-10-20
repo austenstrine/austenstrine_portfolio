@@ -295,10 +295,14 @@ export type UnitOfMeasure = {
 	label: string;
 	dimensionKey: string;
 	factorToReference: string;
+	vendorId?: string | null;
+	aliases?: string[];
+	vendor?: { id: string; name: string; slug: string } | null;
 };
 
-export function listUoms(): Promise<UnitOfMeasure[]> {
-	return catalogRequest<UnitOfMeasure[]>('/uoms');
+export function listUoms(vendorId?: string): Promise<UnitOfMeasure[]> {
+	const query = vendorId ? `?vendorId=${encodeURIComponent(vendorId)}` : '';
+	return catalogRequest<UnitOfMeasure[]>(`/uoms${query}`);
 }
 
 export function createUom(payload: {
@@ -306,11 +310,23 @@ export function createUom(payload: {
 	label: string;
 	dimensionKey: string;
 	factorToReference: string;
+	vendorId?: string;
+	aliases?: string[];
 }): Promise<UnitOfMeasure> {
 	return catalogRequest<UnitOfMeasure>('/uoms', {
 		method: 'POST',
 		body: JSON.stringify(payload),
 	});
+}
+
+export function applyUomMerge(token: string): Promise<{
+	message: string;
+	action: string;
+	nameKey: string;
+}> {
+	return catalogRequest(
+		`/uom-merges/apply?token=${encodeURIComponent(token)}`,
+	);
 }
 
 export type CreateProductPayload = {

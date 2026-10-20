@@ -39,6 +39,7 @@ import { CatalogImportService } from './import/catalog-import.service';
 import { InventoryService } from './inventory/inventory.service';
 import { VendorAppPasswordService } from './vendor-app-password.service';
 import { VendorInviteService } from './vendor-invite.service';
+import { UomMergeService } from './uom-merge.service';
 import { VendorService } from './vendor.service';
 
 type AuthedRequest = Request & { user?: { id: string; email?: string } };
@@ -51,20 +52,29 @@ export class CatalogController {
 		private readonly inventory: InventoryService,
 		private readonly vendors: VendorService,
 		private readonly invites: VendorInviteService,
+		private readonly uomMerges: UomMergeService,
 		private readonly appPasswords: VendorAppPasswordService,
 		private readonly imports: CatalogImportService,
 		private readonly archive: CatalogArchiveService,
 	) {}
 
 	@Get('uoms')
-	listUoms() {
-		return this.catalog.listUoms();
+	listUoms(@Query('vendorId') vendorId?: string) {
+		return this.catalog.listUoms(vendorId);
 	}
 
 	@UseGuards(JwtAuthGuard)
 	@Post('uoms')
-	createUom(@Body() dto: CreateUomDto) {
-		return this.catalog.createUom(dto);
+	createUom(@Req() req: AuthedRequest, @Body() dto: CreateUomDto) {
+		return this.catalog.createUom(req.user!.id, dto);
+	}
+
+	@Get('uom-merges/apply')
+	async applyUomMerge(@Query('token') token?: string) {
+		if(!token?.trim()) {
+			throw new BadRequestException('Merge token is required.');
+		}
+		return this.uomMerges.handleToken(token.trim());
 	}
 
 	@Get('categories')
