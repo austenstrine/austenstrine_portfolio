@@ -86,6 +86,18 @@ This file tracks personal formatting preferences for this project so they are ea
 
 - If the ternary already lives inside clean JSX braces, extra wrapper parentheses are optional.
 
+## Reuse / Widgets
+
+- Prefer extracting repeated or self-contained UI into dedicated components instead of copying markup.
+- Do not paste a second copy of a block that already exists as a widget; import and reuse it.
+- SVG markup belongs in dedicated icon widgets (for this app, under `apps/web/src/components/icons/`), not inlined in pages, buttons, or section components.
+- Icon widgets should accept a `className` prop so callers can size and color them without forking the SVG.
+
+### Enforcement
+
+- Locating inline `<svg>` with search or regex is fine.
+- Do not extract or rewrite SVG blocks with a regex substitution. After a search hit, open that file and move that instance into an icon widget by hand.
+
 ## Notes
 
 - These are preference rules, not hard requirements of the app runtime.
