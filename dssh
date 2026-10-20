@@ -53,6 +53,7 @@ Optional overrides:
   <target>_context     custom build context relative to the repo root
   <target>_image       custom image name
   <target>_name        custom container app name
+  <target>_user        container user (default: host uid:gid)
   <target>_workdir     custom container workdir
 
 Optional actions from .dsshrc:
@@ -207,6 +208,27 @@ parse_workdir() {
   awk 'BEGIN { workdir = "" } toupper($1) == "WORKDIR" { workdir = $2 } END { print workdir }' "$dockerfile_path" | tr -d '\r'
 }
 
+host_user_spec() {
+  printf '%s:%s\n' "$(id -u)" "$(id -g)"
+}
+
+is_root_user_spec() {
+  local spec="$1"
+  [[ "$spec" == "root" || "$spec" == "0" || "$spec" == "0:0" ]]
+}
+
+container_user_spec() {
+  local target="${1-}"
+  if [[ -n "$target" ]]; then
+    local user_var="${target}_user"
+    if [[ -n "${!user_var-}" ]]; then
+      printf '%s\n' "${!user_var}"
+      return 0
+    fi
+  fi
+  host_user_spec
+}
+
 build_image() {
   local image_name="$1"
   local dockerfile_path="$2"
@@ -220,6 +242,8 @@ seed_node_modules_volume() {
   local image_name="$1"
   local volume_name="$2"
   local image_id
+  local host_spec
+  host_spec="$(host_user_spec)"
 
   image_id="$(docker image inspect -f '{{.Id}}' "$image_name")"
 
@@ -227,11 +251,11 @@ seed_node_modules_volume() {
     docker volume create "$volume_name" >/dev/null
   fi
 
-  if docker run --rm -v "$volume_name:/node_modules" "$image_name" sh -lc "test -f /node_modules/.dssh-image-id && [ \"\$(cat /node_modules/.dssh-image-id)\" = '$image_id' ]" >/dev/null 2>&1; then
-    return 0
+  if ! docker run --rm -v "$volume_name:/node_modules" "$image_name" sh -lc "test -f /node_modules/.dssh-image-id && [ \"\$(cat /node_modules/.dssh-image-id)\" = '$image_id' ]" >/dev/null 2>&1; then
+    docker run --rm -v "$volume_name:/node_modules" "$image_name" sh -lc "rm -rf /node_modules/* /node_modules/.[!.]* /node_modules/..?* 2>/dev/null || true; cp -a /app/node_modules/. /node_modules/; echo '$image_id' > /node_modules/.dssh-image-id"
   fi
 
-  docker run --rm -v "$volume_name:/node_modules" "$image_name" sh -lc "rm -rf /node_modules/* /node_modules/.[!.]* /node_modules/..?* 2>/dev/null || true; cp -a /app/node_modules/. /node_modules/; echo '$image_id' > /node_modules/.dssh-image-id"
+  docker run --rm -v "$volume_name:/node_modules" "$image_name" sh -lc "chown -R $host_spec /node_modules"
 }
 
 run_container() {
@@ -262,6 +286,12 @@ run_container() {
   fi
   if [[ -n "$container_name" ]]; then
     run_args+=(--name "$container_name")
+  fi
+  local container_user
+  container_user="$(container_user_spec "${target_name-}")"
+  run_args+=(-u "$container_user")
+  if ! is_root_user_spec "$container_user"; then
+    env_args+=(-e "HOME=/tmp" -e "npm_config_cache=/tmp/npm-cache")
   fi
   run_args+=(--label "dssh.image=$image_name")
   if [[ -n "${target_name-}" ]]; then
