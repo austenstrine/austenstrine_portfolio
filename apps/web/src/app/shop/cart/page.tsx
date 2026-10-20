@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import {
 	formatMoney,
 	getCart,
@@ -10,8 +10,9 @@ import {
 	type CartDto,
 } from '../../../lib/checkout-api';
 import { useSession } from '../../../lib/useSession';
+import { RequireAccess } from '../../../components/auth/RequireAccess';
 
-export default function CartPage() {
+function CartContent() {
 	const { user, loading: sessionLoading } = useSession();
 	const [cart, setCart] = useState<CartDto | null>(null);
 	const [error, setError] = useState<string | null>(null);
@@ -106,24 +107,6 @@ export default function CartPage() {
 				? (
 					<p className="text-sm text-slate-500">
 						Checking session…
-					</p>
-				)
-				: null}
-
-			{!sessionLoading && !user
-				? (
-					<p className="text-sm text-amber-800">
-						Sign in to use the cart.{' '}
-						<Link
-							className="
-								font-semibold
-								text-sky
-								hover:underline
-							"
-							href="/auth/login?next=%2Fshop%2Fcart"
-						>
-							Sign in
-						</Link>
 					</p>
 				)
 				: null}
@@ -283,5 +266,15 @@ export default function CartPage() {
 				)
 				: null}
 		</div>
+	);
+}
+
+export default function CartPage() {
+	return (
+		<Suspense fallback={<p className="text-sm text-slate-500">Loading…</p>}>
+			<RequireAccess reasonKey="cart">
+				<CartContent />
+			</RequireAccess>
+		</Suspense>
 	);
 }

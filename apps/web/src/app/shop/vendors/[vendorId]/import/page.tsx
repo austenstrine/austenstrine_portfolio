@@ -1,7 +1,7 @@
 'use client';
 
 import { useParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import {
 	catalogImportTemplateUrl,
 	commitCatalogImport,
@@ -12,9 +12,10 @@ import {
 	type CatalogImportValidation,
 	type VendorDetail,
 } from '../../../../../lib/catalog-api';
+import { RequireAccess } from '../../../../../components/auth/RequireAccess';
 import { useSession } from '../../../../../lib/useSession';
 
-export default function VendorImportPage() {
+function VendorImportPageContent() {
 	const params = useParams<{ vendorId: string }>();
 	const vendorId = params.vendorId;
 	const { user, loading: sessionLoading } = useSession();
@@ -181,24 +182,6 @@ export default function VendorImportPage() {
 				? (
 					<p className="text-sm text-slate-500">
 						Checking session…
-					</p>
-				)
-				: null}
-
-			{!sessionLoading && !user
-				? (
-					<p className="text-sm text-amber-800">
-						Sign in to import products.{' '}
-						<a
-							className="
-								font-semibold
-								text-sky
-								hover:underline
-							"
-							href="/auth/login"
-						>
-							Sign in
-						</a>
 					</p>
 				)
 				: null}
@@ -499,5 +482,15 @@ export default function VendorImportPage() {
 				)
 				: null}
 		</div>
+	);
+}
+
+export default function VendorImportPage() {
+	return (
+		<Suspense fallback={<p className="text-sm text-slate-500">Loading…</p>}>
+			<RequireAccess vendorRequired reasonKey="import">
+				<VendorImportPageContent />
+			</RequireAccess>
+		</Suspense>
 	);
 }

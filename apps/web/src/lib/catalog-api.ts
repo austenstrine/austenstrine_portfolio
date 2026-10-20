@@ -202,6 +202,63 @@ export function createVendor(payload: { name: string; slug: string }): Promise<V
 	});
 }
 
+export type VendorInviteSummary = {
+	id: string;
+	email: string;
+	role: 'EDITOR' | 'VIEWER' | 'OWNER';
+	expiresAt: string;
+	createdAt: string;
+};
+
+export type VendorInvitePeek = {
+	email: string;
+	role: 'EDITOR' | 'VIEWER' | 'OWNER';
+	expiresAt: string;
+	vendorName: string;
+	vendorSlug: string;
+};
+
+export type AcceptVendorInviteResult = {
+	vendorId: string;
+	vendorName: string;
+	vendorSlug: string;
+	role: 'EDITOR' | 'VIEWER' | 'OWNER';
+	alreadyMember: boolean;
+};
+
+export function listVendorInvites(vendorId: string): Promise<VendorInviteSummary[]> {
+	return catalogRequest<VendorInviteSummary[]>(`/vendors/${vendorId}/invites`);
+}
+
+export function createVendorInvite(
+	vendorId: string,
+	payload: { email: string; role?: 'EDITOR' | 'VIEWER' },
+): Promise<VendorInviteSummary> {
+	return catalogRequest<VendorInviteSummary>(`/vendors/${vendorId}/invites`, {
+		method: 'POST',
+		body: JSON.stringify(payload),
+	});
+}
+
+export function revokeVendorInvite(vendorId: string, inviteId: string): Promise<{ message: string }> {
+	return catalogRequest<{ message: string }>(`/vendors/${vendorId}/invites/${inviteId}`, {
+		method: 'DELETE',
+	});
+}
+
+export function peekVendorInvite(token: string): Promise<VendorInvitePeek> {
+	return catalogRequest<VendorInvitePeek>(
+		`/invites/peek?token=${encodeURIComponent(token)}`,
+	);
+}
+
+export function acceptVendorInvite(token: string): Promise<AcceptVendorInviteResult> {
+	return catalogRequest<AcceptVendorInviteResult>('/invites/accept', {
+		method: 'POST',
+		body: JSON.stringify({ token }),
+	});
+}
+
 export type UnitOfMeasure = {
 	id: string;
 	code: string;

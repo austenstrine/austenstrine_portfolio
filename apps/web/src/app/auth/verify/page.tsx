@@ -6,16 +6,22 @@ import { AuthCard } from '../../../components/auth/AuthCard';
 import { ErrorText } from '../../../components/auth/ErrorText';
 import { FormField } from '../../../components/auth/FormField';
 import { AuthApiError, verifyLoginOtp } from '../../../lib/auth-api';
+import {
+	AUTH_NEXT_COOKIE,
+	consumeStashedNext,
+	readCookie,
+	resolvePostAuthDestination,
+	safeNextPath,
+} from '../../../lib/accessGate';
 
 function VerifyLoginForm() {
 	const router = useRouter();
 	const searchParams = useSearchParams();
 	const pendingToken = searchParams.get('pendingToken');
-	const nextRaw = searchParams.get('next');
-	const nextPath =
-		nextRaw && nextRaw.startsWith('/') && !nextRaw.startsWith('//')
-			? nextRaw
-			: '/';
+	const nextFromQuery = searchParams.get('next');
+	const nextPath = safeNextPath(
+		nextFromQuery ?? readCookie(AUTH_NEXT_COOKIE),
+	);
 
 	const [code, setCode] = useState('');
 	const [error, setError] = useState<string | null>(
@@ -35,7 +41,10 @@ function VerifyLoginForm() {
 
 		try {
 			await verifyLoginOtp(pendingToken, code);
-			router.push(nextPath);
+			const destination = await resolvePostAuthDestination(
+				nextFromQuery ? nextPath : consumeStashedNext(nextPath),
+			);
+			router.push(destination);
 		}
 		catch(submitError) {
 			setError(

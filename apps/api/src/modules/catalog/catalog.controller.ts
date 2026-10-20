@@ -1,4 +1,5 @@
 import {
+	BadRequestException,
 	Body,
 	Controller,
 	Delete,
@@ -24,8 +25,10 @@ import { CreateBrokenPackDto } from './dto/create-broken-pack.dto';
 import { CreateCatalogProductDto } from './dto/create-catalog-product.dto';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { CreateUomDto } from './dto/create-uom.dto';
+import { AcceptVendorInviteDto } from './dto/accept-vendor-invite.dto';
 import { CreateVendorAppPasswordDto } from './dto/create-vendor-app-password.dto';
 import { CreateVendorDto } from './dto/create-vendor.dto';
+import { CreateVendorInviteDto } from './dto/create-vendor-invite.dto';
 import { DeleteCatalogProductsDto } from './dto/delete-catalog-products.dto';
 import { TrimInventoryDto } from './dto/trim-inventory.dto';
 import { UpdateCatalogProductDto } from './dto/update-catalog-product.dto';
@@ -34,9 +37,10 @@ import { CatalogAuthGuard } from './guards/catalog-auth.guard';
 import { CatalogImportService } from './import/catalog-import.service';
 import { InventoryService } from './inventory/inventory.service';
 import { VendorAppPasswordService } from './vendor-app-password.service';
+import { VendorInviteService } from './vendor-invite.service';
 import { VendorService } from './vendor.service';
 
-type AuthedRequest = Request & { user?: { id: string } };
+type AuthedRequest = Request & { user?: { id: string; email?: string } };
 
 @ApiTags('catalog')
 @Controller('catalog')
@@ -45,6 +49,7 @@ export class CatalogController {
 		private readonly catalog: CatalogService,
 		private readonly inventory: InventoryService,
 		private readonly vendors: VendorService,
+		private readonly invites: VendorInviteService,
 		private readonly appPasswords: VendorAppPasswordService,
 		private readonly imports: CatalogImportService,
 		private readonly archive: CatalogArchiveService,
@@ -88,6 +93,61 @@ export class CatalogController {
 	@Post('vendors')
 	createVendor(@Req() req: AuthedRequest, @Body() dto: CreateVendorDto) {
 		return this.vendors.createVendor(req.user!.id, dto);
+	}
+
+	@UseGuards(JwtAuthGuard)
+	@Get('vendors/:vendorId/invites')
+	listVendorInvites(
+		@Req() req: AuthedRequest,
+		@Param('vendorId') vendorId: string,
+	) {
+		return this.invites.listInvites(req.user!.id, vendorId);
+	}
+
+	@UseGuards(JwtAuthGuard)
+	@Post('vendors/:vendorId/invites')
+	createVendorInvite(
+		@Req() req: AuthedRequest,
+		@Param('vendorId') vendorId: string,
+		@Body() dto: CreateVendorInviteDto,
+	) {
+		return this.invites.createInvite(
+			req.user!.id,
+			vendorId,
+			dto.email,
+			dto.role,
+		);
+	}
+
+	@UseGuards(JwtAuthGuard)
+	@Delete('vendors/:vendorId/invites/:inviteId')
+	revokeVendorInvite(
+		@Req() req: AuthedRequest,
+		@Param('vendorId') vendorId: string,
+		@Param('inviteId') inviteId: string,
+	) {
+		return this.invites.revokeInvite(req.user!.id, vendorId, inviteId);
+	}
+
+	@Get('invites/peek')
+	peekVendorInvite(@Query('token') token?: string) {
+		if(!token?.trim()) {
+			throw new BadRequestException('Invite token is required.');
+		}
+		return this.invites.peekInvite(token.trim());
+	}
+
+	@UseGuards(JwtAuthGuard)
+	@Post('invites/accept')
+	acceptVendorInvite(
+		@Req() req: AuthedRequest,
+		@Body() dto: AcceptVendorInviteDto,
+	) {
+		const email = req.user!.email;
+		if(!email) {
+			throw new BadRequestException('Authenticated user is missing an email address.');
+		}
+		return this.invites.acceptInvite(req.user!.id, email, dto.token);
 	}
 
 	@Get('products')

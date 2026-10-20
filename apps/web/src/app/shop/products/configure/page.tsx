@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useEffect, useMemo, useState, type FormEvent } from 'react';
+import { Suspense, useEffect, useMemo, useState, type FormEvent } from 'react';
 import {
 	createCatalogProduct,
 	listCatalogCategories,
@@ -15,6 +15,7 @@ import { dollarsToCents, slugify } from '../../../../lib/catalog-product-form';
 import { useSession } from '../../../../lib/useSession';
 import { CatalogWorkspaceSwitcher } from '../../../../components/catalog/CatalogWorkspaceSwitcher';
 import { UrlSlugField } from '../../../../components/catalog/UrlSlugField';
+import { RequireAccess } from '../../../../components/auth/RequireAccess';
 
 type BreakFeeMode = 'OFF' | 'PER_PARENT_OPENED' | 'ONCE_PER_LINE' | 'PRODUCT_ONCE';
 
@@ -50,7 +51,7 @@ function createLevel(partial?: Partial<ChainLevel>): ChainLevel {
 	};
 }
 
-export default function InventoryConfigurationPage() {
+function InventoryConfigurationForm() {
 	const router = useRouter();
 	const { user, loading: sessionLoading } = useSession();
 
@@ -279,29 +280,10 @@ export default function InventoryConfigurationPage() {
 		}
 	};
 
-	if(sessionLoading) {
+	if(sessionLoading || !user) {
 		return (
 			<p className="text-sm text-slate-500">
 				Checking session…
-			</p>
-		);
-	}
-
-	if(!user) {
-		return (
-			<p className="text-sm text-amber-800">
-				Sign in to configure inventory.
-				{' '}
-				<a
-					className="
-						font-semibold
-						text-sky
-						hover:underline
-					"
-					href="/auth/login"
-				>
-					Sign in
-				</a>
 			</p>
 		);
 	}
@@ -1043,5 +1025,21 @@ export default function InventoryConfigurationPage() {
 				</button>
 			</form>
 		</div>
+	);
+}
+
+export default function InventoryConfigurationPage() {
+	return (
+		<Suspense
+			fallback={
+				<p className="text-sm text-slate-500">
+					Loading…
+				</p>
+			}
+		>
+			<RequireAccess vendorRequired reasonKey="products">
+				<InventoryConfigurationForm />
+			</RequireAccess>
+		</Suspense>
 	);
 }
