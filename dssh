@@ -33,6 +33,8 @@ Examples:
   ./dssh backend build
   ./dssh backend start
   ./dssh backend start -nobuild
+  ./dssh backend restart
+  ./dssh backend restart -nobuild
   ./dssh mailtest
   ./dssh mailtest you@example.com
   ./dssh mailtest you@example.com "SMTP check" "Hello from local"
@@ -68,6 +70,8 @@ Example:
 
 start always rebuilds the target image first. Pass -nobuild (or --nobuild)
 to skip that rebuild when you know the image is current.
+restart stops the target's start container, then runs start. -nobuild
+is passed through to start.
 
 Optional global overrides:
   dssh_stop_local="..."
@@ -486,6 +490,12 @@ fi
 if [[ "$1" == "stop" ]]; then
   stop_target_start_container "$app_name" "$target_name"
   exit 0
+fi
+
+if [[ "$1" == "restart" ]]; then
+  shift
+  stop_target_start_container "$app_name" "$target_name"
+  exec "$script_dir/dssh" "$target_name" start "$@"
 fi
 
 action_name="$1"
