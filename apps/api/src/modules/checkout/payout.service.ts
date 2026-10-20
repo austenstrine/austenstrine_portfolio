@@ -432,7 +432,7 @@ export class PayoutService implements OnModuleInit, OnModuleDestroy {
 				},
 			});
 		}
-		catch (error) {
+		catch(error) {
 			const message =
 				error instanceof Error ? error.message : 'Transfer failed.';
 			this.logger.error(

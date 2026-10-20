@@ -103,7 +103,7 @@ export class CheckoutController {
 			const event = this.stripe.constructEvent(rawBody, signature);
 			return this.checkout.handleStripeEvent(event);
 		}
-		catch (error) {
+		catch(error) {
 			throw new BadRequestException(
 				error instanceof Error ? error.message : 'Invalid Stripe webhook.',
 			);

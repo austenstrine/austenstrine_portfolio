@@ -253,7 +253,9 @@ function NewProductForm() {
 				gap-6
 			"
 		>
-			<CatalogWorkspaceSwitcher active="standard" />
+			<CatalogWorkspaceSwitcher
+				active="standard"
+			/>
 
 			<div>
 				<p
@@ -305,7 +307,8 @@ function NewProductForm() {
 							</a>
 						</p>
 					)
-				: null}
+				: null
+			}
 
 			{uoms.length === 0
 				? (
@@ -324,7 +327,8 @@ function NewProductForm() {
 							</a>
 						</p>
 					)
-				: null}
+				: null
+			}
 
 			<form
 				className="
@@ -488,7 +492,8 @@ function NewProductForm() {
 							<span className="font-semibold">
 								{offeringMode === 'BOTH'
 									? 'Base SKU'
-									: 'SKU'}
+									: 'SKU'
+								}
 							</span>
 							<input
 								className="
@@ -523,7 +528,8 @@ function NewProductForm() {
 											{pieceSku}.
 										</span>
 									)
-								: null}
+								: null
+							}
 						</label>
 						<UrlSlugField
 							label="Product URL"
@@ -659,7 +665,8 @@ function NewProductForm() {
 								</div>
 							</section>
 						)
-					: null}
+					: null
+				}
 
 				{needsPack
 					? (
@@ -764,7 +771,8 @@ function NewProductForm() {
 								</div>
 							</section>
 						)
-					: null}
+					: null
+				}
 
 				{needsPiece
 					? (
@@ -894,11 +902,13 @@ function NewProductForm() {
 														required
 													/>
 												</label>
-											)}
+											)
+										}
 								</div>
 							</section>
 						)
-					: null}
+					: null
+				}
 
 				{error
 					? (
@@ -906,7 +916,8 @@ function NewProductForm() {
 								{error}
 							</p>
 						)
-					: null}
+					: null
+				}
 
 				<button
 					className="
@@ -926,7 +937,8 @@ function NewProductForm() {
 				>
 					{submitting
 						? 'Creating…'
-						: 'Create product'}
+						: 'Create product'
+					}
 				</button>
 			</form>
 		</div>
@@ -942,7 +954,10 @@ export default function NewProductPage() {
 				</p>
 			}
 		>
-			<RequireAccess vendorRequired reasonKey="products">
+			<RequireAccess
+				vendorRequired
+				reasonKey="products"
+			>
 				<NewProductForm />
 			</RequireAccess>
 		</Suspense>

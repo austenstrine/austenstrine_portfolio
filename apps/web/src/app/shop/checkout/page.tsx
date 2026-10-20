@@ -67,8 +67,6 @@ function PaymentForm({
 		>
 			<PaymentElement />
 			<button
-				type="submit"
-				disabled={!stripe || submitting}
 				className="
 					rounded-full
 					bg-ink
@@ -80,8 +78,13 @@ function PaymentForm({
 					hover:bg-sky
 					disabled:opacity-60
 				"
+				type="submit"
+				disabled={!stripe || submitting}
 			>
-				{submitting ? 'Processing…' : 'Pay now'}
+				{submitting
+					? 'Processing…'
+					: 'Pay now'
+				}
 			</button>
 		</form>
 	);
@@ -169,7 +172,7 @@ function CheckoutContent() {
 			);
 			setTotalCents(session.totalCents);
 		}
-		catch (sessionError) {
+		catch(sessionError) {
 			setError(
 				sessionError instanceof Error
 					? sessionError.message
@@ -216,7 +219,8 @@ function CheckoutContent() {
 						Checking session…
 					</p>
 				)
-				: null}
+				: null
+			}
 
 			{error
 				? (
@@ -224,7 +228,8 @@ function CheckoutContent() {
 						{error}
 					</p>
 				)
-				: null}
+				: null
+			}
 
 			{user && preview
 				? (
@@ -322,7 +327,8 @@ function CheckoutContent() {
 											Ships separately
 										</p>
 									)
-									: null}
+									: null
+								}
 								<ul
 									className="
 										mt-3
@@ -379,7 +385,10 @@ function CheckoutContent() {
 										}
 									>
 										{group.rates.map((rate) => (
-											<option key={rate.id} value={rate.id}>
+											<option
+												key={rate.id}
+												value={rate.id}
+											>
 												{rate.label} · {formatMoney(rate.amountCents)}
 											</option>
 										))}
@@ -407,8 +416,6 @@ function CheckoutContent() {
 							{!clientSecret
 								? (
 									<button
-										type="button"
-										disabled={busy || preview.groups.length === 0}
 										className="
 											rounded-full
 											bg-ink
@@ -420,16 +427,22 @@ function CheckoutContent() {
 											hover:bg-sky
 											disabled:opacity-60
 										"
+										type="button"
+										disabled={busy || preview.groups.length === 0}
 										onClick={() => void onStartPayment()}
 									>
-										{busy ? 'Reserving…' : 'Continue to payment'}
+										{busy
+											? 'Reserving…'
+											: 'Continue to payment'
+										}
 									</button>
 								)
 								: (
 									<p className="text-sm text-slate-600">
 										Charging {formatMoney(totalCents)}
 									</p>
-								)}
+								)
+							}
 						</div>
 
 						{clientSecret && stripePromise
@@ -456,17 +469,25 @@ function CheckoutContent() {
 									</Elements>
 								</section>
 							)
-							: null}
+							: null
+						}
 					</>
 				)
-				: null}
+				: null
+			}
 		</div>
 	);
 }
 
 export default function CheckoutPage() {
 	return (
-		<Suspense fallback={<p className="text-sm text-slate-500">Loading…</p>}>
+		<Suspense
+			fallback={
+				<p className="text-sm text-slate-500">
+					Loading…
+				</p>
+			}
+		>
 			<RequireAccess reasonKey="checkout">
 				<CheckoutContent />
 			</RequireAccess>

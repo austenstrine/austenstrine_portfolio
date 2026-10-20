@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useState, type FormEvent } from 'react';
@@ -104,7 +104,9 @@ function ResetPasswordForm() {
 					autoComplete="new-password"
 				/>
 
-				<ErrorText message={error} />
+				<ErrorText
+					message={error}
+				/>
 
 				<button
 					className="
@@ -124,7 +126,10 @@ function ResetPasswordForm() {
 					type="submit"
 					disabled={submitting}
 				>
-					{submitting ? 'Updating…' : 'Update password'}
+					{submitting
+						? 'Updating…'
+						: 'Update password'
+					}
 				</button>
 			</form>
 		</AuthCard>

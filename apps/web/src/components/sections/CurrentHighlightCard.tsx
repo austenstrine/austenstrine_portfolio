@@ -33,19 +33,33 @@ export function CurrentHighlightCard({
 		<div
 			className={`
 				relative
-				transition-[margin] duration-300 ease-out
-				${showWrapper ? '-mx-4' : 'mx-0'}
+				transition-[margin]
+				duration-300
+				ease-out
+				${showWrapper
+					? '-mx-4'
+					: 'mx-0'
+				}
 			`}
 		>
 			<div
 				className={`
 					pointer-events-none
-					absolute inset-0
+					absolute
+					inset-0
 					rounded-2xl
-					bg-gradient-to-br from-ink via-sky to-emerald-800
+					bg-gradient-to-br
+					from-ink
+					via-sky
+					to-emerald-800
 					shadow-xl
-					transition-opacity duration-300 ease-out
-					${showWrapper ? 'opacity-100' : 'opacity-0'}
+					transition-opacity
+					duration-300
+					ease-out
+					${showWrapper
+						? 'opacity-100'
+						: 'opacity-0'
+					}
 				`}
 				aria-hidden="true"
 			/>
@@ -54,17 +68,35 @@ export function CurrentHighlightCard({
 				onClose && (
 					<button
 						className={`
-							absolute right-3 top-3 z-10
-							rounded-full p-1.5 text-slate-200
-							transition-colors duration-200 ease-out
-							hover:bg-white/10 hover:text-white
-							focus:outline-none focus:ring-2 focus:ring-white/40
-							${showWrapper ? 'opacity-100' : 'pointer-events-none opacity-0'}
+							absolute
+							right-3
+							top-3
+							z-10
+							rounded-full
+							p-1.5
+							text-slate-200
+							transition-colors
+							duration-200
+							ease-out
+							hover:bg-white/10
+							hover:text-white
+							focus:outline-none
+							focus:ring-2
+							focus:ring-white/40
+							${showWrapper
+								? 'opacity-100'
+								: 'pointer-events-none opacity-0'
+							}
 						`}
 						type="button"
 						onClick={onClose}
 						aria-label="Dismiss current highlight"
-						tabIndex={showWrapper ? 0 : -1}
+						tabIndex={
+							(showWrapper
+								? 0
+								: -1
+							)
+						}
 					>
 						<svg
 							aria-hidden="true"
@@ -87,15 +119,25 @@ export function CurrentHighlightCard({
 			<div
 				className={`
 					relative
-					transition-[padding] duration-300 ease-out
-					${showWrapper ? 'p-4' : 'p-0'}
+					transition-[padding]
+					duration-300
+					ease-out
+					${showWrapper
+						? 'p-4'
+						: 'p-0'
+					}
 				`}
 			>
 				<div
 					className={`
 						grid
-						transition-[grid-template-rows] duration-300 ease-out
-						${showWrapper ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}
+						transition-[grid-template-rows]
+						duration-300
+						ease-out
+						${showWrapper
+							? 'grid-rows-[1fr] opacity-100'
+							: 'grid-rows-[0fr] opacity-0'
+						}
 					`}
 					aria-hidden={!showWrapper}
 				>
@@ -103,9 +145,18 @@ export function CurrentHighlightCard({
 						<p
 							className={`
 								pr-8
-								text-xs font-semibold uppercase tracking-[0.22em] text-slate-100
-								transition-transform duration-300 ease-out
-								${showWrapper ? 'translate-y-0' : '-translate-y-1'}
+								text-xs
+								font-semibold
+								uppercase
+								tracking-[0.22em]
+								text-slate-100
+								transition-transform
+								duration-300
+								ease-out
+								${showWrapper
+									? 'translate-y-0'
+									: '-translate-y-1'
+								}
 							`}
 						>
 							Current highlight
@@ -117,8 +168,13 @@ export function CurrentHighlightCard({
 					children && (
 						<div
 							className={`
-								transition-[margin-top] duration-300 ease-out
-								${showWrapper ? 'mt-3' : 'mt-0'}
+								transition-[margin-top]
+								duration-300
+								ease-out
+								${showWrapper
+									? 'mt-3'
+									: 'mt-0'
+								}
 							`}
 						>
 							{children}
@@ -129,16 +185,26 @@ export function CurrentHighlightCard({
 				<div
 					className={`
 						grid
-						transition-[grid-template-rows] duration-300 ease-out
-						${showWrapper ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}
+						transition-[grid-template-rows]
+						duration-300
+						ease-out
+						${showWrapper
+							? 'grid-rows-[1fr] opacity-100'
+							: 'grid-rows-[0fr] opacity-0'
+						}
 					`}
 					aria-hidden={!showWrapper}
 				>
 					<div className="overflow-hidden">
 						<div
 							className={`
-								transition-transform duration-300 ease-out
-								${showWrapper ? 'translate-y-0' : '-translate-y-1'}
+								transition-transform
+								duration-300
+								ease-out
+								${showWrapper
+									? 'translate-y-0'
+									: '-translate-y-1'
+								}
 							`}
 						>
 							<h3
@@ -243,15 +309,42 @@ export function CurrentHighlightCard({
 										<a
 											className={
 												(action.variant === 'outline'
-													? 'rounded-full border border-white/30 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/10'
-													: 'rounded-full bg-white px-4 py-2 text-sm font-semibold text-ink transition hover:-translate-y-0.5 hover:bg-frost'
+													? `
+														rounded-full
+														border
+														border-white/30
+														px-4
+														py-2
+														text-sm
+														font-semibold
+														text-white
+														transition
+														hover:bg-white/10
+													`
+													: `
+														rounded-full
+														bg-white
+														px-4
+														py-2
+														text-sm
+														font-semibold
+														text-ink
+														transition
+														hover:-translate-y-0.5
+														hover:bg-frost
+													`
 												)
 											}
 											key={action.href}
 											href={action.href}
 											target="_blank"
 											rel="noreferrer"
-											tabIndex={showWrapper ? 0 : -1}
+											tabIndex={
+												(showWrapper
+													? 0
+													: -1
+												)
+											}
 										>
 											{action.label}
 										</a>

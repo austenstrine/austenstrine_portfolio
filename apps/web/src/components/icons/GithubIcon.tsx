@@ -1,11 +1,11 @@
 export function GithubIcon({ className = 'h-5 w-5' }: { className?: string }) {
 	return (
 		<svg
+			className={className}
 			height="32"
 			width="32"
 			viewBox="0 0 24 24"
 			version="1.1"
-			className={className}
 			aria-hidden="true"
 		>
 			<path

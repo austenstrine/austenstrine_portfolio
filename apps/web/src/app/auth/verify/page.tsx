@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useState, type FormEvent } from 'react';
@@ -81,7 +81,9 @@ function VerifyLoginForm() {
 					placeholder="000000"
 				/>
 
-				<ErrorText message={error} />
+				<ErrorText
+					message={error}
+				/>
 
 				<button
 					className="
@@ -101,7 +103,10 @@ function VerifyLoginForm() {
 					type="submit"
 					disabled={submitting || !pendingToken}
 				>
-					{submitting ? 'Verifying…' : 'Verify and sign in'}
+					{submitting
+						? 'Verifying…'
+						: 'Verify and sign in'
+					}
 				</button>
 			</form>
 		</AuthCard>

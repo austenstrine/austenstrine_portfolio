@@ -352,7 +352,7 @@ export class CatalogArchiveService implements OnModuleInit, OnModuleDestroy {
 					],
 				});
 			}
-			catch (error) {
+			catch(error) {
 				this.logger.error(
 					`Deleted products but failed to email owners for batch ${archiveBatchId}`,
 					error as Error,

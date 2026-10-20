@@ -48,37 +48,64 @@ export default function ShopLayout({ children }: { children: ReactNode }) {
 							font-semibold
 						"
 					>
-						<a href="/shop/search" className="text-sky hover:underline">
+						<a
+							className="text-sky hover:underline"
+							href="/shop/search"
+						>
 							Search
 						</a>
-						<a href="/shop/cart" className="text-sky hover:underline">
+						<a
+							className="text-sky hover:underline"
+							href="/shop/cart"
+						>
 							Cart
 						</a>
-						<a href="/shop/orders" className="text-sky hover:underline">
+						<a
+							className="text-sky hover:underline"
+							href="/shop/orders"
+						>
 							Orders
 						</a>
-						<a href="/shop/vendors" className="text-sky hover:underline">
+						<a
+							className="text-sky hover:underline"
+							href="/shop/vendors"
+						>
 							Vendors
 						</a>
-						<a href="/shop/uoms" className="text-sky hover:underline">
+						<a
+							className="text-sky hover:underline"
+							href="/shop/uoms"
+						>
 							UOMs
 						</a>
-						<a href="/shop/categories" className="text-sky hover:underline">
+						<a
+							className="text-sky hover:underline"
+							href="/shop/categories"
+						>
 							Categories
 						</a>
-						<a href="/shop/products/new" className="text-sky hover:underline">
+						<a
+							className="text-sky hover:underline"
+							href="/shop/products/new"
+						>
 							New product
 						</a>
 						<a
-							href="/shop/products/configure"
 							className="text-sky hover:underline"
+							href="/shop/products/configure"
 						>
 							Inventory config
 						</a>
-						<a href="/shop/manage" className="text-sky hover:underline">
+						<a
+							className="text-sky hover:underline"
+							href="/shop/manage"
+						>
 							Manage
 						</a>
-						<a href="/" className="text-slate-500 hover:text-ink">
+						<a
+							className="text-slate-500 hover:text-ink"
+							href="/"
+						>
 							Portfolio
 						</a>
 					</nav>

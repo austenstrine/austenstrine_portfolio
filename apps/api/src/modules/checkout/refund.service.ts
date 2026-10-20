@@ -326,7 +326,7 @@ export class RefundService {
 				}),
 			);
 		}
-		catch (error) {
+		catch(error) {
 			const message =
 				error instanceof Error ? error.message : 'Refund failed.';
 			this.logger.error(

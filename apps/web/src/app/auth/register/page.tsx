@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useState, type FormEvent } from 'react';
@@ -82,7 +82,9 @@ function RegisterForm() {
 				</p>
 			}
 		>
-			<AuthReasonBanner reason={reason} />
+			<AuthReasonBanner
+				reason={reason}
+			/>
 			<form
 				className="
 					flex
@@ -115,7 +117,9 @@ function RegisterForm() {
 					autoComplete="new-password"
 				/>
 
-				<ErrorText message={error} />
+				<ErrorText
+					message={error}
+				/>
 
 				<button
 					className="
@@ -135,7 +139,10 @@ function RegisterForm() {
 					type="submit"
 					disabled={submitting}
 				>
-					{submitting ? 'Creating account…' : 'Create account'}
+					{submitting
+						? 'Creating account…'
+						: 'Create account'
+					}
 				</button>
 
 				<div

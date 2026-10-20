@@ -57,21 +57,44 @@ function UomMergeContent() {
 							Applying…
 						</p>
 					)
-				: null}
+				: null
+			}
 			{message
 				? (
-						<p className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900">
+						<p
+							className="
+								rounded-xl
+								border
+								border-emerald-200
+								bg-emerald-50
+								p-4
+								text-sm
+								text-emerald-900
+							"
+						>
 							{message}
 						</p>
 					)
-				: null}
+				: null
+			}
 			{error
 				? (
-						<p className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+						<p
+							className="
+								rounded-xl
+								border
+								border-red-200
+								bg-red-50
+								p-4
+								text-sm
+								text-red-800
+							"
+						>
 							{error}
 						</p>
 					)
-				: null}
+				: null
+			}
 			<a
 				className="
 					text-sm

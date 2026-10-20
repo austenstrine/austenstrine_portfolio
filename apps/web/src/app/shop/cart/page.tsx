@@ -40,7 +40,7 @@ function CartContent() {
 		try {
 			setCart(await upsertCartLine(offeringId, quantity));
 		}
-		catch (updateError) {
+		catch(updateError) {
 			setError(
 				updateError instanceof Error
 					? updateError.message
@@ -58,7 +58,7 @@ function CartContent() {
 		try {
 			setCart(await removeCartLine(offeringId));
 		}
-		catch (removeError) {
+		catch(removeError) {
 			setError(
 				removeError instanceof Error
 					? removeError.message
@@ -109,7 +109,8 @@ function CartContent() {
 						Checking session…
 					</p>
 				)
-				: null}
+				: null
+			}
 
 			{error
 				? (
@@ -117,7 +118,8 @@ function CartContent() {
 						{error}
 					</p>
 				)
-				: null}
+				: null
+			}
 
 			{user && cart
 				? (
@@ -211,8 +213,6 @@ function CartContent() {
 													/>
 												</label>
 												<button
-													type="button"
-													disabled={busy}
 													className="
 														text-sm
 														font-semibold
@@ -220,6 +220,8 @@ function CartContent() {
 														hover:underline
 														disabled:opacity-60
 													"
+													type="button"
+													disabled={busy}
 													onClick={() => void onRemove(line.offeringId)}
 												>
 													Remove
@@ -228,7 +230,8 @@ function CartContent() {
 										</li>
 									))}
 								</ul>
-							)}
+							)
+						}
 
 						{cart.lines.length > 0
 							? (
@@ -261,17 +264,25 @@ function CartContent() {
 									</Link>
 								</div>
 							)
-							: null}
+							: null
+						}
 					</>
 				)
-				: null}
+				: null
+			}
 		</div>
 	);
 }
 
 export default function CartPage() {
 	return (
-		<Suspense fallback={<p className="text-sm text-slate-500">Loading…</p>}>
+		<Suspense
+			fallback={
+				<p className="text-sm text-slate-500">
+					Loading…
+				</p>
+			}
+		>
 			<RequireAccess reasonKey="cart">
 				<CartContent />
 			</RequireAccess>

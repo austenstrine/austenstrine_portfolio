@@ -116,7 +116,8 @@ function AcceptInviteContent() {
 							Loading invite…
 						</p>
 					)
-				: null}
+				: null
+			}
 
 			{error
 				? (
@@ -124,7 +125,8 @@ function AcceptInviteContent() {
 							{error}
 						</p>
 					)
-				: null}
+				: null
+			}
 
 			{peek && !sessionLoading
 				? (
@@ -140,23 +142,55 @@ function AcceptInviteContent() {
 							<p className="text-sm text-slate-600">
 								You&apos;ve been invited to join
 							</p>
-							<p className="mt-1 text-xl font-semibold text-ink">
+							<p
+								className="
+									mt-1
+									text-xl
+									font-semibold
+									text-ink
+								"
+							>
 								{peek.vendorName}
 							</p>
-							<p className="mt-1 text-sm text-slate-600">
+							<p
+								className="
+									mt-1
+									text-sm
+									text-slate-600
+								"
+							>
 								Role: {peek.role} · Invited email: {peek.email}
 							</p>
-							<p className="mt-1 text-xs text-slate-500">
+							<p
+								className="
+									mt-1
+									text-xs
+									text-slate-500
+								"
+							>
 								Expires {new Date(peek.expiresAt).toLocaleString()}
 							</p>
 
 							{!user
 								? (
-										<div className="mt-5 flex flex-col gap-3">
+										<div
+											className="
+												mt-5
+												flex
+												flex-col
+												gap-3
+											"
+										>
 											<p className="text-sm text-slate-700">
 												{ACCESS_REASONS.invite}
 											</p>
-											<div className="flex flex-wrap gap-3">
+											<div
+												className="
+													flex
+													flex-wrap
+													gap-3
+												"
+											>
 												<a
 													className="
 														rounded-full
@@ -199,7 +233,14 @@ function AcceptInviteContent() {
 										</div>
 									)
 								: (
-										<div className="mt-5 flex flex-col gap-3">
+										<div
+											className="
+												mt-5
+												flex
+												flex-col
+												gap-3
+											"
+										>
 											{user.email.toLowerCase() !== peek.email.toLowerCase()
 												? (
 														<p className="text-sm text-amber-800">
@@ -226,14 +267,20 @@ function AcceptInviteContent() {
 															disabled={accepting}
 															onClick={() => void onAccept()}
 														>
-															{accepting ? 'Joining…' : 'Accept invite'}
+															{accepting
+																? 'Joining…'
+																: 'Accept invite'
+															}
 														</button>
-													)}
+												)
+											}
 										</div>
-									)}
+									)
+							}
 						</section>
 					)
-				: null}
+				: null
+			}
 		</div>
 	);
 }

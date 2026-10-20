@@ -151,7 +151,6 @@ function FeaturedRecommendation({
 					target="_blank"
 				>
 					<img
-						alt={recommendation.name}
 						className="
 							h-28
 							w-28
@@ -161,12 +160,15 @@ function FeaturedRecommendation({
 							object-cover
 							shadow-md
 						"
+						alt={recommendation.name}
 						src={recommendation.image}
 					/>
 				</a>
 
 				<div>
-					<RecommendationAttribution recommendation={recommendation} />
+					<RecommendationAttribution
+						recommendation={recommendation}
+					/>
 					<RecommendationQuote
 						featured
 						recommendation={recommendation}
@@ -211,7 +213,6 @@ function SupportingRecommendation({
 					target="_blank"
 				>
 					<img
-						alt={recommendation.name}
 						className="
 							h-20
 							w-20
@@ -221,13 +222,18 @@ function SupportingRecommendation({
 							object-cover
 							shadow-md
 						"
+						alt={recommendation.name}
 						src={recommendation.image}
 					/>
 				</a>
 
 				<div>
-					<RecommendationAttribution recommendation={recommendation} />
-					<RecommendationQuote recommendation={recommendation} />
+					<RecommendationAttribution
+						recommendation={recommendation}
+					/>
+					<RecommendationQuote
+						recommendation={recommendation}
+					/>
 				</div>
 			</div>
 		</article>
@@ -297,7 +303,9 @@ export function AboutSection() {
 				{
 					featured
 						? (
-							<FeaturedRecommendation recommendation={featured} />
+							<FeaturedRecommendation
+								recommendation={featured}
+							/>
 						)
 						: null
 				}
