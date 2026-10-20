@@ -76,7 +76,7 @@ export type CheckoutSession = {
 	expiresAt: string | null;
 };
 
-export type ShopOrderRefund = {
+export type PlaceEtMarqueOrderRefund = {
 	id: string;
 	reason: string;
 	status: string;
@@ -86,7 +86,7 @@ export type ShopOrderRefund = {
 	createdAt: string;
 };
 
-export type ShopOrder = {
+export type PlaceEtMarqueOrder = {
 	id: string;
 	orderRef: string;
 	status: string;
@@ -114,7 +114,7 @@ export type ShopOrder = {
 	canVendorRefund?: boolean;
 	vendor: { id: string; slug: string; name: string } | null;
 	buyerEmail?: string | null;
-	refunds?: ShopOrderRefund[];
+	refunds?: PlaceEtMarqueOrderRefund[];
 	lines: Array<{
 		id: string;
 		offeringId: string;
@@ -232,12 +232,12 @@ export function createCheckoutSession(payload: {
 	});
 }
 
-export function listBuyerOrders(): Promise<ShopOrder[]> {
-	return checkoutRequest<ShopOrder[]>('/orders');
+export function listBuyerOrders(): Promise<PlaceEtMarqueOrder[]> {
+	return checkoutRequest<PlaceEtMarqueOrder[]>('/orders');
 }
 
-export function getBuyerOrder(orderId: string): Promise<ShopOrder> {
-	return checkoutRequest<ShopOrder>(`/orders/${orderId}`);
+export function getBuyerOrder(orderId: string): Promise<PlaceEtMarqueOrder> {
+	return checkoutRequest<PlaceEtMarqueOrder>(`/orders/${orderId}`);
 }
 
 export function listVendorShippingProfiles(vendorId: string): Promise<ShippingProfile[]> {
@@ -279,12 +279,12 @@ export function createVendorConnectAccountLink(
 	);
 }
 
-export function listVendorOrders(vendorId: string): Promise<ShopOrder[]> {
-	return checkoutRequest<ShopOrder[]>(`/vendors/${vendorId}/orders`);
+export function listVendorOrders(vendorId: string): Promise<PlaceEtMarqueOrder[]> {
+	return checkoutRequest<PlaceEtMarqueOrder[]>(`/vendors/${vendorId}/orders`);
 }
 
-export function shipVendorOrder(vendorId: string, orderId: string): Promise<ShopOrder> {
-	return checkoutRequest<ShopOrder>(`/vendors/${vendorId}/orders/${orderId}/ship`, {
+export function shipVendorOrder(vendorId: string, orderId: string): Promise<PlaceEtMarqueOrder> {
+	return checkoutRequest<PlaceEtMarqueOrder>(`/vendors/${vendorId}/orders/${orderId}/ship`, {
 		method: 'POST',
 		body: JSON.stringify({}),
 	});

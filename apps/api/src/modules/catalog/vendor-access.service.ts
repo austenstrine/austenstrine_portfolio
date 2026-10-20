@@ -84,7 +84,7 @@ export class VendorAccessService {
 		const allowed = await this.isSuperVendorMember(userId);
 		if(!allowed) {
 			throw new ForbiddenException(
-				'Only the austenstrine.dev supervendor can manage marketplace categories.',
+				'Only the austenstrine.dev supervendor can manage Place et Marque categories.',
 			);
 		}
 	}

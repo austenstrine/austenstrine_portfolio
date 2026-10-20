@@ -172,7 +172,7 @@ export class CatalogService {
 
 		const to = process.env.CATEGORY_REQUEST_EMAIL ?? 'categories@austenstrine.dev';
 		const vendorLines = memberships
-			.map((row) => `- ${row.vendor.name} (/shop/${row.vendor.slug}) as ${row.role}`)
+			.map((row) => `- ${row.vendor.name} (/place-et-marque/${row.vendor.slug}) as ${row.role}`)
 			.join('\n');
 		const text = [
 			`Category request from ${userEmail}`,
@@ -192,7 +192,7 @@ export class CatalogService {
 			html: `<pre style="font-family:inherit;white-space:pre-wrap;">${text}</pre>`,
 		});
 
-		return { message: 'Category request sent. The marketplace team will review it.' };
+		return { message: 'Category request sent. The Place et Marque team will review it.' };
 	}
 
 	async listPopularTags(input: {

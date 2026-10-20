@@ -83,9 +83,9 @@ export function HeroSection() {
 								hover:-translate-y-0.5
 								hover:bg-frost
 							"
-							href="/shop"
+							href="/place-et-marque"
 						>
-							Explore the marketplace
+							Explore Place et Marque
 						</a>
 						<a
 							className="

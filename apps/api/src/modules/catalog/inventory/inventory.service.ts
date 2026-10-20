@@ -2,7 +2,7 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import {
 	BrokenPackStatus,
 	InventoryClaimStatus,
-	MarketplaceOrderStatus,
+	PlaceEtMarqueOrderStatus,
 	Prisma,
 } from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/library';
@@ -218,15 +218,15 @@ export class InventoryService {
 		}
 
 		const order = input.orderId
-			? await this.prisma.marketplaceOrder.findUniqueOrThrow({
+			? await this.prisma.placeEtMarqueOrder.findUniqueOrThrow({
 					where: { id: input.orderId },
 				})
-			: await this.prisma.marketplaceOrder.upsert({
+			: await this.prisma.placeEtMarqueOrder.upsert({
 					where: { orderRef: input.orderRef },
 					create: {
 						orderRef: input.orderRef,
 						buyerId: input.buyerId,
-						status: MarketplaceOrderStatus.HOLD,
+						status: PlaceEtMarqueOrderStatus.HOLD,
 					},
 					update: {},
 				});

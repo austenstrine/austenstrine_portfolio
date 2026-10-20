@@ -348,16 +348,16 @@ export class UomMergeService {
 		const skipOnceToken = this.signToken('skip-once', group.nameKey);
 		const skipForeverToken = this.signToken('skip-forever', group.nameKey);
 
-		const confirmUrl = `${webBase}/shop/uom-merges?token=${encodeURIComponent(confirmToken)}`;
-		const skipOnceUrl = `${webBase}/shop/uom-merges?token=${encodeURIComponent(skipOnceToken)}`;
-		const skipForeverUrl = `${webBase}/shop/uom-merges?token=${encodeURIComponent(skipForeverToken)}`;
+		const confirmUrl = `${webBase}/place-et-marque/uom-merges?token=${encodeURIComponent(confirmToken)}`;
+		const skipOnceUrl = `${webBase}/place-et-marque/uom-merges?token=${encodeURIComponent(skipOnceToken)}`;
+		const skipForeverUrl = `${webBase}/place-et-marque/uom-merges?token=${encodeURIComponent(skipForeverToken)}`;
 
 		// Keep API token routes as well for email clients that prefer direct API hits
 		void apiBase;
 
 		const lines = group.uoms.map((row) => {
 			const owner = row.vendorId
-				? `${row.vendorName} (/shop/${row.vendorSlug})`
+				? `${row.vendorName} (/place-et-marque/${row.vendorSlug})`
 				: 'GLOBAL';
 			const aliases = row.aliases.length ? ` aliases=[${row.aliases.join(', ')}]` : '';
 			return `- ${owner}: code="${row.code}"${aliases} id=${row.id}`;
