@@ -4,6 +4,7 @@ import {
   ProductOfferingRole,
 } from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/library';
+import { ensureSupervendor } from '../src/modules/catalog/ensure-supervendor';
 
 export async function seedCatalog(prisma: PrismaClient): Promise<void> {
   const uomRows = [
@@ -63,19 +64,7 @@ export async function seedCatalog(prisma: PrismaClient): Promise<void> {
     update: { name: 'Wire & Cable' },
   });
 
-  const superVendor = await prisma.vendor.upsert({
-    where: { slug: 'austenstrine-dev' },
-    create: {
-      slug: 'austenstrine-dev',
-      name: 'austenstrine.dev',
-      isSuperVendor: true,
-    },
-    update: {
-      name: 'austenstrine.dev',
-      isSuperVendor: true,
-    },
-  });
-  void superVendor;
+  await ensureSupervendor(prisma);
 
   const vendor = await prisma.vendor.upsert({
     where: { slug: 'demo-supply' },

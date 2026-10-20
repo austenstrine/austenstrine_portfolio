@@ -14,7 +14,7 @@
     "mail:test": "ts-node --transpile-only scripts/send-test-email.ts"
   },
   "prisma": {
-    "seed": "ts-node prisma/seed.ts"
+    "seed": "ts-node --transpile-only prisma/seed.ts"
   },
   "dependencies": {
     "@nestjs/common": "^10.4.2",

@@ -48,7 +48,7 @@ export default function ForgotPasswordPage() {
 		>
 			<AuthCard
 				title="Forgot password"
-				subtitle="Enter your email and we'll send a one-time code if an account exists."
+				subtitle="Enter your email and we'll send a one-time code if an account exists. This also works if you only signed in with Google and never set a password."
 				footer={
 					<p>
 						Remembered it?{' '}

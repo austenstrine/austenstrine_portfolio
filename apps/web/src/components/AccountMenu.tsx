@@ -55,9 +55,16 @@ export function AccountMenu() {
 				text-white
 			"
 		>
-			<span className="max-w-[10rem] truncate">
+			<a
+				className="
+					max-w-[10rem]
+					truncate
+					hover:underline
+				"
+				href="/auth/account"
+			>
 				{user.email}
-			</span>
+			</a>
 			<button
 				className="
 					rounded-full
