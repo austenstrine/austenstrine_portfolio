@@ -1,14 +1,19 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsNumberString, IsOptional, IsString, Matches, MaxLength, MinLength } from 'class-validator';
+import {
+	IsArray,
+	IsNumberString,
+	IsOptional,
+	IsString,
+	IsUUID,
+	MaxLength,
+	MinLength,
+} from 'class-validator';
 
 export class CreateUomDto {
-	@ApiProperty({ example: 'FT' })
+	@ApiProperty({ example: 'ft' })
 	@IsString()
 	@MinLength(1)
-	@MaxLength(20)
-	@Matches(/^[A-Z0-9_]+$/, {
-		message: 'Code must be uppercase letters, numbers, and underscores only.',
-	})
+	@MaxLength(40)
 	code!: string;
 
 	@ApiProperty({ example: 'Foot' })
@@ -29,6 +34,20 @@ export class CreateUomDto {
 	})
 	@IsNumberString()
 	factorToReference!: string;
+
+	@ApiPropertyOptional({
+		description: 'Vendor that owns this UOM. Omit only when creating a global UOM as supervendor.',
+	})
+	@IsOptional()
+	@IsUUID()
+	vendorId?: string;
+
+	@ApiPropertyOptional({ type: [String], example: ['foot', "'"] })
+	@IsOptional()
+	@IsArray()
+	@IsString({ each: true })
+	@MaxLength(40, { each: true })
+	aliases?: string[];
 
 	@ApiPropertyOptional()
 	@IsOptional()

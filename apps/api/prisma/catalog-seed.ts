@@ -7,28 +7,54 @@ import { Decimal } from '@prisma/client/runtime/library';
 
 export async function seedCatalog(prisma: PrismaClient): Promise<void> {
   const uomRows = [
-    { code: 'FT', label: 'Foot', dimensionKey: 'length', factorToReference: new Decimal('0.3048') },
-    { code: 'IN', label: 'Inch', dimensionKey: 'length', factorToReference: new Decimal('0.0254') },
-    { code: 'MM', label: 'Millimeter', dimensionKey: 'length', factorToReference: new Decimal('0.001') },
-    { code: 'M', label: 'Meter', dimensionKey: 'length', factorToReference: new Decimal('1') },
-    { code: 'EA', label: 'Each', dimensionKey: 'count', factorToReference: new Decimal('1') },
-    { code: 'PK', label: 'Pack', dimensionKey: 'count', factorToReference: new Decimal('1') },
-    { code: 'BX', label: 'Box', dimensionKey: 'count', factorToReference: new Decimal('1') },
-    { code: 'SPOOL', label: 'Spool', dimensionKey: 'count', factorToReference: new Decimal('1') },
-    { code: 'LB', label: 'Pound', dimensionKey: 'weight', factorToReference: new Decimal('0.45359237') },
-    { code: 'KG', label: 'Kilogram', dimensionKey: 'weight', factorToReference: new Decimal('1') },
+    {
+      code: 'FT',
+      label: 'Foot',
+      dimensionKey: 'length',
+      factorToReference: new Decimal('0.3048'),
+      aliases: ['ft', 'foot', "'"],
+    },
+    {
+      code: 'IN',
+      label: 'Inch',
+      dimensionKey: 'length',
+      factorToReference: new Decimal('0.0254'),
+      aliases: ['in', 'inch', '"'],
+    },
+    { code: 'MM', label: 'Millimeter', dimensionKey: 'length', factorToReference: new Decimal('0.001'), aliases: ['mm'] },
+    { code: 'M', label: 'Meter', dimensionKey: 'length', factorToReference: new Decimal('1'), aliases: ['m', 'meter'] },
+    { code: 'EA', label: 'Each', dimensionKey: 'count', factorToReference: new Decimal('1'), aliases: ['ea', 'each'] },
+    { code: 'PK', label: 'Pack', dimensionKey: 'count', factorToReference: new Decimal('1'), aliases: ['pk', 'pack'] },
+    { code: 'BX', label: 'Box', dimensionKey: 'count', factorToReference: new Decimal('1'), aliases: ['bx', 'box'] },
+    { code: 'SPOOL', label: 'Spool', dimensionKey: 'count', factorToReference: new Decimal('1'), aliases: ['spool'] },
+    { code: 'LB', label: 'Pound', dimensionKey: 'weight', factorToReference: new Decimal('0.45359237'), aliases: ['lb', 'lbs'] },
+    { code: 'KG', label: 'Kilogram', dimensionKey: 'weight', factorToReference: new Decimal('1'), aliases: ['kg'] },
   ];
 
   for(const row of uomRows) {
-    await prisma.unitOfMeasure.upsert({
-      where: { code: row.code },
-      create: row,
-      update: {
-        label: row.label,
-        dimensionKey: row.dimensionKey,
-        factorToReference: row.factorToReference,
-      },
+    const existing = await prisma.unitOfMeasure.findFirst({
+      where: { vendorId: null, code: row.code },
     });
+    if(existing) {
+      await prisma.unitOfMeasure.update({
+        where: { id: existing.id },
+        data: {
+          label: row.label,
+          dimensionKey: row.dimensionKey,
+          factorToReference: row.factorToReference,
+          aliases: row.aliases,
+          vendorId: null,
+        },
+      });
+    }
+    else {
+      await prisma.unitOfMeasure.create({
+        data: {
+          ...row,
+          vendorId: null,
+        },
+      });
+    }
   }
 
   const category = await prisma.catalogCategory.upsert({
@@ -57,8 +83,12 @@ export async function seedCatalog(prisma: PrismaClient): Promise<void> {
     update: { name: 'Demo Supply Co.', isSuperVendor: false },
   });
 
-  const uomSpool = await prisma.unitOfMeasure.findUniqueOrThrow({ where: { code: 'SPOOL' } });
-  const uomFt = await prisma.unitOfMeasure.findUniqueOrThrow({ where: { code: 'FT' } });
+  const uomSpool = await prisma.unitOfMeasure.findFirstOrThrow({
+    where: { vendorId: null, code: 'SPOOL' },
+  });
+  const uomFt = await prisma.unitOfMeasure.findFirstOrThrow({
+    where: { vendorId: null, code: 'FT' },
+  });
 
   const product = await prisma.catalogProduct.upsert({
     where: {

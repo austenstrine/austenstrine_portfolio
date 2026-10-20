@@ -17,6 +17,7 @@ import { CreateUomDto } from './dto/create-uom.dto';
 import { RequestCategoryDto } from './dto/request-category.dto';
 import { TrimInventoryDto } from './dto/trim-inventory.dto';
 import { UpdateCatalogProductDto } from './dto/update-catalog-product.dto';
+import { UomMergeService } from './uom-merge.service';
 
 const productInclude = {
 	vendor: true,
@@ -42,28 +43,78 @@ export class CatalogService {
 		private readonly inventory: InventoryService,
 		private readonly vendorAccess: VendorAccessService,
 		private readonly mail: MailService,
+		private readonly uomMerges: UomMergeService,
 	) {}
 
-	listUoms() {
-		return this.prisma.unitOfMeasure.findMany({ orderBy: { code: 'asc' } });
+	listUoms(vendorId?: string) {
+		return this.prisma.unitOfMeasure.findMany({
+			where: vendorId
+				? {
+						OR: [
+							{ vendorId: null },
+							{ vendorId },
+						],
+					}
+				: undefined,
+			orderBy: [{ vendorId: 'asc' }, { code: 'asc' }],
+			include: {
+				vendor: { select: { id: true, name: true, slug: true } },
+			},
+		});
 	}
 
-	async createUom(dto: CreateUomDto) {
-		const code = dto.code.trim().toUpperCase();
-		const existing = await this.prisma.unitOfMeasure.findUnique({ where: { code } });
-		if(existing) {
-			throw new ConflictException('A unit of measure with that code already exists.');
+	async createUom(userId: string, dto: CreateUomDto) {
+		const code = dto.code.trim();
+		if(!code) {
+			throw new BadRequestException('UOM code is required.');
 		}
 
-		return this.prisma.unitOfMeasure.create({
+		const aliases = this.uomMerges.normalizeAliases(dto.aliases);
+		const dimensionKey = dto.dimensionKey.trim().toLowerCase();
+		const label = dto.label.trim();
+
+		let vendorId: string | null = dto.vendorId ?? null;
+
+		if(vendorId) {
+			await this.vendorAccess.assertCanEditVendor(userId, vendorId);
+		}
+		else {
+			await this.vendorAccess.assertIsSuperVendorMember(userId);
+		}
+
+		const existing = await this.prisma.unitOfMeasure.findFirst({
+			where: vendorId
+				? { vendorId, code }
+				: { vendorId: null, code },
+		});
+		if(existing) {
+			throw new ConflictException(
+				vendorId
+					? 'Your vendor already has a UOM with that name.'
+					: 'A global UOM with that name already exists.',
+			);
+		}
+
+		const created = await this.prisma.unitOfMeasure.create({
 			data: {
 				code,
-				label: dto.label.trim(),
-				dimensionKey: dto.dimensionKey.trim().toLowerCase(),
+				label,
+				vendorId,
+				aliases,
+				dimensionKey,
 				factorToReference: new Decimal(dto.factorToReference),
 				metadata: dto.metadata as Prisma.InputJsonValue | undefined,
 			},
+			include: {
+				vendor: { select: { id: true, name: true, slug: true } },
+			},
 		});
+
+		if(vendorId) {
+			await this.uomMerges.evaluateAfterVendorUomChange(created.id).catch(() => undefined);
+		}
+
+		return created;
 	}
 
 	listCategories() {

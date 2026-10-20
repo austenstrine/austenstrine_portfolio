@@ -11,6 +11,7 @@ import { InventoryService } from './inventory/inventory.service';
 import { VendorAccessService } from './vendor-access.service';
 import { VendorAppPasswordService } from './vendor-app-password.service';
 import { VendorInviteService } from './vendor-invite.service';
+import { UomMergeService } from './uom-merge.service';
 import { VendorService } from './vendor.service';
 
 @Module({
@@ -22,6 +23,7 @@ import { VendorService } from './vendor.service';
 		VendorAccessService,
 		VendorService,
 		VendorInviteService,
+		UomMergeService,
 		VendorAppPasswordService,
 		CatalogImportService,
 		CatalogArchiveService,
