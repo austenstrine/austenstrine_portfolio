@@ -6,7 +6,7 @@ import {
 	NotFoundException,
 } from '@nestjs/common';
 import {
-	MarketplaceOrderStatus,
+	PlaceEtMarqueOrderStatus,
 	OrderRefundReason,
 	OrderRefundStatus,
 	VendorMemberRole,
@@ -16,15 +16,15 @@ import { PrismaService } from '../../infra/prisma/prisma.service';
 import { InventoryService } from '../catalog/inventory/inventory.service';
 import { StripeService } from './stripe.service';
 
-const BUYER_CANCEL_STATUSES: MarketplaceOrderStatus[] = [
-	MarketplaceOrderStatus.PAID,
-	MarketplaceOrderStatus.FULFILLING,
+const BUYER_CANCEL_STATUSES: PlaceEtMarqueOrderStatus[] = [
+	PlaceEtMarqueOrderStatus.PAID,
+	PlaceEtMarqueOrderStatus.FULFILLING,
 ];
 
-const VENDOR_REFUND_STATUSES: MarketplaceOrderStatus[] = [
-	MarketplaceOrderStatus.PAID,
-	MarketplaceOrderStatus.FULFILLING,
-	MarketplaceOrderStatus.SHIPPED,
+const VENDOR_REFUND_STATUSES: PlaceEtMarqueOrderStatus[] = [
+	PlaceEtMarqueOrderStatus.PAID,
+	PlaceEtMarqueOrderStatus.FULFILLING,
+	PlaceEtMarqueOrderStatus.SHIPPED,
 ];
 
 @Injectable()
@@ -38,7 +38,7 @@ export class RefundService {
 	) {}
 
 	async cancelAsBuyer(userId: string, orderId: string, note?: string) {
-		const order = await this.prisma.marketplaceOrder.findFirst({
+		const order = await this.prisma.placeEtMarqueOrder.findFirst({
 			where: { id: orderId, buyerId: userId },
 			include: {
 				payout: true,
@@ -90,7 +90,7 @@ export class RefundService {
 			throw new ForbiddenException('Not allowed to refund vendor orders.');
 		}
 
-		const order = await this.prisma.marketplaceOrder.findFirst({
+		const order = await this.prisma.placeEtMarqueOrder.findFirst({
 			where: { id: orderId, vendorId },
 			include: {
 				payout: true,
@@ -127,7 +127,7 @@ export class RefundService {
 		order: {
 			id: string;
 			orderRef: string;
-			status: MarketplaceOrderStatus;
+			status: PlaceEtMarqueOrderStatus;
 			buyerId: string | null;
 			vendorId: string | null;
 			checkoutId: string | null;
@@ -298,10 +298,10 @@ export class RefundService {
 						lastError: null,
 					},
 				});
-				await tx.marketplaceOrder.update({
+				await tx.placeEtMarqueOrder.update({
 					where: { id: order.id },
 					data: {
-						status: MarketplaceOrderStatus.REFUNDED,
+						status: PlaceEtMarqueOrderStatus.REFUNDED,
 						refundedAt: now,
 						cancelledAt:
 							input.reason === OrderRefundReason.BUYER_CANCEL ||

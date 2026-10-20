@@ -40,7 +40,7 @@ export function FeaturedBuildSection() {
 						text-ink
 					"
 				>
-					Live marketplace
+					Place et Marque
 				</h2>
 				<p
 					className="
@@ -48,7 +48,7 @@ export function FeaturedBuildSection() {
 						text-slate-700
 					"
 				>
-					The marketplace is the demonstration—real catalog, inventory, search, and checkout
+					Place et Marque is a live multi-vendor storefront and the demonstration—real catalog, inventory, search, and checkout
 					surfaces, not mocks. Source is public on{' '}
 					<a
 						className="
@@ -142,9 +142,9 @@ export function FeaturedBuildSection() {
 						text-sky
 						hover:underline
 					"
-					href="/shop"
+					href="/place-et-marque"
 				>
-					Enter the marketplace
+					Enter Place et Marque
 				</a>
 				{' '}
 				or browse the full stack in the repository.

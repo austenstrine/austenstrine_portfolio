@@ -8,7 +8,7 @@ import {
 } from '@nestjs/common';
 import {
 	CheckoutStatus,
-	MarketplaceOrderStatus,
+	PlaceEtMarqueOrderStatus,
 	PayoutTrigger,
 } from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/library';
@@ -191,7 +191,7 @@ export class CheckoutService implements OnModuleInit, OnModuleDestroy {
 			throw new BadRequestException('Order total must be at least $0.50.');
 		}
 
-		// Hold inventory against hold orders (one MarketplaceOrder per shipment)
+		// Hold inventory against hold orders (one PlaceEtMarqueOrder per shipment)
 		const shipments = await this.prisma.checkoutShipment.findMany({
 			where: { checkoutId: checkout.id },
 			include: { lines: true },
@@ -208,7 +208,7 @@ export class CheckoutService implements OnModuleInit, OnModuleDestroy {
 					? PayoutTrigger.ON_SHIPMENT
 					: PayoutTrigger.ON_PAYMENT);
 
-			const holdOrder = await this.prisma.marketplaceOrder.create({
+			const holdOrder = await this.prisma.placeEtMarqueOrder.create({
 				data: {
 					orderRef: `hold:${checkout.id}:${shipment.id}`,
 					buyerId,
@@ -216,7 +216,7 @@ export class CheckoutService implements OnModuleInit, OnModuleDestroy {
 					checkoutId: checkout.id,
 					checkoutShipmentId: shipment.id,
 					shippingProfileId: shipment.shippingProfileId,
-					status: MarketplaceOrderStatus.HOLD,
+					status: PlaceEtMarqueOrderStatus.HOLD,
 					currency: checkout.currency,
 					merchandiseCents: shipment.merchandiseCents,
 					shippingCents: shipment.shippingCents,
@@ -364,15 +364,15 @@ export class CheckoutService implements OnModuleInit, OnModuleDestroy {
 	}
 
 	async listBuyerOrders(buyerId: string) {
-		const orders = await this.prisma.marketplaceOrder.findMany({
+		const orders = await this.prisma.placeEtMarqueOrder.findMany({
 			where: {
 				buyerId,
 				status: {
 					in: [
-						MarketplaceOrderStatus.PAID,
-						MarketplaceOrderStatus.FULFILLING,
-						MarketplaceOrderStatus.SHIPPED,
-						MarketplaceOrderStatus.REFUNDED,
+						PlaceEtMarqueOrderStatus.PAID,
+						PlaceEtMarqueOrderStatus.FULFILLING,
+						PlaceEtMarqueOrderStatus.SHIPPED,
+						PlaceEtMarqueOrderStatus.REFUNDED,
 					],
 				},
 			},
@@ -391,7 +391,7 @@ export class CheckoutService implements OnModuleInit, OnModuleDestroy {
 	}
 
 	async getBuyerOrder(buyerId: string, orderId: string) {
-		const order = await this.prisma.marketplaceOrder.findFirst({
+		const order = await this.prisma.placeEtMarqueOrder.findFirst({
 			where: { id: orderId, buyerId },
 			include: {
 				vendor: true,
@@ -418,15 +418,15 @@ export class CheckoutService implements OnModuleInit, OnModuleDestroy {
 			throw new BadRequestException('Not allowed to view vendor orders.');
 		}
 
-		const orders = await this.prisma.marketplaceOrder.findMany({
+		const orders = await this.prisma.placeEtMarqueOrder.findMany({
 			where: {
 				vendorId,
 				status: {
 					in: [
-						MarketplaceOrderStatus.PAID,
-						MarketplaceOrderStatus.FULFILLING,
-						MarketplaceOrderStatus.SHIPPED,
-						MarketplaceOrderStatus.REFUNDED,
+						PlaceEtMarqueOrderStatus.PAID,
+						PlaceEtMarqueOrderStatus.FULFILLING,
+						PlaceEtMarqueOrderStatus.SHIPPED,
+						PlaceEtMarqueOrderStatus.REFUNDED,
 					],
 				},
 			},
@@ -457,24 +457,24 @@ export class CheckoutService implements OnModuleInit, OnModuleDestroy {
 			throw new BadRequestException('Not allowed to ship vendor orders.');
 		}
 
-		const order = await this.prisma.marketplaceOrder.findFirst({
+		const order = await this.prisma.placeEtMarqueOrder.findFirst({
 			where: { id: orderId, vendorId },
 		});
 		if(!order) {
 			throw new NotFoundException('Order not found.');
 		}
 		if(
-			order.status !== MarketplaceOrderStatus.PAID &&
-			order.status !== MarketplaceOrderStatus.FULFILLING
+			order.status !== PlaceEtMarqueOrderStatus.PAID &&
+			order.status !== PlaceEtMarqueOrderStatus.FULFILLING
 		) {
 			throw new BadRequestException('Order is not ready to ship.');
 		}
 
 		await this.inventory.fulfillClaimsForOrder(order.id);
-		const updated = await this.prisma.marketplaceOrder.update({
+		const updated = await this.prisma.placeEtMarqueOrder.update({
 			where: { id: order.id },
 			data: {
-				status: MarketplaceOrderStatus.SHIPPED,
+				status: PlaceEtMarqueOrderStatus.SHIPPED,
 				shippedAt: new Date(),
 			},
 			include: {
@@ -525,15 +525,15 @@ export class CheckoutService implements OnModuleInit, OnModuleDestroy {
 			data: { status: CheckoutStatus.PAID },
 		});
 
-		const orders = await this.prisma.marketplaceOrder.findMany({
+		const orders = await this.prisma.placeEtMarqueOrder.findMany({
 			where: { checkoutId },
 		});
 
 		for(const order of orders) {
-			await this.prisma.marketplaceOrder.update({
+			await this.prisma.placeEtMarqueOrder.update({
 				where: { id: order.id },
 				data: {
-					status: MarketplaceOrderStatus.PAID,
+					status: PlaceEtMarqueOrderStatus.PAID,
 					orderRef: order.orderRef.startsWith('hold:')
 						? `ord_${randomUUID().slice(0, 12)}`
 						: order.orderRef,
@@ -569,14 +569,14 @@ export class CheckoutService implements OnModuleInit, OnModuleDestroy {
 			where: { id: checkoutId },
 			data: { status },
 		});
-		await this.prisma.marketplaceOrder.updateMany({
-			where: { checkoutId, status: MarketplaceOrderStatus.HOLD },
-			data: { status: MarketplaceOrderStatus.CANCELLED },
+		await this.prisma.placeEtMarqueOrder.updateMany({
+			where: { checkoutId, status: PlaceEtMarqueOrderStatus.HOLD },
+			data: { status: PlaceEtMarqueOrderStatus.CANCELLED },
 		});
 	}
 
 	private async releaseCheckoutHolds(checkoutId: string) {
-		const orders = await this.prisma.marketplaceOrder.findMany({
+		const orders = await this.prisma.placeEtMarqueOrder.findMany({
 			where: { checkoutId },
 			select: { id: true },
 		});
@@ -731,7 +731,7 @@ export class CheckoutService implements OnModuleInit, OnModuleDestroy {
 	private toOrderDto(order: {
 		id: string;
 		orderRef: string;
-		status: MarketplaceOrderStatus;
+		status: PlaceEtMarqueOrderStatus;
 		currency: string;
 		merchandiseCents: number;
 		shippingCents: number;
@@ -772,12 +772,12 @@ export class CheckoutService implements OnModuleInit, OnModuleDestroy {
 		}>;
 	}) {
 		const canBuyerCancel =
-			order.status === MarketplaceOrderStatus.PAID ||
-			order.status === MarketplaceOrderStatus.FULFILLING;
+			order.status === PlaceEtMarqueOrderStatus.PAID ||
+			order.status === PlaceEtMarqueOrderStatus.FULFILLING;
 		const canVendorRefund =
-			order.status === MarketplaceOrderStatus.PAID ||
-			order.status === MarketplaceOrderStatus.FULFILLING ||
-			order.status === MarketplaceOrderStatus.SHIPPED;
+			order.status === PlaceEtMarqueOrderStatus.PAID ||
+			order.status === PlaceEtMarqueOrderStatus.FULFILLING ||
+			order.status === PlaceEtMarqueOrderStatus.SHIPPED;
 
 		return {
 			id: order.id,

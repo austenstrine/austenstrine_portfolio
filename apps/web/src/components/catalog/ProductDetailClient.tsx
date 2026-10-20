@@ -82,7 +82,7 @@ export function ProductDetailClient({ initialProduct }: ProductDetailClientProps
 				`Deleted. Archive batch ${result.archiveBatchId.slice(0, 8)}.${emailed}`,
 			);
 			window.setTimeout(() => {
-				router.push('/shop/manage');
+				router.push('/place-et-marque/manage');
 			}, 1800);
 		}
 		catch(error) {
@@ -264,7 +264,7 @@ export function ProductDetailClient({ initialProduct }: ProductDetailClientProps
 										text-sky
 										hover:underline
 									"
-									href="/shop/cart"
+									href="/place-et-marque/cart"
 								>
 									View cart
 								</Link>

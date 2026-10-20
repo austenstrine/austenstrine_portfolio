@@ -45,16 +45,16 @@ model User {
   createdAt           DateTime  @default(now())
   updatedAt           DateTime  @updatedAt
 
-  refreshTokens RefreshToken[]
-  emailOtps     EmailOtp[]
-  vendorMemberships VendorMember[]
-  vendorInvitesSent VendorInvite[] @relation("VendorInvitesSent")
+  refreshTokens             RefreshToken[]
+  emailOtps                 EmailOtp[]
+  vendorMemberships         VendorMember[]
+  vendorInvitesSent         VendorInvite[]       @relation("VendorInvitesSent")
   vendorAppPasswordsCreated VendorAppPassword[]
-  catalogImportJobs CatalogImportJob[]
-  carts Cart[]
-  checkouts Checkout[]
-  marketplaceOrders MarketplaceOrder[]
-  orderRefunds OrderRefund[]
+  catalogImportJobs         CatalogImportJob[]
+  carts                     Cart[]
+  checkouts                 Checkout[]
+  placeEtMarqueOrders       PlaceEtMarqueOrder[]
+  orderRefunds              OrderRefund[]
 
   @@index([createdAt])
 }
@@ -96,7 +96,7 @@ model EmailOtp {
   @@index([userId, purpose])
 }
 
-// --- Marketplace catalog & inventory ---
+// --- Place et Marque catalog & inventory ---
 
 enum VendorMemberRole {
   OWNER
@@ -154,7 +154,7 @@ enum CheckoutStatus {
   EXPIRED
 }
 
-enum MarketplaceOrderStatus {
+enum PlaceEtMarqueOrderStatus {
   HOLD
   PAID
   FULFILLING
@@ -191,31 +191,31 @@ enum OrderRefundReason {
 }
 
 model Vendor {
-  id                          String    @id @default(uuid())
-  slug                        String    @unique
-  name                        String
-  /// Exactly one marketplace vendor may be the supervendor (category + global taxonomy admin).
-  isSuperVendor               Boolean   @default(false)
-  stripeConnectAccountId      String?
-  stripeDetailsSubmitted      Boolean   @default(false)
-  stripeChargesEnabled        Boolean   @default(false)
-  stripePayoutsEnabled        Boolean   @default(false)
-  stripeOnboardingCompleteAt  DateTime?
-  platformFeeBpsOverride      Int?
-  createdAt                   DateTime  @default(now())
-  updatedAt                   DateTime  @updatedAt
+  id                         String    @id @default(uuid())
+  slug                       String    @unique
+  name                       String
+  /// Exactly one vendor may be the supervendor (category + global taxonomy admin).
+  isSuperVendor              Boolean   @default(false)
+  stripeConnectAccountId     String?
+  stripeDetailsSubmitted     Boolean   @default(false)
+  stripeChargesEnabled       Boolean   @default(false)
+  stripePayoutsEnabled       Boolean   @default(false)
+  stripeOnboardingCompleteAt DateTime?
+  platformFeeBpsOverride     Int?
+  createdAt                  DateTime  @default(now())
+  updatedAt                  DateTime  @updatedAt
 
-  members  VendorMember[]
-  invites  VendorInvite[]
-  products CatalogProduct[]
-  appPasswords VendorAppPassword[]
-  importJobs CatalogImportJob[]
-  offerings ProductOffering[]
-  uoms UnitOfMeasure[]
-  shippingProfiles ShippingProfile[]
-  marketplaceOrders MarketplaceOrder[]
-  checkoutShipments CheckoutShipment[]
-  payouts VendorPayout[]
+  members             VendorMember[]
+  invites             VendorInvite[]
+  products            CatalogProduct[]
+  appPasswords        VendorAppPassword[]
+  importJobs          CatalogImportJob[]
+  offerings           ProductOffering[]
+  uoms                UnitOfMeasure[]
+  shippingProfiles    ShippingProfile[]
+  placeEtMarqueOrders PlaceEtMarqueOrder[]
+  checkoutShipments   CheckoutShipment[]
+  payouts             VendorPayout[]
 
   @@index([name])
   @@index([stripeConnectAccountId])
@@ -240,37 +240,37 @@ model VendorInvite {
 }
 
 model PlatformFeeConfig {
-  id                 String   @id @default(uuid())
-  merchandiseFeeBps  Int      @default(1000)
-  flatFeeCents       Int      @default(0)
-  currency           String   @default("USD")
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
+  id                String   @id @default(uuid())
+  merchandiseFeeBps Int      @default(1000)
+  flatFeeCents      Int      @default(0)
+  currency          String   @default("USD")
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 }
 
 model VendorPayout {
-  id               String             @id @default(uuid())
-  orderId          String             @unique
-  order            MarketplaceOrder   @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  vendorId         String
-  vendor           Vendor             @relation(fields: [vendorId], references: [id], onDelete: Cascade)
-  checkoutId       String?
-  merchandiseCents Int
-  shippingCents    Int
-  feeCents         Int
-  vendorNetCents   Int
-  currency         String             @default("USD")
-  status           VendorPayoutStatus @default(PENDING)
-  trigger          PayoutTrigger
-  stripeTransferId String?
+  id                       String             @id @default(uuid())
+  orderId                  String             @unique
+  order                    PlaceEtMarqueOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  vendorId                 String
+  vendor                   Vendor             @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  checkoutId               String?
+  merchandiseCents         Int
+  shippingCents            Int
+  feeCents                 Int
+  vendorNetCents           Int
+  currency                 String             @default("USD")
+  status                   VendorPayoutStatus @default(PENDING)
+  trigger                  PayoutTrigger
+  stripeTransferId         String?
   stripeTransferReversalId String?
-  attemptCount     Int                @default(0)
-  lastError        String?
-  readyAt          DateTime?
-  transferredAt    DateTime?
-  reversedAt       DateTime?
-  createdAt        DateTime           @default(now())
-  updatedAt        DateTime           @updatedAt
+  attemptCount             Int                @default(0)
+  lastError                String?
+  readyAt                  DateTime?
+  transferredAt            DateTime?
+  reversedAt               DateTime?
+  createdAt                DateTime           @default(now())
+  updatedAt                DateTime           @updatedAt
 
   @@index([vendorId, status])
   @@index([status, readyAt])
@@ -278,27 +278,27 @@ model VendorPayout {
 }
 
 model OrderRefund {
-  id                       String            @id @default(uuid())
+  id                       String             @id @default(uuid())
   orderId                  String
-  order                    MarketplaceOrder  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  order                    PlaceEtMarqueOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
   checkoutId               String?
   initiatedByUserId        String?
-  initiatedBy              User?             @relation(fields: [initiatedByUserId], references: [id], onDelete: SetNull)
+  initiatedBy              User?              @relation(fields: [initiatedByUserId], references: [id], onDelete: SetNull)
   reason                   OrderRefundReason
   note                     String?
-  status                   OrderRefundStatus @default(PENDING)
-  currency                 String            @default("USD")
+  status                   OrderRefundStatus  @default(PENDING)
+  currency                 String             @default("USD")
   merchandiseCents         Int
   shippingCents            Int
-  feeCents                 Int               @default(0)
+  feeCents                 Int                @default(0)
   buyerRefundCents         Int
-  vendorReversalCents      Int               @default(0)
+  vendorReversalCents      Int                @default(0)
   stripeRefundId           String?
   stripeTransferReversalId String?
   lastError                String?
   succeededAt              DateTime?
-  createdAt                DateTime          @default(now())
-  updatedAt                DateTime          @updatedAt
+  createdAt                DateTime           @default(now())
+  updatedAt                DateTime           @updatedAt
 
   @@index([orderId, status])
   @@index([checkoutId])
@@ -362,21 +362,21 @@ enum UomMergePolicyStatus {
 }
 
 model UnitOfMeasure {
-  id            String   @id @default(uuid())
+  id                String   @id @default(uuid())
   /// Primary name (case-sensitive). Globals are unique on code; vendor UOMs unique per vendor.
-  code          String
-  label         String
-  /// null = marketplace-global UOM; non-null = vendor-owned
-  vendorId      String?
-  vendor        Vendor?  @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  code              String
+  label             String
+  /// null = global UOM; non-null = vendor-owned
+  vendorId          String?
+  vendor            Vendor?  @relation(fields: [vendorId], references: [id], onDelete: Cascade)
   /// Alternate names that also count for duplicate detection (case-sensitive)
-  aliases       String[] @default([])
+  aliases           String[] @default([])
   /// Logical grouping for conversions, e.g. length, count, volume, weight, area, custom
-  dimensionKey  String
+  dimensionKey      String
   /// Multiply quantity in this UOM by factorToReference to reach the dimension reference unit
-  factorToReference Decimal @db.Decimal(24, 8)
-  metadata      Json?
-  createdAt     DateTime @default(now())
+  factorToReference Decimal  @db.Decimal(24, 8)
+  metadata          Json?
+  createdAt         DateTime @default(now())
 
   offerings ProductOffering[]
 
@@ -396,13 +396,13 @@ model UomMergePolicy {
 }
 
 model CatalogCategory {
-  id        String   @id @default(uuid())
-  slug      String   @unique
+  id        String            @id @default(uuid())
+  slug      String            @unique
   name      String
   parentId  String?
   parent    CatalogCategory?  @relation("CategoryTree", fields: [parentId], references: [id])
   children  CatalogCategory[] @relation("CategoryTree")
-  createdAt DateTime @default(now())
+  createdAt DateTime          @default(now())
 
   products CatalogProduct[]
 
@@ -410,24 +410,24 @@ model CatalogCategory {
 }
 
 model CatalogProduct {
-  id          String   @id @default(uuid())
-  vendorId    String
-  vendor      Vendor   @relation(fields: [vendorId], references: [id], onDelete: Cascade)
-  categoryId  String?
-  category    CatalogCategory? @relation(fields: [categoryId], references: [id])
-  shippingProfileId String?
-  shippingProfile   ShippingProfile? @relation(fields: [shippingProfileId], references: [id], onDelete: SetNull)
-  slug        String
-  title       String
-  description String?
-  tags        String[] @default([])
-  active      Boolean  @default(true)
+  id                       String           @id @default(uuid())
+  vendorId                 String
+  vendor                   Vendor           @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  categoryId               String?
+  category                 CatalogCategory? @relation(fields: [categoryId], references: [id])
+  shippingProfileId        String?
+  shippingProfile          ShippingProfile? @relation(fields: [shippingProfileId], references: [id], onDelete: SetNull)
+  slug                     String
+  title                    String
+  description              String?
+  tags                     String[]         @default([])
+  active                   Boolean          @default(true)
   /// Legacy; prefer offering inheritQtyToChildren + containment graph
-  inventoryFromAllocations Boolean @default(false)
-  breakFeeMode BreakFeeMode @default(OFF)
-  breakFeeCents Int @default(0)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  inventoryFromAllocations Boolean          @default(false)
+  breakFeeMode             BreakFeeMode     @default(OFF)
+  breakFeeCents            Int              @default(0)
+  createdAt                DateTime         @default(now())
+  updatedAt                DateTime         @updatedAt
 
   attributes ProductAttribute[]
   offerings  ProductOffering[]
@@ -441,54 +441,54 @@ model CatalogProduct {
 }
 
 model ProductAttribute {
-  id        String   @id @default(uuid())
+  id        String         @id @default(uuid())
   productId String
   product   CatalogProduct @relation(fields: [productId], references: [id], onDelete: Cascade)
   key       String
   value     String
-  sortOrder Int      @default(0)
+  sortOrder Int            @default(0)
 
   @@unique([productId, key])
   @@index([productId])
 }
 
 model ProductOffering {
-  id          String              @id @default(uuid())
-  productId   String
-  product     CatalogProduct      @relation(fields: [productId], references: [id], onDelete: Cascade)
+  id                   String              @id @default(uuid())
+  productId            String
+  product              CatalogProduct      @relation(fields: [productId], references: [id], onDelete: Cascade)
   /// Denormalized for vendor-scoped (sku, offeringKey) uniqueness and bulk upsert
-  vendorId    String
-  vendor      Vendor              @relation(fields: [vendorId], references: [id], onDelete: Cascade)
-  sku         String
+  vendorId             String
+  vendor               Vendor              @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  sku                  String
   /// Importer-controlled stable id; with sku forms the unique offering identity per vendor
-  offeringKey String              @default("default")
-  uomId       String
-  uom         UnitOfMeasure       @relation(fields: [uomId], references: [id])
-  role        ProductOfferingRole @default(STANDALONE)
-  priceCents  Int
-  currency    String              @default("USD")
+  offeringKey          String              @default("default")
+  uomId                String
+  uom                  UnitOfMeasure       @relation(fields: [uomId], references: [id])
+  role                 ProductOfferingRole @default(STANDALONE)
+  priceCents           Int
+  currency             String              @default("USD")
   /// On-hand count in this offering's UOM (e.g. number of spools). Often 0 for PIECE rows.
-  qtyOnHand   Decimal             @default(0) @db.Decimal(24, 8)
+  qtyOnHand            Decimal             @default(0) @db.Decimal(24, 8)
   /// Cached unclaimed sellable qty in this offering's UOM (refreshed by inventory service)
-  availableQty Decimal            @default(0) @db.Decimal(24, 8)
+  availableQty         Decimal             @default(0) @db.Decimal(24, 8)
   /// When false, qtyOnHand is ignored for own-qty availability; inheritance/broken still apply
-  tracksOwnQty Boolean            @default(true)
+  tracksOwnQty         Boolean             @default(true)
   /// -1 = no auto-break from wholes; >= 0 floor on remaining whole units after auto-break
-  minUnbrokenQty Decimal          @default(-1) @db.Decimal(24, 8)
+  minUnbrokenQty       Decimal             @default(-1) @db.Decimal(24, 8)
   /// Only wholes above this count enter auto-break / inheritance pool
-  breakPoolAboveQty Decimal       @default(0) @db.Decimal(24, 8)
+  breakPoolAboveQty    Decimal             @default(0) @db.Decimal(24, 8)
   /// When true, eligible parent wholes count toward child availableQty
-  inheritQtyToChildren Boolean    @default(false)
-  createdAt   DateTime            @default(now())
-  updatedAt   DateTime            @updatedAt
+  inheritQtyToChildren Boolean             @default(false)
+  createdAt            DateTime            @default(now())
+  updatedAt            DateTime            @updatedAt
 
   containmentsAsParent OfferingContainment[] @relation("ParentSide")
   containmentsAsChild  OfferingContainment[] @relation("ChildSide")
-  brokenPacks      BrokenPack[]
-  claims           InventoryClaim[]
-  cartLines        CartLine[]
-  orderLines       OrderLine[]
-  checkoutLines    CheckoutLine[]
+  brokenPacks          BrokenPack[]
+  claims               InventoryClaim[]
+  cartLines            CartLine[]
+  orderLines           OrderLine[]
+  checkoutLines        CheckoutLine[]
 
   @@unique([productId, uomId, role])
   @@unique([productId, sku, offeringKey])
@@ -500,30 +500,30 @@ model ProductOffering {
 }
 
 model OfferingContainment {
-  id                 String          @id @default(uuid())
-  parentOfferingId   String
-  parentOffering     ProductOffering @relation("ParentSide", fields: [parentOfferingId], references: [id], onDelete: Cascade)
-  childOfferingId    String
-  childOffering      ProductOffering @relation("ChildSide", fields: [childOfferingId], references: [id], onDelete: Cascade)
+  id                String          @id @default(uuid())
+  parentOfferingId  String
+  parentOffering    ProductOffering @relation("ParentSide", fields: [parentOfferingId], references: [id], onDelete: Cascade)
+  childOfferingId   String
+  childOffering     ProductOffering @relation("ChildSide", fields: [childOfferingId], references: [id], onDelete: Cascade)
   /// How much child-UOM quantity one parent unit contains (e.g. 500 ft per spool)
-  childQtyPerParent  Decimal         @db.Decimal(24, 8)
-  breakFeeCents      Int?
-  createdAt          DateTime        @default(now())
+  childQtyPerParent Decimal         @db.Decimal(24, 8)
+  breakFeeCents     Int?
+  createdAt         DateTime        @default(now())
 
   @@unique([parentOfferingId, childOfferingId])
   @@index([childOfferingId])
 }
 
 model BrokenPack {
-  id              String          @id @default(uuid())
-  packOfferingId  String
-  packOffering    ProductOffering @relation(fields: [packOfferingId], references: [id], onDelete: Cascade)
-  label           String?
+  id             String           @id @default(uuid())
+  packOfferingId String
+  packOffering   ProductOffering  @relation(fields: [packOfferingId], references: [id], onDelete: Cascade)
+  label          String?
   /// Remaining quantity in the linked piece offering's UOM
-  remainingQty    Decimal         @db.Decimal(24, 8)
-  status          BrokenPackStatus @default(ACTIVE)
-  createdAt       DateTime        @default(now())
-  updatedAt       DateTime        @updatedAt
+  remainingQty   Decimal          @db.Decimal(24, 8)
+  status         BrokenPackStatus @default(ACTIVE)
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
 
   claims InventoryClaim[]
 
@@ -541,25 +541,25 @@ model ShippingProfile {
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
 
-  rates    ShippingRate[]
-  products CatalogProduct[]
+  rates             ShippingRate[]
+  products          CatalogProduct[]
   checkoutShipments CheckoutShipment[]
-  orders   MarketplaceOrder[]
+  orders            PlaceEtMarqueOrder[]
 
   @@unique([vendorId, code])
   @@index([vendorId])
 }
 
 model ShippingRate {
-  id               String   @id @default(uuid())
+  id               String          @id @default(uuid())
   profileId        String
   profile          ShippingProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
   label            String
   amountCents      Int
   minSubtotalCents Int?
   maxSubtotalCents Int?
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
 
   @@index([profileId])
 }
@@ -595,7 +595,7 @@ model Checkout {
   status                CheckoutStatus @default(OPEN)
   stripePaymentIntentId String?        @unique
   currency              String         @default("USD")
-  merchandiseCents     Int            @default(0)
+  merchandiseCents      Int            @default(0)
   shippingCents         Int            @default(0)
   totalCents            Int            @default(0)
   refundedCents         Int            @default(0)
@@ -604,24 +604,24 @@ model Checkout {
   updatedAt             DateTime       @updatedAt
 
   shipments CheckoutShipment[]
-  orders    MarketplaceOrder[]
+  orders    PlaceEtMarqueOrder[]
 
   @@index([buyerId, createdAt])
   @@index([status, expiresAt])
 }
 
 model CheckoutShipment {
-  id                String   @id @default(uuid())
+  id                String          @id @default(uuid())
   checkoutId        String
-  checkout          Checkout @relation(fields: [checkoutId], references: [id], onDelete: Cascade)
+  checkout          Checkout        @relation(fields: [checkoutId], references: [id], onDelete: Cascade)
   vendorId          String
-  vendor            Vendor   @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  vendor            Vendor          @relation(fields: [vendorId], references: [id], onDelete: Cascade)
   shippingProfileId String
   shippingProfile   ShippingProfile @relation(fields: [shippingProfileId], references: [id])
   selectedRateId    String?
   selectedRateLabel String?
-  shippingCents     Int      @default(0)
-  merchandiseCents Int     @default(0)
+  shippingCents     Int             @default(0)
+  merchandiseCents  Int             @default(0)
   /// Shared or per-group ship-to snapshot
   shipName          String?
   shipLine1         String?
@@ -629,51 +629,51 @@ model CheckoutShipment {
   shipCity          String?
   shipRegion        String?
   shipPostal        String?
-  shipCountry       String?  @default("US")
-  createdAt         DateTime @default(now())
+  shipCountry       String?         @default("US")
+  createdAt         DateTime        @default(now())
 
-  lines  CheckoutLine[]
-  order  MarketplaceOrder?
+  lines CheckoutLine[]
+  order PlaceEtMarqueOrder?
 
   @@index([checkoutId])
   @@index([vendorId])
 }
 
 model CheckoutLine {
-  id         String           @id @default(uuid())
-  shipmentId String
-  shipment   CheckoutShipment @relation(fields: [shipmentId], references: [id], onDelete: Cascade)
-  offeringId String
-  offering   ProductOffering  @relation(fields: [offeringId], references: [id])
-  quantity   Decimal          @db.Decimal(24, 8)
-  unitPriceCents Int
-  lineTotalCents Int
-  titleSnapshot  String
-  skuSnapshot    String
+  id                  String           @id @default(uuid())
+  shipmentId          String
+  shipment            CheckoutShipment @relation(fields: [shipmentId], references: [id], onDelete: Cascade)
+  offeringId          String
+  offering            ProductOffering  @relation(fields: [offeringId], references: [id])
+  quantity            Decimal          @db.Decimal(24, 8)
+  unitPriceCents      Int
+  lineTotalCents      Int
+  titleSnapshot       String
+  skuSnapshot         String
   offeringKeySnapshot String
 
   @@index([shipmentId])
   @@index([offeringId])
 }
 
-model MarketplaceOrder {
-  id                 String                 @id @default(uuid())
-  orderRef           String                 @unique
+model PlaceEtMarqueOrder {
+  id                 String                   @id @default(uuid())
+  orderRef           String                   @unique
   buyerId            String?
-  buyer              User?                  @relation(fields: [buyerId], references: [id], onDelete: SetNull)
+  buyer              User?                    @relation(fields: [buyerId], references: [id], onDelete: SetNull)
   vendorId           String?
-  vendor             Vendor?                @relation(fields: [vendorId], references: [id], onDelete: SetNull)
+  vendor             Vendor?                  @relation(fields: [vendorId], references: [id], onDelete: SetNull)
   checkoutId         String?
-  checkout           Checkout?              @relation(fields: [checkoutId], references: [id], onDelete: SetNull)
-  checkoutShipmentId String?                @unique
-  checkoutShipment   CheckoutShipment?      @relation(fields: [checkoutShipmentId], references: [id], onDelete: SetNull)
+  checkout           Checkout?                @relation(fields: [checkoutId], references: [id], onDelete: SetNull)
+  checkoutShipmentId String?                  @unique
+  checkoutShipment   CheckoutShipment?        @relation(fields: [checkoutShipmentId], references: [id], onDelete: SetNull)
   shippingProfileId  String?
-  shippingProfile    ShippingProfile?       @relation(fields: [shippingProfileId], references: [id], onDelete: SetNull)
-  status             MarketplaceOrderStatus @default(HOLD)
-  currency           String                 @default("USD")
-  merchandiseCents  Int                    @default(0)
-  shippingCents      Int                    @default(0)
-  totalCents         Int                    @default(0)
+  shippingProfile    ShippingProfile?         @relation(fields: [shippingProfileId], references: [id], onDelete: SetNull)
+  status             PlaceEtMarqueOrderStatus @default(HOLD)
+  currency           String                   @default("USD")
+  merchandiseCents   Int                      @default(0)
+  shippingCents      Int                      @default(0)
+  totalCents         Int                      @default(0)
   shippingLabel      String?
   shipName           String?
   shipLine1          String?
@@ -683,14 +683,14 @@ model MarketplaceOrder {
   shipPostal         String?
   shipCountry        String?
   stripeTransferId   String?
-  feeCents           Int                    @default(0)
-  vendorNetCents     Int                    @default(0)
-  payoutTrigger      PayoutTrigger          @default(ON_PAYMENT)
+  feeCents           Int                      @default(0)
+  vendorNetCents     Int                      @default(0)
+  payoutTrigger      PayoutTrigger            @default(ON_PAYMENT)
   shippedAt          DateTime?
   refundedAt         DateTime?
   cancelledAt        DateTime?
-  createdAt          DateTime               @default(now())
-  updatedAt          DateTime               @updatedAt
+  createdAt          DateTime                 @default(now())
+  updatedAt          DateTime                 @updatedAt
 
   claims  InventoryClaim[]
   lines   OrderLine[]
@@ -703,19 +703,19 @@ model MarketplaceOrder {
 }
 
 model OrderLine {
-  id                  String          @id @default(uuid())
+  id                  String             @id @default(uuid())
   orderId             String
-  order               MarketplaceOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  order               PlaceEtMarqueOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
   offeringId          String
-  offering            ProductOffering @relation(fields: [offeringId], references: [id])
-  quantity            Decimal         @db.Decimal(24, 8)
+  offering            ProductOffering    @relation(fields: [offeringId], references: [id])
+  quantity            Decimal            @db.Decimal(24, 8)
   unitPriceCents      Int
   lineTotalCents      Int
   titleSnapshot       String
   skuSnapshot         String
   offeringKeySnapshot String
-  claimId             String?         @unique
-  claim               InventoryClaim? @relation(fields: [claimId], references: [id], onDelete: SetNull)
+  claimId             String?            @unique
+  claim               InventoryClaim?    @relation(fields: [claimId], references: [id], onDelete: SetNull)
 
   @@index([orderId])
   @@index([offeringId])
@@ -724,7 +724,7 @@ model OrderLine {
 model InventoryClaim {
   id                 String               @id @default(uuid())
   orderId            String
-  order              MarketplaceOrder     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  order              PlaceEtMarqueOrder   @relation(fields: [orderId], references: [id], onDelete: Cascade)
   offeringId         String
   offering           ProductOffering      @relation(fields: [offeringId], references: [id], onDelete: Cascade)
   brokenPackId       String?
@@ -815,39 +815,38 @@ model ArchivedProductOffering {
 }
 
 model ArchivedOfferingContainment {
-  id                     String   @id @default(uuid())
-  archiveBatchId         String
-  archivedAt             DateTime @default(now())
-  originalId             String
+  id                       String   @id @default(uuid())
+  archiveBatchId           String
+  archivedAt               DateTime @default(now())
+  originalId               String
   originalParentOfferingId String
   originalChildOfferingId  String
-  parentSku              String
-  parentOfferingKey      String
-  childSku               String
-  childOfferingKey       String
-  childQtyPerParent      Decimal  @db.Decimal(24, 8)
-  breakFeeCents          Int?
-  originalCreatedAt      DateTime
+  parentSku                String
+  parentOfferingKey        String
+  childSku                 String
+  childOfferingKey         String
+  childQtyPerParent        Decimal  @db.Decimal(24, 8)
+  breakFeeCents            Int?
+  originalCreatedAt        DateTime
 
   @@index([archivedAt])
   @@index([archiveBatchId])
 }
 
 model ArchivedBrokenPack {
-  id                   String           @id @default(uuid())
-  archiveBatchId       String
-  archivedAt           DateTime         @default(now())
-  originalId           String
+  id                     String           @id @default(uuid())
+  archiveBatchId         String
+  archivedAt             DateTime         @default(now())
+  originalId             String
   originalPackOfferingId String
-  packSku              String
-  packOfferingKey      String
-  label                String?
-  remainingQty         Decimal          @db.Decimal(24, 8)
-  status               BrokenPackStatus
-  originalCreatedAt    DateTime
-  originalUpdatedAt    DateTime
+  packSku                String
+  packOfferingKey        String
+  label                  String?
+  remainingQty           Decimal          @db.Decimal(24, 8)
+  status                 BrokenPackStatus
+  originalCreatedAt      DateTime
+  originalUpdatedAt      DateTime
 
   @@index([archivedAt])
   @@index([archiveBatchId])
 }
-

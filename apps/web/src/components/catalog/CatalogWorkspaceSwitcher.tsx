@@ -9,7 +9,7 @@ type CatalogWorkspaceSwitcherProps = {
 
 export function CatalogWorkspaceSwitcher({ active }: CatalogWorkspaceSwitcherProps) {
 	const other: CatalogWorkspace = active === 'standard' ? 'inventory' : 'standard';
-	const href = other === 'standard' ? '/shop/products/new' : '/shop/products/configure';
+	const href = other === 'standard' ? '/place-et-marque/products/new' : '/place-et-marque/products/configure';
 
 	return (
 		<div

@@ -82,11 +82,11 @@ export class VendorInviteService {
 		});
 
 		const webUrl = process.env.WEB_URL ?? 'http://localhost:3000';
-		const acceptUrl = `${webUrl}/shop/invites/accept?token=${encodeURIComponent(token)}`;
+		const acceptUrl = `${webUrl}/place-et-marque/invites/accept?token=${encodeURIComponent(token)}`;
 
 		await this.mail.sendMailWithAttachment({
 			to: email,
-			subject: `You're invited to join ${vendor.name} on the marketplace`,
+			subject: `You're invited to join ${vendor.name} on Place et Marque`,
 			text: [
 				`You've been invited to join ${vendor.name} as ${role}.`,
 				'',

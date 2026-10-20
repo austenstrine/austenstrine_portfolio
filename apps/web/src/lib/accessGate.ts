@@ -27,11 +27,11 @@ export const ACCESS_REASONS = {
 export type AccessReasonKey = keyof typeof ACCESS_REASONS;
 
 const VENDOR_REQUIRED_PREFIXES = [
-	'/shop/products/new',
-	'/shop/products/configure',
-	'/shop/manage',
-	'/shop/vendors/',
-	'/shop/uoms',
+	'/place-et-marque/products/new',
+	'/place-et-marque/products/configure',
+	'/place-et-marque/manage',
+	'/place-et-marque/vendors/',
+	'/place-et-marque/uoms',
 ] as const;
 
 export function safeNextPath(raw: string | null | undefined, fallback = '/'): string {
@@ -43,11 +43,11 @@ export function safeNextPath(raw: string | null | undefined, fallback = '/'): st
 
 export function pathRequiresVendor(path: string): boolean {
 	const pathname = path.split('?')[0] ?? path;
-	if(pathname === '/shop/vendors') {
+	if(pathname === '/place-et-marque/vendors') {
 		// Vendors page is the gate itself — do not bounce back here.
 		return false;
 	}
-	if(pathname.startsWith('/shop/invites/')) {
+	if(pathname.startsWith('/place-et-marque/invites/')) {
 		return false;
 	}
 	return VENDOR_REQUIRED_PREFIXES.some(
@@ -88,9 +88,9 @@ export function buildRegisterUrl(options: {
 }
 
 export function buildVendorGateUrl(next?: string): string {
-	const safe = safeNextPath(next ?? null, '/shop');
+	const safe = safeNextPath(next ?? null, '/place-et-marque');
 	const params = new URLSearchParams({ next: safe });
-	return `/shop/vendors?${params.toString()}`;
+	return `/place-et-marque/vendors?${params.toString()}`;
 }
 
 export function readCookie(name: string): string | null {

@@ -5,7 +5,7 @@ import {
 	OnModuleInit,
 } from '@nestjs/common';
 import {
-	MarketplaceOrderStatus,
+	PlaceEtMarqueOrderStatus,
 	PayoutTrigger,
 	VendorPayoutStatus,
 } from '@prisma/client';
@@ -125,7 +125,7 @@ export class PayoutService implements OnModuleInit, OnModuleDestroy {
 	}
 
 	async createPayoutForPaidOrder(orderId: string) {
-		const order = await this.prisma.marketplaceOrder.findUnique({
+		const order = await this.prisma.placeEtMarqueOrder.findUnique({
 			where: { id: orderId },
 			include: {
 				vendor: true,
@@ -162,7 +162,7 @@ export class PayoutService implements OnModuleInit, OnModuleDestroy {
 			flatFeeCents: feeConfig.flatFeeCents,
 		});
 
-		await this.prisma.marketplaceOrder.update({
+		await this.prisma.placeEtMarqueOrder.update({
 			where: { id: order.id },
 			data: {
 				feeCents,
@@ -274,8 +274,8 @@ export class PayoutService implements OnModuleInit, OnModuleDestroy {
 		let attempted = 0;
 		for(const payout of candidates) {
 			if(
-				payout.order.status === MarketplaceOrderStatus.REFUNDED ||
-				payout.order.status === MarketplaceOrderStatus.CANCELLED
+				payout.order.status === PlaceEtMarqueOrderStatus.REFUNDED ||
+				payout.order.status === PlaceEtMarqueOrderStatus.CANCELLED
 			) {
 				await this.prisma.vendorPayout.update({
 					where: { id: payout.id },
@@ -289,7 +289,7 @@ export class PayoutService implements OnModuleInit, OnModuleDestroy {
 
 			const triggerMet =
 				payout.trigger === PayoutTrigger.ON_PAYMENT ||
-				payout.order.status === MarketplaceOrderStatus.SHIPPED ||
+				payout.order.status === PlaceEtMarqueOrderStatus.SHIPPED ||
 				Boolean(payout.order.shippedAt);
 
 			if(!triggerMet) {
@@ -351,8 +351,8 @@ export class PayoutService implements OnModuleInit, OnModuleDestroy {
 			return payout;
 		}
 		if(
-			payout.order.status === MarketplaceOrderStatus.REFUNDED ||
-			payout.order.status === MarketplaceOrderStatus.CANCELLED
+			payout.order.status === PlaceEtMarqueOrderStatus.REFUNDED ||
+			payout.order.status === PlaceEtMarqueOrderStatus.CANCELLED
 		) {
 			return this.prisma.vendorPayout.update({
 				where: { id: payout.id },
@@ -415,7 +415,7 @@ export class PayoutService implements OnModuleInit, OnModuleDestroy {
 				idempotencyKey: `vendor-payout-${payout.id}`,
 			});
 
-			await this.prisma.marketplaceOrder.update({
+			await this.prisma.placeEtMarqueOrder.update({
 				where: { id: payout.orderId },
 				data: { stripeTransferId: transfer.id },
 			});
