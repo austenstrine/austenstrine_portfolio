@@ -11,6 +11,7 @@ import { upsertCartLine } from '../../lib/checkout-api';
 import { ACCESS_REASONS, buildLoginUrl } from '../../lib/accessGate';
 import { useSession } from '../../lib/useSession';
 import { ProductQuickEdit } from './ProductQuickEdit';
+import { TermHint } from './TermHint';
 
 type ProductDetailClientProps = {
 	initialProduct: CatalogProductDetail;
@@ -179,10 +180,24 @@ export function ProductDetailClient({ initialProduct }: ProductDetailClientProps
 								p-4
 							"
 						>
-							<label className="text-sm">
-								<span className="font-semibold">
-									Offering
-								</span>
+							<div className="text-sm">
+								<div
+									className="
+										flex
+										items-center
+										gap-1.5
+									"
+								>
+									<label
+										className="font-semibold"
+										htmlFor="selected-offering"
+									>
+										Offering
+									</label>
+									<TermHint
+										termId="offering"
+									/>
+								</div>
 								<select
 									className="
 										mt-1
@@ -193,6 +208,7 @@ export function ProductDetailClient({ initialProduct }: ProductDetailClientProps
 										px-3
 										py-2
 									"
+									id="selected-offering"
 									value={selectedOfferingId}
 									onChange={(event) =>
 										setSelectedOfferingId(event.target.value)
@@ -209,7 +225,7 @@ export function ProductDetailClient({ initialProduct }: ProductDetailClientProps
 										</option>
 									))}
 								</select>
-							</label>
+							</div>
 							<label className="text-sm">
 								<span className="font-semibold">
 									Quantity
@@ -425,6 +441,9 @@ export function ProductDetailClient({ initialProduct }: ProductDetailClientProps
 				>
 					<h2
 						className="
+							flex
+							items-center
+							gap-1.5
 							text-sm
 							font-semibold
 							uppercase
@@ -433,6 +452,9 @@ export function ProductDetailClient({ initialProduct }: ProductDetailClientProps
 						"
 					>
 						Offerings
+						<TermHint
+							termId="offering"
+						/>
 					</h2>
 					<ul
 						className="
@@ -507,8 +529,22 @@ export function ProductDetailClient({ initialProduct }: ProductDetailClientProps
 									text-slate-500
 								"
 							>
-								Piece availability is derived from pack and broken-pack inventory (cached on each
-								offering for search).
+								Piece availability is derived from pack and
+								{' '}
+								<span
+									className="
+										inline-flex
+										items-center
+										gap-1
+									"
+								>
+									broken-pack
+									<TermHint
+										termId="broken-pack"
+									/>
+								</span>
+								{' '}
+								inventory (cached on each offering for search).
 							</p>
 						)
 						: null

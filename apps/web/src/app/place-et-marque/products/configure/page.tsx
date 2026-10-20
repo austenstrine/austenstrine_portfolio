@@ -15,6 +15,7 @@ import { dollarsToCents, slugify } from '../../../../lib/catalog-product-form';
 import { useSession } from '../../../../lib/useSession';
 import { CatalogWorkspaceSwitcher } from '../../../../components/catalog/CatalogWorkspaceSwitcher';
 import { ProductTagField } from '../../../../components/catalog/ProductTagField';
+import { TermHint } from '../../../../components/catalog/TermHint';
 import { UrlSlugField } from '../../../../components/catalog/UrlSlugField';
 import { RequireAccess } from '../../../../components/auth/RequireAccess';
 
@@ -515,8 +516,19 @@ function InventoryConfigurationForm() {
 						gap-3
 					"
 				>
-					<h2 className="text-lg font-semibold">
+					<h2
+						className="
+							flex
+							items-center
+							gap-1.5
+							text-lg
+							font-semibold
+						"
+					>
 						Offering chain
+						<TermHint
+							termId="offering"
+						/>
 					</h2>
 					<button
 						className="
@@ -946,7 +958,18 @@ function InventoryConfigurationForm() {
 							text-slate-700
 						"
 					>
-						Break fees (product default)
+						<span
+							className="
+								inline-flex
+								items-center
+								gap-1.5
+							"
+						>
+							Break fees (product default)
+							<TermHint
+								termId="break-fee"
+							/>
+						</span>
 					</summary>
 					<div
 						className="

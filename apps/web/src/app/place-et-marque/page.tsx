@@ -1,3 +1,4 @@
+import { CatalogEmptyActions } from '../../components/catalog/CatalogEmptyActions';
 import { searchCatalogProducts } from '../../lib/catalog-api';
 
 export default async function PlaceEtMarqueHomePage() {
@@ -47,58 +48,7 @@ export default async function PlaceEtMarqueHomePage() {
 						<p className="font-semibold text-ink">
 							No products yet
 						</p>
-						<p
-							className="
-								mt-2
-								text-sm
-								text-slate-600
-							"
-						>
-							No seed data—create a vendor, add units and categories, then list a product.
-						</p>
-						<div
-							className="
-								mt-4
-								flex
-								flex-wrap
-								gap-3
-							"
-						>
-							<a
-								className="
-									inline-flex
-									rounded-full
-									bg-ink
-									px-4
-									py-2
-									text-sm
-									font-semibold
-									text-white
-									hover:bg-sky
-								"
-								href="/place-et-marque/vendors"
-							>
-								Create a vendor
-							</a>
-							<a
-								className="
-									inline-flex
-									rounded-full
-									border
-									border-slate-300
-									px-4
-									py-2
-									text-sm
-									font-semibold
-									text-ink
-									hover:border-sky
-									hover:text-sky
-								"
-								href="/place-et-marque/products/new"
-							>
-								New product
-							</a>
-						</div>
+						<CatalogEmptyActions />
 					</div>
 				)
 				: (
