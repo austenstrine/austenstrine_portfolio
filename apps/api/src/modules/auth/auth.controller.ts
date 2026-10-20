@@ -16,6 +16,7 @@ import { LoginDto } from './dto/login.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { RegisterDto } from './dto/register.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
+import { SetPasswordDto } from './dto/set-password.dto';
 import { VerifyEmailDto } from './dto/verify-email.dto';
 import { VerifyLoginOtpDto } from './dto/verify-login-otp.dto';
 import { GoogleAuthGuard } from './guards/google-auth.guard';
@@ -67,7 +68,7 @@ export class AuthController {
 
 	private toPublicUser(session: IssuedSession) {
 		return {
-			user: { id: session.user.id, email: session.user.email },
+			user: this.authService.toPublicUser(session.user),
 			accessTokenExpiresInSeconds: session.accessTokenExpiresInSeconds,
 		};
 	}
@@ -176,9 +177,19 @@ export class AuthController {
 		res.redirect(`${webUrl}/auth/verify?pendingToken=${encodeURIComponent(pendingToken)}`);
 	}
 
+	@Throttle({ default: { limit: 5, ttl: 60_000 } })
+	@Post('password')
+	@UseGuards(JwtAuthGuard)
+	setPassword(
+		@CurrentUser() user: { id: string; email: string },
+		@Body() dto: SetPasswordDto,
+	) {
+		return this.authService.setPassword(user.id, dto);
+	}
+
 	@Get('me')
 	@UseGuards(JwtAuthGuard)
-	me(@CurrentUser() user: { id: string; email: string }) {
-		return { user };
+	async me(@CurrentUser() user: { id: string; email: string }) {
+		return { user: await this.authService.getPublicUserById(user.id) };
 	}
 }

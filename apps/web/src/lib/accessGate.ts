@@ -22,6 +22,7 @@ export const ACCESS_REASONS = {
 	uoms: 'Sign in to create units of measure.',
 	categories: 'Sign in to work with categories.',
 	invite: 'Sign in or create an account to accept this vendor invite.',
+	account: 'Sign in to manage your account.',
 } as const;
 
 export type AccessReasonKey = keyof typeof ACCESS_REASONS;

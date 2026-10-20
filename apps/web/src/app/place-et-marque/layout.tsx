@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { SessionNav } from '../../components/auth/SessionNav';
 
 export default function PlaceEtMarqueLayout({ children }: { children: ReactNode }) {
 	return (
@@ -114,6 +115,7 @@ export default function PlaceEtMarqueLayout({ children }: { children: ReactNode 
 						>
 							Portfolio
 						</a>
+						<SessionNav />
 					</nav>
 				</div>
 			</header>

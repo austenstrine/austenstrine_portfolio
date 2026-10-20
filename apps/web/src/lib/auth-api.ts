@@ -3,6 +3,7 @@ import { API_BASE_URL } from './api';
 export type AuthUser = {
 	id: string;
 	email: string;
+	hasPassword: boolean;
 };
 
 export type RegisterResponse = {
@@ -182,11 +183,28 @@ export function logoutUser(): Promise<{ message: string }> {
 export async function getCurrentUser(): Promise<AuthUser | null> {
 	try {
 		const result = await request<{ user: AuthUser }>('/auth/me');
-		return result.user;
+		return {
+			...result.user,
+			hasPassword: Boolean(result.user.hasPassword),
+		};
 	}
 	catch {
 		return null;
 	}
+}
+
+export function setPassword(
+	password: string,
+	currentPassword?: string,
+): Promise<RegisterResponse> {
+	return request<RegisterResponse>('/auth/password', {
+		method: 'POST',
+		body: JSON.stringify(
+			currentPassword
+				? { password, currentPassword }
+				: { password },
+		),
+	});
 }
 
 export function googleSignInUrl(): string {

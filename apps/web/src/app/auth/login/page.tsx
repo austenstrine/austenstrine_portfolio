@@ -119,6 +119,26 @@ function LoginForm() {
 						Forgot password?
 					</a>
 				</div>
+				<p
+					className="
+						-mt-1
+						text-xs
+						text-slate-500
+					"
+				>
+					Used Google and never set a password? You can add one after signing in, or
+					{' '}
+					<a
+						className="
+							font-semibold
+							text-sky
+							hover:underline
+						"
+						href="/auth/forgot-password"
+					>
+						create one here.
+					</a>
+				</p>
 
 				<ErrorText
 					message={error}

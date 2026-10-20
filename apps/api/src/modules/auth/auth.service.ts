@@ -12,6 +12,7 @@ import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
+import { SetPasswordDto } from './dto/set-password.dto';
 import { VerifyEmailDto } from './dto/verify-email.dto';
 import { VerifyLoginOtpDto } from './dto/verify-login-otp.dto';
 import type {
@@ -387,6 +388,66 @@ export class AuthService {
 
 	async getUserById(id: string): Promise<User | null> {
 		return this.prisma.user.findUnique({ where: { id } });
+	}
+
+	toPublicUser(user: User) {
+		return {
+			id: user.id,
+			email: user.email,
+			hasPassword: Boolean(user.passwordHash),
+		};
+	}
+
+	async getPublicUserById(id: string) {
+		const user = await this.getUserById(id);
+
+		if(!user) {
+			throw new UnauthorizedException();
+		}
+
+		return this.toPublicUser(user);
+	}
+
+	async setPassword(userId: string, dto: SetPasswordDto): Promise<{ message: string }> {
+		const user = await this.getUserById(userId);
+
+		if(!user) {
+			throw new UnauthorizedException();
+		}
+
+		if(user.passwordHash) {
+			if(!dto.currentPassword) {
+				throw new BadRequestException('Current password is required.');
+			}
+
+			const currentValid = await this.security.verifyPassword(
+				user.passwordHash,
+				dto.currentPassword,
+			);
+
+			if(!currentValid) {
+				throw new UnauthorizedException('Current password is incorrect.');
+			}
+		}
+
+		const passwordHash = await this.security.hashPassword(dto.password);
+
+		await this.prisma.user.update({
+			where: { id: user.id },
+			data: {
+				passwordHash,
+				failedLoginAttempts: 0,
+				lockedUntil: null,
+			},
+		});
+
+		if(user.passwordHash) {
+			return { message: 'Password updated.' };
+		}
+
+		return {
+			message: 'Password added. You can now sign in with email and password.',
+		};
 	}
 
 	// ---------- OTP helpers ----------
