@@ -60,7 +60,7 @@ export default function OrderDetailPage() {
 			await refresh();
 			setCancelNote('');
 		}
-		catch (cancelError) {
+		catch(cancelError) {
 			setError(
 				cancelError instanceof Error
 					? cancelError.message
@@ -98,7 +98,8 @@ export default function OrderDetailPage() {
 						Checking session…
 					</p>
 				)
-				: null}
+				: null
+			}
 
 			{error
 				? (
@@ -106,7 +107,8 @@ export default function OrderDetailPage() {
 						{error}
 					</p>
 				)
-				: null}
+				: null
+			}
 
 			{order
 				? (
@@ -135,7 +137,10 @@ export default function OrderDetailPage() {
 							"
 						>
 							{order.status} · {formatMoney(order.totalCents, order.currency)}
-							{order.shippingLabel ? ` · ${order.shippingLabel}` : ''}
+							{order.shippingLabel
+								? ` · ${order.shippingLabel}`
+								: ''
+							}
 						</p>
 						{order.refundedAt
 							? (
@@ -150,10 +155,12 @@ export default function OrderDetailPage() {
 									Refunded {new Date(order.refundedAt).toLocaleString()}
 									{order.refunds?.[0]
 										? ` · ${formatMoney(order.refunds[0].buyerRefundCents, order.currency)}`
-										: ''}
+										: ''
+									}
 								</p>
 							)
-							: null}
+							: null
+						}
 						<p
 							className="
 								mt-4
@@ -162,7 +169,10 @@ export default function OrderDetailPage() {
 							"
 						>
 							Ship to {order.shipTo.name}, {order.shipTo.line1}
-							{order.shipTo.line2 ? `, ${order.shipTo.line2}` : ''},{' '}
+							{order.shipTo.line2
+								? `, ${order.shipTo.line2}`
+								: ''
+							},{' '}
 							{order.shipTo.city}, {order.shipTo.region}{' '}
 							{order.shipTo.postal}
 						</p>
@@ -260,14 +270,17 @@ export default function OrderDetailPage() {
 									>
 										{busy
 											? 'Cancelling…'
-											: 'Cancel & refund'}
+											: 'Cancel & refund'
+										}
 									</button>
 								</div>
 							)
-							: null}
+							: null
+						}
 					</section>
 				)
-				: null}
+				: null
+			}
 		</div>
 	);
 }

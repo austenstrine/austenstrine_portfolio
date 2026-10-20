@@ -64,7 +64,8 @@ function OrdersContent() {
 							Payment received. Orders appear below once Stripe confirms.
 						</p>
 					)
-					: null}
+					: null
+				}
 			</div>
 
 			{sessionLoading
@@ -73,7 +74,8 @@ function OrdersContent() {
 						Checking session…
 					</p>
 				)
-				: null}
+				: null
+			}
 
 			{error
 				? (
@@ -81,7 +83,8 @@ function OrdersContent() {
 						{error}
 					</p>
 				)
-				: null}
+				: null
+			}
 
 			{user
 				? (
@@ -150,14 +153,21 @@ function OrdersContent() {
 							</ul>
 						)
 				)
-				: null}
+				: null
+			}
 		</div>
 	);
 }
 
 export default function OrdersClient() {
 	return (
-		<Suspense fallback={<p className="text-sm text-slate-500">Loading…</p>}>
+		<Suspense
+			fallback={
+				<p className="text-sm text-slate-500">
+					Loading…
+				</p>
+			}
+		>
 			<RequireAccess reasonKey="orders">
 				<OrdersContent />
 			</RequireAccess>

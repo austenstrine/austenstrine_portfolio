@@ -56,7 +56,8 @@ function ShopManageContent() {
 						Signed in as {user.email}
 					</p>
 				)
-				: null}
+				: null
+			}
 
 			<section
 				className="
@@ -94,7 +95,8 @@ function ShopManageContent() {
 							No vendor memberships yet.
 						</p>
 					)
-					: null}
+					: null
+				}
 				{vendors.map((vendor) => (
 					<a
 						className="
@@ -134,7 +136,8 @@ function ShopManageContent() {
 							No products in the catalog yet.
 						</p>
 					)
-					: null}
+					: null
+				}
 				{products.map((product) => (
 					<a
 						className="
@@ -178,7 +181,10 @@ export default function ShopManagePage() {
 				</p>
 			}
 		>
-			<RequireAccess vendorRequired reasonKey="manage">
+			<RequireAccess
+				vendorRequired
+				reasonKey="manage"
+			>
 				<ShopManageContent />
 			</RequireAccess>
 		</Suspense>

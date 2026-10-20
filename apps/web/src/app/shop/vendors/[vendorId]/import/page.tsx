@@ -83,7 +83,7 @@ function VendorImportPageContent() {
 			const result = await validateCatalogImport(vendorId, csv);
 			setValidation(result);
 		}
-		catch (validateError) {
+		catch(validateError) {
 			setValidation(null);
 			setError(
 				validateError instanceof Error
@@ -108,7 +108,7 @@ function VendorImportPageContent() {
 			const status = await getCatalogImportJob(vendorId, started.jobId);
 			setJob(status);
 		}
-		catch (commitError) {
+		catch(commitError) {
 			setError(
 				commitError instanceof Error
 					? commitError.message
@@ -160,7 +160,10 @@ function VendorImportPageContent() {
 						tracking-tight
 					"
 				>
-					{vendor ? `${vendor.name} catalog CSV` : 'Catalog CSV'}
+					{vendor
+						? `${vendor.name} catalog CSV`
+						: 'Catalog CSV'
+					}
 				</h1>
 				<p
 					className="
@@ -184,7 +187,8 @@ function VendorImportPageContent() {
 						Checking session…
 					</p>
 				)
-				: null}
+				: null
+			}
 
 			{error
 				? (
@@ -192,7 +196,8 @@ function VendorImportPageContent() {
 						{error}
 					</p>
 				)
-				: null}
+				: null
+			}
 
 			{user
 				? (
@@ -244,7 +249,13 @@ function VendorImportPageContent() {
 								p-5
 							"
 						>
-							<label className="block text-sm font-semibold">
+							<label
+								className="
+									block
+									text-sm
+									font-semibold
+								"
+							>
 								Upload CSV
 								<input
 									className="
@@ -302,8 +313,6 @@ function VendorImportPageContent() {
 								"
 							>
 								<button
-									type="button"
-									disabled={busy || !csv.trim()}
 									className="
 										rounded-full
 										bg-ink
@@ -315,13 +324,13 @@ function VendorImportPageContent() {
 										hover:bg-sky
 										disabled:opacity-60
 									"
+									type="button"
+									disabled={busy || !csv.trim()}
 									onClick={() => void onValidate()}
 								>
 									Validate format
 								</button>
 								<button
-									type="button"
-									disabled={busy || !validation?.ok}
 									className="
 										rounded-full
 										border
@@ -335,6 +344,8 @@ function VendorImportPageContent() {
 										hover:text-sky
 										disabled:opacity-60
 									"
+									type="button"
+									disabled={busy || !validation?.ok}
 									onClick={() => void onCommit()}
 								>
 									Commit import
@@ -363,7 +374,10 @@ function VendorImportPageContent() {
 											text-slate-600
 										"
 									>
-										Delimiter: {validation.delimiter === '\t' ? 'TSV' : 'CSV'} ·{' '}
+										Delimiter: {validation.delimiter === '\t'
+											? 'TSV'
+											: 'CSV'
+										} ·{' '}
 										{validation.rowCount} rows ·{' '}
 										{validation.createProductCount} products create /{' '}
 										{validation.updateProductCount} update ·{' '}
@@ -393,10 +407,14 @@ function VendorImportPageContent() {
 												"
 											>
 												{validation.blockingErrorCount} blocking issue
-												{validation.blockingErrorCount === 1 ? '' : 's'} —
+												{validation.blockingErrorCount === 1
+													? ''
+													: 's'
+												} —
 												fix these before commit.
 											</p>
-										)}
+										)
+									}
 									{validation.errors.length > 0
 										? (
 											<ul
@@ -420,16 +438,21 @@ function VendorImportPageContent() {
 														key={`${row.lineNumber}-${index}`}
 													>
 														Line {row.lineNumber}
-														{row.column ? ` · ${row.column}` : ''}
+														{row.column
+															? ` · ${row.column}`
+															: ''
+														}
 														: {row.message}
 													</li>
 												))}
 											</ul>
 										)
-										: null}
+										: null
+									}
 								</section>
 							)
-							: null}
+							: null
+						}
 
 						{job
 							? (
@@ -474,21 +497,33 @@ function VendorImportPageContent() {
 												))}
 											</ul>
 										)
-										: null}
+										: null
+									}
 								</section>
 							)
-							: null}
+							: null
+						}
 					</>
 				)
-				: null}
+				: null
+			}
 		</div>
 	);
 }
 
 export default function VendorImportPage() {
 	return (
-		<Suspense fallback={<p className="text-sm text-slate-500">Loading…</p>}>
-			<RequireAccess vendorRequired reasonKey="import">
+		<Suspense
+			fallback={
+				<p className="text-sm text-slate-500">
+					Loading…
+				</p>
+			}
+		>
+			<RequireAccess
+				vendorRequired
+				reasonKey="import"
+			>
 				<VendorImportPageContent />
 			</RequireAccess>
 		</Suspense>

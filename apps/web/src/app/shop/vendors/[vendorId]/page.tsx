@@ -137,7 +137,7 @@ function VendorDetailContent() {
 			});
 			setShippingProfiles(await listVendorShippingProfiles(vendorId));
 		}
-		catch (ensureError) {
+		catch(ensureError) {
 			setShippingError(
 				ensureError instanceof Error
 					? ensureError.message
@@ -159,7 +159,7 @@ function VendorDetailContent() {
 			const link = await createVendorConnectAccountLink(vendorId);
 			window.location.href = link.url;
 		}
-		catch (setupError) {
+		catch(setupError) {
 			setConnectError(
 				setupError instanceof Error
 					? setupError.message
@@ -180,7 +180,7 @@ function VendorDetailContent() {
 			setCreatedToken(created);
 			setPasswords(await listVendorAppPasswords(vendorId));
 		}
-		catch (createError) {
+		catch(createError) {
 			setPasswordError(
 				createError instanceof Error
 					? createError.message
@@ -202,7 +202,7 @@ function VendorDetailContent() {
 			await revokeVendorAppPassword(vendorId, passwordId);
 			setPasswords(await listVendorAppPasswords(vendorId));
 		}
-		catch (revokeError) {
+		catch(revokeError) {
 			setPasswordError(
 				revokeError instanceof Error
 					? revokeError.message
@@ -240,7 +240,8 @@ function VendorDetailContent() {
 						Loading…
 					</p>
 				)
-				: null}
+				: null
+			}
 
 			{error
 				? (
@@ -248,7 +249,8 @@ function VendorDetailContent() {
 						{error}
 					</p>
 				)
-				: null}
+				: null
+			}
 
 			{vendor
 				? (
@@ -357,7 +359,13 @@ function VendorDetailContent() {
 									<h2 className="text-lg font-semibold">
 										Invite members
 									</h2>
-									<p className="mt-2 text-sm text-slate-600">
+									<p
+										className="
+											mt-2
+											text-sm
+											text-slate-600
+										"
+									>
 										Send an email invite so teammates can join this organization.
 									</p>
 									<form
@@ -396,7 +404,13 @@ function VendorDetailContent() {
 												.finally(() => setInviteBusy(false));
 										}}
 									>
-										<label className="block flex-1 text-sm">
+										<label
+											className="
+												block
+												flex-1
+												text-sm
+											"
+										>
 											<span className="font-semibold">
 												Email
 											</span>
@@ -417,7 +431,13 @@ function VendorDetailContent() {
 												placeholder="teammate@example.com"
 											/>
 										</label>
-										<label className="block text-sm md:w-40">
+										<label
+											className="
+												block
+												text-sm
+												md:w-40
+											"
+										>
 											<span className="font-semibold">
 												Role
 											</span>
@@ -459,26 +479,50 @@ function VendorDetailContent() {
 											type="submit"
 											disabled={inviteBusy}
 										>
-											{inviteBusy ? 'Sending…' : 'Send invite'}
+											{inviteBusy
+												? 'Sending…'
+												: 'Send invite'
+											}
 										</button>
 									</form>
 									{inviteError
 										? (
-												<p className="mt-3 text-sm text-red-700">
+												<p
+													className="
+														mt-3
+														text-sm
+														text-red-700
+													"
+												>
 													{inviteError}
 												</p>
 											)
-										: null}
+										: null
+									}
 									{inviteMessage
 										? (
-												<p className="mt-3 text-sm text-emerald-700">
+												<p
+													className="
+														mt-3
+														text-sm
+														text-emerald-700
+													"
+												>
 													{inviteMessage}
 												</p>
 											)
-										: null}
+										: null
+									}
 									{invites.length > 0
 										? (
-												<ul className="mt-4 flex flex-col gap-2">
+												<ul
+													className="
+														mt-4
+														flex
+														flex-col
+														gap-2
+													"
+												>
 													{invites.map((invite) => (
 														<li
 															className="
@@ -531,10 +575,12 @@ function VendorDetailContent() {
 													))}
 												</ul>
 											)
-										: null}
+										: null
+									}
 								</section>
 							)
-							: null}
+							: null
+						}
 
 						{vendor.myRole === 'OWNER'
 							? (
@@ -579,15 +625,23 @@ function VendorDetailContent() {
 												{connectBanner}
 											</p>
 										)
-										: null}
+										: null
+									}
 
 									{connectError
 										? (
-											<p className="mt-3 text-sm text-red-700">
+											<p
+												className="
+													mt-3
+													text-sm
+													text-red-700
+												"
+											>
 												{connectError}
 											</p>
 										)
-										: null}
+										: null
+									}
 
 									{connectStatus
 										? (
@@ -623,7 +677,8 @@ function VendorDetailContent() {
 															? 'Payouts enabled'
 															: connectStatus.detailsSubmitted
 																? 'Review pending'
-																: 'Setup incomplete'}
+																: 'Setup incomplete'
+														}
 													</span>
 													{connectStatus.chargesEnabled
 														? (
@@ -643,7 +698,8 @@ function VendorDetailContent() {
 																Charges on
 															</span>
 														)
-														: null}
+														: null
+													}
 													{(connectStatus.pendingCount ?? 0) > 0
 														? (
 															<span
@@ -662,7 +718,8 @@ function VendorDetailContent() {
 																{connectStatus.pendingCount} queued
 															</span>
 														)
-														: null}
+														: null
+													}
 												</div>
 
 												{connectStatus.accountId
@@ -676,7 +733,8 @@ function VendorDetailContent() {
 															No Stripe account yet. Buyers can still check out;
 															your net is ledgered until onboarding finishes.
 														</p>
-													)}
+													)
+												}
 
 												{connectStatus.lastError
 													? (
@@ -684,7 +742,8 @@ function VendorDetailContent() {
 															Last transfer error: {connectStatus.lastError}
 														</p>
 													)
-													: null}
+													: null
+												}
 
 												<button
 													className="
@@ -708,7 +767,8 @@ function VendorDetailContent() {
 														? 'Opening Stripe…'
 														: connectStatus.canReceivePayouts
 															? 'Update Stripe details'
-															: 'Continue Stripe setup'}
+															: 'Continue Stripe setup'
+													}
 												</button>
 
 												{(connectStatus.recent?.length ?? 0) > 0
@@ -750,17 +810,26 @@ function VendorDetailContent() {
 															))}
 														</ul>
 													)
-													: null}
+													: null
+												}
 											</div>
 										)
 										: (
-											<p className="mt-3 text-sm text-slate-500">
+											<p
+												className="
+													mt-3
+													text-sm
+													text-slate-500
+												"
+											>
 												Could not load payout status.
 											</p>
-										)}
+										)
+									}
 								</section>
 							)
-							: null}
+							: null
+						}
 
 						<section
 							className="
@@ -782,7 +851,10 @@ function VendorDetailContent() {
 								"
 							>
 								{vendor.productCount} product
-								{vendor.productCount === 1 ? '' : 's'} in this organization.
+								{vendor.productCount === 1
+									? ''
+									: 's'
+								} in this organization.
 							</p>
 							<div
 								className="
@@ -865,7 +937,8 @@ function VendorDetailContent() {
 												{shippingError}
 											</p>
 										)
-										: null}
+										: null
+									}
 									<ul
 										className="
 											mt-4
@@ -886,10 +959,14 @@ function VendorDetailContent() {
 											>
 												<p className="font-semibold">
 													{profile.code} · {profile.name}
-													{profile.shipsSeparately ? ' · separate ship' : ''}
+													{profile.shipsSeparately
+														? ' · separate ship'
+														: ''
+													}
 													{profile.payoutTrigger === 'ON_SHIPMENT'
 														? ' · payout on ship'
-														: ' · payout on pay'}
+														: ' · payout on pay'
+													}
 												</p>
 												<p className="text-sm text-slate-600">
 													{profile.rates
@@ -903,8 +980,6 @@ function VendorDetailContent() {
 										))}
 									</ul>
 									<button
-										type="button"
-										disabled={shippingBusy}
 										className="
 											mt-4
 											rounded-full
@@ -919,20 +994,23 @@ function VendorDetailContent() {
 											hover:text-sky
 											disabled:opacity-60
 										"
+										type="button"
+										disabled={shippingBusy}
 										onClick={() => void onEnsureFreight()}
 									>
 										{shippingBusy
 											? 'Saving…'
-											: 'Ensure STANDARD + FREIGHT defaults'}
+											: 'Ensure STANDARD + FREIGHT defaults'
+										}
 									</button>
 								</section>
 							)
-							: null}
+							: null
+						}
 
 						{vendor.myRole === 'OWNER'
 							? (
 								<section
-									id="app-passwords"
 									className="
 										rounded-2xl
 										border
@@ -940,6 +1018,7 @@ function VendorDetailContent() {
 										bg-white
 										p-5
 									"
+									id="app-passwords"
 								>
 									<h2 className="text-lg font-semibold">
 										App passwords
@@ -969,7 +1048,8 @@ function VendorDetailContent() {
 												{passwordError}
 											</p>
 										)
-										: null}
+										: null
+									}
 
 									{createdToken
 										? (
@@ -983,7 +1063,13 @@ function VendorDetailContent() {
 													p-4
 												"
 											>
-												<p className="text-sm font-semibold text-amber-900">
+												<p
+													className="
+														text-sm
+														font-semibold
+														text-amber-900
+													"
+												>
 													{createdToken.warning}
 												</p>
 												<code
@@ -1003,7 +1089,6 @@ function VendorDetailContent() {
 													{createdToken.token}
 												</code>
 												<button
-													type="button"
 													className="
 														mt-3
 														text-sm
@@ -1011,17 +1096,19 @@ function VendorDetailContent() {
 														text-sky
 														hover:underline
 													"
+													type="button"
 													onClick={() =>
 														void navigator.clipboard.writeText(
-															createdToken.token,
+														createdToken.token,
 														)
-													}
+														}
 												>
 													Copy token
 												</button>
 											</div>
 										)
-										: null}
+										: null
+									}
 
 									<div
 										className="
@@ -1053,8 +1140,6 @@ function VendorDetailContent() {
 											/>
 										</label>
 										<button
-											type="button"
-											disabled={passwordBusy || !passwordName.trim()}
 											className="
 												rounded-full
 												bg-ink
@@ -1066,6 +1151,8 @@ function VendorDetailContent() {
 												hover:bg-sky
 												disabled:opacity-60
 											"
+											type="button"
+											disabled={passwordBusy || !passwordName.trim()}
 											onClick={() => void onCreatePassword()}
 										>
 											Create app password
@@ -1086,7 +1173,8 @@ function VendorDetailContent() {
 													No app passwords yet.
 												</li>
 											)
-											: null}
+											: null
+										}
 										{passwords.map((row) => (
 											<li
 												className="
@@ -1108,17 +1196,19 @@ function VendorDetailContent() {
 													</p>
 													<p className="text-xs text-slate-500">
 														{row.hint}
-														{row.active ? '' : ' · revoked'}
+														{row.active
+															? ''
+															: ' · revoked'
+														}
 														{row.lastUsedAt
 															? ` · last used ${new Date(row.lastUsedAt).toLocaleString()}`
-															: ''}
+															: ''
+														}
 													</p>
 												</div>
 												{row.active
 													? (
 														<button
-															type="button"
-															disabled={passwordBusy}
 															className="
 																text-sm
 																font-semibold
@@ -1126,14 +1216,17 @@ function VendorDetailContent() {
 																hover:underline
 																disabled:opacity-60
 															"
+															type="button"
+															disabled={passwordBusy}
 															onClick={() =>
 																void onRevokePassword(row.id)
-															}
+																}
 														>
 															Revoke
 														</button>
 													)
-													: null}
+													: null
+												}
 											</li>
 										))}
 									</ul>
@@ -1158,10 +1251,12 @@ function VendorDetailContent() {
 									</pre>
 								</section>
 							)
-							: null}
+							: null
+						}
 					</>
 				)
-				: null}
+				: null
+			}
 		</div>
 	);
 }
@@ -1175,7 +1270,10 @@ export default function VendorDetailPage() {
 				</p>
 			}
 		>
-			<RequireAccess vendorRequired reasonKey="vendorDetail">
+			<RequireAccess
+				vendorRequired
+				reasonKey="vendorDetail"
+			>
 				<VendorDetailContent />
 			</RequireAccess>
 		</Suspense>

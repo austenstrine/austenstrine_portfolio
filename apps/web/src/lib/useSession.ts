@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import { useCallback, useEffect, useState } from 'react';
 import { type AuthUser, getCurrentUser, logoutUser } from './auth-api';

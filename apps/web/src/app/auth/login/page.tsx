@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useState, type FormEvent } from 'react';
@@ -79,7 +79,9 @@ function LoginForm() {
 				</p>
 			}
 		>
-			<AuthReasonBanner reason={reason} />
+			<AuthReasonBanner
+				reason={reason}
+			/>
 			<form
 				className="
 					flex
@@ -118,7 +120,9 @@ function LoginForm() {
 					</a>
 				</div>
 
-				<ErrorText message={error} />
+				<ErrorText
+					message={error}
+				/>
 
 				<button
 					className="
@@ -138,7 +142,10 @@ function LoginForm() {
 					type="submit"
 					disabled={submitting}
 				>
-					{submitting ? 'Signing in…' : 'Sign in'}
+					{submitting
+						? 'Signing in…'
+						: 'Sign in'
+					}
 				</button>
 
 				<div

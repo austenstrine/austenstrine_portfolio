@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import type { ReactNode } from 'react';
 import { useEffect, useMemo, useState } from 'react';
@@ -64,7 +64,12 @@ export function HighlightSectionWrapper({
 		<CurrentHighlightCard
 			body={activeBody ?? fallbackBody}
 			showWrapper={Boolean(activeBody)}
-			onClose={activeBody ? clearHighlight : undefined}
+			onClose={
+				(activeBody
+					? clearHighlight
+					: undefined
+				)
+			}
 		>
 			{children}
 		</CurrentHighlightCard>

@@ -89,7 +89,10 @@ function ShopSearchForm() {
 						All categories
 					</option>
 					{categories.map((row) => (
-						<option key={row.slug} value={row.slug}>
+						<option
+							key={row.slug}
+							value={row.slug}
+						>
 							{row.name}
 						</option>
 					))}
@@ -117,7 +120,8 @@ function ShopSearchForm() {
 						</button>
 					</p>
 				)
-				: null}
+				: null
+			}
 
 			{loading
 				? (
@@ -125,7 +129,8 @@ function ShopSearchForm() {
 						Searching…
 					</p>
 				)
-				: null}
+				: null
+			}
 
 			<div className="grid gap-3">
 				{results.map((product) => (
@@ -156,7 +161,13 @@ function ShopSearchForm() {
 
 export default function ShopSearchPage() {
 	return (
-		<Suspense fallback={<p className="text-sm text-slate-500">Loading search…</p>}>
+		<Suspense
+			fallback={
+				<p className="text-sm text-slate-500">
+					Loading search…
+				</p>
+			}
+		>
 			<ShopSearchForm />
 		</Suspense>
 	);

@@ -52,7 +52,7 @@ export function ProductDetailClient({ initialProduct }: ProductDetailClientProps
 			await upsertCartLine(selectedOfferingId, cartQty || '1');
 			setCartMessage('Added to cart.');
 		}
-		catch (error) {
+		catch(error) {
 			setCartError(
 				error instanceof Error ? error.message : 'Could not add to cart.',
 			);
@@ -85,7 +85,7 @@ export function ProductDetailClient({ initialProduct }: ProductDetailClientProps
 				router.push('/shop/manage');
 			}, 1800);
 		}
-		catch (error) {
+		catch(error) {
 			setDeleteError(
 				error instanceof Error ? error.message : 'Could not delete product.',
 			);
@@ -134,7 +134,14 @@ export function ProductDetailClient({ initialProduct }: ProductDetailClientProps
 					{product.description}
 					{(product.tags?.length ?? 0) > 0
 						? (
-								<div className="mt-3 flex flex-wrap gap-2">
+								<div
+									className="
+										mt-3
+										flex
+										flex-wrap
+										gap-2
+									"
+								>
 									{product.tags?.map((tag) => (
 										<span
 											className="
@@ -153,7 +160,8 @@ export function ProductDetailClient({ initialProduct }: ProductDetailClientProps
 									))}
 								</div>
 							)
-						: null}
+						: null
+					}
 				</p>
 
 				{!deletedNotice
@@ -191,7 +199,10 @@ export function ProductDetailClient({ initialProduct }: ProductDetailClientProps
 									}
 								>
 									{product.offerings.map((offering) => (
-										<option key={offering.id} value={offering.id}>
+										<option
+											key={offering.id}
+											value={offering.id}
+										>
 											{offering.role} · {offering.sku ?? offering.id} ·{' '}
 											{(offering.priceCents / 100).toFixed(2)} ·{' '}
 											{offering.availableQty} avail
@@ -226,8 +237,6 @@ export function ProductDetailClient({ initialProduct }: ProductDetailClientProps
 								"
 							>
 								<button
-									type="button"
-									disabled={cartBusy || !selectedOfferingId}
 									className="
 										rounded-full
 										bg-ink
@@ -239,9 +248,14 @@ export function ProductDetailClient({ initialProduct }: ProductDetailClientProps
 										hover:bg-sky
 										disabled:opacity-60
 									"
+									type="button"
+									disabled={cartBusy || !selectedOfferingId}
 									onClick={() => void onAddToCart()}
 								>
-									{cartBusy ? 'Adding…' : 'Add to cart'}
+									{cartBusy
+										? 'Adding…'
+										: 'Add to cart'
+									}
 								</button>
 								<Link
 									className="
@@ -261,17 +275,20 @@ export function ProductDetailClient({ initialProduct }: ProductDetailClientProps
 										{cartMessage}
 									</p>
 								)
-								: null}
+								: null
+							}
 							{cartError
 								? (
 									<p className="text-sm text-red-700">
 										{cartError}
 									</p>
 								)
-								: null}
+								: null
+							}
 						</div>
 					)
-					: null}
+					: null
+				}
 
 				<dl
 					className="
@@ -317,7 +334,10 @@ export function ProductDetailClient({ initialProduct }: ProductDetailClientProps
 				{product.permissions.canEdit && !deletedNotice
 					? (
 						<>
-							<ProductQuickEdit product={product} onUpdated={setProduct} />
+							<ProductQuickEdit
+								product={product}
+								onUpdated={setProduct}
+							/>
 							<div
 								className="
 									rounded-2xl
@@ -343,10 +363,9 @@ export function ProductDetailClient({ initialProduct }: ProductDetailClientProps
 											{deleteError}
 										</p>
 									)
-									: null}
+									: null
+								}
 								<button
-									type="button"
-									disabled={deleteBusy}
 									className="
 										mt-3
 										rounded-full
@@ -361,14 +380,20 @@ export function ProductDetailClient({ initialProduct }: ProductDetailClientProps
 										hover:border-red-500
 										disabled:opacity-60
 									"
+									type="button"
+									disabled={deleteBusy}
 									onClick={() => void onDelete()}
 								>
-									{deleteBusy ? 'Deleting…' : 'Delete product'}
+									{deleteBusy
+										? 'Deleting…'
+										: 'Delete product'
+									}
 								</button>
 							</div>
 						</>
 					)
-					: null}
+					: null
+				}
 
 				{deletedNotice
 					? (
@@ -386,7 +411,8 @@ export function ProductDetailClient({ initialProduct }: ProductDetailClientProps
 							{deletedNotice}
 						</p>
 					)
-					: null}
+					: null
+				}
 
 				<div
 					className="
@@ -427,7 +453,10 @@ export function ProductDetailClient({ initialProduct }: ProductDetailClientProps
 								key={offering.id}
 							>
 								<p className="font-semibold">
-									{offering.sku ? `${offering.sku} · ` : ''}
+									{offering.sku
+										? `${offering.sku} · `
+										: ''
+									}
 									{offering.role} · {offering.uom.label} ({offering.uom.code})
 								</p>
 								<p
@@ -482,7 +511,8 @@ export function ProductDetailClient({ initialProduct }: ProductDetailClientProps
 								offering for search).
 							</p>
 						)
-						: null}
+						: null
+					}
 				</div>
 			</section>
 		</div>

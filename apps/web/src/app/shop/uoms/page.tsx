@@ -163,11 +163,18 @@ function UomManagePageContent() {
 							Signed in as {user.email}
 						</p>
 					)
-				: null}
+				: null
+			}
 
 			{vendors.length > 1
 				? (
-						<label className="block max-w-md text-sm">
+						<label
+							className="
+								block
+								max-w-md
+								text-sm
+							"
+						>
 							<span className="font-semibold">
 								Vendor
 							</span>
@@ -195,7 +202,8 @@ function UomManagePageContent() {
 							</select>
 						</label>
 					)
-				: null}
+				: null
+			}
 
 			{vendorId
 				? (
@@ -240,7 +248,14 @@ function UomManagePageContent() {
 										maxLength={40}
 										placeholder="ft"
 									/>
-									<span className="mt-1 block text-xs text-slate-500">
+									<span
+										className="
+											mt-1
+											block
+											text-xs
+											text-slate-500
+										"
+									>
 										Case-sensitive. Matching names/aliases across vendors may trigger a merge review.
 									</span>
 								</label>
@@ -378,14 +393,22 @@ function UomManagePageContent() {
 												Create as global marketplace UOM
 											</label>
 										)
-									: null}
+									: null
+								}
 								{error
 									? (
-											<p className="text-sm text-red-700 md:col-span-2">
+											<p
+												className="
+													text-sm
+													text-red-700
+													md:col-span-2
+												"
+											>
 												{error}
 											</p>
 										)
-									: null}
+									: null
+								}
 								<button
 									className="
 										self-start
@@ -402,14 +425,24 @@ function UomManagePageContent() {
 									type="submit"
 									disabled={submitting || (!asGlobal && !vendorId)}
 								>
-									{submitting ? 'Creating…' : 'Create UOM'}
+									{submitting
+										? 'Creating…'
+										: 'Create UOM'
+									}
 								</button>
 							</form>
 						</section>
 					)
-				: null}
+				: null
+			}
 
-			<section className="flex flex-col gap-3">
+			<section
+				className="
+					flex
+					flex-col
+					gap-3
+				"
+			>
 				<h2 className="text-lg font-semibold">
 					Global units
 				</h2>
@@ -419,14 +452,16 @@ function UomManagePageContent() {
 								Loading…
 							</p>
 						)
-					: null}
+					: null
+				}
 				{!loading && globals.length === 0
 					? (
 							<p className="text-sm text-slate-500">
 								No global units yet.
 							</p>
 						)
-					: null}
+					: null
+				}
 				{globals.map((uom) => (
 					<div
 						className="
@@ -446,16 +481,29 @@ function UomManagePageContent() {
 						</p>
 						{(uom.aliases?.length ?? 0) > 0
 							? (
-									<p className="mt-1 text-xs text-slate-500">
+									<p
+										className="
+											mt-1
+											text-xs
+											text-slate-500
+										"
+									>
 										Aliases: {uom.aliases?.join(', ')}
 									</p>
 								)
-							: null}
+							: null
+						}
 					</div>
 				))}
 			</section>
 
-			<section className="flex flex-col gap-3">
+			<section
+				className="
+					flex
+					flex-col
+					gap-3
+				"
+			>
 				<h2 className="text-lg font-semibold">
 					Your vendor units
 				</h2>
@@ -465,7 +513,8 @@ function UomManagePageContent() {
 								No vendor-specific units yet. Create one above.
 							</p>
 						)
-					: null}
+					: null
+				}
 				{mine.map((uom) => (
 					<div
 						className="
@@ -485,11 +534,18 @@ function UomManagePageContent() {
 						</p>
 						{(uom.aliases?.length ?? 0) > 0
 							? (
-									<p className="mt-1 text-xs text-slate-500">
+									<p
+										className="
+											mt-1
+											text-xs
+											text-slate-500
+										"
+									>
 										Aliases: {uom.aliases?.join(', ')}
 									</p>
 								)
-							: null}
+							: null
+						}
 					</div>
 				))}
 			</section>
@@ -499,8 +555,17 @@ function UomManagePageContent() {
 
 export default function UomManagePage() {
 	return (
-		<Suspense fallback={<p className="text-sm text-slate-500">Loading…</p>}>
-			<RequireAccess vendorRequired reasonKey="uoms">
+		<Suspense
+			fallback={
+				<p className="text-sm text-slate-500">
+					Loading…
+				</p>
+			}
+		>
+			<RequireAccess
+				vendorRequired
+				reasonKey="uoms"
+			>
 				<UomManagePageContent />
 			</RequireAccess>
 		</Suspense>

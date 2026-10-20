@@ -1,14 +1,19 @@
-# Target aliases for dssh.
+# Project map for dssh.
 #
-# Use simple shell assignments so the config stays easy to read and source.
+# dssh does not ship with names like backend, frontend, or proxy.
+# This file invents those shorthand names and points each one at something
+# in this repo: usually a directory with a Dockerfile. Host-only scripts
+# attach to an action with <target>_<action>_local.
 #
-# Required:
-#   <target>=<project root or app root>
+# Required for each target:
+#   <target>=<app directory>
 #
 # Optional overrides:
 #   <target>_dockerfile=<custom Dockerfile path>
 #   <target>_context=<custom Docker build context>
 #   <target>_image=<custom image name>
+#   <target>_name=<custom container app name>
+#   <target>_user=<container user; default is the host uid:gid>
 #   <target>_workdir=<custom container workdir>
 
 # Optional global actions:
@@ -16,33 +21,34 @@
 #   dssh_status_local=<host command>
 #   dssh_mailtest_local=<host command>
 
-dssh_stop_local="docker ps -q --filter name=^/dssh- | xargs -r docker rm -f >/dev/null 2>&1 || true; docker compose stop postgres redis opensearch >/dev/null 2>&1 || true; echo 'Stopped dssh app containers and compose infra services.'"
-dssh_status_local="echo '=== dssh app containers ==='; docker ps --filter name=^/dssh- --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}'; echo; echo '=== compose infra services ==='; docker compose ps postgres redis opensearch"
+dssh_stop_local="ids=\$(docker ps -aq --filter label=dssh.image); if [[ -n \"\$ids\" ]]; then docker rm -f \$ids; fi; docker compose stop postgres redis opensearch; echo 'Stopped dssh app containers and compose infra services.'"
+dssh_status_local="echo '=== dssh app containers ==='; docker ps --filter label=dssh.image --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}'; echo; echo '=== compose infra services ==='; docker compose ps postgres redis opensearch"
 dssh_mailtest_local="\"$script_dir/dssh\" backend mailtest"
 
-dssh_stop_local="docker ps -q --filter name=^/dssh- | xargs -r docker rm -f >/dev/null 2>&1 || true; docker compose stop postgres redis opensearch >/dev/null 2>&1 || true; echo 'Stopped dssh app containers and compose infra services.'"
-dssh_status_local="echo '=== dssh app containers ==='; docker ps --filter name=^/dssh- --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}'; echo; echo '=== compose infra services ==='; docker compose ps postgres redis opensearch"
-
+# Nest API
 backend=./apps/api
 backend_image=portfolio-api
 backend_start_local="docker ps -q --filter ancestor=portfolio-api | xargs -r docker rm -f >/dev/null 2>&1 || true; docker compose up -d postgres redis opensearch"
 backend_start="npm run prisma:generate -w apps/api && npm run dev -w apps/api"
 backend_start_detached=1
-backend_stop_local="docker rm -f dssh-backend-start >/dev/null 2>&1 || true"
+backend_migrate_local="docker compose up -d postgres"
+backend_migrate="npm run prisma:migrate -w apps/api --"
 backend_mailtest="npx ts-node --transpile-only apps/api/scripts/send-test-email.ts"
 backend_mailtest_attach=0
 
+# Next.js app
 frontend=./apps/web
 frontend_image=portfolio-web
 frontend_start="npm run dev -w apps/web"
 frontend_start_detached=1
-frontend_stop_local="docker rm -f dssh-frontend-start >/dev/null 2>&1 || true"
 
+# Local TLS + nginx. The directory has the image; init-local-tls.sh runs on the host before nginx starts.
 proxy=./ops/nginx
 proxy_image=portfolio-proxy
 proxy_context=./ops/nginx
+# nginx binds 80/443, which needs root in this image.
+proxy_user=root
 proxy_mount_node_modules=0
 proxy_start_local="./ops/nginx/init-local-tls.sh"
 proxy_start="nginx -c /app/nginx.conf -g 'daemon off;'"
 proxy_start_detached=1
-proxy_stop_local="docker rm -f dssh-proxy-start >/dev/null 2>&1 || true"

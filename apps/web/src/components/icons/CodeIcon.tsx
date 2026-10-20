@@ -1,8 +1,8 @@
 export function CodeIcon({ className = 'h-6 w-6' }: { className?: string }) {
 	return (
 		<svg
-			viewBox="0 0 24 24"
 			className={className}
+			viewBox="0 0 24 24"
 			fill="none"
 			aria-hidden="true"
 		>

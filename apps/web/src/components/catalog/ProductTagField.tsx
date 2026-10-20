@@ -58,12 +58,24 @@ export function ProductTagField({ value, onChange, vendorId }: ProductTagFieldPr
 	};
 
 	return (
-		<div className="flex flex-col gap-3">
+		<div
+			className="
+				flex
+				flex-col
+				gap-3
+			"
+		>
 			<label className="block text-sm">
 				<span className="font-semibold">
 					Tags
 				</span>
-				<p className="mt-1 text-xs text-slate-500">
+				<p
+					className="
+						mt-1
+						text-xs
+						text-slate-500
+					"
+				>
 					Freeform labels for discovery. Type a tag and press Enter, or pick from frequent tags.
 				</p>
 				<div
@@ -120,7 +132,12 @@ export function ProductTagField({ value, onChange, vendorId }: ProductTagFieldPr
 						value={draft}
 						onChange={(event) => setDraft(event.target.value)}
 						onKeyDown={onKeyDown}
-						placeholder={value.length ? 'Add another…' : 'Type a tag and press Enter'}
+						placeholder={
+							(value.length
+								? 'Add another…'
+								: 'Type a tag and press Enter'
+							)
+						}
 					/>
 				</div>
 			</label>
@@ -136,7 +153,10 @@ export function ProductTagField({ value, onChange, vendorId }: ProductTagFieldPr
 					type="button"
 					onClick={() => setPickerOpen((open) => !open)}
 				>
-					{pickerOpen ? 'Hide tag picker' : 'Browse frequent tags'}
+					{pickerOpen
+						? 'Hide tag picker'
+						: 'Browse frequent tags'
+					}
 				</button>
 				{pickerOpen
 					? (
@@ -157,7 +177,8 @@ export function ProductTagField({ value, onChange, vendorId }: ProductTagFieldPr
 												appear here for faster reuse.
 											</p>
 										)
-									: null}
+									: null
+								}
 								{frequent.length > 0
 									? (
 											<div className="mb-3">
@@ -172,15 +193,43 @@ export function ProductTagField({ value, onChange, vendorId }: ProductTagFieldPr
 												>
 													Frequently used
 												</p>
-												<div className="mt-2 flex flex-wrap gap-2">
+												<div
+													className="
+														mt-2
+														flex
+														flex-wrap
+														gap-2
+													"
+												>
 													{frequent.map((row) => {
 														const active = selected.has(row.tag);
 														return (
 															<button
 																className={
-																	active
-																		? 'rounded-full bg-ink px-3 py-1 text-xs font-semibold text-white'
-																		: 'rounded-full border border-slate-300 bg-white px-3 py-1 text-xs font-semibold text-slate-700 hover:border-sky hover:text-sky'
+																	(active
+																		? `
+																			rounded-full
+																			bg-ink
+																			px-3
+																			py-1
+																			text-xs
+																			font-semibold
+																			text-white
+																		`
+																		: `
+																			rounded-full
+																			border
+																			border-slate-300
+																			bg-white
+																			px-3
+																			py-1
+																			text-xs
+																			font-semibold
+																			text-slate-700
+																			hover:border-sky
+																			hover:text-sky
+																		`
+																	)
 																}
 																key={`freq-${row.tag}`}
 																type="button"
@@ -204,7 +253,8 @@ export function ProductTagField({ value, onChange, vendorId }: ProductTagFieldPr
 												</div>
 											</div>
 										)
-									: null}
+									: null
+								}
 								{remainder.length > 0
 									? (
 											<div>
@@ -219,15 +269,43 @@ export function ProductTagField({ value, onChange, vendorId }: ProductTagFieldPr
 												>
 													More tags
 												</p>
-												<div className="mt-2 flex flex-wrap gap-2">
+												<div
+													className="
+														mt-2
+														flex
+														flex-wrap
+														gap-2
+													"
+												>
 													{remainder.map((row) => {
 														const active = selected.has(row.tag);
 														return (
 															<button
 																className={
-																	active
-																		? 'rounded-full bg-ink px-3 py-1 text-xs font-semibold text-white'
-																		: 'rounded-full border border-slate-300 bg-white px-3 py-1 text-xs font-semibold text-slate-700 hover:border-sky hover:text-sky'
+																	(active
+																		? `
+																			rounded-full
+																			bg-ink
+																			px-3
+																			py-1
+																			text-xs
+																			font-semibold
+																			text-white
+																		`
+																		: `
+																			rounded-full
+																			border
+																			border-slate-300
+																			bg-white
+																			px-3
+																			py-1
+																			text-xs
+																			font-semibold
+																			text-slate-700
+																			hover:border-sky
+																			hover:text-sky
+																		`
+																	)
 																}
 																key={`more-${row.tag}`}
 																type="button"
@@ -247,10 +325,12 @@ export function ProductTagField({ value, onChange, vendorId }: ProductTagFieldPr
 												</div>
 											</div>
 										)
-									: null}
+									: null
+								}
 							</div>
 						)
-					: null}
+					: null
+				}
 			</div>
 		</div>
 	);

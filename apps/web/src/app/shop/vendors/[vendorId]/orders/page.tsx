@@ -51,7 +51,7 @@ function VendorOrdersPageContent() {
 			await shipVendorOrder(vendorId, orderId);
 			await refresh();
 		}
-		catch (shipError) {
+		catch(shipError) {
 			setError(
 				shipError instanceof Error
 					? shipError.message
@@ -82,7 +82,7 @@ function VendorOrdersPageContent() {
 			});
 			await refresh();
 		}
-		catch (refundError) {
+		catch(refundError) {
 			setError(
 				refundError instanceof Error
 					? refundError.message
@@ -130,7 +130,8 @@ function VendorOrdersPageContent() {
 						Checking session…
 					</p>
 				)
-				: null}
+				: null
+			}
 
 			{error
 				? (
@@ -138,7 +139,8 @@ function VendorOrdersPageContent() {
 						{error}
 					</p>
 				)
-				: null}
+				: null
+			}
 
 			{user
 				? (
@@ -216,10 +218,12 @@ function VendorOrdersPageContent() {
 														>
 															{busyId === order.id
 																? 'Shipping…'
-																: 'Mark shipped'}
+																: 'Mark shipped'
+															}
 														</button>
 													)
-													: null}
+													: null
+												}
 												{order.canVendorRefund
 													? (
 														<button
@@ -243,10 +247,12 @@ function VendorOrdersPageContent() {
 																? 'Working…'
 																: order.status === 'SHIPPED'
 																	? 'Refund buyer'
-																	: 'Cancel & refund'}
+																	: 'Cancel & refund'
+															}
 														</button>
 													)
-													: null}
+													: null
+												}
 											</div>
 										</div>
 										<ul
@@ -270,15 +276,25 @@ function VendorOrdersPageContent() {
 							</ul>
 						)
 				)
-				: null}
+				: null
+			}
 		</div>
 	);
 }
 
 export default function VendorOrdersPage() {
 	return (
-		<Suspense fallback={<p className="text-sm text-slate-500">Loading…</p>}>
-			<RequireAccess vendorRequired reasonKey="vendorOrders">
+		<Suspense
+			fallback={
+				<p className="text-sm text-slate-500">
+					Loading…
+				</p>
+			}
+		>
+			<RequireAccess
+				vendorRequired
+				reasonKey="vendorOrders"
+			>
 				<VendorOrdersPageContent />
 			</RequireAccess>
 		</Suspense>

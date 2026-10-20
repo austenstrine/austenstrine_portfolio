@@ -121,7 +121,8 @@ export function ProductQuickEdit({ product, onUpdated }: ProductQuickEditProps) 
 							{error}
 						</p>
 					)
-					: null}
+					: null
+				}
 				<button
 					className="
 						self-start
@@ -139,7 +140,10 @@ export function ProductQuickEdit({ product, onUpdated }: ProductQuickEditProps) 
 					onClick={onSave}
 					disabled={saving}
 				>
-					{saving ? 'Saving…' : 'Save changes'}
+					{saving
+						? 'Saving…'
+						: 'Save changes'
+					}
 				</button>
 			</div>
 		</section>

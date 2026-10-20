@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useState, type FormEvent } from 'react';
@@ -72,7 +72,9 @@ function VerifyEmailForm() {
 					placeholder="000000"
 				/>
 
-				<ErrorText message={error} />
+				<ErrorText
+					message={error}
+				/>
 
 				<button
 					className="
@@ -92,7 +94,10 @@ function VerifyEmailForm() {
 					type="submit"
 					disabled={submitting}
 				>
-					{submitting ? 'Verifying…' : 'Verify email'}
+					{submitting
+						? 'Verifying…'
+						: 'Verify email'
+					}
 				</button>
 			</form>
 		</AuthCard>

@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import { useRouter } from 'next/navigation';
 import { useState, type FormEvent } from 'react';
@@ -82,7 +82,9 @@ export default function ForgotPasswordPage() {
 						placeholder="you@example.com"
 					/>
 
-					<ErrorText message={error} />
+					<ErrorText
+						message={error}
+					/>
 
 					<button
 						className="
@@ -102,7 +104,10 @@ export default function ForgotPasswordPage() {
 						type="submit"
 						disabled={submitting}
 					>
-						{submitting ? 'Sending code…' : 'Send reset code'}
+						{submitting
+							? 'Sending code…'
+							: 'Send reset code'
+						}
 					</button>
 				</form>
 			</AuthCard>

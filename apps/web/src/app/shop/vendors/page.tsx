@@ -138,7 +138,8 @@ function VendorManageContent() {
 								where you left off.
 							</p>
 						)
-					: null}
+					: null
+				}
 			</div>
 
 			<section
@@ -213,7 +214,8 @@ function VendorManageContent() {
 									{error}
 								</p>
 							)
-						: null}
+						: null
+					}
 
 					<button
 						className="
@@ -231,7 +233,10 @@ function VendorManageContent() {
 						type="submit"
 						disabled={submitting}
 					>
-						{submitting ? 'Creating…' : 'Create vendor'}
+						{submitting
+							? 'Creating…'
+							: 'Create vendor'
+						}
 					</button>
 				</form>
 			</section>
@@ -252,7 +257,8 @@ function VendorManageContent() {
 								Loading…
 							</p>
 						)
-					: null}
+					: null
+				}
 				{!loading && vendors.length === 0
 					? (
 							<p className="text-sm text-slate-500">
@@ -260,7 +266,8 @@ function VendorManageContent() {
 								or wait for an invite from an existing vendor.
 							</p>
 						)
-					: null}
+					: null
+				}
 				{vendors.map((vendor) => (
 					<a
 						className="
@@ -314,8 +321,14 @@ function VendorManageContent() {
 								text-slate-500
 							"
 						>
-							{vendor.memberCount} member{vendor.memberCount === 1 ? '' : 's'} ·{' '}
-							{vendor.productCount} product{vendor.productCount === 1 ? '' : 's'}
+							{vendor.memberCount} member{vendor.memberCount === 1
+								? ''
+								: 's'
+							} ·{' '}
+							{vendor.productCount} product{vendor.productCount === 1
+								? ''
+								: 's'
+							}
 						</p>
 					</a>
 				))}

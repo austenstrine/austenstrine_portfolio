@@ -183,7 +183,8 @@ export default function CategoryManagePage() {
 							Checking session…
 						</p>
 					)
-				: null}
+				: null
+			}
 
 			{isSuperVendor
 				? (
@@ -199,7 +200,13 @@ export default function CategoryManagePage() {
 							<h2 className="text-lg font-semibold">
 								Create category
 							</h2>
-							<p className="mt-1 text-sm text-slate-600">
+							<p
+								className="
+									mt-1
+									text-sm
+									text-slate-600
+								"
+							>
 								Supervendor tools — changes apply marketplace-wide.
 							</p>
 							<form
@@ -286,7 +293,8 @@ export default function CategoryManagePage() {
 												{error}
 											</p>
 										)
-									: null}
+									: null
+								}
 
 								<button
 									className="
@@ -304,12 +312,16 @@ export default function CategoryManagePage() {
 									type="submit"
 									disabled={submitting}
 								>
-									{submitting ? 'Creating…' : 'Create category'}
+									{submitting
+										? 'Creating…'
+										: 'Create category'
+									}
 								</button>
 							</form>
 						</section>
 					)
-				: null}
+				: null
+			}
 
 			{!isSuperVendor
 				? (
@@ -325,18 +337,34 @@ export default function CategoryManagePage() {
 							<h2 className="text-lg font-semibold">
 								Request a category
 							</h2>
-							<p className="mt-1 text-sm text-slate-600">
+							<p
+								className="
+									mt-1
+									text-sm
+									text-slate-600
+								"
+							>
 								Need a category that isn&apos;t listed? Send a request to the marketplace
 								team. Until then, use product tags for finer labeling.
 							</p>
 
 							{!user
 								? (
-										<p className="mt-4 text-sm text-amber-800">
+										<p
+											className="
+												mt-4
+												text-sm
+												text-amber-800
+											"
+										>
 											{ACCESS_REASONS.categories}
 											{' '}
 											<a
-												className="font-semibold text-sky hover:underline"
+												className="
+													font-semibold
+													text-sky
+													hover:underline
+												"
 												href={buildLoginUrl({
 													next: '/shop/categories',
 													reason: ACCESS_REASONS.categories,
@@ -346,21 +374,33 @@ export default function CategoryManagePage() {
 											</a>
 										</p>
 									)
-								: null}
+								: null
+							}
 
 							{user && !hasVendor
 								? (
-										<p className="mt-4 text-sm text-amber-800">
+										<p
+											className="
+												mt-4
+												text-sm
+												text-amber-800
+											"
+										>
 											Join or create a vendor organization before requesting categories.{' '}
 											<a
-												className="font-semibold text-sky hover:underline"
+												className="
+													font-semibold
+													text-sky
+													hover:underline
+												"
 												href="/shop/vendors?next=%2Fshop%2Fcategories"
 											>
 												Go to vendors
 											</a>
 										</p>
 									)
-								: null}
+								: null
+							}
 
 							{user && hasVendor
 								? (
@@ -440,14 +480,16 @@ export default function CategoryManagePage() {
 															{requestError}
 														</p>
 													)
-												: null}
+												: null
+											}
 											{requestMessage
 												? (
 														<p className="text-sm text-emerald-700">
 															{requestMessage}
 														</p>
 													)
-												: null}
+												: null
+											}
 											<button
 												className="
 													self-start
@@ -464,14 +506,19 @@ export default function CategoryManagePage() {
 												type="submit"
 												disabled={requestBusy}
 											>
-												{requestBusy ? 'Sending…' : 'Send request'}
+												{requestBusy
+													? 'Sending…'
+													: 'Send request'
+												}
 											</button>
 										</form>
 									)
-								: null}
+								: null
+							}
 						</section>
 					)
-				: null}
+				: null
+			}
 
 			<section
 				className="
@@ -489,14 +536,16 @@ export default function CategoryManagePage() {
 								Loading…
 							</p>
 						)
-					: null}
+					: null
+				}
 				{!loading && categories.length === 0
 					? (
 							<p className="text-sm text-slate-500">
 								No categories yet.
 							</p>
 						)
-					: null}
+					: null
+				}
 				{categories.map((category) => (
 					<div
 						className="
@@ -513,9 +562,18 @@ export default function CategoryManagePage() {
 						</p>
 						<p className="text-sm text-slate-600">
 							/{category.slug}
-							{category.parent ? ` · under ${category.parent.name}` : ''}
+							{category.parent
+								? ` · under ${category.parent.name}`
+								: ''
+							}
 						</p>
-						<p className="mt-1 text-xs text-slate-500">
+						<p
+							className="
+								mt-1
+								text-xs
+								text-slate-500
+							"
+						>
 							{category._count?.products ?? 0} products ·{' '}
 							{category._count?.children ?? 0} children
 						</p>

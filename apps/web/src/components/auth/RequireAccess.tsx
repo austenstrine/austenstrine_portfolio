@@ -35,7 +35,10 @@ export function RequireAccess({
 
 	const message =
 		reason
-		?? (reasonKey ? ACCESS_REASONS[reasonKey] : ACCESS_REASONS.vendors);
+		?? (reasonKey
+			? ACCESS_REASONS[reasonKey]
+			: ACCESS_REASONS.vendors
+		);
 
 	useEffect(() => {
 		if(sessionLoading) {
@@ -106,5 +109,9 @@ export function RequireAccess({
 		);
 	}
 
-	return <>{children}</>;
+	return (
+		<>
+			{children}
+		</>
+	);
 }

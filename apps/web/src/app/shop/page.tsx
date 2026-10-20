@@ -161,7 +161,10 @@ export default async function ShopHomePage() {
 									"
 								>
 									From ${((product.primaryPriceCents ?? 0) / 100).toFixed(2)}
-									{product.primaryUom ? ` / ${product.primaryUom}` : ''}
+									{product.primaryUom
+										? ` / ${product.primaryUom}`
+										: ''
+									}
 								</p>
 								<p
 									className="

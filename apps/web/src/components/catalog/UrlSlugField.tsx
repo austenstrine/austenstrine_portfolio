@@ -27,7 +27,11 @@ export function UrlSlugField({
 	maxLength = 80,
 }: UrlSlugFieldProps) {
 	const origin = siteOrigin();
-	const prefix = `${origin}${prefixPath.endsWith('/') ? prefixPath : `${prefixPath}/`}`;
+	const prefix = `${origin}${
+		prefixPath.endsWith('/')
+			? prefixPath
+			: `${prefixPath}/`
+	}`;
 
 	return (
 		<label className="block text-sm">
@@ -108,7 +112,8 @@ export function UrlSlugField({
 						{helpText}
 					</span>
 				)
-				: null}
+				: null
+			}
 		</label>
 	);
 }

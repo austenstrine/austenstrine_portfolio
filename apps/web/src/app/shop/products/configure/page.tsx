@@ -301,7 +301,9 @@ function InventoryConfigurationForm() {
 				gap-6
 			"
 		>
-			<CatalogWorkspaceSwitcher active="inventory" />
+			<CatalogWorkspaceSwitcher
+				active="inventory"
+			/>
 
 			<div>
 				<p
@@ -355,7 +357,8 @@ function InventoryConfigurationForm() {
 							</a>
 						</p>
 					)
-				: null}
+				: null
+			}
 
 			<form
 				className="
@@ -572,7 +575,8 @@ function InventoryConfigurationForm() {
 										Level {index + 1}
 										{isOptionalOuter
 											? ' · leave SKU blank to skip'
-											: ''}
+											: ''
+										}
 									</p>
 									<input
 										className="
@@ -608,7 +612,8 @@ function InventoryConfigurationForm() {
 												Remove
 											</button>
 										)
-									: null}
+									: null
+								}
 							</div>
 
 							<div
@@ -919,7 +924,8 @@ function InventoryConfigurationForm() {
 											</div>
 										</div>
 									)
-								: null}
+								: null
+							}
 						</section>
 					);
 				})}
@@ -1012,7 +1018,8 @@ function InventoryConfigurationForm() {
 								{error}
 							</p>
 						)
-					: null}
+					: null
+				}
 
 				<button
 					className="
@@ -1032,7 +1039,8 @@ function InventoryConfigurationForm() {
 				>
 					{submitting
 						? 'Creating…'
-						: 'Create configured product'}
+						: 'Create configured product'
+					}
 				</button>
 			</form>
 		</div>
@@ -1048,7 +1056,10 @@ export default function InventoryConfigurationPage() {
 				</p>
 			}
 		>
-			<RequireAccess vendorRequired reasonKey="products">
+			<RequireAccess
+				vendorRequired
+				reasonKey="products"
+			>
 				<InventoryConfigurationForm />
 			</RequireAccess>
 		</Suspense>

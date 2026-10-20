@@ -67,10 +67,36 @@ This file tracks personal formatting preferences for this project so they are ea
 - When the ternary is not already wrapped by a clean delimiter (for example JSX `{ ... }`), prefer wrapping the full expression in parentheses.
 - For wrapped ternaries, place the opening parenthesis on the same line as the condition start and align the final closing parenthesis with the expression boundary indentation.
 - Keep ternary expression wrappers visually balanced: the closing `}` or `)` should be on its own line aligned with the opening wrapper when the expression spans multiple lines.
+- When a ternary is wrapped in JSX `{ ... }` (or `${ ... }` in a template), put the closing `}` on its own line at the same indentation as the opening `{`. Do not leave the closing `}` attached to the final operand line.
+
+```tsx
+{submitting
+	? 'Sending code…'
+	: 'Send reset code'
+}
+```
+
+### Enforcement
+
+- Locating candidate ternaries with search or regex is fine.
+- Do not enforce this wrapping rule with a regex substitution. Matching the closing `}` to the correct opening `{` is too easy to get wrong in nested or mixed delimiter cases.
+- After a search hit, open that file and line and correct that instance individually so the closing delimiter indent matches its opening wrapper.
 
 ### Context Note
 
 - If the ternary already lives inside clean JSX braces, extra wrapper parentheses are optional.
+
+## Reuse / Widgets
+
+- Prefer extracting repeated or self-contained UI into dedicated components instead of copying markup.
+- Do not paste a second copy of a block that already exists as a widget; import and reuse it.
+- SVG markup belongs in dedicated icon widgets (for this app, under `apps/web/src/components/icons/`), not inlined in pages, buttons, or section components.
+- Icon widgets should accept a `className` prop so callers can size and color them without forking the SVG.
+
+### Enforcement
+
+- Locating inline `<svg>` with search or regex is fine.
+- Do not extract or rewrite SVG blocks with a regex substitution. After a search hit, open that file and move that instance into an icon widget by hand.
 
 ## Notes
 

@@ -138,7 +138,7 @@ export class ConnectService {
 			try {
 				await this.syncAccountFlags(vendor.stripeConnectAccountId);
 			}
-			catch (error) {
+			catch(error) {
 				this.logger.warn(
 					`Could not refresh Connect status for vendor ${vendorId}`,
 					error as Error,

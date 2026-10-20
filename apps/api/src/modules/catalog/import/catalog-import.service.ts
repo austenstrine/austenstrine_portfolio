@@ -633,7 +633,7 @@ export class CatalogImportService {
 						offeringIdByKey.set(key, id);
 					}
 				}
-				catch (error) {
+				catch(error) {
 					runtimeErrors.push({
 						lineNumber: offeringRows[0]?.lineNumber ?? 0,
 						message:
@@ -695,7 +695,7 @@ export class CatalogImportService {
 					},
 				});
 			}
-			catch (error) {
+			catch(error) {
 				runtimeErrors.push({
 					lineNumber: row.lineNumber,
 					message:
