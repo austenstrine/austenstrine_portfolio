@@ -132,6 +132,28 @@ export function ProductDetailClient({ initialProduct }: ProductDetailClientProps
 				</h1>
 				<p className="text-slate-600">
 					{product.description}
+					{(product.tags?.length ?? 0) > 0
+						? (
+								<div className="mt-3 flex flex-wrap gap-2">
+									{product.tags?.map((tag) => (
+										<span
+											className="
+												rounded-full
+												bg-slate-100
+												px-2.5
+												py-1
+												text-xs
+												font-semibold
+												text-slate-700
+											"
+											key={tag}
+										>
+											{tag}
+										</span>
+									))}
+								</div>
+							)
+						: null}
 				</p>
 
 				{!deletedNotice

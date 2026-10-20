@@ -108,6 +108,12 @@ export class UpdateCatalogProductDto {
 	attributes?: ProductAttributePatchDto[];
 
 	@IsOptional()
+	@IsArray()
+	@IsString({ each: true })
+	@MaxLength(60, { each: true })
+	tags?: string[];
+
+	@IsOptional()
 	@ValidateNested({ each: true })
 	@Type(() => ProductOfferingPatchDto)
 	@IsArray()

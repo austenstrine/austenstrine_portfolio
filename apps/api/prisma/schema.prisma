@@ -194,6 +194,8 @@ model Vendor {
   id                          String    @id @default(uuid())
   slug                        String    @unique
   name                        String
+  /// Exactly one marketplace vendor may be the supervendor (category + global taxonomy admin).
+  isSuperVendor               Boolean   @default(false)
   stripeConnectAccountId      String?
   stripeDetailsSubmitted      Boolean   @default(false)
   stripeChargesEnabled        Boolean   @default(false)
@@ -391,6 +393,7 @@ model CatalogProduct {
   slug        String
   title       String
   description String?
+  tags        String[] @default([])
   active      Boolean  @default(true)
   /// Legacy; prefer offering inheritQtyToChildren + containment graph
   inventoryFromAllocations Boolean @default(false)
@@ -407,6 +410,7 @@ model CatalogProduct {
   @@index([shippingProfileId])
   @@index([active])
   @@index([title])
+  @@index([tags])
 }
 
 model ProductAttribute {

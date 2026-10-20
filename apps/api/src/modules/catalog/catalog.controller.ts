@@ -30,6 +30,7 @@ import { CreateVendorAppPasswordDto } from './dto/create-vendor-app-password.dto
 import { CreateVendorDto } from './dto/create-vendor.dto';
 import { CreateVendorInviteDto } from './dto/create-vendor-invite.dto';
 import { DeleteCatalogProductsDto } from './dto/delete-catalog-products.dto';
+import { RequestCategoryDto } from './dto/request-category.dto';
 import { TrimInventoryDto } from './dto/trim-inventory.dto';
 import { UpdateCatalogProductDto } from './dto/update-catalog-product.dto';
 import type { CatalogAuthedRequest } from './guards/catalog-auth.guard';
@@ -73,8 +74,28 @@ export class CatalogController {
 
 	@UseGuards(JwtAuthGuard)
 	@Post('categories')
-	createCategory(@Body() dto: CreateCategoryDto) {
-		return this.catalog.createCategory(dto);
+	createCategory(@Req() req: AuthedRequest, @Body() dto: CreateCategoryDto) {
+		return this.catalog.createCategory(req.user!.id, dto);
+	}
+
+	@UseGuards(JwtAuthGuard)
+	@Post('categories/request')
+	requestCategory(@Req() req: AuthedRequest, @Body() dto: RequestCategoryDto) {
+		return this.catalog.requestCategory(req.user!.id, req.user!.email ?? 'unknown', dto);
+	}
+
+	@UseGuards(JwtAuthGuard)
+	@Get('tags/popular')
+	listPopularTags(
+		@Req() req: AuthedRequest,
+		@Query('vendorId') vendorId?: string,
+		@Query('limit') limit?: string,
+	) {
+		return this.catalog.listPopularTags({
+			userId: req.user!.id,
+			vendorId,
+			limit: limit ? Number(limit) : undefined,
+		});
 	}
 
 	@UseGuards(JwtAuthGuard)

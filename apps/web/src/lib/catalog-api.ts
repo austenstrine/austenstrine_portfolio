@@ -3,12 +3,13 @@ import { authedFetch } from './auth-api';
 
 export type CatalogProductSummary = {
 	id: string;
-	vendor: { slug: string; name: string };
+	vendor: { id?: string; slug: string; name: string };
 	category: { slug: string; name: string } | null;
 	sku: string;
 	slug: string;
 	title: string;
 	description: string | null;
+	tags?: string[];
 	inventoryFromAllocations: boolean;
 	primaryPriceCents: number | null;
 	primaryUom: string | null;
@@ -126,6 +127,8 @@ export function updateCatalogProduct(
 	payload: {
 		title?: string;
 		description?: string;
+		tags?: string[];
+		categoryId?: string | null;
 		offerings?: Array<{
 			id: string;
 			priceCents?: number;
@@ -167,10 +170,37 @@ export function createCatalogCategory(payload: {
 	});
 }
 
+export function requestCatalogCategory(payload: {
+	name: string;
+	suggestedParent?: string;
+	note?: string;
+}): Promise<{ message: string }> {
+	return catalogRequest('/categories/request', {
+		method: 'POST',
+		body: JSON.stringify(payload),
+	});
+}
+
+export function listPopularTags(params?: {
+	vendorId?: string;
+	limit?: number;
+}): Promise<Array<{ tag: string; count: number }>> {
+	const query = new URLSearchParams();
+	if(params?.vendorId) {
+		query.set('vendorId', params.vendorId);
+	}
+	if(params?.limit) {
+		query.set('limit', String(params.limit));
+	}
+	const suffix = query.toString() ? `?${query.toString()}` : '';
+	return catalogRequest(`/tags/popular${suffix}`);
+}
+
 export type VendorSummary = {
 	id: string;
 	name: string;
 	slug: string;
+	isSuperVendor?: boolean;
 	createdAt: string;
 	productCount: number;
 	memberCount: number;
@@ -290,6 +320,7 @@ export type CreateProductPayload = {
 	slug: string;
 	title: string;
 	description?: string;
+	tags?: string[];
 	inventoryFromAllocations?: boolean;
 	breakFeeMode?: 'OFF' | 'PER_PARENT_OPENED' | 'ONCE_PER_LINE' | 'PRODUCT_ONCE';
 	breakFeeCents?: number;

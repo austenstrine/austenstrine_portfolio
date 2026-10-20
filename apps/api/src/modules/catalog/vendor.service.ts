@@ -93,6 +93,7 @@ export class VendorService {
 			id: membership.vendor.id,
 			name: membership.vendor.name,
 			slug: membership.vendor.slug,
+			isSuperVendor: membership.vendor.isSuperVendor,
 			createdAt: membership.vendor.createdAt,
 			productCount: membership.vendor._count.products,
 			memberCount: membership.vendor._count.members,
@@ -111,6 +112,7 @@ export class VendorService {
 		name: string;
 		slug: string;
 		createdAt: Date;
+		isSuperVendor?: boolean;
 		members: Array<{ role: VendorMemberRole }>;
 		_count: { products: number; members: number };
 	}) {
@@ -118,6 +120,7 @@ export class VendorService {
 			id: vendor.id,
 			name: vendor.name,
 			slug: vendor.slug,
+			isSuperVendor: Boolean(vendor.isSuperVendor),
 			createdAt: vendor.createdAt,
 			productCount: vendor._count.products,
 			memberCount: vendor._count.members,

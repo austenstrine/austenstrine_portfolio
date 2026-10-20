@@ -37,10 +37,24 @@ export async function seedCatalog(prisma: PrismaClient): Promise<void> {
     update: { name: 'Wire & Cable' },
   });
 
+  const superVendor = await prisma.vendor.upsert({
+    where: { slug: 'austenstrine-dev' },
+    create: {
+      slug: 'austenstrine-dev',
+      name: 'austenstrine.dev',
+      isSuperVendor: true,
+    },
+    update: {
+      name: 'austenstrine.dev',
+      isSuperVendor: true,
+    },
+  });
+  void superVendor;
+
   const vendor = await prisma.vendor.upsert({
     where: { slug: 'demo-supply' },
-    create: { slug: 'demo-supply', name: 'Demo Supply Co.' },
-    update: { name: 'Demo Supply Co.' },
+    create: { slug: 'demo-supply', name: 'Demo Supply Co.', isSuperVendor: false },
+    update: { name: 'Demo Supply Co.', isSuperVendor: false },
   });
 
   const uomSpool = await prisma.unitOfMeasure.findUniqueOrThrow({ where: { code: 'SPOOL' } });

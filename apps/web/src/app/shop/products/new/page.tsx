@@ -14,6 +14,7 @@ import {
 import { dollarsToCents, slugify } from '../../../../lib/catalog-product-form';
 import { useSession } from '../../../../lib/useSession';
 import { CatalogWorkspaceSwitcher } from '../../../../components/catalog/CatalogWorkspaceSwitcher';
+import { ProductTagField } from '../../../../components/catalog/ProductTagField';
 import { UrlSlugField } from '../../../../components/catalog/UrlSlugField';
 import { RequireAccess } from '../../../../components/auth/RequireAccess';
 
@@ -34,6 +35,7 @@ function NewProductForm() {
 	const [slug, setSlug] = useState('');
 	const [slugTouched, setSlugTouched] = useState(false);
 	const [description, setDescription] = useState('');
+	const [tags, setTags] = useState<string[]>([]);
 	const [offeringMode, setOfferingMode] = useState<OfferingMode>('SINGLE');
 	const [packUomId, setPackUomId] = useState('');
 	const [pieceUomId, setPieceUomId] = useState('');
@@ -174,6 +176,7 @@ function NewProductForm() {
 			slug: slug.trim(),
 			title: title.trim(),
 			description: description.trim() || undefined,
+			tags,
 			inventoryFromAllocations: offeringMode === 'BOTH',
 			offerings,
 			containments,
@@ -552,6 +555,12 @@ function NewProductForm() {
 							rows={3}
 						/>
 					</label>
+
+					<ProductTagField
+						value={tags}
+						onChange={setTags}
+						vendorId={vendorId || undefined}
+					/>
 				</section>
 
 				{needsSingle

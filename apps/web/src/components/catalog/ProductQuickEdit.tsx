@@ -5,6 +5,7 @@ import {
 	updateCatalogProduct,
 	type CatalogProductDetail,
 } from '../../lib/catalog-api';
+import { ProductTagField } from './ProductTagField';
 
 type ProductQuickEditProps = {
 	product: CatalogProductDetail;
@@ -14,6 +15,7 @@ type ProductQuickEditProps = {
 export function ProductQuickEdit({ product, onUpdated }: ProductQuickEditProps) {
 	const [title, setTitle] = useState(product.title);
 	const [description, setDescription] = useState(product.description ?? '');
+	const [tags, setTags] = useState<string[]>(product.tags ?? []);
 	const [saving, setSaving] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 
@@ -25,6 +27,7 @@ export function ProductQuickEdit({ product, onUpdated }: ProductQuickEditProps) 
 			const updated = await updateCatalogProduct(product.id, {
 				title,
 				description,
+				tags,
 				offerings: product.offerings.map((offering) => ({
 					id: offering.id,
 					priceCents: offering.priceCents,
@@ -107,6 +110,11 @@ export function ProductQuickEdit({ product, onUpdated }: ProductQuickEditProps) 
 						rows={4}
 					/>
 				</label>
+				<ProductTagField
+					value={tags}
+					onChange={setTags}
+					vendorId={product.vendor.id}
+				/>
 				{error
 					? (
 						<p className="text-sm text-red-700">
