@@ -5,7 +5,7 @@
   "workspaces": [
     "apps/api",
     "apps/web",
-    "packages/prisma-json-seed"
+    "packages/prisma-seed-migration-sync"
   ],
   "scripts": {
     "dev": "npm run dev -w apps/api & npm run dev -w apps/web",
