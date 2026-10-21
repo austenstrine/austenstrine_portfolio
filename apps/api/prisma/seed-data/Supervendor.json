@@ -1,0 +1,13 @@
+{
+  "$prismaJsonSeed": {
+    "maintain": false
+  },
+  "vendor": {
+    "slug": "austenstrine-dev",
+    "name": "austenstrine.dev",
+    "isSuperVendor": true
+  },
+  "admin": {
+    "email": "admin@austenstrine.dev"
+  }
+}

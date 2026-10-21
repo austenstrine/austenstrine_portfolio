@@ -7,13 +7,20 @@ import {
 	searchCatalogProducts,
 	type CatalogProductSummary,
 } from '../../../lib/catalog-api';
+import { sortCategoryTree } from '../../../lib/category-tree';
 
 function PlaceEtMarqueSearchForm() {
 	const searchParams = useSearchParams();
 	const [query, setQuery] = useState('');
 	const [category, setCategory] = useState(searchParams.get('category') ?? '');
 	const [vendor, setVendor] = useState(searchParams.get('vendor') ?? '');
-	const [categories, setCategories] = useState<Array<{ slug: string; name: string }>>([]);
+	const [categories, setCategories] = useState<Array<{
+		id: string;
+		slug: string;
+		name: string;
+		parent?: { id: string; name: string; slug: string } | null;
+	}>>([]);
+	const categoryTree = sortCategoryTree(categories);
 	const [results, setResults] = useState<CatalogProductSummary[]>([]);
 	const [loading, setLoading] = useState(false);
 
@@ -88,12 +95,12 @@ function PlaceEtMarqueSearchForm() {
 					<option value="">
 						All categories
 					</option>
-					{categories.map((row) => (
+					{categoryTree.map((row) => (
 						<option
 							key={row.slug}
 							value={row.slug}
 						>
-							{row.name}
+							{row.label}
 						</option>
 					))}
 				</select>

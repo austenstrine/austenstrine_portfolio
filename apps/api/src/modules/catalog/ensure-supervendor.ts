@@ -1,20 +1,50 @@
+import { readFileSync } from 'fs';
+import { join } from 'path';
 import { PrismaClient, VendorMemberRole } from '@prisma/client';
 
-export const SUPERVENDOR_SLUG = 'austenstrine-dev';
-export const SUPERVENDOR_NAME = 'austenstrine.dev';
-export const SUPERVENDOR_ADMIN_EMAIL = 'admin@austenstrine.dev';
+type SupervendorSeed = {
+	vendor: {
+		slug: string;
+		name: string;
+		isSuperVendor: boolean;
+	};
+	admin: {
+		email: string;
+	};
+};
 
-export async function ensureSupervendor(prisma: PrismaClient): Promise<void> {
+const SUPERVENDOR_FILE = 'Supervendor.json';
+
+export const supervendorSeed = loadSupervendorSeed();
+export const SUPERVENDOR_SLUG = supervendorSeed.vendor.slug;
+export const SUPERVENDOR_NAME = supervendorSeed.vendor.name;
+export const SUPERVENDOR_ADMIN_EMAIL = supervendorSeed.admin.email;
+
+export function loadSupervendorSeed(seedDir = defaultSeedDir()): SupervendorSeed {
+	const parsed = JSON.parse(
+		readFileSync(join(seedDir, SUPERVENDOR_FILE), 'utf8'),
+	) as SupervendorSeed;
+	if(!parsed.vendor?.slug || !parsed.vendor.name || !parsed.admin?.email) {
+		throw new Error(`${SUPERVENDOR_FILE} is missing vendor.slug, vendor.name, or admin.email.`);
+	}
+	return parsed;
+}
+
+export async function ensureSupervendor(
+	prisma: PrismaClient,
+	seedDir = defaultSeedDir(),
+): Promise<void> {
+	const seed = loadSupervendorSeed(seedDir);
 	const vendor = await prisma.vendor.upsert({
-		where: { slug: SUPERVENDOR_SLUG },
+		where: { slug: seed.vendor.slug },
 		create: {
-			slug: SUPERVENDOR_SLUG,
-			name: SUPERVENDOR_NAME,
-			isSuperVendor: true,
+			slug: seed.vendor.slug,
+			name: seed.vendor.name,
+			isSuperVendor: seed.vendor.isSuperVendor,
 		},
 		update: {
-			name: SUPERVENDOR_NAME,
-			isSuperVendor: true,
+			name: seed.vendor.name,
+			isSuperVendor: seed.vendor.isSuperVendor,
 		},
 	});
 
@@ -27,13 +57,13 @@ export async function ensureSupervendor(prisma: PrismaClient): Promise<void> {
 	});
 
 	let user = await prisma.user.findUnique({
-		where: { email: SUPERVENDOR_ADMIN_EMAIL },
+		where: { email: seed.admin.email },
 	});
 
 	if(!user) {
 		user = await prisma.user.create({
 			data: {
-				email: SUPERVENDOR_ADMIN_EMAIL,
+				email: seed.admin.email,
 				emailVerifiedAt: new Date(),
 			},
 		});
@@ -61,4 +91,8 @@ export async function ensureSupervendor(prisma: PrismaClient): Promise<void> {
 			role: VendorMemberRole.OWNER,
 		},
 	});
+}
+
+function defaultSeedDir(): string {
+	return join(__dirname, '../../../prisma/seed-data');
 }

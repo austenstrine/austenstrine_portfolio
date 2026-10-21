@@ -12,6 +12,7 @@ import {
 	type VendorSummary,
 } from '../../../../lib/catalog-api';
 import { dollarsToCents, slugify } from '../../../../lib/catalog-product-form';
+import { sortCategoryTree } from '../../../../lib/category-tree';
 import { useSession } from '../../../../lib/useSession';
 import { CatalogWorkspaceSwitcher } from '../../../../components/catalog/CatalogWorkspaceSwitcher';
 import { ProductTagField } from '../../../../components/catalog/ProductTagField';
@@ -58,7 +59,13 @@ function InventoryConfigurationForm() {
 	const { user, loading: sessionLoading } = useSession();
 
 	const [vendors, setVendors] = useState<VendorSummary[]>([]);
-	const [categories, setCategories] = useState<Array<{ id: string; name: string; slug: string }>>([]);
+	const [categories, setCategories] = useState<Array<{
+		id: string;
+		name: string;
+		slug: string;
+		parent?: { id: string; name: string; slug: string } | null;
+	}>>([]);
+	const categoryTree = sortCategoryTree(categories);
 	const [uoms, setUoms] = useState<UnitOfMeasure[]>([]);
 	const [vendorId, setVendorId] = useState('');
 	const [categoryId, setCategoryId] = useState('');
@@ -432,12 +439,12 @@ function InventoryConfigurationForm() {
 							<option value="">
 								None
 							</option>
-							{categories.map((category) => (
+							{categoryTree.map((category) => (
 								<option
 									key={category.id}
 									value={category.id}
 								>
-									{category.name}
+									{category.label}
 								</option>
 							))}
 						</select>

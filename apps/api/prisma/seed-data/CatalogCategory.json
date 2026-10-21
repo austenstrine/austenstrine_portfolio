@@ -1,0 +1,907 @@
+{
+  "$prismaJsonSeed": {
+    "format": "tree",
+    "model": "CatalogCategory",
+    "identityField": "slug",
+    "parentRelation": "parent",
+    "childrenField": "children"
+  },
+  "records": [
+    {
+      "slug": "electronics",
+      "name": "Electronics",
+      "children": [
+        {
+          "slug": "tv-video",
+          "name": "TV & Video",
+          "children": [
+            {
+              "slug": "televisions",
+              "name": "Televisions"
+            },
+            {
+              "slug": "home-theater",
+              "name": "Home Theater Systems"
+            },
+            {
+              "slug": "streaming-media-players",
+              "name": "Streaming Media Players"
+            },
+            {
+              "slug": "projectors",
+              "name": "Projectors"
+            }
+          ]
+        },
+        {
+          "slug": "headphones",
+          "name": "Headphones"
+        },
+        {
+          "slug": "speakers",
+          "name": "Speakers"
+        },
+        {
+          "slug": "wearable-technology",
+          "name": "Wearable Technology"
+        },
+        {
+          "slug": "portable-audio",
+          "name": "Portable Audio & Video"
+        },
+        {
+          "slug": "car-electronics-gps",
+          "name": "Car Electronics & GPS"
+        }
+      ]
+    },
+    {
+      "slug": "computers-tablets",
+      "name": "Computers & Tablets",
+      "children": [
+        {
+          "slug": "laptops",
+          "name": "Laptops"
+        },
+        {
+          "slug": "desktops",
+          "name": "Desktops"
+        },
+        {
+          "slug": "tablets",
+          "name": "Tablets"
+        },
+        {
+          "slug": "computer-components",
+          "name": "Computer Components"
+        },
+        {
+          "slug": "monitors",
+          "name": "Monitors"
+        },
+        {
+          "slug": "printers-scanners",
+          "name": "Printers & Scanners"
+        },
+        {
+          "slug": "networking",
+          "name": "Networking"
+        },
+        {
+          "slug": "data-storage",
+          "name": "Data Storage"
+        },
+        {
+          "slug": "computer-accessories",
+          "name": "Computer Accessories"
+        }
+      ]
+    },
+    {
+      "slug": "cell-phones-accessories",
+      "name": "Cell Phones & Accessories",
+      "children": [
+        {
+          "slug": "unlocked-cell-phones",
+          "name": "Cell Phones"
+        },
+        {
+          "slug": "phone-cases",
+          "name": "Cases, Holsters & Clips"
+        },
+        {
+          "slug": "phone-chargers",
+          "name": "Chargers & Power Adapters"
+        },
+        {
+          "slug": "phone-screen-protectors",
+          "name": "Screen Protectors"
+        },
+        {
+          "slug": "smartwatches",
+          "name": "Smartwatches"
+        },
+        {
+          "slug": "mobile-accessories",
+          "name": "Mobile Accessories"
+        }
+      ]
+    },
+    {
+      "slug": "cameras-photo",
+      "name": "Cameras & Photo",
+      "children": [
+        {
+          "slug": "digital-cameras",
+          "name": "Digital Cameras"
+        },
+        {
+          "slug": "camera-lenses",
+          "name": "Lenses"
+        },
+        {
+          "slug": "camera-accessories",
+          "name": "Camera Accessories"
+        },
+        {
+          "slug": "binoculars-telescopes",
+          "name": "Binoculars & Telescopes"
+        },
+        {
+          "slug": "video-cameras",
+          "name": "Video Cameras"
+        },
+        {
+          "slug": "photo-lighting",
+          "name": "Lighting & Studio"
+        }
+      ]
+    },
+    {
+      "slug": "home-kitchen",
+      "name": "Home & Kitchen",
+      "children": [
+        {
+          "slug": "kitchen-dining",
+          "name": "Kitchen & Dining"
+        },
+        {
+          "slug": "bedding",
+          "name": "Bedding"
+        },
+        {
+          "slug": "bath",
+          "name": "Bath"
+        },
+        {
+          "slug": "home-storage",
+          "name": "Storage & Organization"
+        },
+        {
+          "slug": "heating-cooling",
+          "name": "Heating, Cooling & Air Quality"
+        },
+        {
+          "slug": "home-decor",
+          "name": "Home Décor"
+        },
+        {
+          "slug": "cleaning-supplies-home",
+          "name": "Cleaning Supplies"
+        }
+      ]
+    },
+    {
+      "slug": "furniture",
+      "name": "Furniture",
+      "children": [
+        {
+          "slug": "living-room-furniture",
+          "name": "Living Room Furniture"
+        },
+        {
+          "slug": "bedroom-furniture",
+          "name": "Bedroom Furniture"
+        },
+        {
+          "slug": "office-furniture",
+          "name": "Office Furniture"
+        },
+        {
+          "slug": "kitchen-dining-furniture",
+          "name": "Kitchen & Dining Furniture"
+        },
+        {
+          "slug": "outdoor-furniture",
+          "name": "Outdoor Furniture"
+        },
+        {
+          "slug": "entryway-furniture",
+          "name": "Entryway Furniture"
+        }
+      ]
+    },
+    {
+      "slug": "appliances",
+      "name": "Appliances",
+      "children": [
+        {
+          "slug": "major-appliances",
+          "name": "Major Appliances"
+        },
+        {
+          "slug": "small-appliances",
+          "name": "Small Appliances"
+        },
+        {
+          "slug": "vacuum-floor-care",
+          "name": "Vacuum & Floor Care"
+        },
+        {
+          "slug": "laundry-appliances",
+          "name": "Laundry Appliances"
+        }
+      ]
+    },
+    {
+      "slug": "patio-lawn-garden",
+      "name": "Patio, Lawn & Garden",
+      "children": [
+        {
+          "slug": "outdoor-decor",
+          "name": "Outdoor Decor"
+        },
+        {
+          "slug": "gardening-lawn-care",
+          "name": "Gardening & Lawn Care"
+        },
+        {
+          "slug": "grills-outdoor-cooking",
+          "name": "Grills & Outdoor Cooking"
+        },
+        {
+          "slug": "pools-spas-supplies",
+          "name": "Pools, Hot Tubs & Supplies"
+        },
+        {
+          "slug": "outdoor-power-tools",
+          "name": "Outdoor Power Tools"
+        }
+      ]
+    },
+    {
+      "slug": "tools-home-improvement",
+      "name": "Tools & Home Improvement",
+      "children": [
+        {
+          "slug": "power-tools",
+          "name": "Power Tools"
+        },
+        {
+          "slug": "hand-tools",
+          "name": "Hand Tools"
+        },
+        {
+          "slug": "hardware",
+          "name": "Hardware"
+        },
+        {
+          "slug": "lighting-ceiling-fans",
+          "name": "Lighting & Ceiling Fans"
+        },
+        {
+          "slug": "electrical",
+          "name": "Electrical",
+          "children": [
+            {
+              "slug": "wire-and-cable",
+              "name": "Wire & Cable"
+            },
+            {
+              "slug": "conduit-raceway",
+              "name": "Conduit & Raceway"
+            },
+            {
+              "slug": "circuit-breakers-fuses",
+              "name": "Circuit Breakers & Fuses"
+            },
+            {
+              "slug": "outlets-switches",
+              "name": "Outlets & Switches"
+            },
+            {
+              "slug": "electrical-boxes",
+              "name": "Electrical Boxes & Enclosures"
+            }
+          ]
+        },
+        {
+          "slug": "plumbing",
+          "name": "Plumbing"
+        },
+        {
+          "slug": "building-supplies",
+          "name": "Building Supplies"
+        },
+        {
+          "slug": "safety-security",
+          "name": "Safety & Security"
+        },
+        {
+          "slug": "painting-supplies",
+          "name": "Painting Supplies & Wall Treatments"
+        }
+      ]
+    },
+    {
+      "slug": "clothing-shoes-jewelry",
+      "name": "Clothing, Shoes & Jewelry",
+      "children": [
+        {
+          "slug": "womens-clothing",
+          "name": "Women's Clothing"
+        },
+        {
+          "slug": "mens-clothing",
+          "name": "Men's Clothing"
+        },
+        {
+          "slug": "girls-clothing",
+          "name": "Girls' Clothing"
+        },
+        {
+          "slug": "boys-clothing",
+          "name": "Boys' Clothing"
+        },
+        {
+          "slug": "baby-clothing",
+          "name": "Baby Clothing"
+        },
+        {
+          "slug": "shoes",
+          "name": "Shoes"
+        },
+        {
+          "slug": "jewelry",
+          "name": "Jewelry"
+        },
+        {
+          "slug": "watches",
+          "name": "Watches"
+        },
+        {
+          "slug": "handbags-accessories",
+          "name": "Handbags & Accessories"
+        }
+      ]
+    },
+    {
+      "slug": "beauty-personal-care",
+      "name": "Beauty & Personal Care",
+      "children": [
+        {
+          "slug": "makeup",
+          "name": "Makeup"
+        },
+        {
+          "slug": "skin-care",
+          "name": "Skin Care"
+        },
+        {
+          "slug": "hair-care",
+          "name": "Hair Care"
+        },
+        {
+          "slug": "fragrance",
+          "name": "Fragrance"
+        },
+        {
+          "slug": "shave-hair-removal",
+          "name": "Shave & Hair Removal"
+        },
+        {
+          "slug": "oral-care",
+          "name": "Oral Care"
+        }
+      ]
+    },
+    {
+      "slug": "health-household",
+      "name": "Health, Household & Baby Care",
+      "children": [
+        {
+          "slug": "vitamins-supplements",
+          "name": "Vitamins & Dietary Supplements"
+        },
+        {
+          "slug": "medical-supplies",
+          "name": "Medical Supplies & Equipment"
+        },
+        {
+          "slug": "household-supplies",
+          "name": "Household Supplies"
+        },
+        {
+          "slug": "baby-child-care",
+          "name": "Baby & Child Care"
+        },
+        {
+          "slug": "sports-nutrition",
+          "name": "Sports Nutrition"
+        },
+        {
+          "slug": "health-care",
+          "name": "Health Care"
+        }
+      ]
+    },
+    {
+      "slug": "sports-outdoors",
+      "name": "Sports & Outdoors",
+      "children": [
+        {
+          "slug": "exercise-fitness",
+          "name": "Exercise & Fitness"
+        },
+        {
+          "slug": "outdoor-recreation",
+          "name": "Outdoor Recreation"
+        },
+        {
+          "slug": "cycling",
+          "name": "Cycling"
+        },
+        {
+          "slug": "hunting-fishing",
+          "name": "Hunting & Fishing"
+        },
+        {
+          "slug": "team-sports",
+          "name": "Team Sports"
+        },
+        {
+          "slug": "fan-shop",
+          "name": "Fan Shop"
+        },
+        {
+          "slug": "camping-hiking",
+          "name": "Camping & Hiking"
+        },
+        {
+          "slug": "water-sports",
+          "name": "Water Sports"
+        }
+      ]
+    },
+    {
+      "slug": "toys-games",
+      "name": "Toys & Games",
+      "children": [
+        {
+          "slug": "action-figures",
+          "name": "Action Figures & Statues"
+        },
+        {
+          "slug": "dolls-accessories",
+          "name": "Dolls & Accessories"
+        },
+        {
+          "slug": "building-toys",
+          "name": "Building Toys"
+        },
+        {
+          "slug": "games-puzzles",
+          "name": "Games & Puzzles"
+        },
+        {
+          "slug": "outdoor-play",
+          "name": "Sports & Outdoor Play"
+        },
+        {
+          "slug": "kids-electronics",
+          "name": "Kids Electronics"
+        },
+        {
+          "slug": "stuffed-animals",
+          "name": "Stuffed Animals & Plush"
+        }
+      ]
+    },
+    {
+      "slug": "baby",
+      "name": "Baby",
+      "children": [
+        {
+          "slug": "diapering",
+          "name": "Diapering"
+        },
+        {
+          "slug": "baby-feeding",
+          "name": "Feeding"
+        },
+        {
+          "slug": "baby-gear",
+          "name": "Gear"
+        },
+        {
+          "slug": "nursery",
+          "name": "Nursery"
+        },
+        {
+          "slug": "strollers",
+          "name": "Strollers"
+        },
+        {
+          "slug": "car-seats",
+          "name": "Car Seats"
+        }
+      ]
+    },
+    {
+      "slug": "automotive",
+      "name": "Automotive",
+      "children": [
+        {
+          "slug": "automotive-replacement-parts",
+          "name": "Replacement Parts"
+        },
+        {
+          "slug": "automotive-tools",
+          "name": "Tools & Equipment"
+        },
+        {
+          "slug": "tires-wheels",
+          "name": "Tires & Wheels"
+        },
+        {
+          "slug": "motorcycle-powersports",
+          "name": "Motorcycle & Powersports"
+        },
+        {
+          "slug": "oils-fluids",
+          "name": "Oils & Fluids"
+        },
+        {
+          "slug": "car-care",
+          "name": "Car Care"
+        },
+        {
+          "slug": "interior-accessories-auto",
+          "name": "Interior Accessories"
+        },
+        {
+          "slug": "exterior-accessories-auto",
+          "name": "Exterior Accessories"
+        }
+      ]
+    },
+    {
+      "slug": "industrial-scientific",
+      "name": "Industrial & Scientific",
+      "children": [
+        {
+          "slug": "test-measurement",
+          "name": "Test & Measurement"
+        },
+        {
+          "slug": "lab-scientific-products",
+          "name": "Lab & Scientific Products"
+        },
+        {
+          "slug": "occupational-health-safety",
+          "name": "Occupational Health & Safety"
+        },
+        {
+          "slug": "material-handling",
+          "name": "Material Handling"
+        },
+        {
+          "slug": "hydraulics-pneumatics",
+          "name": "Hydraulics, Pneumatics & Pumps"
+        },
+        {
+          "slug": "industrial-electrical",
+          "name": "Industrial Electrical"
+        }
+      ]
+    },
+    {
+      "slug": "pet-supplies",
+      "name": "Pet Supplies",
+      "children": [
+        {
+          "slug": "dog-supplies",
+          "name": "Dogs"
+        },
+        {
+          "slug": "cat-supplies",
+          "name": "Cats"
+        },
+        {
+          "slug": "fish-aquatic-pets",
+          "name": "Fish & Aquatic Pets"
+        },
+        {
+          "slug": "bird-supplies",
+          "name": "Birds"
+        },
+        {
+          "slug": "small-animal-supplies",
+          "name": "Small Animals"
+        },
+        {
+          "slug": "horse-supplies",
+          "name": "Horses"
+        }
+      ]
+    },
+    {
+      "slug": "grocery-gourmet",
+      "name": "Grocery & Gourmet Food",
+      "children": [
+        {
+          "slug": "beverages",
+          "name": "Beverages"
+        },
+        {
+          "slug": "snack-foods",
+          "name": "Snack Foods"
+        },
+        {
+          "slug": "pantry-staples",
+          "name": "Pantry Staples"
+        },
+        {
+          "slug": "breakfast-foods",
+          "name": "Breakfast Foods"
+        },
+        {
+          "slug": "produce",
+          "name": "Produce"
+        },
+        {
+          "slug": "meat-seafood",
+          "name": "Meat & Seafood"
+        }
+      ]
+    },
+    {
+      "slug": "office-products",
+      "name": "Office Products",
+      "children": [
+        {
+          "slug": "office-electronics",
+          "name": "Office Electronics"
+        },
+        {
+          "slug": "office-supplies",
+          "name": "Office Supplies"
+        },
+        {
+          "slug": "school-supplies",
+          "name": "School Supplies"
+        },
+        {
+          "slug": "office-furniture-lighting",
+          "name": "Office Furniture & Lighting"
+        },
+        {
+          "slug": "calendars-planners",
+          "name": "Calendars, Planners & Personal Organizers"
+        }
+      ]
+    },
+    {
+      "slug": "arts-crafts-sewing",
+      "name": "Arts, Crafts & Sewing",
+      "children": [
+        {
+          "slug": "painting",
+          "name": "Painting"
+        },
+        {
+          "slug": "drawing",
+          "name": "Drawing"
+        },
+        {
+          "slug": "beading-jewelry-making",
+          "name": "Beading & Jewelry Making"
+        },
+        {
+          "slug": "sewing",
+          "name": "Sewing"
+        },
+        {
+          "slug": "scrapbooking",
+          "name": "Scrapbooking & Stamping"
+        },
+        {
+          "slug": "crafting",
+          "name": "Crafting"
+        }
+      ]
+    },
+    {
+      "slug": "musical-instruments",
+      "name": "Musical Instruments",
+      "children": [
+        {
+          "slug": "guitars",
+          "name": "Guitars"
+        },
+        {
+          "slug": "keyboards",
+          "name": "Keyboards"
+        },
+        {
+          "slug": "drums-percussion",
+          "name": "Drums & Percussion"
+        },
+        {
+          "slug": "dj-karaoke",
+          "name": "DJ, Electronic Music & Karaoke"
+        },
+        {
+          "slug": "band-orchestra",
+          "name": "Band & Orchestra"
+        },
+        {
+          "slug": "instrument-accessories",
+          "name": "Instrument Accessories"
+        }
+      ]
+    },
+    {
+      "slug": "books",
+      "name": "Books",
+      "children": [
+        {
+          "slug": "literature-fiction",
+          "name": "Literature & Fiction"
+        },
+        {
+          "slug": "childrens-books",
+          "name": "Children's Books"
+        },
+        {
+          "slug": "textbooks",
+          "name": "Textbooks"
+        },
+        {
+          "slug": "comics-graphic-novels",
+          "name": "Comics & Graphic Novels"
+        },
+        {
+          "slug": "magazines",
+          "name": "Magazines"
+        }
+      ]
+    },
+    {
+      "slug": "movies-tv",
+      "name": "Movies & TV",
+      "children": [
+        {
+          "slug": "movies",
+          "name": "Movies"
+        },
+        {
+          "slug": "tv-shows",
+          "name": "TV"
+        },
+        {
+          "slug": "blu-ray",
+          "name": "Blu-ray"
+        },
+        {
+          "slug": "4k-ultra-hd",
+          "name": "4K Ultra HD"
+        }
+      ]
+    },
+    {
+      "slug": "video-games",
+      "name": "Video Games",
+      "children": [
+        {
+          "slug": "video-game-consoles",
+          "name": "Consoles"
+        },
+        {
+          "slug": "video-game-software",
+          "name": "Games"
+        },
+        {
+          "slug": "video-game-accessories",
+          "name": "Accessories"
+        },
+        {
+          "slug": "pc-gaming",
+          "name": "PC Gaming"
+        },
+        {
+          "slug": "virtual-reality",
+          "name": "Virtual Reality"
+        }
+      ]
+    },
+    {
+      "slug": "collectibles-art",
+      "name": "Collectibles & Fine Art",
+      "children": [
+        {
+          "slug": "sports-memorabilia",
+          "name": "Sports Memorabilia"
+        },
+        {
+          "slug": "coins-paper-money",
+          "name": "Coins & Paper Money"
+        },
+        {
+          "slug": "stamps",
+          "name": "Stamps"
+        },
+        {
+          "slug": "collectible-art",
+          "name": "Art"
+        },
+        {
+          "slug": "entertainment-memorabilia",
+          "name": "Entertainment Memorabilia"
+        }
+      ]
+    },
+    {
+      "slug": "business-industrial",
+      "name": "Business & Industrial",
+      "children": [
+        {
+          "slug": "agriculture-forestry",
+          "name": "Agriculture & Forestry"
+        },
+        {
+          "slug": "construction",
+          "name": "Construction"
+        },
+        {
+          "slug": "healthcare-lab",
+          "name": "Healthcare, Lab & Life Science"
+        },
+        {
+          "slug": "restaurant-food-service",
+          "name": "Restaurant & Food Service"
+        },
+        {
+          "slug": "retail-services",
+          "name": "Retail & Services"
+        },
+        {
+          "slug": "heavy-equipment",
+          "name": "Heavy Equipment"
+        }
+      ]
+    },
+    {
+      "slug": "travel",
+      "name": "Luggage & Travel",
+      "children": [
+        {
+          "slug": "luggage",
+          "name": "Luggage"
+        },
+        {
+          "slug": "travel-accessories",
+          "name": "Travel Accessories"
+        },
+        {
+          "slug": "backpacks",
+          "name": "Backpacks"
+        },
+        {
+          "slug": "laptop-bags",
+          "name": "Laptop Bags"
+        }
+      ]
+    }
+  ]
+}

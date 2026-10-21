@@ -11,6 +11,7 @@ import { useSession } from '../../../lib/useSession';
 import { TermHint } from '../../../components/catalog/TermHint';
 import { UrlSlugField } from '../../../components/catalog/UrlSlugField';
 import { ACCESS_REASONS, buildLoginUrl } from '../../../lib/accessGate';
+import { sortCategoryTree } from '../../../lib/category-tree';
 
 type CategoryRow = {
 	id: string;
@@ -49,6 +50,7 @@ export default function CategoryManagePage() {
 	const [requestError, setRequestError] = useState<string | null>(null);
 	const [requestMessage, setRequestMessage] = useState<string | null>(null);
 	const [requestBusy, setRequestBusy] = useState(false);
+	const categoryTree = sortCategoryTree(categories);
 
 	const refresh = useCallback(async () => {
 		setLoading(true);
@@ -292,12 +294,12 @@ export default function CategoryManagePage() {
 										<option value="">
 											None
 										</option>
-										{categories.map((category) => (
+										{categoryTree.map((category) => (
 											<option
 												key={category.id}
 												value={category.id}
 											>
-												{category.name}
+												{category.label}
 											</option>
 										))}
 									</select>
@@ -562,7 +564,7 @@ export default function CategoryManagePage() {
 						)
 					: null
 				}
-				{categories.map((category) => (
+				{categoryTree.map((category) => (
 					<div
 						className="
 							rounded-xl
@@ -572,6 +574,7 @@ export default function CategoryManagePage() {
 							p-4
 						"
 						key={category.id}
+						style={{ marginLeft: `${category.depth * 16}px` }}
 					>
 						<p className="font-semibold">
 							{category.name}

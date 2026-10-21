@@ -9,8 +9,11 @@
     "lint": "tsc --noEmit",
     "test": "jest",
     "prisma:generate": "prisma generate",
-    "prisma:migrate": "prisma migrate dev",
+    "prisma:migrate": "prisma migrate dev --skip-seed",
     "prisma:seed": "prisma db seed",
+    "seed-sync": "node ../../packages/prisma-seed-migration-sync/dist/cli.js sync --dir prisma/seed-data",
+    "seed-sync:dry": "node ../../packages/prisma-seed-migration-sync/dist/cli.js sync --dir prisma/seed-data --dry-run",
+    "seed-sync:validate": "node ../../packages/prisma-seed-migration-sync/dist/cli.js validate --dir prisma/seed-data",
     "mail:test": "ts-node --transpile-only scripts/send-test-email.ts"
   },
   "prisma": {
@@ -36,6 +39,7 @@
     "passport": "^0.7.0",
     "passport-google-oauth20": "^2.0.0",
     "passport-jwt": "^4.0.1",
+    "prisma-seed-migration-sync": "*",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
     "stripe": "^17.7.0",
