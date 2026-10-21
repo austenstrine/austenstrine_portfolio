@@ -12,6 +12,7 @@ import {
 	type VendorSummary,
 } from '../../../../lib/catalog-api';
 import { dollarsToCents, slugify } from '../../../../lib/catalog-product-form';
+import { sortCategoryTree } from '../../../../lib/category-tree';
 import { useSession } from '../../../../lib/useSession';
 import { CatalogWorkspaceSwitcher } from '../../../../components/catalog/CatalogWorkspaceSwitcher';
 import { ProductTagField } from '../../../../components/catalog/ProductTagField';
@@ -27,8 +28,14 @@ function NewProductForm() {
 	const { user, loading: sessionLoading } = useSession();
 
 	const [vendors, setVendors] = useState<VendorSummary[]>([]);
-	const [categories, setCategories] = useState<Array<{ id: string; name: string; slug: string }>>([]);
+	const [categories, setCategories] = useState<Array<{
+		id: string;
+		name: string;
+		slug: string;
+		parent?: { id: string; name: string; slug: string } | null;
+	}>>([]);
 	const [uoms, setUoms] = useState<UnitOfMeasure[]>([]);
+	const categoryTree = sortCategoryTree(categories);
 	const [vendorId, setVendorId] = useState(searchParams.get('vendorId') ?? '');
 	const [categoryId, setCategoryId] = useState(searchParams.get('categoryId') ?? '');
 	const [title, setTitle] = useState('');
@@ -460,12 +467,12 @@ function NewProductForm() {
 								<option value="">
 									None
 								</option>
-								{categories.map((category) => (
+								{categoryTree.map((category) => (
 									<option
 										key={category.id}
 										value={category.id}
 									>
-										{category.name}
+										{category.label}
 									</option>
 								))}
 							</select>

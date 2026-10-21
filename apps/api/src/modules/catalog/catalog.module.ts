@@ -12,6 +12,7 @@ import { VendorAccessService } from './vendor-access.service';
 import { VendorAppPasswordService } from './vendor-app-password.service';
 import { VendorInviteService } from './vendor-invite.service';
 import { UomMergeService } from './uom-merge.service';
+import { JsonSeedBootstrapService } from './json-seed-bootstrap.service';
 import { SupervendorBootstrapService } from './supervendor-bootstrap.service';
 import { VendorService } from './vendor.service';
 
@@ -29,6 +30,7 @@ import { VendorService } from './vendor.service';
 		CatalogImportService,
 		CatalogArchiveService,
 		SupervendorBootstrapService,
+		JsonSeedBootstrapService,
 		CatalogAuthGuard,
 		JwtAuthGuard,
 		OptionalJwtAuthGuard,
