@@ -8,6 +8,7 @@ import {
 	type CatalogProductSummary,
 } from '../../../lib/catalog-api';
 import { sortCategoryTree } from '../../../lib/category-tree';
+import { formatQty } from '../../../lib/uom-qty';
 
 function PlaceEtMarqueSearchForm() {
 	const searchParams = useSearchParams();
@@ -157,7 +158,7 @@ function PlaceEtMarqueSearchForm() {
 							{product.title}
 						</p>
 						<p className="text-sm text-slate-600">
-							{product.sku} · {product.availableQty} available
+							{product.sku} · {formatQty(product.availableQty, product.primaryUom)} available
 						</p>
 					</a>
 				))}

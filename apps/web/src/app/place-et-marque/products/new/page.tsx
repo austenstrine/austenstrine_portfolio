@@ -11,7 +11,7 @@ import {
 	type UnitOfMeasure,
 	type VendorSummary,
 } from '../../../../lib/catalog-api';
-import { dollarsToCents, slugify } from '../../../../lib/catalog-product-form';
+import { dollarsToCents, pricePerLabel, slugify } from '../../../../lib/catalog-product-form';
 import { sortCategoryTree } from '../../../../lib/category-tree';
 import { useSession } from '../../../../lib/useSession';
 import { CatalogWorkspaceSwitcher } from '../../../../components/catalog/CatalogWorkspaceSwitcher';
@@ -19,6 +19,7 @@ import { ProductTagField } from '../../../../components/catalog/ProductTagField'
 import { TermHint } from '../../../../components/catalog/TermHint';
 import { UrlSlugField } from '../../../../components/catalog/UrlSlugField';
 import { RequireAccess } from '../../../../components/auth/RequireAccess';
+import { CompoundQtyField } from '../../../../components/catalog/CompoundQtyField';
 
 type OfferingMode = 'SINGLE' | 'PACK' | 'PIECE' | 'BOTH';
 
@@ -78,21 +79,12 @@ function NewProductForm() {
 					setCategoryId(searchParams.get('categoryId') ?? '');
 				}
 
-				const spool = uomRows.find((row) => row.code === 'SPOOL');
-				const foot = uomRows.find((row) => row.code === 'FT');
-				const each = uomRows.find((row) => row.code === 'EA');
-
-				if(spool) {
-					setPackUomId(spool.id);
-				}
-				if(foot) {
-					setPieceUomId(foot.id);
-				}
+				const each = uomRows.find((row) => row.code === 'EA') ?? uomRows[0];
+				const ids = new Set(uomRows.map((row) => row.id));
 				if(each) {
-					setSingleUomId(each.id);
-				}
-				else if(uomRows[0]) {
-					setSingleUomId(uomRows[0].id);
+					setPackUomId((id) => (id && ids.has(id) ? id : each.id));
+					setPieceUomId((id) => (id && ids.has(id) ? id : each.id));
+					setSingleUomId((id) => (id && ids.has(id) ? id : each.id));
 				}
 			})
 			.catch(() => undefined);
@@ -102,6 +94,9 @@ function NewProductForm() {
 		() => vendors.find((row) => row.id === vendorId) ?? null,
 		[vendors, vendorId],
 	);
+	const singleUom = uoms.find((row) => row.id === singleUomId);
+	const packUom = uoms.find((row) => row.id === packUomId);
+	const pieceUom = uoms.find((row) => row.id === pieceUomId);
 
 	const needsPack = offeringMode === 'PACK' || offeringMode === 'BOTH';
 	const needsPiece = offeringMode === 'PIECE' || offeringMode === 'BOTH';
@@ -649,7 +644,7 @@ function NewProductForm() {
 									</label>
 									<label className="block text-sm">
 										<span className="font-semibold">
-											Price ($)
+											{pricePerLabel(singleUom)}
 										</span>
 										<input
 											className="
@@ -666,25 +661,13 @@ function NewProductForm() {
 											required
 										/>
 									</label>
-									<label className="block text-sm">
-										<span className="font-semibold">
-											Qty on hand
-										</span>
-										<input
-											className="
-												mt-1
-												w-full
-												rounded-lg
-												border
-												border-slate-300
-												px-3
-												py-2
-											"
-											value={singleQty}
-											onChange={(event) => setSingleQty(event.target.value)}
-											required
-										/>
-									</label>
+									<CompoundQtyField
+										label="Qty on hand"
+										uomCode={singleUom?.code}
+										value={singleQty}
+										onChange={setSingleQty}
+										required
+									/>
 								</div>
 							</section>
 						)
@@ -755,7 +738,7 @@ function NewProductForm() {
 									</label>
 									<label className="block text-sm">
 										<span className="font-semibold">
-											Price ($)
+											{pricePerLabel(packUom)}
 										</span>
 										<input
 											className="
@@ -772,25 +755,13 @@ function NewProductForm() {
 											required={needsPack}
 										/>
 									</label>
-									<label className="block text-sm">
-										<span className="font-semibold">
-											Qty on hand
-										</span>
-										<input
-											className="
-												mt-1
-												w-full
-												rounded-lg
-												border
-												border-slate-300
-												px-3
-												py-2
-											"
-											value={packQty}
-											onChange={(event) => setPackQty(event.target.value)}
-											required={needsPack}
-										/>
-									</label>
+									<CompoundQtyField
+										label="Qty on hand"
+										uomCode={packUom?.code}
+										value={packQty}
+										onChange={setPackQty}
+										required={needsPack}
+									/>
 								</div>
 							</section>
 						)
@@ -861,7 +832,7 @@ function NewProductForm() {
 									</label>
 									<label className="block text-sm">
 										<span className="font-semibold">
-											Price ($)
+											{pricePerLabel(pieceUom)}
 										</span>
 										<input
 											className="
@@ -880,51 +851,23 @@ function NewProductForm() {
 									</label>
 									{offeringMode === 'BOTH'
 										? (
-												<label className="block text-sm">
-													<span className="font-semibold">
-														Piece qty per pack
-													</span>
-													<input
-														className="
-															mt-1
-															w-full
-															rounded-lg
-															border
-															border-slate-300
-															px-3
-															py-2
-														"
-														value={pieceQtyPerPack}
-														onChange={(event) =>
-															setPieceQtyPerPack(event.target.value)
-														}
-														required
-														placeholder="500"
-													/>
-												</label>
+												<CompoundQtyField
+													label="Piece qty per pack"
+													uomCode={pieceUom?.code}
+													value={pieceQtyPerPack}
+													onChange={setPieceQtyPerPack}
+													required
+													placeholder="1"
+												/>
 											)
 										: (
-												<label className="block text-sm">
-													<span className="font-semibold">
-														Qty on hand
-													</span>
-													<input
-														className="
-															mt-1
-															w-full
-															rounded-lg
-															border
-															border-slate-300
-															px-3
-															py-2
-														"
-														value={pieceQty}
-														onChange={(event) =>
-															setPieceQty(event.target.value)
-														}
-														required
-													/>
-												</label>
+												<CompoundQtyField
+													label="Qty on hand"
+													uomCode={pieceUom?.code}
+													value={pieceQty}
+													onChange={setPieceQty}
+													required
+												/>
 											)
 										}
 								</div>

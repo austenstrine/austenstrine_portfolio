@@ -13,6 +13,7 @@ import {
 	MinLength,
 	ValidateNested,
 } from 'class-validator';
+import { QtyCompoundDto } from './qty-compound.dto';
 
 class ProductAttributeInputDto {
 	@IsString()
@@ -63,6 +64,11 @@ class ProductOfferingInputDto {
 	qtyOnHand?: string;
 
 	@IsOptional()
+	@ValidateNested()
+	@Type(() => QtyCompoundDto)
+	qtyCompound?: QtyCompoundDto;
+
+	@IsOptional()
 	@IsBoolean()
 	tracksOwnQty?: boolean;
 
@@ -100,6 +106,11 @@ class OfferingContainmentInputDto {
 
 	@IsString()
 	childQtyPerParent!: string;
+
+	@IsOptional()
+	@ValidateNested()
+	@Type(() => QtyCompoundDto)
+	childQtyCompound?: QtyCompoundDto;
 
 	@IsOptional()
 	@IsInt()

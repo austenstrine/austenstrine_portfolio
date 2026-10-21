@@ -12,6 +12,8 @@ import { ACCESS_REASONS, buildLoginUrl } from '../../lib/accessGate';
 import { useSession } from '../../lib/useSession';
 import { ProductQuickEdit } from './ProductQuickEdit';
 import { TermHint } from './TermHint';
+import { CompoundQtyField } from './CompoundQtyField';
+import { formatQty } from '../../lib/uom-qty';
 
 type ProductDetailClientProps = {
 	initialProduct: CatalogProductDetail;
@@ -31,6 +33,9 @@ export function ProductDetailClient({ initialProduct }: ProductDetailClientProps
 	const [cartBusy, setCartBusy] = useState(false);
 	const [cartMessage, setCartMessage] = useState<string | null>(null);
 	const [cartError, setCartError] = useState<string | null>(null);
+	const selectedOffering = product.offerings.find(
+		(offering) => offering.id === selectedOfferingId,
+	);
 
 	async function onAddToCart() {
 		if(!selectedOfferingId) {
@@ -221,29 +226,19 @@ export function ProductDetailClient({ initialProduct }: ProductDetailClientProps
 										>
 											{offering.role} · {offering.sku ?? offering.id} ·{' '}
 											{(offering.priceCents / 100).toFixed(2)} ·{' '}
-											{offering.availableQty} avail
+											{formatQty(offering.availableQty, offering.uom.code)} avail
 										</option>
 									))}
 								</select>
 							</div>
-							<label className="text-sm">
-								<span className="font-semibold">
-									Quantity
-								</span>
-								<input
-									className="
-										mt-1
-										w-32
-										rounded-lg
-										border
-										border-slate-300
-										px-3
-										py-2
-									"
+							<div className="min-w-[16rem]">
+								<CompoundQtyField
+									label="Quantity"
+									uomCode={selectedOffering?.uom.code}
 									value={cartQty}
-									onChange={(event) => setCartQty(event.target.value)}
+									onChange={setCartQty}
 								/>
-							</label>
+							</div>
 							<div
 								className="
 									flex
@@ -488,8 +483,8 @@ export function ProductDetailClient({ initialProduct }: ProductDetailClientProps
 										text-slate-600
 									"
 								>
-									${(offering.priceCents / 100).toFixed(2)} · Available {offering.availableQty}{' '}
-									{offering.uom.code}
+									${(offering.priceCents / 100).toFixed(2)} · Available{' '}
+									{formatQty(offering.availableQty, offering.uom.code)}
 								</p>
 								{(offering.parentContainments ?? []).map((link) => (
 									<p

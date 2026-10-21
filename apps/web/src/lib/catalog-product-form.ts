@@ -7,6 +7,13 @@ export function slugify(value: string): string {
 		.slice(0, 80);
 }
 
+export function pricePerLabel(uom?: { label: string } | null): string {
+	if(!uom) {
+		return 'Price ($)';
+	}
+	return `Price ($ / ${uom.label.toLowerCase()})`;
+}
+
 export function dollarsToCents(value: string): number {
 	const parsed = Number(value);
 	if(Number.isNaN(parsed) || parsed < 0) {

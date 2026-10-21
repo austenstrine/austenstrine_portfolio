@@ -54,7 +54,12 @@ export class CheckoutController {
 	@UseGuards(JwtAuthGuard)
 	@Put('cart/lines')
 	upsertCartLine(@Req() req: AuthedRequest, @Body() dto: UpsertCartLineDto) {
-		return this.cart.upsertLine(req.user!.id, dto.offeringId, dto.quantity);
+		return this.cart.upsertLine(
+			req.user!.id,
+			dto.offeringId,
+			dto.quantity,
+			dto.qtyCompound,
+		);
 	}
 
 	@UseGuards(JwtAuthGuard)

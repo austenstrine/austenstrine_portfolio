@@ -11,7 +11,7 @@ import {
 	type UnitOfMeasure,
 	type VendorSummary,
 } from '../../../../lib/catalog-api';
-import { dollarsToCents, slugify } from '../../../../lib/catalog-product-form';
+import { dollarsToCents, pricePerLabel, slugify } from '../../../../lib/catalog-product-form';
 import { sortCategoryTree } from '../../../../lib/category-tree';
 import { useSession } from '../../../../lib/useSession';
 import { CatalogWorkspaceSwitcher } from '../../../../components/catalog/CatalogWorkspaceSwitcher';
@@ -19,6 +19,7 @@ import { ProductTagField } from '../../../../components/catalog/ProductTagField'
 import { TermHint } from '../../../../components/catalog/TermHint';
 import { UrlSlugField } from '../../../../components/catalog/UrlSlugField';
 import { RequireAccess } from '../../../../components/auth/RequireAccess';
+import { CompoundQtyField } from '../../../../components/catalog/CompoundQtyField';
 
 type BreakFeeMode = 'OFF' | 'PER_PARENT_OPENED' | 'ONCE_PER_LINE' | 'PRODUCT_ONCE';
 
@@ -98,49 +99,12 @@ function InventoryConfigurationForm() {
 				const uomRows = await listUoms(selected || undefined).catch(() => []);
 				setUoms(uomRows);
 
-				const spool = uomRows.find((row) => row.code === 'SPOOL');
-				const foot = uomRows.find((row) => row.code === 'FT');
-				const pallet = uomRows.find((row) => row.code === 'PK' || row.code === 'BX');
-
-				if(spool || foot) {
-					setLevels([
-						createLevel({
-							key: 'pallet',
-							label: 'Larger pack (optional)',
-							sku: '',
-							uomId: pallet?.id ?? '',
-							price: '',
-							qtyOnHand: '0',
-							childQtyPerParent: '48',
-							autoBreakEnabled: false,
-							minUnbrokenQty: '0',
-							breakPoolAboveQty: '0',
-							inheritQtyToChildren: false,
-						}),
-						createLevel({
-							key: 'spool',
-							label: 'Pack / spool',
-							sku: '',
-							uomId: spool?.id ?? '',
-							price: '',
-							qtyOnHand: '0',
-							childQtyPerParent: '500',
-							autoBreakEnabled: true,
-							minUnbrokenQty: '0',
-							breakPoolAboveQty: '0',
-							inheritQtyToChildren: true,
-						}),
-						createLevel({
-							key: 'foot',
-							label: 'Inner unit',
-							sku: '',
-							uomId: foot?.id ?? '',
-							price: '',
-							qtyOnHand: '0',
-							childQtyPerParent: '1',
-							autoBreakEnabled: false,
-						}),
-					]);
+				const each = uomRows.find((row) => row.code === 'EA') ?? uomRows[0];
+				if(each) {
+					setLevels((prev) => prev.map((level) => ({
+						...level,
+						uomId: level.uomId || each.id,
+					})));
 				}
 			})
 			.catch(() => undefined);
@@ -560,6 +524,8 @@ function InventoryConfigurationForm() {
 				{levels.map((level, index) => {
 					const hasChild = index < levels.length - 1;
 					const isOptionalOuter = index === 0 && levels.length > 1;
+					const levelUom = uoms.find((row) => row.id === level.uomId);
+					const childUom = uoms.find((row) => row.id === levels[index + 1]?.uomId);
 
 					return (
 						<section
@@ -703,7 +669,7 @@ function InventoryConfigurationForm() {
 								</label>
 								<label className="block text-sm">
 									<span className="font-semibold">
-										Price ($)
+										{pricePerLabel(levelUom)}
 									</span>
 									<input
 										className="
@@ -721,26 +687,14 @@ function InventoryConfigurationForm() {
 										}
 									/>
 								</label>
-								<label className="block text-sm">
-									<span className="font-semibold">
-										Qty on hand
-									</span>
-									<input
-										className="
-											mt-1
-											w-full
-											rounded-lg
-											border
-											border-slate-300
-											px-3
-											py-2
-										"
-										value={level.qtyOnHand}
-										onChange={(event) =>
-											updateLevel(level.key, { qtyOnHand: event.target.value })
-										}
-									/>
-								</label>
+								<CompoundQtyField
+									label="Qty on hand"
+									uomCode={levelUom?.code}
+									value={level.qtyOnHand}
+									onChange={(qtyOnHand) =>
+										updateLevel(level.key, { qtyOnHand })
+									}
+								/>
 							</div>
 
 							{hasChild
@@ -754,29 +708,16 @@ function InventoryConfigurationForm() {
 												pt-4
 											"
 										>
-											<label className="block text-sm">
-												<span className="font-semibold">
-													Child units per one of these
-												</span>
-												<input
-													className="
-														mt-1
-														w-full
-														max-w-xs
-														rounded-lg
-														border
-														border-slate-300
-														px-3
-														py-2
-													"
+											<div className="max-w-xl">
+												<CompoundQtyField
+													label="Child units per one of these"
+													uomCode={childUom?.code}
 													value={level.childQtyPerParent}
-													onChange={(event) =>
-														updateLevel(level.key, {
-															childQtyPerParent: event.target.value,
-														})
+													onChange={(childQtyPerParent) =>
+														updateLevel(level.key, { childQtyPerParent })
 													}
 												/>
-											</label>
+											</div>
 
 											<div
 												className="

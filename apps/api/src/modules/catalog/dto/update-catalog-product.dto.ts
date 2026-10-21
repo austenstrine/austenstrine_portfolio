@@ -13,6 +13,7 @@ import {
 	MinLength,
 	ValidateNested,
 } from 'class-validator';
+import { QtyCompoundDto } from './qty-compound.dto';
 
 class ProductAttributePatchDto {
 	@IsString()
@@ -50,6 +51,11 @@ class ProductOfferingPatchDto {
 	@IsOptional()
 	@IsString()
 	qtyOnHand?: string;
+
+	@IsOptional()
+	@ValidateNested()
+	@Type(() => QtyCompoundDto)
+	qtyCompound?: QtyCompoundDto;
 
 	@IsOptional()
 	@IsBoolean()
