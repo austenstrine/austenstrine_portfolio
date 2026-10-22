@@ -1,2 +1,13 @@
-granular, user-specific authorization/permissions within vendors - allow vendor owners to manage permissions granularly for their members - add product, edit product, edit price, delete product, add promotion, etc.
+Features to implement:
 
+- Granular Permissions: granular, user-specific authorization/permissions within vendors - allow vendor owners to manage permissions granularly for their members - add product, edit product, edit price, delete product, add promotion, etc.
+- PrismaTypescriptTypeGenerator: generate swagger-decorated classes and related helper types from which all DTOs and model files inherit, whether partially or completely, and automatically copy/paste these files into the frontend for the frontend to use for similar inheritance.
+
+
+Features that need testing:
+
+- PrismaSeedMigrationSync: the tool that syncs the shape of seed files with the prisma schema by applying the migrations to the seed data. I have no clue how it was implemented or if it works.
+
+Features to keep an eye on:
+- PrismaSeedMigrationSync
+- 

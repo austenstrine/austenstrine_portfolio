@@ -1,3 +1,4 @@
+import { readFileSync } from 'fs';
 import { join } from 'path';
 import {
 	BrokenPackStatus,
@@ -7,6 +8,22 @@ import {
 import { Decimal } from '@prisma/client/runtime/library';
 import { ensureSupervendor } from '../src/modules/catalog/ensure-supervendor';
 import { seedGlobalUoms } from '../src/modules/catalog/seed-global-uoms';
+
+function demoVendorFromSeed(): {
+	id: string;
+	slug: string;
+	name: string;
+	isSuperVendor: boolean;
+} {
+	const file = JSON.parse(readFileSync(join(__dirname, 'seed-data/Vendor.json'), 'utf8')) as {
+		records?: Array<{ id: string; slug: string; name: string; isSuperVendor: boolean }>;
+	};
+	const row = file.records?.[0];
+	if(!row?.id || !row.slug || !row.name) {
+		throw new Error('Vendor.json is missing the demo vendor record.');
+	}
+	return row;
+}
 
 export async function seedCatalog(prisma: PrismaClient): Promise<void> {
 	await seedGlobalUoms(prisma);
@@ -22,10 +39,19 @@ export async function seedCatalog(prisma: PrismaClient): Promise<void> {
 
 	await ensureSupervendor(prisma, join(__dirname, 'seed-data'));
 
+	const demoVendor = demoVendorFromSeed();
 	const vendor = await prisma.vendor.upsert({
-		where: { slug: 'demo-supply' },
-		create: { slug: 'demo-supply', name: 'Demo Supply Co.', isSuperVendor: false },
-		update: { name: 'Demo Supply Co.', isSuperVendor: false },
+		where: { slug: demoVendor.slug },
+		create: {
+			id: demoVendor.id,
+			slug: demoVendor.slug,
+			name: demoVendor.name,
+			isSuperVendor: demoVendor.isSuperVendor,
+		},
+		update: {
+			name: demoVendor.name,
+			isSuperVendor: demoVendor.isSuperVendor,
+		},
 	});
 
 	const uomSpool = await prisma.unitOfMeasure.findFirstOrThrow({

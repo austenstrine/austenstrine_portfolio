@@ -78,15 +78,19 @@ export type ValidateResult = {
 	pendingMigrations: string[];
 };
 
-export type PrismaLike = {
-	$executeRawUnsafe: (query: string, ...values: unknown[]) => Promise<unknown>;
-	$queryRawUnsafe: <T = unknown>(query: string, ...values: unknown[]) => Promise<T>;
+export type PrismaLike = object;
+
+/** Optional checksum store. Must not be a Postgres table Prisma Migrate does not own. */
+export type SeedApplyStore = {
+	read(pack: string): Promise<string | null>;
+	write(pack: string, checksum: string): Promise<void>;
 };
 
 export type ApplyOptions = {
 	prisma: PrismaLike;
 	seedDir: string;
 	force?: boolean;
+	store?: SeedApplyStore;
 };
 
 export type ApplyResult = {
