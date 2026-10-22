@@ -20,6 +20,7 @@ export const ACCESS_REASONS = {
 	checkout: 'Sign in to complete checkout.',
 	orders: 'Sign in to view your orders.',
 	uoms: 'Sign in to create units of measure.',
+	attributes: 'Sign in to manage product attributes.',
 	categories: 'Sign in to work with categories.',
 	invite: 'Sign in or create an account to accept this vendor invite.',
 	account: 'Sign in to manage your account.',
@@ -34,6 +35,7 @@ const VENDOR_REQUIRED_PREFIXES = [
 	'/place-et-marque/manage',
 	'/place-et-marque/vendors/',
 	'/place-et-marque/uoms',
+	'/place-et-marque/attributes',
 ] as const;
 
 export function safeNextPath(raw: string | null | undefined, fallback = '/'): string {

@@ -1,4 +1,3 @@
-import { readFileSync } from 'fs';
 import { join } from 'path';
 import {
 	BrokenPackStatus,
@@ -7,47 +6,10 @@ import {
 } from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/library';
 import { ensureSupervendor } from '../src/modules/catalog/ensure-supervendor';
-
-type UomSeedRow = {
-	code: string;
-	label: string;
-	dimensionKey: string;
-	factorToReference: string;
-	aliases: string[];
-};
+import { seedGlobalUoms } from '../src/modules/catalog/seed-global-uoms';
 
 export async function seedCatalog(prisma: PrismaClient): Promise<void> {
-	const uomRows = loadUomRows();
-
-	for(const row of uomRows) {
-		const existing = await prisma.unitOfMeasure.findFirst({
-			where: { vendorId: null, code: row.code },
-		});
-		if(existing) {
-			await prisma.unitOfMeasure.update({
-				where: { id: existing.id },
-				data: {
-					label: row.label,
-					dimensionKey: row.dimensionKey,
-					factorToReference: new Decimal(row.factorToReference),
-					aliases: row.aliases,
-					vendorId: null,
-				},
-			});
-		}
-		else {
-			await prisma.unitOfMeasure.create({
-				data: {
-					code: row.code,
-					label: row.label,
-					dimensionKey: row.dimensionKey,
-					factorToReference: new Decimal(row.factorToReference),
-					aliases: row.aliases,
-					vendorId: null,
-				},
-			});
-		}
-	}
+	await seedGlobalUoms(prisma);
 
 	let category = await prisma.catalogCategory.findUnique({
 		where: { slug: 'wire-and-cable' },
@@ -231,14 +193,4 @@ export async function seedCatalog(prisma: PrismaClient): Promise<void> {
 		where: { id: pieceOffering.id },
 		data: { availableQty: new Decimal('440') },
 	});
-}
-
-function loadUomRows(): UomSeedRow[] {
-	const file = JSON.parse(
-		readFileSync(join(__dirname, 'seed-data', 'UnitOfMeasure.json'), 'utf8'),
-	) as { records?: UomSeedRow[] };
-	if(!Array.isArray(file.records)) {
-		throw new Error('UnitOfMeasure.json is missing records[].');
-	}
-	return file.records;
 }

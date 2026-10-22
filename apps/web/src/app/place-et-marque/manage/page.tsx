@@ -16,7 +16,9 @@ function PlaceEtMarqueManageContent() {
 	const [vendors, setVendors] = useState<VendorSummary[]>([]);
 
 	useEffect(() => {
-		searchCatalogProducts({}).then(setProducts).catch(() => setProducts([]));
+		searchCatalogProducts({})
+			.then((result) => setProducts(result.items))
+			.catch(() => setProducts([]));
 	}, []);
 
 	useEffect(() => {

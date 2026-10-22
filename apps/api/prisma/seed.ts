@@ -6,11 +6,11 @@ import { seedCatalog } from './catalog-seed';
 const prisma = new PrismaClient();
 
 async function main() {
+	await seedCatalog(prisma);
 	await applySeedDataIfNeeded({
 		prisma,
 		seedDir: join(__dirname, 'seed-data'),
 	});
-	await seedCatalog(prisma);
 }
 
 main()

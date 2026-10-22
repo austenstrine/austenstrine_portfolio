@@ -40,6 +40,7 @@ import {
 	updateCatalogProduct,
 	type CatalogAttributeDefinition,
 	type CreateProductPayload,
+	type ProductMeasuresPayload,
 	type UnitOfMeasure,
 	type VendorSummary,
 } from '../../lib/catalog-api';
@@ -63,6 +64,10 @@ import { CatalogWorkspaceSwitcher } from './CatalogWorkspaceSwitcher';
 import { CompoundQtyField } from './CompoundQtyField';
 import { DisclosurePrompt } from './DisclosurePrompt';
 import { ProductAttributeField } from './ProductAttributeField';
+import {
+	emptyProductMeasures,
+	ProductMeasuresField,
+} from './ProductMeasuresField';
 import { ProductTagField } from './ProductTagField';
 import { TermHint } from './TermHint';
 import { UrlSlugField } from './UrlSlugField';
@@ -111,6 +116,8 @@ export function ProductEditorForm({
 	const [breakFeeMode, setBreakFeeMode] = useState<BreakFeeMode>('OFF');
 	const [breakFeeDollars, setBreakFeeDollars] = useState('0');
 	const [selectedAttributeValueIds, setSelectedAttributeValueIds] = useState<string[]>([]);
+	const [measures, setMeasures] = useState<ProductMeasuresPayload>(emptyProductMeasures);
+	const [scalarValues, setScalarValues] = useState<Record<string, string>>({});
 
 	const [advancedFeatureToggles, setAdvancedFeatureToggles] = useState(
 		() => ({ ...DEFAULT_ADVANCED_FEATURE_TOGGLES }),
@@ -258,6 +265,38 @@ export function ProductEditorForm({
 				);
 				setBreakFeeDollars(centsToDollars(product.breakFeeCents ?? 0));
 				setSelectedAttributeValueIds(product.attributes.map((row) => row.id));
+				setMeasures({
+					...emptyProductMeasures(),
+					lengthNumeric: product.lengthNumeric ?? '',
+					widthNumeric: product.widthNumeric ?? '',
+					heightNumeric: product.heightNumeric ?? '',
+					linearUnit: product.linearUnit ?? 'in',
+					weightNumeric: product.weightNumeric ?? '',
+					weightUnit: product.weightUnit ?? 'lb',
+					packageLengthNumeric: product.packageLengthNumeric ?? '',
+					packageWidthNumeric: product.packageWidthNumeric ?? '',
+					packageHeightNumeric: product.packageHeightNumeric ?? '',
+					packageLinearUnit: product.packageLinearUnit ?? 'in',
+					packageWeightNumeric: product.packageWeightNumeric ?? '',
+					packageWeightUnit: product.packageWeightUnit ?? 'lb',
+					volumeNumeric: product.volumeNumeric ?? '',
+					volumeUnit: product.volumeUnit ?? '',
+					voltageNumeric: product.voltageNumeric ?? '',
+					wattageNumeric: product.wattageNumeric ?? '',
+					amperageNumeric: product.amperageNumeric ?? '',
+					gtin: product.gtin ?? '',
+					mpn: product.mpn ?? '',
+					countryOfOrigin: product.countryOfOrigin ?? '',
+					condition: product.condition ?? 'NA',
+				});
+				const nextScalars: Record<string, string> = {};
+				for(const row of product.scalarValues ?? []) {
+					nextScalars[row.attributeId] =
+						row.stringValue
+						?? row.numericValue
+						?? (row.booleanValue == null ? '' : row.booleanValue ? 'true' : 'false');
+				}
+				setScalarValues(nextScalars);
 
 				const uomRows = await listUoms(product.vendor.id).catch(() => []);
 				setUoms(uomRows);
@@ -423,6 +462,17 @@ export function ProductEditorForm({
 				? dollarsToCents(breakFeeDollars)
 				: 0,
 			attributeValueIds: selectedAttributeValueIds,
+			scalarValues: attributeCatalog
+				.filter((row) => row.valueKind && row.valueKind !== 'OPTION')
+				.map((row) => ({
+					attributeId: row.id,
+					stringValue: row.valueKind === 'SCALAR_STRING' ? (scalarValues[row.id] || null) : null,
+					numericValue: row.valueKind === 'SCALAR_NUMBER' ? (scalarValues[row.id] || null) : null,
+					booleanValue: row.valueKind === 'SCALAR_BOOLEAN'
+						? scalarValues[row.id] === 'true'
+						: null,
+				})),
+			...measures,
 			offerings,
 			containments: containments.map((link) => ({
 				parentOfferingKey: link.parentClientKey,
@@ -1302,9 +1352,87 @@ export function ProductEditorForm({
 						Search to add; only selected values stay on the product.
 					</p>
 					<ProductAttributeField
-						catalog={attributeCatalog}
+						catalog={attributeCatalog.filter((row) => (row.valueKind ?? 'OPTION') === 'OPTION')}
 						valueIds={selectedAttributeValueIds}
 						onChange={setSelectedAttributeValueIds}
+					/>
+					{attributeCatalog.some((row) => row.valueKind && row.valueKind !== 'OPTION')
+						? (
+								<div className="space-y-2 pt-2">
+									<p className="text-sm font-semibold text-slate-700">
+										Other facts
+									</p>
+									{attributeCatalog
+										.filter((row) => row.valueKind && row.valueKind !== 'OPTION')
+										.map((attribute) => (
+											<label
+												key={attribute.id}
+												className="block text-sm"
+											>
+												<span className="font-semibold">
+													{attribute.name}
+												</span>
+												{attribute.valueKind === 'SCALAR_BOOLEAN'
+													? (
+															<select
+																className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
+																value={scalarValues[attribute.id] ?? ''}
+																onChange={(event) =>
+																	setScalarValues((prev) => ({
+																		...prev,
+																		[attribute.id]: event.target.value,
+																	}))
+																}
+															>
+																<option value="">
+																	Not set
+																</option>
+																<option value="true">
+																	Yes
+																</option>
+																<option value="false">
+																	No
+																</option>
+															</select>
+														)
+													: (
+															<input
+																className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
+																value={scalarValues[attribute.id] ?? ''}
+																onChange={(event) =>
+																	setScalarValues((prev) => ({
+																		...prev,
+																		[attribute.id]: event.target.value,
+																	}))
+																}
+															/>
+														)
+												}
+											</label>
+										))
+									}
+								</div>
+							)
+						: null
+					}
+				</section>
+
+				<section
+					className="
+						space-y-3
+						rounded-2xl
+						border
+						border-slate-200
+						bg-white
+						p-4
+					"
+				>
+					<h2 className="text-lg font-semibold text-ink">
+						Measurements
+					</h2>
+					<ProductMeasuresField
+						value={measures}
+						onChange={setMeasures}
 					/>
 				</section>
 

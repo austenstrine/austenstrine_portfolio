@@ -1,3 +1,4 @@
+import { randomUUID } from 'crypto';
 import {
 	BadRequestException,
 	Injectable,
@@ -901,11 +902,15 @@ export class CatalogImportService {
 
 			for(const [index, attribute] of row.attributes.entries()) {
 				let definition = await this.prisma.attribute.findFirst({
-					where: { name: attribute.key, vendorId: null },
+					where: {
+						name: attribute.key,
+						OR: [{ vendorId: null }, { vendorId }],
+					},
+					orderBy: { vendorId: 'asc' },
 				});
 				if(!definition) {
 					definition = await this.prisma.attribute.create({
-						data: { name: attribute.key, vendorId: null },
+						data: { name: attribute.key, vendorId },
 					});
 				}
 
@@ -913,15 +918,36 @@ export class CatalogImportService {
 					where: {
 						attributeId: definition.id,
 						value: attribute.value,
-						vendorId: null,
+						vendorId,
+						...(categoryId ? { categoryId } : {}),
 					},
 				});
-				if(!valueRow) {
+				if(!valueRow && categoryId) {
+					const sibling = await this.prisma.attributeValue.findFirst({
+						where: {
+							attributeId: definition.id,
+							value: attribute.value,
+							vendorId,
+							groupId: { not: null },
+						},
+					});
 					valueRow = await this.prisma.attributeValue.create({
 						data: {
 							attributeId: definition.id,
 							value: attribute.value,
-							vendorId: null,
+							vendorId,
+							categoryId,
+							groupId: sibling?.groupId ?? randomUUID(),
+							sortOrder: index,
+						},
+					});
+				}
+				else if(!valueRow) {
+					valueRow = await this.prisma.attributeValue.create({
+						data: {
+							attributeId: definition.id,
+							value: attribute.value,
+							vendorId,
 							sortOrder: index,
 						},
 					});

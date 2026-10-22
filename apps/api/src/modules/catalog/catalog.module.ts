@@ -3,8 +3,10 @@ import { AuthModule } from '../auth/auth.module';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { OptionalJwtAuthGuard } from '../auth/guards/optional-jwt-auth.guard';
 import { CatalogArchiveService } from './archive/catalog-archive.service';
+import { AttributeService } from './attributes/attribute.service';
 import { CatalogController } from './catalog.controller';
 import { CatalogService } from './catalog.service';
+import { CatalogSearchService } from './search/catalog-search.service';
 import { CatalogAuthGuard } from './guards/catalog-auth.guard';
 import { CatalogImportService } from './import/catalog-import.service';
 import { InventoryService } from './inventory/inventory.service';
@@ -21,6 +23,8 @@ import { VendorService } from './vendor.service';
 	controllers: [CatalogController],
 	providers: [
 		CatalogService,
+		AttributeService,
+		CatalogSearchService,
 		InventoryService,
 		VendorAccessService,
 		VendorService,

@@ -83,17 +83,83 @@ export type CatalogAttributeDefinition = {
 	id: string;
 	name: string;
 	vendorId: string | null;
+	valueKind?: 'OPTION' | 'SCALAR_STRING' | 'SCALAR_NUMBER' | 'SCALAR_BOOLEAN';
+	unit?: string | null;
+	minNumeric?: string | null;
+	maxNumeric?: string | null;
 	values: Array<{
 		id: string;
 		value: string;
 		vendorId: string | null;
 		parentId: string | null;
+		groupId?: string | null;
+		categoryIds?: string[];
 		sortOrder: number;
 	}>;
 };
 
-export type CatalogProductDetail = Omit<CatalogProductSummary, 'offerings'> & {
+export type CatalogSearchFilter = {
+	attributeId: string;
+	attributeName: string;
+	valueId: string;
+	value: string;
+	rollupValue?: string;
+	source: 'auto' | 'manual';
+};
+
+export type CatalogSearchResult = {
+	items: CatalogProductSummary[];
+	appliedFilters: CatalogSearchFilter[];
+	facets: Array<{
+		attributeId: string;
+		attributeName: string;
+		buckets: Array<{ valueId: string; value: string; count: number }>;
+	}>;
+	source?: 'opensearch' | 'prisma';
+};
+
+export type ProductMeasuresPayload = {
+	lengthNumeric?: string | null;
+	widthNumeric?: string | null;
+	heightNumeric?: string | null;
+	linearUnit?: string | null;
+	weightNumeric?: string | null;
+	weightUnit?: string | null;
+	packageLengthNumeric?: string | null;
+	packageWidthNumeric?: string | null;
+	packageHeightNumeric?: string | null;
+	packageLinearUnit?: string | null;
+	packageWeightNumeric?: string | null;
+	packageWeightUnit?: string | null;
+	volumeNumeric?: string | null;
+	volumeUnit?: string | null;
+	netContentNumeric?: string | null;
+	netContentUnit?: string | null;
+	piecesPerRetailUnit?: number | null;
+	voltageNumeric?: string | null;
+	wattageNumeric?: string | null;
+	amperageNumeric?: string | null;
+	frequencyHzNumeric?: string | null;
+	capacityNumeric?: string | null;
+	capacityUnit?: string | null;
+	gtin?: string | null;
+	mpn?: string | null;
+	countryOfOrigin?: string | null;
+	condition?: 'NEW' | 'USED' | 'REFURBISHED' | 'NA';
+	releaseAt?: string | null;
+	expiresAt?: string | null;
+};
+
+export type CatalogProductDetail = Omit<CatalogProductSummary, 'offerings'> & ProductMeasuresPayload & {
 	attributes: CatalogProductAttribute[];
+	scalarValues?: Array<{
+		attributeId: string;
+		attributeName: string;
+		valueKind: string;
+		stringValue: string | null;
+		numericValue: string | null;
+		booleanValue: boolean | null;
+	}>;
 	offerings: CatalogOfferingDetail[];
 	permissions: { canEdit: boolean };
 };
@@ -120,7 +186,9 @@ export function searchCatalogProducts(params: {
 	q?: string;
 	category?: string;
 	vendor?: string;
-}): Promise<CatalogProductSummary[]> {
+	rollupValueIds?: string[];
+	omitValueIds?: string[];
+}): Promise<CatalogSearchResult> {
 	const query = new URLSearchParams();
 	if(params.q) {
 		query.set('q', params.q);
@@ -131,9 +199,15 @@ export function searchCatalogProducts(params: {
 	if(params.vendor) {
 		query.set('vendor', params.vendor);
 	}
+	for(const id of params.rollupValueIds ?? []) {
+		query.append('rollupValueId', id);
+	}
+	for(const id of params.omitValueIds ?? []) {
+		query.append('omitValueId', id);
+	}
 
 	const suffix = query.toString() ? `?${query.toString()}` : '';
-	return catalogRequest<CatalogProductSummary[]>(`/products${suffix}`);
+	return catalogRequest<CatalogSearchResult>(`/products${suffix}`);
 }
 
 export function getCatalogProduct(
@@ -156,9 +230,45 @@ export function listCatalogAttributes(
 	return catalogRequest<CatalogAttributeDefinition[]>(`/attributes${query}`);
 }
 
+export function createCatalogAttribute(payload: {
+	name: string;
+	vendorId?: string;
+	asGlobal?: boolean;
+	valueKind?: CatalogAttributeDefinition['valueKind'];
+}): Promise<CatalogAttributeDefinition> {
+	return catalogRequest('/attributes', {
+		method: 'POST',
+		body: JSON.stringify(payload),
+	});
+}
+
+export function upsertVendorAttributeValue(payload: {
+	vendorId: string;
+	attributeId: string;
+	value: string;
+	parentId?: string;
+	categoryIds: string[];
+	groupId?: string;
+}): Promise<CatalogAttributeDefinition['values'][number]> {
+	return catalogRequest('/attributes/values', {
+		method: 'POST',
+		body: JSON.stringify(payload),
+	});
+}
+
+export function createGlobalAttributeValue(payload: {
+	attributeId: string;
+	value: string;
+}): Promise<CatalogAttributeDefinition['values'][number]> {
+	return catalogRequest('/attributes/values/global', {
+		method: 'POST',
+		body: JSON.stringify(payload),
+	});
+}
+
 export function updateCatalogProduct(
 	productId: string,
-	payload: {
+	payload: ProductMeasuresPayload & {
 		title?: string;
 		description?: string;
 		tags?: string[];
@@ -167,6 +277,12 @@ export function updateCatalogProduct(
 		breakFeeMode?: 'OFF' | 'PER_PARENT_OPENED' | 'ONCE_PER_LINE' | 'PRODUCT_ONCE';
 		breakFeeCents?: number;
 		attributeValueIds?: string[];
+		scalarValues?: Array<{
+			attributeId: string;
+			stringValue?: string | null;
+			numericValue?: string | null;
+			booleanValue?: boolean | null;
+		}>;
 		offerings?: Array<{
 			id: string;
 			sku?: string;
@@ -372,7 +488,7 @@ export function applyUomMerge(token: string): Promise<{
 	);
 }
 
-export type CreateProductPayload = {
+export type CreateProductPayload = ProductMeasuresPayload & {
 	vendorId: string;
 	categoryId?: string;
 	sku?: string;
@@ -384,6 +500,12 @@ export type CreateProductPayload = {
 	breakFeeMode?: 'OFF' | 'PER_PARENT_OPENED' | 'ONCE_PER_LINE' | 'PRODUCT_ONCE';
 	breakFeeCents?: number;
 	attributeValueIds?: string[];
+	scalarValues?: Array<{
+		attributeId: string;
+		stringValue?: string | null;
+		numericValue?: string | null;
+		booleanValue?: boolean | null;
+	}>;
 	offerings: Array<{
 		clientKey?: string;
 		offeringKey?: string;

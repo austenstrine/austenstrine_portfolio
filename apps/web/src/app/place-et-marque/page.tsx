@@ -3,7 +3,9 @@ import { searchCatalogProducts } from '../../lib/catalog-api';
 import { formatQty } from '../../lib/uom-qty';
 
 export default async function PlaceEtMarqueHomePage() {
-	const products = await searchCatalogProducts({}).catch(() => []);
+	const products = await searchCatalogProducts({})
+		.then((result) => result.items)
+		.catch(() => []);
 
 	return (
 		<div

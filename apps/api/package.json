@@ -14,6 +14,7 @@
     "seed-sync": "node ../../packages/prisma-seed-migration-sync/dist/cli.js sync --dir prisma/seed-data",
     "seed-sync:dry": "node ../../packages/prisma-seed-migration-sync/dist/cli.js sync --dir prisma/seed-data --dry-run",
     "seed-sync:validate": "node ../../packages/prisma-seed-migration-sync/dist/cli.js validate --dir prisma/seed-data",
+    "seed-batch": "ts-node --transpile-only prisma/generate-catalog-seed-batch.ts",
     "mail:test": "ts-node --transpile-only scripts/send-test-email.ts"
   },
   "prisma": {

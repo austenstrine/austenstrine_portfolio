@@ -13,6 +13,10 @@ import {
 	MinLength,
 	ValidateNested,
 } from 'class-validator';
+import {
+	ProductMeasureFieldsDto,
+	ProductScalarValueInputDto,
+} from './product-measure.dto';
 import { QtyCompoundDto } from './qty-compound.dto';
 
 class ProductOfferingInputDto {
@@ -109,7 +113,7 @@ class LegacyPackPieceLinkInputDto {
 	pieceQtyPerPack!: string;
 }
 
-export class CreateCatalogProductDto {
+export class CreateCatalogProductDto extends ProductMeasureFieldsDto {
 	@IsUUID()
 	vendorId!: string;
 
@@ -154,6 +158,12 @@ export class CreateCatalogProductDto {
 	@IsArray()
 	@IsUUID('4', { each: true })
 	attributeValueIds?: string[];
+
+	@IsOptional()
+	@ValidateNested({ each: true })
+	@Type(() => ProductScalarValueInputDto)
+	@IsArray()
+	scalarValues?: ProductScalarValueInputDto[];
 
 	@IsOptional()
 	@IsArray()

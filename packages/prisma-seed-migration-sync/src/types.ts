@@ -6,7 +6,11 @@ export type SeedFileHeader = {
 	maintain?: boolean;
 	parentRelation?: string;
 	identityField?: string;
+	/** Optional compound unique used for upsert, e.g. ["vendorId", "slug"]. */
+	identityFields?: string[];
 	childrenField?: string;
+	/** Lower runs first. Default 100. Use this when FK order differs from filename sort. */
+	applyOrder?: number;
 };
 
 export type SeedFile = {
