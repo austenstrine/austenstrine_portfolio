@@ -30,6 +30,7 @@ export type AccessReasonKey = keyof typeof ACCESS_REASONS;
 const VENDOR_REQUIRED_PREFIXES = [
 	'/place-et-marque/products/new',
 	'/place-et-marque/products/configure',
+	'/place-et-marque/products/',
 	'/place-et-marque/manage',
 	'/place-et-marque/vendors/',
 	'/place-et-marque/uoms',

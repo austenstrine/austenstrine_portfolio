@@ -95,7 +95,7 @@ export default function PlaceEtMarqueLayout({ children }: { children: ReactNode 
 							className="text-sky hover:underline"
 							href="/place-et-marque/products/configure"
 						>
-							Inventory config
+							Advanced product
 						</a>
 						<a
 							className="text-sky hover:underline"

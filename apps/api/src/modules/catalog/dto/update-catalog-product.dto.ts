@@ -15,20 +15,6 @@ import {
 } from 'class-validator';
 import { QtyCompoundDto } from './qty-compound.dto';
 
-class ProductAttributePatchDto {
-	@IsString()
-	@MaxLength(120)
-	key!: string;
-
-	@IsString()
-	@MaxLength(500)
-	value!: string;
-
-	@IsOptional()
-	@IsInt()
-	sortOrder?: number;
-}
-
 class ProductOfferingPatchDto {
 	@IsUUID()
 	id!: string;
@@ -108,10 +94,9 @@ export class UpdateCatalogProductDto {
 	breakFeeCents?: number;
 
 	@IsOptional()
-	@ValidateNested({ each: true })
-	@Type(() => ProductAttributePatchDto)
 	@IsArray()
-	attributes?: ProductAttributePatchDto[];
+	@IsUUID('4', { each: true })
+	attributeValueIds?: string[];
 
 	@IsOptional()
 	@IsArray()

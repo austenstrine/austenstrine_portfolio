@@ -54,17 +54,38 @@ export function ProductQuickEdit({ product, onUpdated }: ProductQuickEditProps) 
 				p-5
 			"
 		>
-			<h2
+			<div
 				className="
-					text-sm
-					font-semibold
-					uppercase
-					tracking-wide
-					text-amber-900
+					flex
+					flex-wrap
+					items-center
+					justify-between
+					gap-2
 				"
 			>
-				Quick edit
-			</h2>
+				<h2
+					className="
+						text-sm
+						font-semibold
+						uppercase
+						tracking-wide
+						text-amber-900
+					"
+				>
+					Quick edit
+				</h2>
+				<a
+					className="
+						text-xs
+						font-semibold
+						text-sky
+						hover:underline
+					"
+					href={`/place-et-marque/products/${product.id}/edit`}
+				>
+					Full edit
+				</a>
+			</div>
 			<div
 				className="
 					mt-4

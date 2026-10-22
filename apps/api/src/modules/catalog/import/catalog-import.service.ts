@@ -262,7 +262,9 @@ export class CatalogImportService {
 			const sku = (values.sku ?? '').trim();
 			const offeringKey = (values.offering_key ?? '').trim() || 'default';
 			const uomCode = (values.uom_code ?? '').trim().toUpperCase();
-			const roleRaw = (values.role ?? '').trim().toUpperCase();
+			const roleRawRaw = (values.role ?? '').trim().toUpperCase();
+			const roleRaw =
+				roleRawRaw === 'STANDALONE' ? ProductOfferingRole.PIECE : roleRawRaw;
 			const identity = `${sku}::${offeringKey}`;
 
 			if(!productSlug) {
@@ -317,14 +319,13 @@ export class CatalogImportService {
 			}
 
 			if(
-				roleRaw !== ProductOfferingRole.STANDALONE &&
 				roleRaw !== ProductOfferingRole.PACK &&
 				roleRaw !== ProductOfferingRole.PIECE
 			) {
 				errors.push({
 					lineNumber,
 					column: 'role',
-					message: 'role must be STANDALONE, PACK, or PIECE.',
+					message: 'role must be PACK or PIECE.',
 					blocking: true,
 				});
 			}
@@ -899,21 +900,47 @@ export class CatalogImportService {
 			}
 
 			for(const [index, attribute] of row.attributes.entries()) {
-				await this.prisma.productAttribute.upsert({
+				let definition = await this.prisma.attribute.findFirst({
+					where: { name: attribute.key, vendorId: null },
+				});
+				if(!definition) {
+					definition = await this.prisma.attribute.create({
+						data: { name: attribute.key, vendorId: null },
+					});
+				}
+
+				let valueRow = await this.prisma.attributeValue.findFirst({
 					where: {
-						productId_key: {
+						attributeId: definition.id,
+						value: attribute.value,
+						vendorId: null,
+					},
+				});
+				if(!valueRow) {
+					valueRow = await this.prisma.attributeValue.create({
+						data: {
+							attributeId: definition.id,
+							value: attribute.value,
+							vendorId: null,
+							sortOrder: index,
+						},
+					});
+				}
+
+				await this.prisma.productAttributeValue.upsert({
+					where: {
+						productId_attributeValueId: {
 							productId,
-							key: attribute.key,
+							attributeValueId: valueRow.id,
 						},
 					},
 					create: {
 						productId,
-						key: attribute.key,
-						value: attribute.value,
+						attributeValueId: valueRow.id,
 						sortOrder: index,
 					},
 					update: {
-						value: attribute.value,
+						sortOrder: index,
 					},
 				});
 			}

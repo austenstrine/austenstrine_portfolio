@@ -24,7 +24,14 @@ import type { QtyCompoundDto } from './dto/qty-compound.dto';
 const productInclude = {
 	vendor: true,
 	category: true,
-	attributes: { orderBy: { sortOrder: 'asc' as const } },
+	attributeValues: {
+		orderBy: { sortOrder: 'asc' as const },
+		include: {
+			attributeValue: {
+				include: { attribute: true },
+			},
+		},
+	},
 	offerings: {
 		include: {
 			uom: true,
@@ -332,11 +339,10 @@ export class CatalogService {
 				inventoryFromAllocations: dto.inventoryFromAllocations ?? false,
 				breakFeeMode: dto.breakFeeMode,
 				breakFeeCents: dto.breakFeeCents,
-				attributes: {
-					create: dto.attributes?.map((row, index) => ({
-						key: row.key,
-						value: row.value,
-						sortOrder: row.sortOrder ?? index,
+				attributeValues: {
+					create: (dto.attributeValueIds ?? []).map((attributeValueId, index) => ({
+						attributeValueId,
+						sortOrder: index,
 					})),
 				},
 				offerings: {
@@ -398,29 +404,17 @@ export class CatalogService {
 			},
 		});
 
-		if(dto.attributes) {
-			await this.prisma.$transaction(
-				dto.attributes.map((row, index) =>
-					this.prisma.productAttribute.upsert({
-						where: {
-							productId_key: {
-								productId,
-								key: row.key,
-							},
-						},
-						create: {
-							productId,
-							key: row.key,
-							value: row.value,
-							sortOrder: row.sortOrder ?? index,
-						},
-						update: {
-							value: row.value,
-							sortOrder: row.sortOrder ?? index,
-						},
-					}),
-				),
-			);
+		if(dto.attributeValueIds) {
+			await this.prisma.productAttributeValue.deleteMany({ where: { productId } });
+			if(dto.attributeValueIds.length > 0) {
+				await this.prisma.productAttributeValue.createMany({
+					data: dto.attributeValueIds.map((attributeValueId, index) => ({
+						productId,
+						attributeValueId,
+						sortOrder: index,
+					})),
+				});
+			}
 		}
 
 		if(dto.offerings) {
@@ -526,6 +520,40 @@ export class CatalogService {
 			leewayRatio: dto.leewayRatio ? new Decimal(dto.leewayRatio) : undefined,
 			dryRun: dto.dryRun,
 		});
+	}
+
+	async getProductByProductId(productId: string, viewerUserId?: string) {
+		return this.getProductById(productId, viewerUserId);
+	}
+
+	async listAttributes(vendorId?: string) {
+		const rows = await this.prisma.attribute.findMany({
+			where: vendorId
+				? { OR: [{ vendorId: null }, { vendorId }] }
+				: { vendorId: null },
+			include: {
+				values: {
+					where: vendorId
+						? { OR: [{ vendorId: null }, { vendorId }] }
+						: { vendorId: null },
+					orderBy: { sortOrder: 'asc' },
+				},
+			},
+			orderBy: { name: 'asc' },
+		});
+
+		return rows.map((attribute) => ({
+			id: attribute.id,
+			name: attribute.name,
+			vendorId: attribute.vendorId,
+			values: attribute.values.map((value) => ({
+				id: value.id,
+				value: value.value,
+				vendorId: value.vendorId,
+				parentId: value.parentId,
+				sortOrder: value.sortOrder,
+			})),
+		}));
 	}
 
 	private async getProductById(productId: string, viewerUserId?: string) {
@@ -826,7 +854,13 @@ export class CatalogService {
 			inventoryFromAllocations: product.inventoryFromAllocations,
 			breakFeeMode: product.breakFeeMode,
 			breakFeeCents: product.breakFeeCents,
-			attributes: product.attributes,
+			attributes: product.attributeValues.map((row) => ({
+				id: row.attributeValue.id,
+				attributeId: row.attributeValue.attributeId,
+				attributeName: row.attributeValue.attribute.name,
+				value: row.attributeValue.value,
+				sortOrder: row.sortOrder,
+			})),
 			offerings: product.offerings.map((offering) => ({
 				id: offering.id,
 				sku: offering.sku,

@@ -71,8 +71,29 @@ export type CatalogOfferingDetail = {
 	} | null;
 };
 
+export type CatalogProductAttribute = {
+	id: string;
+	attributeId: string;
+	attributeName: string;
+	value: string;
+	sortOrder: number;
+};
+
+export type CatalogAttributeDefinition = {
+	id: string;
+	name: string;
+	vendorId: string | null;
+	values: Array<{
+		id: string;
+		value: string;
+		vendorId: string | null;
+		parentId: string | null;
+		sortOrder: number;
+	}>;
+};
+
 export type CatalogProductDetail = Omit<CatalogProductSummary, 'offerings'> & {
-	attributes: Array<{ key: string; value: string; sortOrder: number }>;
+	attributes: CatalogProductAttribute[];
 	offerings: CatalogOfferingDetail[];
 	permissions: { canEdit: boolean };
 };
@@ -122,6 +143,19 @@ export function getCatalogProduct(
 	return catalogRequest<CatalogProductDetail>(`/products/${vendorSlug}/${productSlug}`);
 }
 
+export function getCatalogProductById(
+	productId: string,
+): Promise<CatalogProductDetail> {
+	return catalogRequest<CatalogProductDetail>(`/products/by-id/${productId}`);
+}
+
+export function listCatalogAttributes(
+	vendorId?: string,
+): Promise<CatalogAttributeDefinition[]> {
+	const query = vendorId ? `?vendorId=${encodeURIComponent(vendorId)}` : '';
+	return catalogRequest<CatalogAttributeDefinition[]>(`/attributes${query}`);
+}
+
 export function updateCatalogProduct(
 	productId: string,
 	payload: {
@@ -129,10 +163,19 @@ export function updateCatalogProduct(
 		description?: string;
 		tags?: string[];
 		categoryId?: string | null;
+		inventoryFromAllocations?: boolean;
+		breakFeeMode?: 'OFF' | 'PER_PARENT_OPENED' | 'ONCE_PER_LINE' | 'PRODUCT_ONCE';
+		breakFeeCents?: number;
+		attributeValueIds?: string[];
 		offerings?: Array<{
 			id: string;
+			sku?: string;
 			priceCents?: number;
 			qtyOnHand?: string;
+			tracksOwnQty?: boolean;
+			minUnbrokenQty?: string;
+			breakPoolAboveQty?: string;
+			inheritQtyToChildren?: boolean;
 		}>;
 	},
 ): Promise<CatalogProductDetail> {
@@ -340,13 +383,13 @@ export type CreateProductPayload = {
 	inventoryFromAllocations?: boolean;
 	breakFeeMode?: 'OFF' | 'PER_PARENT_OPENED' | 'ONCE_PER_LINE' | 'PRODUCT_ONCE';
 	breakFeeCents?: number;
-	attributes?: Array<{ key: string; value: string; sortOrder?: number }>;
+	attributeValueIds?: string[];
 	offerings: Array<{
 		clientKey?: string;
 		offeringKey?: string;
 		sku?: string;
 		uomId: string;
-		role: 'STANDALONE' | 'PACK' | 'PIECE';
+		role: 'PACK' | 'PIECE';
 		priceCents: number;
 		currency?: string;
 		qtyOnHand?: string;

@@ -15,20 +15,6 @@ import {
 } from 'class-validator';
 import { QtyCompoundDto } from './qty-compound.dto';
 
-class ProductAttributeInputDto {
-	@IsString()
-	@MaxLength(120)
-	key!: string;
-
-	@IsString()
-	@MaxLength(500)
-	value!: string;
-
-	@IsOptional()
-	@IsInt()
-	sortOrder?: number;
-}
-
 class ProductOfferingInputDto {
 	@IsOptional()
 	@IsString()
@@ -165,10 +151,9 @@ export class CreateCatalogProductDto {
 	breakFeeCents?: number;
 
 	@IsOptional()
-	@ValidateNested({ each: true })
-	@Type(() => ProductAttributeInputDto)
 	@IsArray()
-	attributes?: ProductAttributeInputDto[];
+	@IsUUID('4', { each: true })
+	attributeValueIds?: string[];
 
 	@IsOptional()
 	@IsArray()

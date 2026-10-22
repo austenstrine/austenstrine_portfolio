@@ -63,6 +63,20 @@ export class CatalogController {
 		return this.catalog.listUoms(vendorId);
 	}
 
+	@Get('attributes')
+	listAttributes(@Query('vendorId') vendorId?: string) {
+		return this.catalog.listAttributes(vendorId);
+	}
+
+	@UseGuards(JwtAuthGuard)
+	@Get('products/by-id/:productId')
+	getProductById(
+		@Param('productId') productId: string,
+		@Req() req: AuthedRequest,
+	) {
+		return this.catalog.getProductByProductId(productId, req.user!.id);
+	}
+
 	@UseGuards(JwtAuthGuard)
 	@Post('uoms')
 	createUom(@Req() req: AuthedRequest, @Body() dto: CreateUomDto) {

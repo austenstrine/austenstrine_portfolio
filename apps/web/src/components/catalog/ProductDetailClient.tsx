@@ -195,12 +195,12 @@ export function ProductDetailClient({ initialProduct }: ProductDetailClientProps
 								>
 									<label
 										className="font-semibold"
-										htmlFor="selected-offering"
+										htmlFor="selected-pack-or-piece"
 									>
-										Offering
+										Pack or piece
 									</label>
 									<TermHint
-										termId="offering"
+										termId="piece"
 									/>
 								</div>
 								<select
@@ -213,7 +213,7 @@ export function ProductDetailClient({ initialProduct }: ProductDetailClientProps
 										px-3
 										py-2
 									"
-									id="selected-offering"
+									id="selected-pack-or-piece"
 									value={selectedOfferingId}
 									onChange={(event) =>
 										setSelectedOfferingId(event.target.value)
@@ -224,9 +224,14 @@ export function ProductDetailClient({ initialProduct }: ProductDetailClientProps
 											key={offering.id}
 											value={offering.id}
 										>
-											{offering.role} · {offering.sku ?? offering.id} ·{' '}
-											{(offering.priceCents / 100).toFixed(2)} ·{' '}
-											{formatQty(offering.availableQty, offering.uom.code)} avail
+											{offering.role === 'PACK' ? 'Pack' : 'Piece'}
+											{' · '}
+											{offering.sku ?? offering.id}
+											{' · '}
+											{(offering.priceCents / 100).toFixed(2)}
+											{' · '}
+											{formatQty(offering.availableQty, offering.uom.code)}
+											{' avail'}
 										</option>
 									))}
 								</select>
@@ -315,7 +320,7 @@ export function ProductDetailClient({ initialProduct }: ProductDetailClientProps
 								gap-3
 								text-sm
 							"
-							key={attribute.key}
+							key={attribute.id}
 						>
 							<dt
 								className="
@@ -325,7 +330,7 @@ export function ProductDetailClient({ initialProduct }: ProductDetailClientProps
 									text-slate-500
 								"
 							>
-								{attribute.key}
+								{attribute.attributeName}
 							</dt>
 							<dd>
 								{attribute.value}
@@ -446,9 +451,9 @@ export function ProductDetailClient({ initialProduct }: ProductDetailClientProps
 							text-slate-500
 						"
 					>
-						Offerings
+						Packs and pieces
 						<TermHint
-							termId="offering"
+							termId="pack"
 						/>
 					</h2>
 					<ul
@@ -539,7 +544,7 @@ export function ProductDetailClient({ initialProduct }: ProductDetailClientProps
 									/>
 								</span>
 								{' '}
-								inventory (cached on each offering for search).
+								inventory (cached on each pack and piece for search).
 							</p>
 						)
 						: null

@@ -87,13 +87,6 @@ export async function seedCatalog(prisma: PrismaClient): Promise<void> {
 			title: 'THHN 12 AWG Copper Wire',
 			description: 'Demo listing sold as full spools or by the foot with shared inventory.',
 			inventoryFromAllocations: true,
-			attributes: {
-				create: [
-					{ key: 'gauge', value: '12 AWG', sortOrder: 0 },
-					{ key: 'conductor', value: 'Copper', sortOrder: 1 },
-					{ key: 'insulation', value: 'THHN', sortOrder: 2 },
-				],
-			},
 		},
 		update: {
 			title: 'THHN 12 AWG Copper Wire',
@@ -103,6 +96,52 @@ export async function seedCatalog(prisma: PrismaClient): Promise<void> {
 		},
 		include: { offerings: true },
 	});
+
+	for(const [index, pair] of [
+		{ key: 'gauge', value: '12 AWG' },
+		{ key: 'conductor', value: 'Copper' },
+		{ key: 'insulation', value: 'THHN' },
+	].entries()) {
+		let definition = await prisma.attribute.findFirst({
+			where: { name: pair.key, vendorId: null },
+		});
+		if(!definition) {
+			definition = await prisma.attribute.create({
+				data: { name: pair.key, vendorId: null },
+			});
+		}
+		let valueRow = await prisma.attributeValue.findFirst({
+			where: {
+				attributeId: definition.id,
+				value: pair.value,
+				vendorId: null,
+			},
+		});
+		if(!valueRow) {
+			valueRow = await prisma.attributeValue.create({
+				data: {
+					attributeId: definition.id,
+					value: pair.value,
+					vendorId: null,
+					sortOrder: index,
+				},
+			});
+		}
+		await prisma.productAttributeValue.upsert({
+			where: {
+				productId_attributeValueId: {
+					productId: product.id,
+					attributeValueId: valueRow.id,
+				},
+			},
+			create: {
+				productId: product.id,
+				attributeValueId: valueRow.id,
+				sortOrder: index,
+			},
+			update: { sortOrder: index },
+		});
+	}
 
 	let packOffering = product.offerings.find((row) => row.role === ProductOfferingRole.PACK);
 	let pieceOffering = product.offerings.find((row) => row.role === ProductOfferingRole.PIECE);

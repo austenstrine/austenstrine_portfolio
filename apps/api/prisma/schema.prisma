@@ -105,7 +105,6 @@ enum VendorMemberRole {
 }
 
 enum ProductOfferingRole {
-  STANDALONE
   PACK
   PIECE
 }
@@ -212,6 +211,8 @@ model Vendor {
   importJobs          CatalogImportJob[]
   offerings           ProductOffering[]
   uoms                UnitOfMeasure[]
+  attributes          Attribute[]
+  attributeValues     AttributeValue[]
   shippingProfiles    ShippingProfile[]
   placeEtMarqueOrders PlaceEtMarqueOrder[]
   checkoutShipments   CheckoutShipment[]
@@ -429,8 +430,10 @@ model CatalogProduct {
   createdAt                DateTime         @default(now())
   updatedAt                DateTime         @updatedAt
 
-  attributes ProductAttribute[]
-  offerings  ProductOffering[]
+  /// Follow-up: ProductScalarValue typed side-table, category-scoped seller values,
+  /// search auto-filter / popularity matcher (see attribute design notes).
+  attributeValues ProductAttributeValue[]
+  offerings       ProductOffering[]
 
   @@unique([vendorId, slug])
   @@index([categoryId])
@@ -440,16 +443,54 @@ model CatalogProduct {
   @@index([tags])
 }
 
-model ProductAttribute {
-  id        String         @id @default(uuid())
-  productId String
-  product   CatalogProduct @relation(fields: [productId], references: [id], onDelete: Cascade)
-  key       String
-  value     String
-  sortOrder Int            @default(0)
+/// Determinable attribute (Color, Size). vendorId null = global / admin-defined.
+model Attribute {
+  id        String           @id @default(uuid())
+  name      String
+  vendorId  String?
+  vendor    Vendor?          @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+  values    AttributeValue[]
 
-  @@unique([productId, key])
+  @@index([vendorId])
+  @@index([name])
+}
+
+/// Determinate option under an Attribute (Green, Large). Optional parentId rolls up
+/// seller-specific values (algae) to a global value (green) for faceting later.
+model AttributeValue {
+  id          String           @id @default(uuid())
+  attributeId String
+  attribute   Attribute        @relation(fields: [attributeId], references: [id], onDelete: Cascade)
+  value       String
+  vendorId    String?
+  vendor      Vendor?          @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  parentId    String?
+  parent      AttributeValue?  @relation("ValueHierarchy", fields: [parentId], references: [id], onDelete: SetNull)
+  children    AttributeValue[] @relation("ValueHierarchy")
+  sortOrder   Int              @default(0)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  products    ProductAttributeValue[]
+
+  @@index([attributeId])
+  @@index([vendorId])
+  @@index([parentId])
+  @@index([attributeId, value])
+}
+
+model ProductAttributeValue {
+  id               String         @id @default(uuid())
+  productId        String
+  product          CatalogProduct @relation(fields: [productId], references: [id], onDelete: Cascade)
+  attributeValueId String
+  attributeValue   AttributeValue @relation(fields: [attributeValueId], references: [id], onDelete: Cascade)
+  sortOrder        Int            @default(0)
+
+  @@unique([productId, attributeValueId])
   @@index([productId])
+  @@index([attributeValueId])
 }
 
 model ProductOffering {
@@ -464,7 +505,7 @@ model ProductOffering {
   offeringKey          String              @default("default")
   uomId                String
   uom                  UnitOfMeasure       @relation(fields: [uomId], references: [id])
-  role                 ProductOfferingRole @default(STANDALONE)
+  role                 ProductOfferingRole @default(PIECE)
   priceCents           Int
   currency             String              @default("USD")
   /// On-hand count in this offering's UOM (e.g. number of spools). Often 0 for PIECE rows.
