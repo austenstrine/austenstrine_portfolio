@@ -9,11 +9,12 @@
     "lint": "tsc --noEmit",
     "test": "jest",
     "prisma:generate": "prisma generate",
-    "prisma:migrate": "prisma migrate dev --skip-seed",
+    "prisma:migrate": "prisma db execute --file prisma/drop-unmanaged-tables.sql && prisma migrate dev --skip-seed",
     "prisma:seed": "prisma db seed",
     "seed-sync": "node ../../packages/prisma-seed-migration-sync/dist/cli.js sync --dir prisma/seed-data",
     "seed-sync:dry": "node ../../packages/prisma-seed-migration-sync/dist/cli.js sync --dir prisma/seed-data --dry-run",
     "seed-sync:validate": "node ../../packages/prisma-seed-migration-sync/dist/cli.js validate --dir prisma/seed-data",
+    "seed-batch": "ts-node --transpile-only prisma/generate-catalog-seed-batch.ts",
     "mail:test": "ts-node --transpile-only scripts/send-test-email.ts"
   },
   "prisma": {

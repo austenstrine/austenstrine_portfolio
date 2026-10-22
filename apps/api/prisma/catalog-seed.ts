@@ -7,47 +7,26 @@ import {
 } from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/library';
 import { ensureSupervendor } from '../src/modules/catalog/ensure-supervendor';
+import { seedGlobalUoms } from '../src/modules/catalog/seed-global-uoms';
 
-type UomSeedRow = {
-	code: string;
-	label: string;
-	dimensionKey: string;
-	factorToReference: string;
-	aliases: string[];
-};
+function demoVendorFromSeed(): {
+	id: string;
+	slug: string;
+	name: string;
+	isSuperVendor: boolean;
+} {
+	const file = JSON.parse(readFileSync(join(__dirname, 'seed-data/Vendor.json'), 'utf8')) as {
+		records?: Array<{ id: string; slug: string; name: string; isSuperVendor: boolean }>;
+	};
+	const row = file.records?.[0];
+	if(!row?.id || !row.slug || !row.name) {
+		throw new Error('Vendor.json is missing the demo vendor record.');
+	}
+	return row;
+}
 
 export async function seedCatalog(prisma: PrismaClient): Promise<void> {
-	const uomRows = loadUomRows();
-
-	for(const row of uomRows) {
-		const existing = await prisma.unitOfMeasure.findFirst({
-			where: { vendorId: null, code: row.code },
-		});
-		if(existing) {
-			await prisma.unitOfMeasure.update({
-				where: { id: existing.id },
-				data: {
-					label: row.label,
-					dimensionKey: row.dimensionKey,
-					factorToReference: new Decimal(row.factorToReference),
-					aliases: row.aliases,
-					vendorId: null,
-				},
-			});
-		}
-		else {
-			await prisma.unitOfMeasure.create({
-				data: {
-					code: row.code,
-					label: row.label,
-					dimensionKey: row.dimensionKey,
-					factorToReference: new Decimal(row.factorToReference),
-					aliases: row.aliases,
-					vendorId: null,
-				},
-			});
-		}
-	}
+	await seedGlobalUoms(prisma);
 
 	let category = await prisma.catalogCategory.findUnique({
 		where: { slug: 'wire-and-cable' },
@@ -60,10 +39,19 @@ export async function seedCatalog(prisma: PrismaClient): Promise<void> {
 
 	await ensureSupervendor(prisma, join(__dirname, 'seed-data'));
 
+	const demoVendor = demoVendorFromSeed();
 	const vendor = await prisma.vendor.upsert({
-		where: { slug: 'demo-supply' },
-		create: { slug: 'demo-supply', name: 'Demo Supply Co.', isSuperVendor: false },
-		update: { name: 'Demo Supply Co.', isSuperVendor: false },
+		where: { slug: demoVendor.slug },
+		create: {
+			id: demoVendor.id,
+			slug: demoVendor.slug,
+			name: demoVendor.name,
+			isSuperVendor: demoVendor.isSuperVendor,
+		},
+		update: {
+			name: demoVendor.name,
+			isSuperVendor: demoVendor.isSuperVendor,
+		},
 	});
 
 	const uomSpool = await prisma.unitOfMeasure.findFirstOrThrow({
@@ -87,13 +75,6 @@ export async function seedCatalog(prisma: PrismaClient): Promise<void> {
 			title: 'THHN 12 AWG Copper Wire',
 			description: 'Demo listing sold as full spools or by the foot with shared inventory.',
 			inventoryFromAllocations: true,
-			attributes: {
-				create: [
-					{ key: 'gauge', value: '12 AWG', sortOrder: 0 },
-					{ key: 'conductor', value: 'Copper', sortOrder: 1 },
-					{ key: 'insulation', value: 'THHN', sortOrder: 2 },
-				],
-			},
 		},
 		update: {
 			title: 'THHN 12 AWG Copper Wire',
@@ -103,6 +84,52 @@ export async function seedCatalog(prisma: PrismaClient): Promise<void> {
 		},
 		include: { offerings: true },
 	});
+
+	for(const [index, pair] of [
+		{ key: 'gauge', value: '12 AWG' },
+		{ key: 'conductor', value: 'Copper' },
+		{ key: 'insulation', value: 'THHN' },
+	].entries()) {
+		let definition = await prisma.attribute.findFirst({
+			where: { name: pair.key, vendorId: null },
+		});
+		if(!definition) {
+			definition = await prisma.attribute.create({
+				data: { name: pair.key, vendorId: null },
+			});
+		}
+		let valueRow = await prisma.attributeValue.findFirst({
+			where: {
+				attributeId: definition.id,
+				value: pair.value,
+				vendorId: null,
+			},
+		});
+		if(!valueRow) {
+			valueRow = await prisma.attributeValue.create({
+				data: {
+					attributeId: definition.id,
+					value: pair.value,
+					vendorId: null,
+					sortOrder: index,
+				},
+			});
+		}
+		await prisma.productAttributeValue.upsert({
+			where: {
+				productId_attributeValueId: {
+					productId: product.id,
+					attributeValueId: valueRow.id,
+				},
+			},
+			create: {
+				productId: product.id,
+				attributeValueId: valueRow.id,
+				sortOrder: index,
+			},
+			update: { sortOrder: index },
+		});
+	}
 
 	let packOffering = product.offerings.find((row) => row.role === ProductOfferingRole.PACK);
 	let pieceOffering = product.offerings.find((row) => row.role === ProductOfferingRole.PIECE);
@@ -192,14 +219,4 @@ export async function seedCatalog(prisma: PrismaClient): Promise<void> {
 		where: { id: pieceOffering.id },
 		data: { availableQty: new Decimal('440') },
 	});
-}
-
-function loadUomRows(): UomSeedRow[] {
-	const file = JSON.parse(
-		readFileSync(join(__dirname, 'seed-data', 'UnitOfMeasure.json'), 'utf8'),
-	) as { records?: UomSeedRow[] };
-	if(!Array.isArray(file.records)) {
-		throw new Error('UnitOfMeasure.json is missing records[].');
-	}
-	return file.records;
 }

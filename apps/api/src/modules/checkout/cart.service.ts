@@ -5,6 +5,8 @@ import {
 } from '@nestjs/common';
 import { Decimal } from '@prisma/client/runtime/library';
 import { PrismaService } from '../../infra/prisma/prisma.service';
+import type { QtyCompoundDto } from '../catalog/dto/qty-compound.dto';
+import { formatQty, resolveQty } from '../catalog/uom-qty';
 
 @Injectable()
 export class CartService {
@@ -24,12 +26,12 @@ export class CartService {
 		return this.toCartDto(cart);
 	}
 
-	async upsertLine(buyerId: string, offeringId: string, quantityRaw: string) {
-		const quantity = new Decimal(quantityRaw);
-		if(quantity.lte(0)) {
-			throw new BadRequestException('Quantity must be greater than zero.');
-		}
-
+	async upsertLine(
+		buyerId: string,
+		offeringId: string,
+		quantityRaw?: string,
+		qtyCompound?: QtyCompoundDto,
+	) {
 		const offering = await this.prisma.productOffering.findUnique({
 			where: { id: offeringId },
 			include: {
@@ -42,9 +44,22 @@ export class CartService {
 			throw new NotFoundException('Offering not found or inactive.');
 		}
 
+		let quantity: Decimal;
+		try {
+			quantity = new Decimal(resolveQty(offering.uom.code, quantityRaw, qtyCompound));
+		}
+		catch(error) {
+			throw new BadRequestException(
+				error instanceof Error ? error.message : 'Invalid quantity.',
+			);
+		}
+		if(quantity.lte(0)) {
+			throw new BadRequestException('Quantity must be greater than zero.');
+		}
+
 		if(offering.availableQty.lt(quantity)) {
 			throw new BadRequestException(
-				`Only ${offering.availableQty.toString()} available for this offering.`,
+				`Only ${formatQty(offering.availableQty.toString(), offering.uom.code)} available for this offering.`,
 			);
 		}
 

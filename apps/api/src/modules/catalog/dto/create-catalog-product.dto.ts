@@ -13,20 +13,11 @@ import {
 	MinLength,
 	ValidateNested,
 } from 'class-validator';
-
-class ProductAttributeInputDto {
-	@IsString()
-	@MaxLength(120)
-	key!: string;
-
-	@IsString()
-	@MaxLength(500)
-	value!: string;
-
-	@IsOptional()
-	@IsInt()
-	sortOrder?: number;
-}
+import {
+	ProductMeasureFieldsDto,
+	ProductScalarValueInputDto,
+} from './product-measure.dto';
+import { QtyCompoundDto } from './qty-compound.dto';
 
 class ProductOfferingInputDto {
 	@IsOptional()
@@ -61,6 +52,11 @@ class ProductOfferingInputDto {
 	@IsOptional()
 	@IsString()
 	qtyOnHand?: string;
+
+	@IsOptional()
+	@ValidateNested()
+	@Type(() => QtyCompoundDto)
+	qtyCompound?: QtyCompoundDto;
 
 	@IsOptional()
 	@IsBoolean()
@@ -102,6 +98,11 @@ class OfferingContainmentInputDto {
 	childQtyPerParent!: string;
 
 	@IsOptional()
+	@ValidateNested()
+	@Type(() => QtyCompoundDto)
+	childQtyCompound?: QtyCompoundDto;
+
+	@IsOptional()
 	@IsInt()
 	@Min(0)
 	breakFeeCents?: number;
@@ -112,7 +113,7 @@ class LegacyPackPieceLinkInputDto {
 	pieceQtyPerPack!: string;
 }
 
-export class CreateCatalogProductDto {
+export class CreateCatalogProductDto extends ProductMeasureFieldsDto {
 	@IsUUID()
 	vendorId!: string;
 
@@ -154,10 +155,15 @@ export class CreateCatalogProductDto {
 	breakFeeCents?: number;
 
 	@IsOptional()
-	@ValidateNested({ each: true })
-	@Type(() => ProductAttributeInputDto)
 	@IsArray()
-	attributes?: ProductAttributeInputDto[];
+	@IsUUID('4', { each: true })
+	attributeValueIds?: string[];
+
+	@IsOptional()
+	@ValidateNested({ each: true })
+	@Type(() => ProductScalarValueInputDto)
+	@IsArray()
+	scalarValues?: ProductScalarValueInputDto[];
 
 	@IsOptional()
 	@IsArray()

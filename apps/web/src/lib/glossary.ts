@@ -1,9 +1,15 @@
 export const glossaryTerms = [
 	{
-		id: 'offering',
-		term: 'Offering',
-		short: 'One buyable size or form of a product.',
-		long: 'A product is the listing shoppers see. An offering is each way that listing can be sold—for example a spool and a per-foot cut of the same cable. Each offering has its own SKU, unit, price, and inventory.',
+		id: 'pack',
+		term: 'Pack',
+		short: 'A larger sellable unit that can contain pieces or other packs.',
+		long: 'A pack is how you sell something in bulk—for example a spool of wire or a carton of parts. A pack can link to a piece (or to another pack in a chain) so inventory and break fees stay consistent when someone buys less than a full pack.',
+	},
+	{
+		id: 'piece',
+		term: 'Piece',
+		short: 'The smaller sellable unit—often cut or broken out of a pack.',
+		long: 'A piece is the unit shoppers buy when they want less than a full pack—for example feet of cable cut from a spool. A product can be piece-only, or a piece can sit under one or more packs through pack links.',
 	},
 	{
 		id: 'uom',
@@ -31,9 +37,9 @@ export const glossaryTerms = [
 	},
 	{
 		id: 'offering-key',
-		term: 'Offering key',
-		short: 'A stable name for an offering inside a product, used when importing.',
-		long: 'When a CSV adds or updates catalog rows, offerings are matched by SKU plus offering_key (for example pack or piece). That lets you rename a SKU without losing the row, and it is how nested pack/piece links point at each other.',
+		term: 'Pack / piece key',
+		short: 'A stable name for a pack or piece inside a product, used when importing.',
+		long: 'When a CSV adds or updates catalog rows, packs and pieces are matched by SKU plus offering_key (for example pack or piece). That lets you rename a SKU without losing the row, and it is how nested pack/piece links point at each other.',
 	},
 ] as const;
 

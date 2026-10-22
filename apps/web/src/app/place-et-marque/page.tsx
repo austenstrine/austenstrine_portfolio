@@ -1,8 +1,11 @@
 import { CatalogEmptyActions } from '../../components/catalog/CatalogEmptyActions';
 import { searchCatalogProducts } from '../../lib/catalog-api';
+import { formatQty } from '../../lib/uom-qty';
 
 export default async function PlaceEtMarqueHomePage() {
-	const products = await searchCatalogProducts({}).catch(() => []);
+	const products = await searchCatalogProducts({})
+		.then((result) => result.items)
+		.catch(() => []);
 
 	return (
 		<div
@@ -123,7 +126,7 @@ export default async function PlaceEtMarqueHomePage() {
 										text-slate-500
 									"
 								>
-									Available: {product.availableQty} {product.primaryUom ?? ''}
+									Available: {formatQty(product.availableQty, product.primaryUom)}
 								</p>
 							</a>
 						))}

@@ -11,6 +11,8 @@ import {
 } from '../../../lib/checkout-api';
 import { useSession } from '../../../lib/useSession';
 import { RequireAccess } from '../../../components/auth/RequireAccess';
+import { CompoundQtyField } from '../../../components/catalog/CompoundQtyField';
+import { formatQty } from '../../../lib/uom-qty';
 
 function CartContent() {
 	const { user, loading: sessionLoading } = useSession();
@@ -177,7 +179,7 @@ function CartContent() {
 													</p>
 													<p className="text-sm text-slate-500">
 														{formatMoney(line.unitPriceCents, line.currency)} each ·{' '}
-														{line.availableQty} available
+														{formatQty(line.availableQty, line.uom)} available
 													</p>
 												</div>
 												<p className="font-semibold">
@@ -193,25 +195,31 @@ function CartContent() {
 													gap-3
 												"
 											>
-												<label className="text-sm">
-													Qty
-													<input
-														className="
-															ml-2
-															w-24
-															rounded-lg
-															border
-															border-slate-300
-															px-2
-															py-1
-														"
+												<div className="min-w-[16rem]">
+													<CompoundQtyField
+														label="Qty"
+														uomCode={line.uom}
+														value={line.quantity}
 														disabled={busy}
-														defaultValue={line.quantity}
-														onBlur={(event) =>
-															void onQty(line.offeringId, event.target.value)
+														onChange={(quantity) => {
+															setCart((current) =>
+																current
+																	? {
+																			...current,
+																			lines: current.lines.map((row) =>
+																				row.offeringId === line.offeringId
+																					? { ...row, quantity }
+																					: row
+																			),
+																		}
+																	: current
+															);
+														}}
+														onCommit={(quantity) =>
+															void onQty(line.offeringId, quantity)
 														}
 													/>
-												</label>
+												</div>
 												<button
 													className="
 														text-sm

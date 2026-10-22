@@ -105,7 +105,6 @@ enum VendorMemberRole {
 }
 
 enum ProductOfferingRole {
-  STANDALONE
   PACK
   PIECE
 }
@@ -132,6 +131,20 @@ enum BreakFeeMode {
   PER_PARENT_OPENED
   ONCE_PER_LINE
   PRODUCT_ONCE
+}
+
+enum ProductCondition {
+  NEW
+  USED
+  REFURBISHED
+  NA
+}
+
+enum AttributeValueKind {
+  OPTION
+  SCALAR_STRING
+  SCALAR_NUMBER
+  SCALAR_BOOLEAN
 }
 
 enum CatalogImportSource {
@@ -201,9 +214,11 @@ model Vendor {
   stripeChargesEnabled       Boolean   @default(false)
   stripePayoutsEnabled       Boolean   @default(false)
   stripeOnboardingCompleteAt DateTime?
-  platformFeeBpsOverride     Int?
-  createdAt                  DateTime  @default(now())
-  updatedAt                  DateTime  @updatedAt
+  platformFeeBpsOverride             Int?
+  /// Max categories a vendor-scoped AttributeValue group may expand into.
+  maxCategoriesPerAttributeValue     Int       @default(3)
+  createdAt                          DateTime  @default(now())
+  updatedAt                          DateTime  @updatedAt
 
   members             VendorMember[]
   invites             VendorInvite[]
@@ -212,6 +227,8 @@ model Vendor {
   importJobs          CatalogImportJob[]
   offerings           ProductOffering[]
   uoms                UnitOfMeasure[]
+  attributes          Attribute[]
+  attributeValues     AttributeValue[]
   shippingProfiles    ShippingProfile[]
   placeEtMarqueOrders PlaceEtMarqueOrder[]
   checkoutShipments   CheckoutShipment[]
@@ -404,7 +421,8 @@ model CatalogCategory {
   children  CatalogCategory[] @relation("CategoryTree")
   createdAt DateTime          @default(now())
 
-  products CatalogProduct[]
+  products        CatalogProduct[]
+  attributeValues AttributeValue[]
 
   @@index([parentId])
 }
@@ -426,11 +444,43 @@ model CatalogProduct {
   inventoryFromAllocations Boolean          @default(false)
   breakFeeMode             BreakFeeMode     @default(OFF)
   breakFeeCents            Int              @default(0)
+
+  lengthNumeric            Decimal?         @db.Decimal(24, 8)
+  widthNumeric             Decimal?         @db.Decimal(24, 8)
+  heightNumeric            Decimal?         @db.Decimal(24, 8)
+  linearUnit               String?
+  weightNumeric            Decimal?         @db.Decimal(24, 8)
+  weightUnit               String?
+  packageLengthNumeric     Decimal?         @db.Decimal(24, 8)
+  packageWidthNumeric      Decimal?         @db.Decimal(24, 8)
+  packageHeightNumeric     Decimal?         @db.Decimal(24, 8)
+  packageLinearUnit        String?
+  packageWeightNumeric     Decimal?         @db.Decimal(24, 8)
+  packageWeightUnit        String?
+  volumeNumeric            Decimal?         @db.Decimal(24, 8)
+  volumeUnit               String?
+  netContentNumeric        Decimal?         @db.Decimal(24, 8)
+  netContentUnit           String?
+  piecesPerRetailUnit      Int?
+  voltageNumeric           Decimal?         @db.Decimal(24, 8)
+  wattageNumeric           Decimal?         @db.Decimal(24, 8)
+  amperageNumeric          Decimal?         @db.Decimal(24, 8)
+  frequencyHzNumeric       Decimal?         @db.Decimal(24, 8)
+  capacityNumeric          Decimal?         @db.Decimal(24, 8)
+  capacityUnit             String?
+  gtin                     String?
+  mpn                      String?
+  countryOfOrigin          String?
+  condition                ProductCondition @default(NA)
+  releaseAt                DateTime?
+  expiresAt                DateTime?
+
   createdAt                DateTime         @default(now())
   updatedAt                DateTime         @updatedAt
 
-  attributes ProductAttribute[]
-  offerings  ProductOffering[]
+  attributeValues ProductAttributeValue[]
+  scalarValues    ProductScalarValue[]
+  offerings       ProductOffering[]
 
   @@unique([vendorId, slug])
   @@index([categoryId])
@@ -438,17 +488,86 @@ model CatalogProduct {
   @@index([active])
   @@index([title])
   @@index([tags])
+  @@index([weightNumeric])
+  @@index([voltageNumeric])
+  @@index([packageWeightNumeric])
 }
 
-model ProductAttribute {
-  id        String         @id @default(uuid())
-  productId String
-  product   CatalogProduct @relation(fields: [productId], references: [id], onDelete: Cascade)
-  key       String
-  value     String
-  sortOrder Int            @default(0)
+/// Determinable attribute (Color, Size). vendorId null = global / admin-defined.
+model Attribute {
+  id          String             @id @default(uuid())
+  name        String
+  vendorId    String?
+  vendor      Vendor?            @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  valueKind   AttributeValueKind @default(OPTION)
+  unit        String?
+  minNumeric  Decimal?           @db.Decimal(24, 8)
+  maxNumeric  Decimal?           @db.Decimal(24, 8)
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+  values      AttributeValue[]
+  scalarValues ProductScalarValue[]
 
-  @@unique([productId, key])
+  @@index([vendorId])
+  @@index([name])
+}
+
+/// Determinate option under an Attribute (Green, Large). Optional parentId rolls up
+/// vendor-specific values (algae) to a global value (green) for faceting later.
+model AttributeValue {
+  id          String           @id @default(uuid())
+  attributeId String
+  attribute   Attribute        @relation(fields: [attributeId], references: [id], onDelete: Cascade)
+  value       String
+  vendorId    String?
+  vendor      Vendor?          @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  parentId    String?
+  parent      AttributeValue?  @relation("ValueHierarchy", fields: [parentId], references: [id], onDelete: SetNull)
+  children    AttributeValue[] @relation("ValueHierarchy")
+  categoryId  String?
+  category    CatalogCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  /// Shared by every category expansion of one logical vendor value.
+  groupId     String?
+  sortOrder   Int              @default(0)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  products    ProductAttributeValue[]
+
+  @@index([attributeId])
+  @@index([vendorId])
+  @@index([parentId])
+  @@index([attributeId, value])
+  @@index([vendorId, categoryId])
+  @@index([groupId])
+  @@index([attributeId, parentId])
+}
+
+model ProductAttributeValue {
+  id               String         @id @default(uuid())
+  productId        String
+  product          CatalogProduct @relation(fields: [productId], references: [id], onDelete: Cascade)
+  attributeValueId String
+  attributeValue   AttributeValue @relation(fields: [attributeValueId], references: [id], onDelete: Cascade)
+  sortOrder        Int            @default(0)
+
+  @@unique([productId, attributeValueId])
+  @@index([productId])
+  @@index([attributeValueId])
+}
+
+model ProductScalarValue {
+  id            String         @id @default(uuid())
+  productId     String
+  product       CatalogProduct @relation(fields: [productId], references: [id], onDelete: Cascade)
+  attributeId   String
+  attribute     Attribute      @relation(fields: [attributeId], references: [id], onDelete: Cascade)
+  stringValue   String?
+  numericValue  Decimal?       @db.Decimal(24, 8)
+  booleanValue  Boolean?
+
+  @@unique([productId, attributeId])
+  @@index([attributeId, numericValue])
+  @@index([attributeId, stringValue])
   @@index([productId])
 }
 
@@ -464,7 +583,7 @@ model ProductOffering {
   offeringKey          String              @default("default")
   uomId                String
   uom                  UnitOfMeasure       @relation(fields: [uomId], references: [id])
-  role                 ProductOfferingRole @default(STANDALONE)
+  role                 ProductOfferingRole @default(PIECE)
   priceCents           Int
   currency             String              @default("USD")
   /// On-hand count in this offering's UOM (e.g. number of spools). Often 0 for PIECE rows.

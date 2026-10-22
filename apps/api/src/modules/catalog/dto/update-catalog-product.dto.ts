@@ -13,20 +13,11 @@ import {
 	MinLength,
 	ValidateNested,
 } from 'class-validator';
-
-class ProductAttributePatchDto {
-	@IsString()
-	@MaxLength(120)
-	key!: string;
-
-	@IsString()
-	@MaxLength(500)
-	value!: string;
-
-	@IsOptional()
-	@IsInt()
-	sortOrder?: number;
-}
+import {
+	ProductMeasureFieldsDto,
+	ProductScalarValueInputDto,
+} from './product-measure.dto';
+import { QtyCompoundDto } from './qty-compound.dto';
 
 class ProductOfferingPatchDto {
 	@IsUUID()
@@ -52,6 +43,11 @@ class ProductOfferingPatchDto {
 	qtyOnHand?: string;
 
 	@IsOptional()
+	@ValidateNested()
+	@Type(() => QtyCompoundDto)
+	qtyCompound?: QtyCompoundDto;
+
+	@IsOptional()
 	@IsBoolean()
 	tracksOwnQty?: boolean;
 
@@ -68,7 +64,7 @@ class ProductOfferingPatchDto {
 	inheritQtyToChildren?: boolean;
 }
 
-export class UpdateCatalogProductDto {
+export class UpdateCatalogProductDto extends ProductMeasureFieldsDto {
 	@IsOptional()
 	@IsString()
 	@MinLength(2)
@@ -102,10 +98,15 @@ export class UpdateCatalogProductDto {
 	breakFeeCents?: number;
 
 	@IsOptional()
-	@ValidateNested({ each: true })
-	@Type(() => ProductAttributePatchDto)
 	@IsArray()
-	attributes?: ProductAttributePatchDto[];
+	@IsUUID('4', { each: true })
+	attributeValueIds?: string[];
+
+	@IsOptional()
+	@ValidateNested({ each: true })
+	@Type(() => ProductScalarValueInputDto)
+	@IsArray()
+	scalarValues?: ProductScalarValueInputDto[];
 
 	@IsOptional()
 	@IsArray()

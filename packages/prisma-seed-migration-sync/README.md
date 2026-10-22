@@ -105,9 +105,13 @@ npx prisma-seed-migration-sync sync --dir prisma/seed-data
 npx prisma-seed-migration-sync validate --dir prisma/seed-data
 ```
 
-`applySeedDataIfNeeded({ prisma, seedDir })` belongs in `prisma/seed.ts` or
-app boot. It upserts opted-in JSON rows into the database. It does **not**
-replay migrations onto the files.
+`applySeedDataIfNeeded({ prisma, seedDir, store })` belongs in `prisma/seed.ts`
+or app boot. It upserts opted-in JSON rows into the database. It does **not**
+replay migrations onto the files, and it does **not** create database tables.
+
+To skip unchanged upserts on app boot, pass a `store` that keeps the pack
+checksum **outside** Postgres (Redis, for example). A side table that Prisma
+Migrate does not own shows up as drift on every `migrate dev`.
 
 ## Scope
 

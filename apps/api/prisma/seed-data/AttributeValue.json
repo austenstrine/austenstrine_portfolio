@@ -1,0 +1,370 @@
+{
+  "$prismaJsonSeed": {
+    "format": "table",
+    "model": "AttributeValue",
+    "identityField": "id",
+    "applyOrder": 30
+  },
+  "records": [
+    {
+      "id": "d3ab8d14-1119-516f-b666-4351857add82",
+      "attributeId": "d68d54a3-bd16-590c-ad34-bff43d725102",
+      "value": "Green",
+      "vendorId": null,
+      "parentId": null,
+      "sortOrder": 0,
+      "categoryId": null,
+      "groupId": null
+    },
+    {
+      "id": "b29885fc-fb4c-5636-b49b-f3033b405469",
+      "attributeId": "d68d54a3-bd16-590c-ad34-bff43d725102",
+      "value": "Red",
+      "vendorId": null,
+      "parentId": null,
+      "sortOrder": 1,
+      "categoryId": null,
+      "groupId": null
+    },
+    {
+      "id": "8805f8d5-4a1f-567a-bae9-57d54ce40b9a",
+      "attributeId": "d68d54a3-bd16-590c-ad34-bff43d725102",
+      "value": "Blue",
+      "vendorId": null,
+      "parentId": null,
+      "sortOrder": 2,
+      "categoryId": null,
+      "groupId": null
+    },
+    {
+      "id": "ba058c5b-202e-510a-8b96-3d80722bafef",
+      "attributeId": "d68d54a3-bd16-590c-ad34-bff43d725102",
+      "value": "Black",
+      "vendorId": null,
+      "parentId": null,
+      "sortOrder": 3,
+      "categoryId": null,
+      "groupId": null
+    },
+    {
+      "id": "97a240cf-f9a0-58f4-8111-4c26e5d09bdb",
+      "attributeId": "d68d54a3-bd16-590c-ad34-bff43d725102",
+      "value": "White",
+      "vendorId": null,
+      "parentId": null,
+      "sortOrder": 4,
+      "categoryId": null,
+      "groupId": null
+    },
+    {
+      "id": "062960ae-f908-5d00-bb3e-a1d2865e293f",
+      "attributeId": "d68d54a3-bd16-590c-ad34-bff43d725102",
+      "value": "Yellow",
+      "vendorId": null,
+      "parentId": null,
+      "sortOrder": 5,
+      "categoryId": null,
+      "groupId": null
+    },
+    {
+      "id": "d5b80815-4fad-5bda-a6fe-e5f0a99ff955",
+      "attributeId": "d68d54a3-bd16-590c-ad34-bff43d725102",
+      "value": "Brown",
+      "vendorId": null,
+      "parentId": null,
+      "sortOrder": 6,
+      "categoryId": null,
+      "groupId": null
+    },
+    {
+      "id": "94606c78-2bd0-5b2a-94a4-bd14a5ba11ff",
+      "attributeId": "d68d54a3-bd16-590c-ad34-bff43d725102",
+      "value": "Gray",
+      "vendorId": null,
+      "parentId": null,
+      "sortOrder": 7,
+      "categoryId": null,
+      "groupId": null
+    },
+    {
+      "id": "6cf15320-8b36-54b0-9350-49ecb18c9f39",
+      "attributeId": "d68d54a3-bd16-590c-ad34-bff43d725102",
+      "value": "algae",
+      "vendorId": "9d2b9484-4cae-5f72-9290-7c14cb148da1",
+      "parentId": "d3ab8d14-1119-516f-b666-4351857add82",
+      "sortOrder": 8,
+      "categoryId": null,
+      "groupId": null
+    },
+    {
+      "id": "7cadc863-d7a7-5e01-a8c8-a060b5b9458e",
+      "attributeId": "d68d54a3-bd16-590c-ad34-bff43d725102",
+      "value": "pine",
+      "vendorId": "9d2b9484-4cae-5f72-9290-7c14cb148da1",
+      "parentId": "d3ab8d14-1119-516f-b666-4351857add82",
+      "sortOrder": 9,
+      "categoryId": null,
+      "groupId": null
+    },
+    {
+      "id": "6f202ac7-46c9-5e5f-931a-7c711a3e1c43",
+      "attributeId": "d68d54a3-bd16-590c-ad34-bff43d725102",
+      "value": "verdigris",
+      "vendorId": "9d2b9484-4cae-5f72-9290-7c14cb148da1",
+      "parentId": "d3ab8d14-1119-516f-b666-4351857add82",
+      "sortOrder": 10,
+      "categoryId": null,
+      "groupId": null
+    },
+    {
+      "id": "eaaf3c31-e2bc-5d64-b4ae-206db7691529",
+      "attributeId": "979c3004-a365-5bde-af8a-e271697ff13f",
+      "value": "XS",
+      "vendorId": null,
+      "parentId": null,
+      "sortOrder": 0,
+      "categoryId": null,
+      "groupId": null
+    },
+    {
+      "id": "9068eb18-10d2-52af-b55d-b2ee689771bf",
+      "attributeId": "979c3004-a365-5bde-af8a-e271697ff13f",
+      "value": "S",
+      "vendorId": null,
+      "parentId": null,
+      "sortOrder": 1,
+      "categoryId": null,
+      "groupId": null
+    },
+    {
+      "id": "5de561f8-25e2-5503-a930-7f49a3b5897b",
+      "attributeId": "979c3004-a365-5bde-af8a-e271697ff13f",
+      "value": "M",
+      "vendorId": null,
+      "parentId": null,
+      "sortOrder": 2,
+      "categoryId": null,
+      "groupId": null
+    },
+    {
+      "id": "78b55618-4f05-5c2d-83ce-518e3d0416fa",
+      "attributeId": "979c3004-a365-5bde-af8a-e271697ff13f",
+      "value": "L",
+      "vendorId": null,
+      "parentId": null,
+      "sortOrder": 3,
+      "categoryId": null,
+      "groupId": null
+    },
+    {
+      "id": "203bb30a-0fef-524b-9ba0-d1df9d5a5fb4",
+      "attributeId": "979c3004-a365-5bde-af8a-e271697ff13f",
+      "value": "XL",
+      "vendorId": null,
+      "parentId": null,
+      "sortOrder": 4,
+      "categoryId": null,
+      "groupId": null
+    },
+    {
+      "id": "a87ab903-9d88-5697-a848-4c594a0d84af",
+      "attributeId": "6831d1de-6f04-50fc-af21-2720ca5986b7",
+      "value": "Cotton",
+      "vendorId": null,
+      "parentId": null,
+      "sortOrder": 0,
+      "categoryId": null,
+      "groupId": null
+    },
+    {
+      "id": "f5705c9d-b519-571d-9d5a-42779ff9119f",
+      "attributeId": "6831d1de-6f04-50fc-af21-2720ca5986b7",
+      "value": "Leather",
+      "vendorId": null,
+      "parentId": null,
+      "sortOrder": 1,
+      "categoryId": null,
+      "groupId": null
+    },
+    {
+      "id": "4ca44203-5e94-55ab-a94a-a4a657a01942",
+      "attributeId": "6831d1de-6f04-50fc-af21-2720ca5986b7",
+      "value": "Steel",
+      "vendorId": null,
+      "parentId": null,
+      "sortOrder": 2,
+      "categoryId": null,
+      "groupId": null
+    },
+    {
+      "id": "4e934ac9-7c9d-5828-8232-5641a4a907e4",
+      "attributeId": "6831d1de-6f04-50fc-af21-2720ca5986b7",
+      "value": "Plastic",
+      "vendorId": null,
+      "parentId": null,
+      "sortOrder": 3,
+      "categoryId": null,
+      "groupId": null
+    },
+    {
+      "id": "436587be-6d53-5ab8-85ef-a3e568d44255",
+      "attributeId": "6831d1de-6f04-50fc-af21-2720ca5986b7",
+      "value": "Wood",
+      "vendorId": null,
+      "parentId": null,
+      "sortOrder": 4,
+      "categoryId": null,
+      "groupId": null
+    },
+    {
+      "id": "200060d3-defb-552b-936a-0a8d18a581b7",
+      "attributeId": "6831d1de-6f04-50fc-af21-2720ca5986b7",
+      "value": "Copper",
+      "vendorId": null,
+      "parentId": null,
+      "sortOrder": 5,
+      "categoryId": null,
+      "groupId": null
+    },
+    {
+      "id": "a81850f3-7f9a-5e0d-8a68-9eb683b3d2a0",
+      "attributeId": "ae962b0a-e0bc-5677-ab73-d9e1fcf6a337",
+      "value": "Solid",
+      "vendorId": null,
+      "parentId": null,
+      "sortOrder": 0,
+      "categoryId": null,
+      "groupId": null
+    },
+    {
+      "id": "5f595aff-bc17-5336-bfcc-c56ba817a7ff",
+      "attributeId": "ae962b0a-e0bc-5677-ab73-d9e1fcf6a337",
+      "value": "Striped",
+      "vendorId": null,
+      "parentId": null,
+      "sortOrder": 1,
+      "categoryId": null,
+      "groupId": null
+    },
+    {
+      "id": "c6ff0fec-e603-504e-94dc-00c407615aa1",
+      "attributeId": "ae962b0a-e0bc-5677-ab73-d9e1fcf6a337",
+      "value": "Plaid",
+      "vendorId": null,
+      "parentId": null,
+      "sortOrder": 2,
+      "categoryId": null,
+      "groupId": null
+    },
+    {
+      "id": "a0d61deb-8c9d-5a9f-ab6d-a78dc83b696d",
+      "attributeId": "606d1f3a-2e3c-5829-9f7b-70bd5cb308bb",
+      "value": "10 AWG",
+      "vendorId": null,
+      "parentId": null,
+      "sortOrder": 0,
+      "categoryId": null,
+      "groupId": null
+    },
+    {
+      "id": "739d6092-877a-5b66-aa93-4780b0147d03",
+      "attributeId": "606d1f3a-2e3c-5829-9f7b-70bd5cb308bb",
+      "value": "12 AWG",
+      "vendorId": null,
+      "parentId": null,
+      "sortOrder": 1,
+      "categoryId": null,
+      "groupId": null
+    },
+    {
+      "id": "a81eeca4-0b18-5b4f-a516-d9eac2773acd",
+      "attributeId": "606d1f3a-2e3c-5829-9f7b-70bd5cb308bb",
+      "value": "14 AWG",
+      "vendorId": null,
+      "parentId": null,
+      "sortOrder": 2,
+      "categoryId": null,
+      "groupId": null
+    },
+    {
+      "id": "c8a9eff1-88ec-5290-abcd-2f5ae5bc2a9e",
+      "attributeId": "606d1f3a-2e3c-5829-9f7b-70bd5cb308bb",
+      "value": "16 AWG",
+      "vendorId": null,
+      "parentId": null,
+      "sortOrder": 3,
+      "categoryId": null,
+      "groupId": null
+    },
+    {
+      "id": "c7a09d7a-ad3c-56aa-af14-174a9e60ec76",
+      "attributeId": "93c8e568-9054-5947-80e8-88c87fa25337",
+      "value": "Copper",
+      "vendorId": null,
+      "parentId": null,
+      "sortOrder": 0,
+      "categoryId": null,
+      "groupId": null
+    },
+    {
+      "id": "190686ba-67d3-5290-80e9-1101c1340891",
+      "attributeId": "93c8e568-9054-5947-80e8-88c87fa25337",
+      "value": "Aluminum",
+      "vendorId": null,
+      "parentId": null,
+      "sortOrder": 1,
+      "categoryId": null,
+      "groupId": null
+    },
+    {
+      "id": "107c5b5e-b10c-57e5-b95c-27294516769e",
+      "attributeId": "e9170d13-13c7-5ec8-a4a6-d20c0aba7a59",
+      "value": "THHN",
+      "vendorId": null,
+      "parentId": null,
+      "sortOrder": 0,
+      "categoryId": null,
+      "groupId": null
+    },
+    {
+      "id": "aeffb4a9-ef17-531d-a76a-c28f7ed801d5",
+      "attributeId": "e9170d13-13c7-5ec8-a4a6-d20c0aba7a59",
+      "value": "THWN",
+      "vendorId": null,
+      "parentId": null,
+      "sortOrder": 1,
+      "categoryId": null,
+      "groupId": null
+    },
+    {
+      "id": "4f4dbeb5-d3b9-52ff-b5b0-cb3dd30f189c",
+      "attributeId": "e9170d13-13c7-5ec8-a4a6-d20c0aba7a59",
+      "value": "XHHW",
+      "vendorId": null,
+      "parentId": null,
+      "sortOrder": 2,
+      "categoryId": null,
+      "groupId": null
+    },
+    {
+      "id": "1f8f6964-e234-5171-8aa7-14f39ba77e95",
+      "attributeId": "04cadfc2-0775-5cbf-9788-e8ce2a7b4eda",
+      "value": "Matte",
+      "vendorId": "9d2b9484-4cae-5f72-9290-7c14cb148da1",
+      "parentId": null,
+      "sortOrder": 0,
+      "categoryId": null,
+      "groupId": null
+    },
+    {
+      "id": "ae92036f-2823-56fd-8d82-83aa58ca7270",
+      "attributeId": "04cadfc2-0775-5cbf-9788-e8ce2a7b4eda",
+      "value": "Gloss",
+      "vendorId": "9d2b9484-4cae-5f72-9290-7c14cb148da1",
+      "parentId": null,
+      "sortOrder": 1,
+      "categoryId": null,
+      "groupId": null
+    }
+  ]
+}

@@ -1,15 +1,31 @@
 import {
 	CATALOG_WORKSPACE_LABELS,
-	type CatalogWorkspace,
+	type ProductEditorIntent,
+	type ProductEditorSurface,
 } from '../../lib/catalog-product-form';
 
 type CatalogWorkspaceSwitcherProps = {
-	active: CatalogWorkspace;
+	active: ProductEditorSurface;
+	intent?: ProductEditorIntent;
+	productId?: string;
 };
 
-export function CatalogWorkspaceSwitcher({ active }: CatalogWorkspaceSwitcherProps) {
-	const other: CatalogWorkspace = active === 'standard' ? 'inventory' : 'standard';
-	const href = other === 'standard' ? '/place-et-marque/products/new' : '/place-et-marque/products/configure';
+export function CatalogWorkspaceSwitcher({
+	active,
+	intent = 'create',
+	productId,
+}: CatalogWorkspaceSwitcherProps) {
+	const other: ProductEditorSurface = active === 'standard' ? 'advanced' : 'standard';
+
+	let href = other === 'standard'
+		? '/place-et-marque/products/new'
+		: '/place-et-marque/products/configure';
+
+	if(intent === 'edit' && productId) {
+		href = other === 'standard'
+			? `/place-et-marque/products/${productId}/edit`
+			: `/place-et-marque/products/${productId}/configure`;
+	}
 
 	return (
 		<div
@@ -66,7 +82,9 @@ export function CatalogWorkspaceSwitcher({ active }: CatalogWorkspaceSwitcherPro
 				"
 				href={href}
 			>
-				Switch to {CATALOG_WORKSPACE_LABELS[other].short}
+				Switch to
+				{' '}
+				{CATALOG_WORKSPACE_LABELS[other].short}
 			</a>
 		</div>
 	);

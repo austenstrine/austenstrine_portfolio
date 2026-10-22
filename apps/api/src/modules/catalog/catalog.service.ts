@@ -8,7 +8,10 @@ import { Prisma, ProductOfferingRole } from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/library';
 import { MailService } from '../../infra/mail/mail.service';
 import { PrismaService } from '../../infra/prisma/prisma.service';
+import { AttributeService } from './attributes/attribute.service';
+import { measuresToPrisma, serializeMeasures } from './attributes/product-measures';
 import { InventoryService } from './inventory/inventory.service';
+import { CatalogSearchService } from './search/catalog-search.service';
 import { VendorAccessService } from './vendor-access.service';
 import { CreateBrokenPackDto } from './dto/create-broken-pack.dto';
 import { CreateCatalogProductDto } from './dto/create-catalog-product.dto';
@@ -18,11 +21,23 @@ import { RequestCategoryDto } from './dto/request-category.dto';
 import { TrimInventoryDto } from './dto/trim-inventory.dto';
 import { UpdateCatalogProductDto } from './dto/update-catalog-product.dto';
 import { UomMergeService } from './uom-merge.service';
+import { resolveQty } from './uom-qty';
+import type { QtyCompoundDto } from './dto/qty-compound.dto';
 
 const productInclude = {
 	vendor: true,
 	category: true,
-	attributes: { orderBy: { sortOrder: 'asc' as const } },
+	attributeValues: {
+		orderBy: { sortOrder: 'asc' as const },
+		include: {
+			attributeValue: {
+				include: { attribute: true, parent: true },
+			},
+		},
+	},
+	scalarValues: {
+		include: { attribute: true },
+	},
 	offerings: {
 		include: {
 			uom: true,
@@ -44,6 +59,8 @@ export class CatalogService {
 		private readonly vendorAccess: VendorAccessService,
 		private readonly mail: MailService,
 		private readonly uomMerges: UomMergeService,
+		private readonly attributes: AttributeService,
+		private readonly catalogSearch: CatalogSearchService,
 	) {}
 
 	listUoms(vendorId?: string) {
@@ -252,37 +269,16 @@ export class CatalogService {
 		categorySlug?: string;
 		vendorSlug?: string;
 		limit?: number;
+		rollupValueIds?: string[];
+		omitValueIds?: string[];
 	}) {
-		const where: Prisma.CatalogProductWhereInput = { active: true };
-
-		if(query.q) {
-			where.OR = [
-				{ title: { contains: query.q, mode: 'insensitive' } },
-				{ description: { contains: query.q, mode: 'insensitive' } },
-				{ offerings: { some: { sku: { contains: query.q, mode: 'insensitive' } } } },
-			];
-		}
-
-		if(query.categorySlug) {
-			where.category = { slug: query.categorySlug };
-		}
-
-		if(query.vendorSlug) {
-			where.vendor = { slug: query.vendorSlug };
-		}
-
-		const products = await this.prisma.catalogProduct.findMany({
-			where,
-			include: {
-				vendor: true,
-				category: true,
-				offerings: { include: { uom: true } },
-			},
-			orderBy: { title: 'asc' },
-			take: query.limit ?? 50,
-		});
-
-		return products.map((product) => this.toSummary(product));
+		const result = await this.catalogSearch.search(query);
+		return {
+			items: result.items.map((product) => this.toSummary(product)),
+			appliedFilters: result.appliedFilters,
+			facets: result.facets,
+			source: result.source,
+		};
 	}
 
 	async getProduct(vendorSlug: string, productSlug: string, viewerUserId?: string) {
@@ -317,6 +313,11 @@ export class CatalogService {
 		await this.assertOfferingIdentitiesUniqueForVendor(dto.vendorId, offeringIdentities);
 
 		const tags = this.normalizeTags(dto.tags) ?? [];
+		const uomById = await this.uomsById(dto.offerings.map((row) => row.uomId));
+		const attributeValueIds = await this.attributes.resolveOptionValueIds(
+			dto.categoryId ?? null,
+			dto.attributeValueIds ?? [],
+		);
 
 		const product = await this.prisma.catalogProduct.create({
 			data: {
@@ -329,11 +330,11 @@ export class CatalogService {
 				inventoryFromAllocations: dto.inventoryFromAllocations ?? false,
 				breakFeeMode: dto.breakFeeMode,
 				breakFeeCents: dto.breakFeeCents,
-				attributes: {
-					create: dto.attributes?.map((row, index) => ({
-						key: row.key,
-						value: row.value,
-						sortOrder: row.sortOrder ?? index,
+				...measuresToPrisma(dto),
+				attributeValues: {
+					create: attributeValueIds.map((attributeValueId, index) => ({
+						attributeValueId,
+						sortOrder: index,
 					})),
 				},
 				offerings: {
@@ -347,7 +348,11 @@ export class CatalogService {
 						role: offering.role,
 						priceCents: offering.priceCents,
 						currency: offering.currency ?? 'USD',
-						qtyOnHand: offering.qtyOnHand ?? 0,
+						qtyOnHand: this.parseQty(
+							uomById.get(offering.uomId)?.code ?? '',
+							offering.qtyOnHand,
+							offering.qtyCompound,
+						),
 						tracksOwnQty: offering.tracksOwnQty ?? true,
 						minUnbrokenQty:
 							offering.minUnbrokenQty !== undefined
@@ -367,7 +372,11 @@ export class CatalogService {
 		const keyToOfferingId = this.buildOfferingKeyMap(product.offerings, dto.offerings);
 		await this.createContainments(product, dto, keyToOfferingId);
 		await this.applyLegacyInventoryFromAllocations(product.id, dto);
+		if(dto.scalarValues) {
+			await this.attributes.replaceScalarValues(product.id, dto.scalarValues);
+		}
 		await this.inventory.refreshProductAvailability(product.id);
+		await this.catalogSearch.indexProduct(product.id);
 
 		return this.getProductById(product.id, userId);
 	}
@@ -376,6 +385,14 @@ export class CatalogService {
 		await this.vendorAccess.assertCanEditProduct(userId, productId);
 
 		const tags = this.normalizeTags(dto.tags);
+
+		const existing = await this.prisma.catalogProduct.findUnique({
+			where: { id: productId },
+			select: { categoryId: true },
+		});
+		const categoryId = dto.categoryId === undefined
+			? existing?.categoryId ?? null
+			: dto.categoryId;
 
 		await this.prisma.catalogProduct.update({
 			where: { id: productId },
@@ -387,44 +404,52 @@ export class CatalogService {
 				categoryId: dto.categoryId,
 				breakFeeMode: dto.breakFeeMode,
 				breakFeeCents: dto.breakFeeCents,
+				...measuresToPrisma(dto),
 				...(tags !== undefined ? { tags } : {}),
 			},
 		});
 
-		if(dto.attributes) {
-			await this.prisma.$transaction(
-				dto.attributes.map((row, index) =>
-					this.prisma.productAttribute.upsert({
-						where: {
-							productId_key: {
-								productId,
-								key: row.key,
-							},
-						},
-						create: {
-							productId,
-							key: row.key,
-							value: row.value,
-							sortOrder: row.sortOrder ?? index,
-						},
-						update: {
-							value: row.value,
-							sortOrder: row.sortOrder ?? index,
-						},
-					}),
-				),
+		if(dto.attributeValueIds) {
+			const attributeValueIds = await this.attributes.resolveOptionValueIds(
+				categoryId,
+				dto.attributeValueIds,
 			);
+			await this.prisma.productAttributeValue.deleteMany({ where: { productId } });
+			if(attributeValueIds.length > 0) {
+				await this.prisma.productAttributeValue.createMany({
+					data: attributeValueIds.map((attributeValueId, index) => ({
+						productId,
+						attributeValueId,
+						sortOrder: index,
+					})),
+				});
+			}
+		}
+
+		if(dto.scalarValues) {
+			await this.attributes.replaceScalarValues(productId, dto.scalarValues);
 		}
 
 		if(dto.offerings) {
 			for(const offering of dto.offerings) {
+				const existing = await this.prisma.productOffering.findUnique({
+					where: { id: offering.id },
+					include: { uom: true },
+				});
 				await this.prisma.productOffering.update({
 					where: { id: offering.id },
 					data: {
 						sku: offering.sku,
 						offeringKey: offering.offeringKey,
 						priceCents: offering.priceCents,
-						qtyOnHand: offering.qtyOnHand,
+						qtyOnHand:
+							offering.qtyOnHand !== undefined || offering.qtyCompound
+								? this.parseQty(
+										existing?.uom.code ?? '',
+										offering.qtyOnHand,
+										offering.qtyCompound,
+									)
+								: undefined,
 						tracksOwnQty: offering.tracksOwnQty,
 						minUnbrokenQty:
 							offering.minUnbrokenQty !== undefined
@@ -441,6 +466,7 @@ export class CatalogService {
 		}
 
 		await this.inventory.refreshProductAvailability(productId);
+		await this.catalogSearch.indexProduct(productId);
 
 		return this.getProductById(productId, userId);
 	}
@@ -508,6 +534,14 @@ export class CatalogService {
 			leewayRatio: dto.leewayRatio ? new Decimal(dto.leewayRatio) : undefined,
 			dryRun: dto.dryRun,
 		});
+	}
+
+	async getProductByProductId(productId: string, viewerUserId?: string) {
+		return this.getProductById(productId, viewerUserId);
+	}
+
+	listAttributes(vendorId?: string) {
+		return this.attributes.listAttributes(vendorId);
 	}
 
 	private async getProductById(productId: string, viewerUserId?: string) {
@@ -614,11 +648,16 @@ export class CatalogService {
 
 			await this.assertContainmentAllowed(parentOfferingId, childOfferingId);
 
+			const child = product.offerings.find((offering) => offering.id === childOfferingId);
 			await this.prisma.offeringContainment.create({
 				data: {
 					parentOfferingId,
 					childOfferingId,
-					childQtyPerParent: new Decimal(row.childQtyPerParent),
+					childQtyPerParent: this.parseQty(
+						child?.uom.code ?? '',
+						row.childQtyPerParent,
+						row.childQtyCompound,
+					),
 					breakFeeCents: row.breakFeeCents,
 				},
 			});
@@ -803,7 +842,23 @@ export class CatalogService {
 			inventoryFromAllocations: product.inventoryFromAllocations,
 			breakFeeMode: product.breakFeeMode,
 			breakFeeCents: product.breakFeeCents,
-			attributes: product.attributes,
+			...serializeMeasures(product as unknown as Record<string, unknown>),
+			attributes: product.attributeValues.map((row) => ({
+				id: row.attributeValue.id,
+				attributeId: row.attributeValue.attributeId,
+				attributeName: row.attributeValue.attribute.name,
+				value: row.attributeValue.value,
+				parentValue: row.attributeValue.parent?.value ?? null,
+				sortOrder: row.sortOrder,
+			})),
+			scalarValues: product.scalarValues.map((row) => ({
+				attributeId: row.attributeId,
+				attributeName: row.attribute.name,
+				valueKind: row.attribute.valueKind,
+				stringValue: row.stringValue,
+				numericValue: row.numericValue?.toString() ?? null,
+				booleanValue: row.booleanValue,
+			})),
 			offerings: product.offerings.map((offering) => ({
 				id: offering.id,
 				sku: offering.sku,
@@ -840,5 +895,32 @@ export class CatalogService {
 				})),
 			})),
 		};
+	}
+
+	private async uomsById(ids: string[]): Promise<Map<string, { id: string; code: string }>> {
+		const unique = [...new Set(ids.filter(Boolean))];
+		if(unique.length === 0) {
+			return new Map();
+		}
+		const rows = await this.prisma.unitOfMeasure.findMany({
+			where: { id: { in: unique } },
+			select: { id: true, code: true },
+		});
+		return new Map(rows.map((row) => [row.id, row]));
+	}
+
+	private parseQty(
+		uomCode: string,
+		qty?: string | null,
+		compound?: QtyCompoundDto | null,
+	): Decimal {
+		try {
+			return new Decimal(resolveQty(uomCode, qty, compound));
+		}
+		catch(error) {
+			throw new BadRequestException(
+				error instanceof Error ? error.message : 'Invalid quantity.',
+			);
+		}
 	}
 }

@@ -27,13 +27,13 @@ export const showcasePortals: ShowcasePortal[] = [
 	{
 		id: 'product-create',
 		title: 'Standard product listing',
-		summary: 'Create single-unit or pack/piece offerings with shared inventory.',
+		summary: 'Create a piece listing; add packs, pack chains, and variants when needed.',
 		href: '/place-et-marque/products/new',
 	},
 	{
 		id: 'inventory-configuration',
-		title: 'Inventory configuration',
-		summary: 'Nested pack chains, break floors and ceilings, qty inheritance, and break fees.',
+		title: 'Advanced product',
+		summary: 'Pack chains, break floors and ceilings, qty inheritance, break fees, and variants.',
 		href: '/place-et-marque/products/configure',
 	},
 	{

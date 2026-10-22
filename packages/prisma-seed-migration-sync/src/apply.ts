@@ -9,33 +9,52 @@ import {
 	readConfig,
 	type ListedSeedFile,
 } from './files';
-import { readLedger, writeLedger } from './ledger';
 import { flattenTree } from './tree';
 import type { ApplyOptions, ApplyResult, PrismaLike, SeedFile } from './types';
 
+export function seedPackChecksum(seedDir: string): { pack: string; checksum: string } {
+	const config = readConfig(seedDir);
+	const listed = listSeedFiles(seedDir, config).filter((file) => file.maintain);
+	return {
+		pack: config.pack,
+		checksum: seedChecksum(seedDir, listed),
+	};
+}
+
 export async function applySeedDataIfNeeded(options: ApplyOptions): Promise<ApplyResult> {
-	return applySeedData(options);
+	const { pack, checksum } = seedPackChecksum(options.seedDir);
+	if(!options.force && options.store) {
+		const existing = await options.store.read(pack);
+		if(existing === checksum) {
+			return {
+				skipped: true,
+				pack,
+				upserted: 0,
+			};
+		}
+	}
+
+	const applied = await applySeedData(options);
+	await options.store?.write(pack, checksum);
+	return applied;
 }
 
 export async function applySeedData(options: ApplyOptions): Promise<ApplyResult> {
 	const config = readConfig(options.seedDir);
 	const listed = listSeedFiles(options.seedDir, config).filter((file) => file.maintain);
-	const checksum = seedChecksum(options.seedDir, listed);
-	const existing = await readLedger(options.prisma, config.pack);
-
-	if(existing?.checksum === checksum && !options.force) {
-		return {
-			skipped: true,
-			pack: config.pack,
-			upserted: 0,
-		};
-	}
-
 	const schema = await loadSchema(resolve(options.seedDir, config.schema));
 	const omit = new Set(config.omitFields);
 	let upserted = 0;
+	const ordered = [...listed].sort((left, right) => {
+		const leftOrder = left.file.$prismaJsonSeed.applyOrder ?? 100;
+		const rightOrder = right.file.$prismaJsonSeed.applyOrder ?? 100;
+		if(leftOrder !== rightOrder) {
+			return leftOrder - rightOrder;
+		}
+		return left.filename.localeCompare(right.filename);
+	});
 
-	for(const item of listed) {
+	for(const item of ordered) {
 		const modelName = item.file.$prismaJsonSeed.model;
 		if(!modelName) {
 			continue;
@@ -48,8 +67,6 @@ export async function applySeedData(options: ApplyOptions): Promise<ApplyResult>
 
 		upserted += await applyModel(options.prisma, model, item.file, omit);
 	}
-
-	await writeLedger(options.prisma, config.pack, checksum);
 
 	return {
 		skipped: false,
@@ -70,7 +87,8 @@ async function applyModel(
 
 	const header = file.$prismaJsonSeed;
 	const identity = identityField(model, header.identityField);
-	if(!identity || omit.has(identity) || !canUpsertBy(model, identity)) {
+	const persistId = identity === 'id';
+	if(!identity || (omit.has(identity) && !persistId) || !canUpsertBy(model, identity)) {
 		return 0;
 	}
 
@@ -98,7 +116,10 @@ async function applyModel(
 		const data: Record<string, unknown> = {};
 
 		for(const field of scalarFields) {
-			if(omit.has(field.name) || field.isId) {
+			if(omit.has(field.name) && !(persistId && field.isId)) {
+				continue;
+			}
+			if(field.isId && !persistId) {
 				continue;
 			}
 			if(field.name in record) {
@@ -109,7 +130,13 @@ async function applyModel(
 		for(const relation of objectFields) {
 			const value = record[relation];
 			if(value && typeof value === 'object' && !Array.isArray(value)) {
-				data[relation] = { connect: value };
+				data[relation] = {
+					connect: await resolveConnect(
+						prisma,
+						relation,
+						value as Record<string, unknown>,
+					),
+				};
 			}
 		}
 
@@ -141,6 +168,26 @@ function canUpsertBy(model: ModelInfo, identity: string): boolean {
 
 function clientKey(model: string): string {
 	return model.charAt(0).toLowerCase() + model.slice(1);
+}
+
+async function resolveConnect(
+	prisma: ApplyOptions['prisma'],
+	relation: string,
+	value: Record<string, unknown>,
+): Promise<Record<string, unknown>> {
+	if(relation === 'uom' && typeof value.code === 'string' && value.id == null) {
+		const delegates = prisma as PrismaLike & Record<string, {
+			findFirst?: (args: unknown) => Promise<{ id: string } | null>;
+		}>;
+		const row = await delegates.unitOfMeasure?.findFirst?.({
+			where: { code: value.code, vendorId: null },
+		});
+		if(!row?.id) {
+			throw new Error(`Seed UOM "${String(value.code)}" was not found (global).`);
+		}
+		return { id: row.id };
+	}
+	return value;
 }
 
 function seedChecksum(seedDir: string, listed: ListedSeedFile[]): string {

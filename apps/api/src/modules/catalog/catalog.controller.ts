@@ -19,7 +19,13 @@ import type { Request, Response } from 'express';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { OptionalJwtAuthGuard } from '../auth/guards/optional-jwt-auth.guard';
 import { CatalogArchiveService } from './archive/catalog-archive.service';
+import { AttributeService, assertCanReadHealth } from './attributes/attribute.service';
 import { CatalogService } from './catalog.service';
+import { CreateAttributeDto } from './dto/create-attribute.dto';
+import {
+	CreateGlobalAttributeValueDto,
+	UpsertVendorAttributeValueDto,
+} from './dto/upsert-attribute-value.dto';
 import { CatalogImportBodyDto } from './dto/catalog-import.dto';
 import { CreateBrokenPackDto } from './dto/create-broken-pack.dto';
 import { CreateCatalogProductDto } from './dto/create-catalog-product.dto';
@@ -49,6 +55,7 @@ type AuthedRequest = Request & { user?: { id: string; email?: string } };
 export class CatalogController {
 	constructor(
 		private readonly catalog: CatalogService,
+		private readonly attributeService: AttributeService,
 		private readonly inventory: InventoryService,
 		private readonly vendors: VendorService,
 		private readonly invites: VendorInviteService,
@@ -61,6 +68,50 @@ export class CatalogController {
 	@Get('uoms')
 	listUoms(@Query('vendorId') vendorId?: string) {
 		return this.catalog.listUoms(vendorId);
+	}
+
+	@Get('attributes')
+	listAttributes(@Query('vendorId') vendorId?: string) {
+		return this.catalog.listAttributes(vendorId);
+	}
+
+	@UseGuards(JwtAuthGuard)
+	@Post('attributes')
+	createAttribute(@Req() req: AuthedRequest, @Body() dto: CreateAttributeDto) {
+		return this.attributeService.createAttribute(req.user!.id, dto);
+	}
+
+	@UseGuards(JwtAuthGuard)
+	@Post('attributes/values')
+	upsertVendorAttributeValue(
+		@Req() req: AuthedRequest,
+		@Body() dto: UpsertVendorAttributeValueDto,
+	) {
+		return this.attributeService.upsertVendorValue(req.user!.id, dto.vendorId, dto);
+	}
+
+	@UseGuards(JwtAuthGuard)
+	@Post('attributes/values/global')
+	createGlobalAttributeValue(
+		@Req() req: AuthedRequest,
+		@Body() dto: CreateGlobalAttributeValueDto,
+	) {
+		return this.attributeService.createGlobalValue(req.user!.id, dto);
+	}
+
+	@UseGuards(JwtAuthGuard)
+	@Get('attributes/health')
+	attributeHealth(@Req() req: AuthedRequest) {
+		return this.attributeService.healthReportForUser(req.user!.id);
+	}
+
+	@UseGuards(JwtAuthGuard)
+	@Get('products/by-id/:productId')
+	getProductById(
+		@Param('productId') productId: string,
+		@Req() req: AuthedRequest,
+	) {
+		return this.catalog.getProductByProductId(productId, req.user!.id);
 	}
 
 	@UseGuards(JwtAuthGuard)
@@ -187,12 +238,18 @@ export class CatalogController {
 		@Query('category') categorySlug?: string,
 		@Query('vendor') vendorSlug?: string,
 		@Query('limit') limit?: string,
+		@Query('rollupValueId') rollupValueId?: string | string[],
+		@Query('omitValueId') omitValueId?: string | string[],
 	) {
+		const asList = (value?: string | string[]) =>
+			(Array.isArray(value) ? value : value ? [value] : []).filter(Boolean);
 		return this.catalog.searchProducts({
 			q,
 			categorySlug,
 			vendorSlug,
 			limit: limit ? Number(limit) : undefined,
+			rollupValueIds: asList(rollupValueId),
+			omitValueIds: asList(omitValueId),
 		});
 	}
 

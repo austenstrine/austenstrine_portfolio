@@ -6,7 +6,11 @@ export type SeedFileHeader = {
 	maintain?: boolean;
 	parentRelation?: string;
 	identityField?: string;
+	/** Optional compound unique used for upsert, e.g. ["vendorId", "slug"]. */
+	identityFields?: string[];
 	childrenField?: string;
+	/** Lower runs first. Default 100. Use this when FK order differs from filename sort. */
+	applyOrder?: number;
 };
 
 export type SeedFile = {
@@ -74,15 +78,19 @@ export type ValidateResult = {
 	pendingMigrations: string[];
 };
 
-export type PrismaLike = {
-	$executeRawUnsafe: (query: string, ...values: unknown[]) => Promise<unknown>;
-	$queryRawUnsafe: <T = unknown>(query: string, ...values: unknown[]) => Promise<T>;
+export type PrismaLike = object;
+
+/** Optional checksum store. Must not be a Postgres table Prisma Migrate does not own. */
+export type SeedApplyStore = {
+	read(pack: string): Promise<string | null>;
+	write(pack: string, checksum: string): Promise<void>;
 };
 
 export type ApplyOptions = {
 	prisma: PrismaLike;
 	seedDir: string;
 	force?: boolean;
+	store?: SeedApplyStore;
 };
 
 export type ApplyResult = {

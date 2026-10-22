@@ -1,3 +1,4 @@
+import { randomUUID } from 'crypto';
 import {
 	BadRequestException,
 	Injectable,
@@ -262,7 +263,9 @@ export class CatalogImportService {
 			const sku = (values.sku ?? '').trim();
 			const offeringKey = (values.offering_key ?? '').trim() || 'default';
 			const uomCode = (values.uom_code ?? '').trim().toUpperCase();
-			const roleRaw = (values.role ?? '').trim().toUpperCase();
+			const roleRawRaw = (values.role ?? '').trim().toUpperCase();
+			const roleRaw =
+				roleRawRaw === 'STANDALONE' ? ProductOfferingRole.PIECE : roleRawRaw;
 			const identity = `${sku}::${offeringKey}`;
 
 			if(!productSlug) {
@@ -317,14 +320,13 @@ export class CatalogImportService {
 			}
 
 			if(
-				roleRaw !== ProductOfferingRole.STANDALONE &&
 				roleRaw !== ProductOfferingRole.PACK &&
 				roleRaw !== ProductOfferingRole.PIECE
 			) {
 				errors.push({
 					lineNumber,
 					column: 'role',
-					message: 'role must be STANDALONE, PACK, or PIECE.',
+					message: 'role must be PACK or PIECE.',
 					blocking: true,
 				});
 			}
@@ -899,21 +901,72 @@ export class CatalogImportService {
 			}
 
 			for(const [index, attribute] of row.attributes.entries()) {
-				await this.prisma.productAttribute.upsert({
+				let definition = await this.prisma.attribute.findFirst({
 					where: {
-						productId_key: {
+						name: attribute.key,
+						OR: [{ vendorId: null }, { vendorId }],
+					},
+					orderBy: { vendorId: 'asc' },
+				});
+				if(!definition) {
+					definition = await this.prisma.attribute.create({
+						data: { name: attribute.key, vendorId },
+					});
+				}
+
+				let valueRow = await this.prisma.attributeValue.findFirst({
+					where: {
+						attributeId: definition.id,
+						value: attribute.value,
+						vendorId,
+						...(categoryId ? { categoryId } : {}),
+					},
+				});
+				if(!valueRow && categoryId) {
+					const sibling = await this.prisma.attributeValue.findFirst({
+						where: {
+							attributeId: definition.id,
+							value: attribute.value,
+							vendorId,
+							groupId: { not: null },
+						},
+					});
+					valueRow = await this.prisma.attributeValue.create({
+						data: {
+							attributeId: definition.id,
+							value: attribute.value,
+							vendorId,
+							categoryId,
+							groupId: sibling?.groupId ?? randomUUID(),
+							sortOrder: index,
+						},
+					});
+				}
+				else if(!valueRow) {
+					valueRow = await this.prisma.attributeValue.create({
+						data: {
+							attributeId: definition.id,
+							value: attribute.value,
+							vendorId,
+							sortOrder: index,
+						},
+					});
+				}
+
+				await this.prisma.productAttributeValue.upsert({
+					where: {
+						productId_attributeValueId: {
 							productId,
-							key: attribute.key,
+							attributeValueId: valueRow.id,
 						},
 					},
 					create: {
 						productId,
-						key: attribute.key,
-						value: attribute.value,
+						attributeValueId: valueRow.id,
 						sortOrder: index,
 					},
 					update: {
-						value: attribute.value,
+						sortOrder: index,
 					},
 				});
 			}

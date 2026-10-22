@@ -16,7 +16,13 @@ import { VendorAccessService } from '../vendor-access.service';
 const productDeleteInclude = {
 	vendor: true,
 	category: true,
-	attributes: true,
+	attributeValues: {
+		include: {
+			attributeValue: {
+				include: { attribute: true },
+			},
+		},
+	},
 	offerings: {
 		include: {
 			uom: true,
@@ -213,15 +219,15 @@ export class CatalogArchiveService implements OnModuleInit, OnModuleDestroy {
 					},
 				});
 
-				if(product.attributes.length > 0) {
+				if(product.attributeValues.length > 0) {
 					await tx.archivedProductAttribute.createMany({
-						data: product.attributes.map((attribute) => ({
+						data: product.attributeValues.map((row) => ({
 							archiveBatchId,
-							originalId: attribute.id,
+							originalId: row.attributeValue.id,
 							originalProductId: product.id,
-							key: attribute.key,
-							value: attribute.value,
-							sortOrder: attribute.sortOrder,
+							key: row.attributeValue.attribute.name,
+							value: row.attributeValue.value,
+							sortOrder: row.sortOrder,
 						})),
 					});
 				}
@@ -409,7 +415,9 @@ export class CatalogArchiveService implements OnModuleInit, OnModuleDestroy {
 		const attrKeys = [
 			...new Set(
 				products.flatMap((product) =>
-					product.attributes.map((attribute) => attribute.key),
+					product.attributeValues.map(
+						(row) => row.attributeValue.attribute.name,
+					),
 				),
 			),
 		];
@@ -434,7 +442,10 @@ export class CatalogArchiveService implements OnModuleInit, OnModuleDestroy {
 			}
 
 			const attrMap = new Map(
-				product.attributes.map((attribute) => [attribute.key, attribute.value]),
+				product.attributeValues.map((row) => [
+					row.attributeValue.attribute.name,
+					row.attributeValue.value,
+				]),
 			);
 
 			for(const offering of product.offerings) {
