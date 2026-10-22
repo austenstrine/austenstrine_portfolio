@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, type FormEvent } from 'react';
+import { Suspense, useState, type FormEvent } from 'react';
 import { AuthCard } from '../../../components/auth/AuthCard';
 import { ErrorText } from '../../../components/auth/ErrorText';
 import { FormField } from '../../../components/auth/FormField';
@@ -214,11 +214,13 @@ export default function AccountPage() {
 				py-16
 			"
 		>
-			<RequireAccess
-				reasonKey="account"
-			>
-				<AccountForm />
-			</RequireAccess>
+			<Suspense fallback={null}>
+				<RequireAccess
+					reasonKey="account"
+				>
+					<AccountForm />
+				</RequireAccess>
+			</Suspense>
 		</main>
 	);
 }
