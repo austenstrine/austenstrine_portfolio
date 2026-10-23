@@ -2,6 +2,8 @@ Features to implement:
 
 - Granular Permissions: granular, user-specific authorization/permissions within vendors - allow vendor owners to manage permissions granularly for their members - add product, edit product, edit price, delete product, add promotion, etc.
 - PrismaTypescriptTypeGenerator: generate swagger-decorated classes and related helper types from which all DTOs and model files inherit, whether partially or completely, and automatically copy/paste these files into the frontend for the frontend to use for similar inheritance.
+- Product Variants: support variants of a single product.
+  - Packaging-differentiated SKUs: manufacturer SKUs that differ only by packaging must be modeled as variants - each packaging SKU stays its own distinct SKU in inventory/catalog, but the customer sees one product with packaging as a selectable option rather than separate products.
 
 
 Features that need testing:
