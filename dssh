@@ -88,6 +88,8 @@ Resource logger (.dsshrc):
   dssh_rlog_interval=1
   dssh_rlog_dir=./ops/diagnostics
   dssh_rlog_history_max=16777216
+  dssh_rlog_history_keep=3
+  dssh_rlog_archive_max=268435456
 EOF
 }
 
@@ -444,6 +446,8 @@ rlog_start() {
     DSSH_RLOG_INTERVAL="$interval" \
     DSSH_RLOG_TARGETS="$targets" \
     DSSH_RLOG_HISTORY_MAX_BYTES="${dssh_rlog_history_max:-16777216}" \
+    DSSH_RLOG_HISTORY_KEEP_PLAIN="${dssh_rlog_history_keep:-3}" \
+    DSSH_RLOG_ARCHIVE_MAX_BYTES="${dssh_rlog_archive_max:-268435456}" \
     nohup bash "$script" >>"$dir/rlog.stdout" 2>&1 &
   echo $! > "$pidfile"
   disown $! 2>/dev/null || true

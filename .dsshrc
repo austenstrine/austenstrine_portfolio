@@ -26,6 +26,8 @@
 #   dssh_rlog_interval=<seconds>   (default 1)
 #   dssh_rlog_dir=<path>
 #   dssh_rlog_history_max=<bytes before history-TIMESTAMP.log rotation>
+#   dssh_rlog_history_keep=<uncompressed rotated files to keep; older are xz -9e>
+#   dssh_rlog_archive_max=<max bytes for history.log + rotated/compressed archives>
 
 dssh_stop_local="ids=\$(docker ps -aq --filter label=dssh.image); if [[ -n \"\$ids\" ]]; then docker rm -f \$ids; fi; docker compose stop postgres redis opensearch; echo 'Stopped dssh app containers and compose infra services.'"
 dssh_mailtest_local="\"$script_dir/dssh\" backend mailtest"
