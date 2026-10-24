@@ -1,0 +1,82 @@
+===== 2026-10-23T19:27:29-06:00 pid=46255 =====
+
+-- uptime / load --
+ 19:27:29 up 44 min,  1 user,  load average: 1.61, 1.10, 0.82
+
+-- memory --
+               total        used        free      shared  buff/cache   available
+Mem:            62Gi       5.7Gi        49Gi       494Mi       8.4Gi        56Gi
+Swap:          8.0Gi          0B       8.0Gi
+
+-- /proc/meminfo --
+MemTotal:       65527624 kB
+MemFree:        51988204 kB
+MemAvailable:   59533348 kB
+Buffers:          352984 kB
+Cached:          7821848 kB
+SwapCached:            0 kB
+SwapTotal:       8388604 kB
+SwapFree:        8388604 kB
+Dirty:              3356 kB
+Writeback:             0 kB
+AnonPages:       3601488 kB
+Slab:            1022828 kB
+SReclaimable:     609136 kB
+WritebackTmp:          0 kB
+CommitLimit:    41152416 kB
+Committed_AS:   15751032 kB
+
+-- pressure --
+cpu:    some avg10=0.17 avg60=0.35 avg300=0.34 total=9404015 full avg10=0.00 avg60=0.00 avg300=0.00 total=0 
+memory: some avg10=0.00 avg60=0.00 avg300=0.00 total=1 full avg10=0.00 avg60=0.00 avg300=0.00 total=1 
+io:     some avg10=0.00 avg60=0.00 avg300=0.00 total=2674374 full avg10=0.00 avg60=0.00 avg300=0.00 total=2625771 
+
+-- vmstat --
+   r    b         swpd         free         buff        cache   si   so    bi    bo   in   cs  us  sy  id  wa  st  gu
+   1    0            0     51987720       352984      8430984    0    0  1683  1644 5006    2   1   0  99   0   0   0
+
+-- top RSS --
+    PID    PPID   RSS    VSZ %CPU %MEM COMMAND         COMMAND
+  17600   17561 1024340 12614020 1.9  1.5 java         /usr/share/opensearch/jdk/bin/java -Xshare:auto -Dopensearch.networkaddress.cache.ttl=60 -Dopensearch.networkaddress.cache.negative.ttl=10 -XX:+AlwaysPreTouch -Xss1m -Djava.awt.headless=true -Dfile.encoding=UTF-8 -Djna.nosys=true -XX:-OmitStackTraceInFastThrow -XX:+ShowCodeDetailsInExceptionMessages -Dio.netty.noUnsafe=true -Dio.netty.noKeySetOptimization=true -Dio.netty.recycler.maxCapacityPerThread=0 -Dio.netty.allocator.numDirectArenas=0 -Dlog4j.shutdownHookEnabled=false -Dlog4j2.disable.jmx=true -Djava.security.manager=allow -Djava.locale.providers=SPI,COMPAT -Xms1g -Xmx1g -XX:+UseG1GC -XX:G1ReservePercent=25 -XX:InitiatingHeapOccupancyPercent=30 -Djava.io.tmpdir=/tmp/opensearch-11097481348291995830 -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=data -XX:ErrorFile=logs/hs_err_pid%p.log -Xlog:gc*,gc+age=trace,safepoint:file=logs/gc.log:utctime,pid,tags:filecount=32,filesize=64m -Djava.security.manager=allow --add-modules=jdk.incubator.vector -Djava.util.concurrent.ForkJoinPool.common.threadFactory=org.opensearch.secure_sm.SecuredForkJoinWorkerThreadFactory -Dclk.tck=100 -Djdk.attach.allowAttachSelf=true -Djava.security.policy=/usr/share/opensearch/config/opensearch-performance-analyzer/opensearch_security.policy --add-opens=jdk.attach/sun.tools.attach=ALL-UNNAMED -Dopensearch.cgroups.hierarchy.override=/ -Xms512m -Xmx512m -XX:MaxDirectMemorySize=268435456 -Dopensearch.path.home=/usr/share/opensearch -Dopensearch.path.conf=/usr/share/opensearch/config -Dopensearch.distribution.type=tar -Dopensearch.bundled_jdk=true -cp /usr/share/opensearch/lib/* org.opensearch.bootstrap.OpenSearch -Ediscovery.type=single-node -Eplugins.security.disabled=true
+  35847   35611 589140 1476295712 7.7  0.8 gitkraken   /proc/self/exe --type=renderer --crashpad-handler-pid=35691 --enable-crash-reporter=52a53639-b2e0-4ab5-8071-3e8c575e53ae,no_channel --user-data-dir=/home/austen-loren-strine/.config/GitKraken --secure-schemes=sentry-ipc --bypasscsp-schemes=sentry-ipc --cors-schemes=sentry-ipc --fetch-schemes=sentry-ipc --app-path=/snap/gitkraken/329/usr/share/gitkraken/resources/app.asar --no-sandbox --no-zygote --no-sandbox --ozone-platform=wayland --lang=en-US --num-raster-threads=4 --enable-main-frame-before-activation --renderer-client-id=6 --time-ticks-at-unix-epoch=-1792802588010027 --launch-time-ticks=2264300101 --shared-files=v8_context_snapshot_data:100 --field-trial-handle=3,i,1771023298068229785,3236011639522522021,262144 --enable-features=PdfUseShowSaveFilePicker --disable-features=DropInputEventsWhilePaintHolding,LocalNetworkAccessChecks,ScreenAIOCREnabled,SpareRendererForSitePerProcess,TraceSiteInstanceGetProcessCreation --variations-seed-version --pseudonymization-salt-handle=7,i,17026873424805466860,9773841898621758956,4 --trace-process-track-uuid=3190708991934122588
+  40367   40141 466644 1104284 2.0  0.7 node           node /app/node_modules/.bin/nest start --watch
+  25545   25534 439560 56856804 1.5  0.6 next-server (v1 next-server (v14.2.5)
+   9781    9092 326392 19743320 3.9  0.4 gnome-shell   /usr/bin/gnome-shell --mode=ubuntu
+  35611    9092 308264 1460057772 1.1  0.4 gitkraken   /snap/gitkraken/329/usr/share/gitkraken/gitkraken --no-sandbox --no-sandbox
+  12784    9092 215512 29178984 0.3  0.3 MainThread    /home/austen-loren-strine/.config/Cursor/User/globalStorage/anysphere.cursor-agent-worker/agent-cli/.local/bin/cursor-agent --use-system-ca /home/austen-loren-strine/.config/Cursor/User/globalStorage/anysphere.cursor-agent-worker/agent-cli/.local/share/cursor-agent/versions/2026.10.22-27dcf5f/index.js --api-key crsr_e97704c50b1d9ef2826eae2011da0e89fd799472708b907b5827c978e794694c --endpoint https://api2.cursor.sh worker start --worker-dir /home/austen-loren-strine/Development/austenstrine_portfolio --name ~/Development/austenstrine_portfolio @ austen-loren-strine-Raider-GE68HX-13VF --label name=cursor-agent-worker-e127bb81a1 --label cursor.private_worker.workspace_key=cursor-agent-worker-c82f074bae --worker-api-socket /tmp/cursor-agent-worker-e127bb81a1.sock --verbose
+  35747   35611 209896 1460123936 0.1  0.3 gitkraken   /proc/self/exe --type=renderer --crashpad-handler-pid=35691 --enable-crash-reporter=52a53639-b2e0-4ab5-8071-3e8c575e53ae,no_channel --user-data-dir=/home/austen-loren-strine/.config/GitKraken --secure-schemes=sentry-ipc --bypasscsp-schemes=sentry-ipc --cors-schemes=sentry-ipc --fetch-schemes=sentry-ipc --app-path=/snap/gitkraken/329/usr/share/gitkraken/resources/app.asar --no-sandbox --no-zygote --no-sandbox --ozone-platform=wayland --lang=en-US --num-raster-threads=4 --enable-main-frame-before-activation --renderer-client-id=5 --time-ticks-at-unix-epoch=-1792802588010027 --launch-time-ticks=2263755975 --shared-files=v8_context_snapshot_data:100 --field-trial-handle=3,i,1771023298068229785,3236011639522522021,262144 --enable-features=PdfUseShowSaveFilePicker --disable-features=DropInputEventsWhilePaintHolding,LocalNetworkAccessChecks,ScreenAIOCREnabled,SpareRendererForSitePerProcess,TraceSiteInstanceGetProcessCreation --variations-seed-version --pseudonymization-salt-handle=7,i,17026873424805466860,9773841898621758956,4 --trace-process-track-uuid=3190708990997080739
+   3307       1 167480 4964352 1.1  0.2 dockerd        /usr/bin/dockerd -H fd:// --containerd=/run/containerd/containerd.sock
+  35929   35847 132752 1459549820 0.0  0.2 gitkraken   /snap/gitkraken/329/usr/share/gitkraken/gitkraken /snap/gitkraken/329/usr/share/gitkraken/resources/app.asar/src/sharedModules/cli/pty-host/pty-host.bundle.js
+  40420   40367 130964 11339668 0.5  0.1 node          node --enable-source-maps /app/apps/api/dist/main
+  11515    9781 127188 1138900 0.0  0.1 mutter-x11-fram /usr/libexec/mutter-x11-frames
+  11331    9781 111192 634676 0.0  0.1 Xwayland        /usr/bin/Xwayland :0 -rootless -noreset -accessx -core -auth /run/user/1000/.mutter-Xwaylandauth.4JDEX3 -listenfd 4 -listenfd 5 -displayfd 6 -initfd 7 -byteswappedclients -enable-ei-portal
+  17695   17600 106792 2477764 0.2  0.1 java           /usr/share/opensearch/jdk/bin/java -Xshare:auto -Xms4m -Xmx64m -XX:+UseSerialGC -Dlog4j.configurationFile=/usr/share/opensearch/config/opensearch-performance-analyzer/log4j2.xml -Xms64M -Xmx64M -XX:+UseSerialGC -XX:CICompilerCount=1 -XX:-TieredCompilation -XX:InitialCodeCacheSize=4096 -XX:MaxRAM=400m -Dopensearch.path.home=/usr/share/opensearch -Dopensearch.path.conf=/usr/share/opensearch/config -Dopensearch.distribution.type=tar -cp /usr/share/opensearch/lib/*:/usr/share/opensearch/performance-analyzer-rca/lib/* org.opensearch.performanceanalyzer.PerformanceAnalyzerApp
+  35700   35611 89620 50685584 0.0  0.1 gitkraken      /proc/self/exe --type=utility --utility-sub-type=network.mojom.NetworkService --lang=en-US --service-sandbox-type=none --no-sandbox --crashpad-handler-pid=35691 --enable-crash-reporter=52a53639-b2e0-4ab5-8071-3e8c575e53ae,no_channel --user-data-dir=/home/austen-loren-strine/.config/GitKraken --secure-schemes=sentry-ipc --bypasscsp-schemes=sentry-ipc --cors-schemes=sentry-ipc --fetch-schemes=sentry-ipc --shared-files=v8_context_snapshot_data:100 --field-trial-handle=3,i,1771023298068229785,3236011639522522021,262144 --enable-features=PdfUseShowSaveFilePicker --disable-features=DropInputEventsWhilePaintHolding,LocalNetworkAccessChecks,ScreenAIOCREnabled,SpareRendererForSitePerProcess,TraceSiteInstanceGetProcessCreation --variations-seed-version --pseudonymization-salt-handle=7,i,17026873424805466860,9773841898621758956,4 --trace-process-track-uuid=3190708989122997041
+
+-- gpu --
+NVIDIA-SMI has failed because it couldn't communicate with the NVIDIA driver. Make sure that the latest NVIDIA driver is installed and running.
+
+nvidia-smi n/a
+
+-- disk --
+Filesystem      Size  Used Avail Use% Mounted on
+/dev/nvme0n1p4  234G  107G  116G  48% /
+/dev/nvme0n1p4  234G  107G  116G  48% /
+
+-- fd / inotify --
+fs.file-nr 11543	0	9223372036854775807
+inotify max_user_watches 65536
+
+-- dmesg tail --
+
+-- containers --
+backend (api): running
+frontend (web): running
+proxy (ops-nginx): running
+
+-- container stats --
+NAME        CPU %     MEM USAGE / LIMIT     MEM %     NET I/O   BLOCK I/O         PIDS
+api         0.14%     501.1MiB / 62.49GiB   0.78%     0B / 0B   0B / 19.9MB       68
+web         0.00%     388.3MiB / 62.49GiB   0.61%     0B / 0B   23.6MB / 64.8MB   97
+ops-nginx   0.00%     37.37MiB / 62.49GiB   0.06%     0B / 0B   8.65MB / 4.1kB    33
+

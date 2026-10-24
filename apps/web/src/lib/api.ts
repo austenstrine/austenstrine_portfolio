@@ -1,3 +1,5 @@
+import { apiTimeoutSignal } from './timed-fetch';
+
 export type Project = {
 	id: string;
 	title: string;
@@ -11,7 +13,10 @@ export const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://loca
 
 export async function getProjects(): Promise<Project[]> {
 	try {
-		const response = await fetch(`${API_BASE_URL}/projects`, { cache: 'no-store' });
+		const response = await fetch(`${API_BASE_URL}/projects`, {
+			cache: 'no-store',
+			signal: apiTimeoutSignal(),
+		});
 		if(!response.ok) {
 			return [];
 		}

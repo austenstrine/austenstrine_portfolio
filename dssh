@@ -24,6 +24,8 @@ Global actions:
   status    show dssh app containers and local infra status
   logs      follow logs for all dssh app containers
   logs <t>  follow logs for one target's start container
+  rlog      toggle the host resource logger (survives container restarts)
+  rlog on|off|status
   help      show this help
 
 Examples:
@@ -77,6 +79,14 @@ Optional global overrides:
   dssh_stop_local="..."
   dssh_status_local="..."
   dssh_logs_local="..."
+
+Resource logger (.dsshrc):
+  dssh_rlog_containers=backend,frontend,proxy
+      comma-separated target aliases whose running containers are sampled.
+      Omit this to log host/system info only.
+  dssh_rlog_interval=5
+  dssh_rlog_dir=./ops/diagnostics
+  dssh_rlog_history_max=16777216
 EOF
 }
 
@@ -348,6 +358,138 @@ compose() {
   docker compose --project-directory "$script_dir" "$@"
 }
 
+rlog_dir() {
+  local dir="${dssh_rlog_dir-}"
+  if [[ -z "$dir" ]]; then
+    dir="$script_dir/ops/diagnostics"
+  elif [[ "$dir" != /* ]]; then
+    dir="$script_dir/$dir"
+  fi
+  printf '%s\n' "$dir"
+}
+
+rlog_pid_file() {
+  printf '%s\n' "$(rlog_dir)/rlog.pid"
+}
+
+rlog_is_running() {
+  local pidfile pid
+  pidfile="$(rlog_pid_file)"
+  if [[ -f "$pidfile" ]]; then
+    pid="$(tr -d '[:space:]' < "$pidfile" 2>/dev/null || true)"
+    if [[ -n "$pid" ]] && kill -0 "$pid" 2>/dev/null; then
+      printf '%s\n' "$pid"
+      return 0
+    fi
+  fi
+  pid="$(pgrep -f "$script_dir/ops/diagnostics/rlog.sh" 2>/dev/null | head -n1 || true)"
+  if [[ -n "$pid" ]] && kill -0 "$pid" 2>/dev/null; then
+    printf '%s\n' "$pid"
+    return 0
+  fi
+  return 1
+}
+
+rlog_resolve_targets() {
+  local raw="${dssh_rlog_containers-}"
+  local alias name pairs=()
+  raw="${raw// /}"
+  if [[ -z "$raw" ]]; then
+    return 0
+  fi
+  IFS=',' read -ra aliases <<< "$raw"
+  for alias in "${aliases[@]}"; do
+    [[ -z "$alias" ]] && continue
+    if name="$(derive_app_name "$alias" 2>/dev/null)"; then
+      pairs+=("$alias=$name")
+    else
+      pairs+=("$alias=$alias")
+    fi
+  done
+  local IFS=','
+  printf '%s\n' "${pairs[*]}"
+}
+
+rlog_stop() {
+  local pidfile pid
+  pidfile="$(rlog_pid_file)"
+  pid=""
+  if [[ -f "$pidfile" ]]; then
+    pid="$(tr -d '[:space:]' < "$pidfile" 2>/dev/null || true)"
+  fi
+  if [[ -n "$pid" ]] && kill -0 "$pid" 2>/dev/null; then
+    kill "$pid" 2>/dev/null || true
+    sleep 0.2
+    kill -0 "$pid" 2>/dev/null && kill -9 "$pid" 2>/dev/null || true
+  fi
+  pkill -f "$script_dir/ops/diagnostics/rlog.sh" 2>/dev/null || true
+  pkill -f "$script_dir/ops/diagnostics/host-watch.sh" 2>/dev/null || true
+  rm -f "$pidfile"
+}
+
+rlog_start() {
+  local dir interval targets script pidfile
+  dir="$(rlog_dir)"
+  mkdir -p "$dir"
+  interval="${dssh_rlog_interval:-5}"
+  targets="$(rlog_resolve_targets)"
+  script="$script_dir/ops/diagnostics/rlog.sh"
+  pidfile="$(rlog_pid_file)"
+  if [[ ! -x "$script" ]]; then
+    chmod +x "$script" 2>/dev/null || true
+  fi
+  rlog_stop
+  DSSH_RLOG_DIR="$dir" \
+    DSSH_RLOG_INTERVAL="$interval" \
+    DSSH_RLOG_TARGETS="$targets" \
+    DSSH_RLOG_HISTORY_MAX_BYTES="${dssh_rlog_history_max:-16777216}" \
+    nohup bash "$script" >>"$dir/rlog.stdout" 2>&1 &
+  echo $! > "$pidfile"
+  disown $! 2>/dev/null || true
+  echo "rlog on  pid=$(tr -d '[:space:]' < "$pidfile")  dir=$dir  containers=${dssh_rlog_containers:-none}"
+}
+
+rlog_status() {
+  local pid dir
+  dir="$(rlog_dir)"
+  if pid="$(rlog_is_running)"; then
+    echo "rlog on  pid=$pid  dir=$dir  containers=${dssh_rlog_containers:-none}"
+    if [[ -f "$dir/latest.txt" ]]; then
+      echo "latest $(stat -c '%y' "$dir/latest.txt" 2>/dev/null || stat -f '%Sm' "$dir/latest.txt")"
+    fi
+  else
+    echo "rlog off  dir=$dir  containers=${dssh_rlog_containers:-none}"
+  fi
+}
+
+rlog_toggle() {
+  local mode="${1-}"
+  case "$mode" in
+    on|start)
+      rlog_start
+      ;;
+    off|stop)
+      rlog_stop
+      echo "rlog off"
+      ;;
+    status)
+      rlog_status
+      ;;
+    "")
+      if rlog_is_running >/dev/null; then
+        rlog_stop
+        echo "rlog off"
+      else
+        rlog_start
+      fi
+      ;;
+    *)
+      echo "Usage: dssh rlog [on|off|status]" >&2
+      return 1
+      ;;
+  esac
+}
+
 run_global_action() {
   local action_name="$1"
   local action_var="dssh_${action_name}_local"
@@ -371,12 +513,21 @@ run_global_action() {
     return 0
   fi
 
+  if [[ "$action_name" == "rlog" ]]; then
+    shift
+    rlog_toggle "${1-}"
+    return 0
+  fi
+
   if [[ "$action_name" == "status" ]]; then
     echo "=== dssh app containers ==="
     docker ps --filter "label=dssh.image" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
     echo
     echo "=== compose infra services ==="
     compose ps postgres redis opensearch 2>/dev/null || compose ps
+    echo
+    echo "=== resource logger ==="
+    rlog_status
     return 0
   fi
 
@@ -411,7 +562,7 @@ if [[ "$1" == "help" || "$1" == "-h" || "$1" == "--help" ]]; then
 fi
 
 global_action_var="dssh_${1}_local"
-if [[ "$1" == "stop" || "$1" == "status" || "$1" == "logs" || -n "${!global_action_var-}" ]]; then
+if [[ "$1" == "stop" || "$1" == "status" || "$1" == "logs" || "$1" == "rlog" || -n "${!global_action_var-}" ]]; then
   run_global_action "$@"
   exit 0
 fi

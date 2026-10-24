@@ -1,4 +1,5 @@
 import { API_BASE_URL } from './api';
+import { apiTimeoutSignal } from './timed-fetch';
 
 export type AuthUser = {
 	id: string;
@@ -51,6 +52,7 @@ async function rawRequest(path: string, options: RequestInit = {}): Promise<Resp
 	return fetch(`${API_BASE_URL}${path}`, {
 		...options,
 		credentials: 'include',
+		signal: apiTimeoutSignal(options.signal),
 		headers: {
 			'Content-Type': 'application/json',
 			...options.headers,

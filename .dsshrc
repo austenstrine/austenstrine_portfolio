@@ -20,10 +20,16 @@
 #   dssh_stop_local=<host command>
 #   dssh_status_local=<host command>
 #   dssh_mailtest_local=<host command>
+#
+# Resource logger (`dssh rlog`):
+#   dssh_rlog_containers=<comma-separated target aliases>
+#   dssh_rlog_interval=<seconds>
+#   dssh_rlog_dir=<path>
+#   dssh_rlog_history_max=<bytes before history-TIMESTAMP.log rotation>
 
 dssh_stop_local="ids=\$(docker ps -aq --filter label=dssh.image); if [[ -n \"\$ids\" ]]; then docker rm -f \$ids; fi; docker compose stop postgres redis opensearch; echo 'Stopped dssh app containers and compose infra services.'"
-dssh_status_local="echo '=== dssh app containers ==='; docker ps --filter label=dssh.image --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}'; echo; echo '=== compose infra services ==='; docker compose ps postgres redis opensearch"
 dssh_mailtest_local="\"$script_dir/dssh\" backend mailtest"
+dssh_rlog_containers=backend,frontend,proxy
 
 # Nest API
 backend=./apps/api
