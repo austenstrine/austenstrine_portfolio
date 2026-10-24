@@ -86,12 +86,12 @@ export async function seedCatalog(prisma: PrismaClient): Promise<void> {
 	});
 
 	for(const [index, pair] of [
-		{ key: 'gauge', value: '12 AWG' },
-		{ key: 'conductor', value: 'Copper' },
-		{ key: 'insulation', value: 'THHN' },
+		{ key: 'Gauge', value: '12 AWG' },
+		{ key: 'Conductor', value: 'Copper' },
+		{ key: 'Insulation', value: 'THHN' },
 	].entries()) {
 		let definition = await prisma.attribute.findFirst({
-			where: { name: pair.key, vendorId: null },
+			where: { name: { equals: pair.key, mode: 'insensitive' }, vendorId: null },
 		});
 		if(!definition) {
 			definition = await prisma.attribute.create({
