@@ -23,7 +23,7 @@
 #
 # Resource logger (`dssh rlog`):
 #   dssh_rlog_containers=<comma-separated target aliases>
-#   dssh_rlog_interval=<seconds>
+#   dssh_rlog_interval=<seconds>   (default 1)
 #   dssh_rlog_dir=<path>
 #   dssh_rlog_history_max=<bytes before history-TIMESTAMP.log rotation>
 

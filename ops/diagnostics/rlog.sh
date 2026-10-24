@@ -5,7 +5,7 @@
 set -u
 
 out_dir="${DSSH_RLOG_DIR:-.}"
-interval="${DSSH_RLOG_INTERVAL:-5}"
+interval="${DSSH_RLOG_INTERVAL:-1}"
 targets="${DSSH_RLOG_TARGETS:-}"
 max_bytes="${DSSH_RLOG_HISTORY_MAX_BYTES:-16777216}"
 mkdir -p "$out_dir"
@@ -14,8 +14,107 @@ latest="$out_dir/latest.txt"
 history="$out_dir/history.log"
 tmp="$out_dir/.latest.tmp"
 pidfile="$out_dir/rlog.pid"
+stats_file="$out_dir/.docker-stats.stream"
+stats_pid=""
+stats_key=""
+gpu_cache="n/a"
+gpu_skip_until=0
 
 printf '%s\n' "$$" > "$pidfile"
+
+now_s() {
+  if [[ -n "${EPOCHREALTIME-}" ]]; then
+    printf '%s' "$EPOCHREALTIME"
+  else
+    date +%s.%N
+  fi
+}
+
+sleep_remaining() {
+  local start="$1" remain
+  remain="$(awk -v s="$start" -v i="$interval" -v n="$(now_s)" 'BEGIN {
+    r = i - (n - s)
+    if (r < 0.05) r = 0
+    printf "%.3f", r
+  }')"
+  if awk -v r="$remain" 'BEGIN { exit !(r > 0) }'; then
+    sleep "$remain" || true
+  fi
+}
+
+stop_stats_stream() {
+  local child
+  if [[ -n "${stats_pid:-}" ]]; then
+    kill "$stats_pid" 2>/dev/null || true
+  fi
+  while read -r child; do
+    [[ -z "$child" ]] && continue
+    kill "$child" 2>/dev/null || true
+    kill -9 "$child" 2>/dev/null || true
+  done < <(pgrep -P $$ -f 'docker stats' 2>/dev/null || true)
+  if [[ -n "${stats_pid:-}" ]]; then
+    kill -9 "$stats_pid" 2>/dev/null || true
+    wait "$stats_pid" 2>/dev/null || true
+  fi
+  stats_pid=""
+  stats_key=""
+}
+
+trap 'stop_stats_stream' EXIT INT TERM
+
+ensure_stats_stream() {
+  local key="$1"
+  shift
+  if [[ -n "$stats_pid" ]] && kill -0 "$stats_pid" 2>/dev/null && [[ "$stats_key" == "$key" ]]; then
+    local size
+    size="$(stat -c%s "$stats_file" 2>/dev/null || echo 0)"
+    if [[ "$size" -lt 1048576 ]]; then
+      return 0
+    fi
+  fi
+  stop_stats_stream
+  stats_key="$key"
+  : > "$stats_file"
+  if [[ $# -eq 0 || "$key" == "none" ]]; then
+    return 0
+  fi
+  docker stats --format '{{.Name}}|{{.CPUPerc}}|{{.MemUsage}}|{{.MemPerc}}|{{.NetIO}}|{{.BlockIO}}|{{.PIDs}}' "$@" 2>/dev/null \
+    | sed -u 's/\x1B\[[0-9;?]*[A-Za-z]//g' >>"$stats_file" &
+  stats_pid=$!
+}
+
+latest_stats_line() {
+  local n="$1"
+  [[ -f "$stats_file" ]] || return 0
+  awk -F'|' -v n="$n" '{
+    gsub(/\033\[[0-9;?]*[A-Za-z]/, "")
+    gsub(/\r/, "")
+    if ($1 == n) line = $0
+  } END { if (line != "") print line }' "$stats_file"
+}
+
+sample_gpu() {
+  local now gpu
+  now="${EPOCHSECONDS:-$(date +%s)}"
+  if (( now < gpu_skip_until )); then
+    printf '%s' "$gpu_cache"
+    return 0
+  fi
+  gpu=""
+  if command -v timeout >/dev/null 2>&1; then
+    gpu="$(timeout 0.3 nvidia-smi --query-gpu=name,memory.used,memory.total,utilization.gpu,temperature.gpu --format=csv,noheader 2>/dev/null | head -n1 || true)"
+  else
+    gpu="$(nvidia-smi --query-gpu=name,memory.used,memory.total,utilization.gpu,temperature.gpu --format=csv,noheader 2>/dev/null | head -n1 || true)"
+  fi
+  if [[ -z "$gpu" || "$gpu" == *"failed"* || "$gpu" == *"NVIDIA-SMI"* ]]; then
+    gpu_cache="n/a"
+    gpu_skip_until=$((now + 30))
+  else
+    gpu_cache="$gpu"
+    gpu_skip_until=$((now + 1))
+  fi
+  printf '%s' "$gpu_cache"
+}
 
 fsync_file() {
   local path="$1"
@@ -43,50 +142,67 @@ rotate_history_if_needed() {
   mv -f "$history" "$dest" 2>/dev/null || true
 }
 
+psi_avg10() {
+  local file="$1"
+  awk '{
+    for (i = 1; i <= NF; i++) {
+      if ($i ~ /^avg10=/) {
+        split($i, a, "=")
+        print a[2]
+        exit
+      }
+    }
+  }' "$file" 2>/dev/null || echo n/a
+}
+
 sample_system() {
-  echo "-- uptime / load --"
-  uptime 2>/dev/null || true
+  local stamp="${1:-$(date -Is)}"
+  local mem_line swap_line disk gpu dirty
+  mem_line="$(free -h 2>/dev/null | awk '/^Mem:/{printf "%s used / %s  avail %s", $3, $2, $7}')"
+  swap_line="$(free -h 2>/dev/null | awk '/^Swap:/{printf "%s / %s", $3, $2}')"
+  dirty="$(awk '/^Dirty:/{printf "%.1fMi", $2/1024}' /proc/meminfo 2>/dev/null || echo n/a)"
+  disk="$(df -h / 2>/dev/null | awk 'NR==2{printf "%s used / %s (%s)", $3, $2, $5}')"
+  gpu="$(sample_gpu)"
+
+  echo "HOST"
+  printf '  time   %s\n' "$stamp"
+  printf '  load   %s\n' "$(cut -d' ' -f1-3 /proc/loadavg 2>/dev/null || echo n/a)"
+  printf '  mem    %s  dirty %s\n' "${mem_line:-n/a}" "$dirty"
+  printf '  swap   %s\n' "${swap_line:-n/a}"
+  printf '  psi    cpu %s  mem %s  io %s\n' \
+    "$(psi_avg10 /proc/pressure/cpu)" \
+    "$(psi_avg10 /proc/pressure/memory)" \
+    "$(psi_avg10 /proc/pressure/io)"
+  printf '  disk   %s\n' "${disk:-n/a}"
+  printf '  gpu    %s\n' "$gpu"
+  printf '  fds    %s open\n' "$(awk '{print $1}' /proc/sys/fs/file-nr 2>/dev/null || echo n/a)"
   echo
-  echo "-- memory --"
-  free -h 2>/dev/null || true
+  echo "TOP RSS"
+  printf '  %-7s %8s %6s %6s  %s\n' PID RSS CPU% MEM% COMM
+  ps -eo pid,rss,pcpu,pmem,comm --sort=-rss 2>/dev/null \
+    | awk 'NR>1 && NR<=9 {printf "  %-7s %7sk %5s%% %5s%%  %s\n", $1, $2, $3, $4, $5}'
   echo
-  echo "-- /proc/meminfo --"
-  awk '/MemTotal|MemFree|MemAvailable|Buffers|Cached|SwapTotal|SwapFree|Dirty|Writeback|AnonPages|Slab|SReclaimable|Committed_AS|CommitLimit/{print}' /proc/meminfo 2>/dev/null || true
-  echo
-  echo "-- pressure --"
-  echo "cpu:    $(tr '\n' ' ' < /proc/pressure/cpu 2>/dev/null || echo n/a)"
-  echo "memory: $(tr '\n' ' ' < /proc/pressure/memory 2>/dev/null || echo n/a)"
-  echo "io:     $(tr '\n' ' ' < /proc/pressure/io 2>/dev/null || echo n/a)"
-  echo
-  echo "-- vmstat --"
-  vmstat -w 2>/dev/null | tail -n 2 || true
-  echo
-  echo "-- top RSS --"
-  ps -eo pid,ppid,rss,vsz,pcpu,pmem,comm,args --sort=-rss 2>/dev/null | awk 'NR==1 || NR<=16 {printf "%s\n", $0}' || true
-  echo
-  echo "-- gpu --"
-  nvidia-smi --query-gpu=name,memory.used,memory.total,utilization.gpu,temperature.gpu,power.draw --format=csv 2>/dev/null || echo 'nvidia-smi n/a'
-  echo
-  echo "-- disk --"
-  df -h / /home 2>/dev/null | awk 'NR==1 || /\/$|\/home/' || true
-  echo
-  echo "-- fd / inotify --"
-  echo "fs.file-nr $(cat /proc/sys/fs/file-nr 2>/dev/null || echo n/a)"
-  echo "inotify max_user_watches $(cat /proc/sys/fs/inotify/max_user_watches 2>/dev/null || echo n/a)"
-  echo
-  echo "-- dmesg tail --"
-  dmesg -T --level=err,warn 2>/dev/null | tail -n 25 || journalctl -k -n 15 --no-pager 2>/dev/null || true
+  local kernel
+  kernel="$(dmesg -T --level=err,warn 2>/dev/null | tail -n 8 || true)"
+  echo "KERNEL"
+  if [[ -n "$kernel" ]]; then
+    printf '%s\n' "$kernel" | sed 's/^/  /'
+  else
+    echo "  none"
+  fi
   echo
 }
 
 sample_containers() {
   if [[ -z "$targets" ]]; then
+    echo "CONTAINERS"
+    echo "  (none configured — set dssh_rlog_containers)"
+    echo
     return 0
   fi
 
-  echo "-- containers --"
-  local live=()
-  local pair alias name alt status
+  local live=() names=() aliases=() statuses=() inspect_names=()
+  local pair alias name alt status inspect_out
   IFS=',' read -ra pairs <<< "$targets"
   for pair in "${pairs[@]}"; do
     pair="${pair#"${pair%%[![:space:]]*}"}"
@@ -96,48 +212,91 @@ sample_containers() {
     name="${pair#*=}"
     [[ -z "$name" ]] && name="$alias"
     alt="dssh-${alias}-start"
-    status=""
-    if docker inspect -f '{{.State.Status}}' "$name" >/dev/null 2>&1; then
-      status="$(docker inspect -f '{{.State.Status}}' "$name" 2>/dev/null || true)"
-      echo "$alias ($name): ${status:-unknown}"
-      if [[ "$status" == "running" ]]; then
-        live+=("$name")
-      fi
-    elif [[ "$alt" != "$name" ]] && docker inspect -f '{{.State.Status}}' "$alt" >/dev/null 2>&1; then
-      status="$(docker inspect -f '{{.State.Status}}' "$alt" 2>/dev/null || true)"
-      echo "$alias ($alt): ${status:-unknown}"
-      if [[ "$status" == "running" ]]; then
-        live+=("$alt")
-      fi
-    else
-      echo "$alias ($name): not running"
+    aliases+=("$alias")
+    names+=("$name")
+    statuses+=("not running")
+    inspect_names+=("$name")
+    if [[ "$alt" != "$name" ]]; then
+      inspect_names+=("$alt")
     fi
   done
-  echo
 
-  if [[ ${#live[@]} -eq 0 ]]; then
-    echo "-- container stats --"
-    echo "none running"
-    echo
-    return 0
+  inspect_out=""
+  if [[ ${#inspect_names[@]} -gt 0 ]]; then
+    inspect_out="$(docker inspect -f '{{.Name}} {{.State.Status}}' "${inspect_names[@]}" 2>/dev/null || true)"
   fi
 
-  echo "-- container stats --"
-  if command -v timeout >/dev/null 2>&1; then
-    timeout 8 docker stats --no-stream --format 'table {{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}\t{{.MemPerc}}\t{{.NetIO}}\t{{.BlockIO}}\t{{.PIDs}}' "${live[@]}" 2>/dev/null \
-      || echo "docker stats skipped (docker busy or restarting)"
+  local i found_name found_status
+  for i in "${!aliases[@]}"; do
+    name="${names[$i]}"
+    alt="dssh-${aliases[$i]}-start"
+    found_name=""
+    found_status=""
+    if [[ -n "$inspect_out" ]]; then
+      found_status="$(printf '%s\n' "$inspect_out" | awk -v n="/$name" -v n2="$name" '
+        $1==n || $1==n2 || substr($1,2)==n2 { print $2; exit }
+      ')"
+      if [[ -n "$found_status" ]]; then
+        found_name="$name"
+      elif [[ "$alt" != "$name" ]]; then
+        found_status="$(printf '%s\n' "$inspect_out" | awk -v n="/$alt" -v n2="$alt" '
+          $1==n || $1==n2 || substr($1,2)==n2 { print $2; exit }
+        ')"
+        if [[ -n "$found_status" ]]; then
+          found_name="$alt"
+        fi
+      fi
+    fi
+    if [[ -n "$found_name" ]]; then
+      names[$i]="$found_name"
+      statuses[$i]="$found_status"
+      if [[ "$found_status" == "running" ]]; then
+        live+=("$found_name")
+      fi
+    fi
+  done
+
+  local stats="" line
+  if [[ ${#live[@]} -gt 0 ]]; then
+    ensure_stats_stream "${live[*]}" "${live[@]}"
+    for name in "${live[@]}"; do
+      line="$(latest_stats_line "$name")"
+      if [[ -n "$line" ]]; then
+        stats+="$line"$'\n'
+      fi
+    done
   else
-    docker stats --no-stream --format 'table {{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}\t{{.MemPerc}}\t{{.NetIO}}\t{{.BlockIO}}\t{{.PIDs}}' "${live[@]}" 2>/dev/null \
-      || echo "docker stats skipped (docker busy or restarting)"
+    ensure_stats_stream none
+  fi
+
+  echo "CONTAINERS"
+  printf '  %-10s %-12s %-11s %7s  %-22s %6s  %-14s %-14s %5s\n' \
+    ALIAS NAME STATUS CPU MEM MEM% NET BLOCK PIDS
+  local i cpu mem memp net blk pids line
+  for i in "${!aliases[@]}"; do
+    cpu="-" mem="-" memp="-" net="-" blk="-" pids="-"
+    if [[ -n "$stats" ]]; then
+      line="$(printf '%s\n' "$stats" | awk -F'|' -v n="${names[$i]}" '$1==n {print; exit}')"
+      if [[ -n "$line" ]]; then
+        IFS='|' read -r _ cpu mem memp net blk pids <<< "$line"
+      fi
+    fi
+    printf '  %-10s %-12s %-11s %7s  %-22s %6s  %-14s %-14s %5s\n' \
+      "${aliases[$i]}" "${names[$i]}" "${statuses[$i]}" "$cpu" "$mem" "$memp" "$net" "$blk" "$pids"
+  done
+  if [[ ${#live[@]} -gt 0 && -z "$stats" ]] && { [[ -z "$stats_pid" ]] || ! kill -0 "$stats_pid" 2>/dev/null; }; then
+    echo "  (docker stats skipped — daemon busy or restarting)"
   fi
   echo
 }
 
 sample() {
-  echo "===== $(date -Is) pid=$$ ====="
+  local stamp
+  stamp="$(date -Is)"
+  echo "===== $stamp pid=$$ ====="
   echo
-  sample_system
   sample_containers
+  sample_system "$stamp"
 }
 
 {
@@ -147,12 +306,15 @@ fsync_file "$history"
 rotate_history_if_needed
 
 while true; do
-  snapshot="$(sample)" || snapshot="===== $(date -Is) pid=$$ ====="$'\n'"sample failed"
-  printf '%s\n\n' "$snapshot" > "$tmp" || true
+  start="$(now_s)"
+  if ! sample > "$tmp"; then
+    printf '%s\n' "===== $(date -Is) pid=$$ =====" "sample failed" > "$tmp"
+  fi
+  printf '\n' >> "$tmp" || true
   fsync_file "$tmp"
-  mv -f "$tmp" "$latest" 2>/dev/null || true
-  printf '%s\n\n' "$snapshot" >> "$history" || true
+  cat "$tmp" >> "$history" || true
   fsync_file "$history"
   rotate_history_if_needed
-  sleep "$interval" || true
+  mv -f "$tmp" "$latest" 2>/dev/null || true
+  sleep_remaining "$start"
 done

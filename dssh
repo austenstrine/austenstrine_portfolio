@@ -24,6 +24,7 @@ Global actions:
   status    show dssh app containers and local infra status
   logs      follow logs for all dssh app containers
   logs <t>  follow logs for one target's start container
+  logs rlog follow the resource logger snapshot (latest.txt)
   rlog      toggle the host resource logger (survives container restarts)
   rlog on|off|status
   help      show this help
@@ -84,7 +85,7 @@ Resource logger (.dsshrc):
   dssh_rlog_containers=backend,frontend,proxy
       comma-separated target aliases whose running containers are sampled.
       Omit this to log host/system info only.
-  dssh_rlog_interval=5
+  dssh_rlog_interval=1
   dssh_rlog_dir=./ops/diagnostics
   dssh_rlog_history_max=16777216
 EOF
@@ -431,7 +432,7 @@ rlog_start() {
   local dir interval targets script pidfile
   dir="$(rlog_dir)"
   mkdir -p "$dir"
-  interval="${dssh_rlog_interval:-5}"
+  interval="${dssh_rlog_interval:-1}"
   targets="$(rlog_resolve_targets)"
   script="$script_dir/ops/diagnostics/rlog.sh"
   pidfile="$(rlog_pid_file)"
@@ -533,6 +534,19 @@ run_global_action() {
 
   if [[ "$action_name" == "logs" ]]; then
     local target="${2-}"
+    if [[ "$target" == "rlog" ]]; then
+      local dir latest
+      dir="$(rlog_dir)"
+      latest="$dir/latest.txt"
+      if [[ ! -f "$latest" ]]; then
+        echo "No rlog snapshot at $latest (start with: dssh rlog on)." >&2
+        return 1
+      fi
+      if command -v watch >/dev/null 2>&1; then
+        exec watch -n "${dssh_rlog_interval:-1}" cat "$latest"
+      fi
+      exec tail -F "$latest"
+    fi
     if [[ -n "$target" ]]; then
       docker logs -f "$(derive_app_name "$target")"
       return 0
