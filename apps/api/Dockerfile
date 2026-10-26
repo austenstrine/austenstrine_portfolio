@@ -9,5 +9,7 @@ COPY apps/web/package.json ./apps/web/
 COPY packages/prisma-seed-migration-sync/package.json ./packages/prisma-seed-migration-sync/
 RUN npm ci
 COPY . .
-RUN npm run build -w prisma-seed-migration-sync && npm run build -w apps/api
+RUN npm run prisma:generate -w apps/api \
+	&& npm run build -w prisma-seed-migration-sync \
+	&& npm run build -w apps/api
 CMD ["npm", "run", "start", "-w", "apps/api"]
