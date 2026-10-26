@@ -11,6 +11,7 @@
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma db execute --file prisma/drop-unmanaged-tables.sql && prisma migrate dev --skip-seed",
     "prisma:seed": "prisma db seed",
+    "reindex": "ts-node --transpile-only scripts/reindex-catalog.ts",
     "seed-sync": "node ../../packages/prisma-seed-migration-sync/dist/cli.js sync --dir prisma/seed-data",
     "seed-sync:dry": "node ../../packages/prisma-seed-migration-sync/dist/cli.js sync --dir prisma/seed-data --dry-run",
     "seed-sync:validate": "node ../../packages/prisma-seed-migration-sync/dist/cli.js validate --dir prisma/seed-data",

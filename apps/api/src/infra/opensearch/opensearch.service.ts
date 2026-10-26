@@ -6,8 +6,14 @@ export class OpenSearchService {
 	readonly client: Client;
 
 	constructor() {
+		const node = process.env.OPENSEARCH_NODE ?? 'https://localhost:9200';
+		const username = process.env.OPENSEARCH_USERNAME ?? 'admin';
+		const password = process.env.OPENSEARCH_PASSWORD;
+		const rejectUnauthorized = process.env.OPENSEARCH_TLS_REJECT_UNAUTHORIZED === 'true';
 		this.client = new Client({
-			node: process.env.OPENSEARCH_NODE ?? 'http://localhost:9200',
+			node,
+			...(password ? { auth: { username, password } } : {}),
+			ssl: { rejectUnauthorized },
 		});
 	}
 

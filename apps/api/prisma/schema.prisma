@@ -571,6 +571,18 @@ model ProductScalarValue {
   @@index([productId])
 }
 
+/// Written by Postgres triggers on catalog tables; drained into OpenSearch by the API.
+model CatalogSearchOutbox {
+  id        String   @id @default(uuid())
+  tableName String
+  op        String
+  rowId     String
+  productId String?
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}
+
 model ProductOffering {
   id                   String              @id @default(uuid())
   productId            String

@@ -27,6 +27,9 @@
     "20261020194842_vendor_invites_tags_and_uoms",
     "20261020210000_rename_to_place_et_marque",
     "20261022070000_drop_standalone_normalize_attributes",
-    "20261022140000_attribute_scalars_and_measures"
+    "20261022140000_attribute_scalars_and_measures",
+    "20261026053000_catalog_search_outbox",
+    "20261026053100_catalog_search_enqueue_json",
+    "20261026060000_catalog_search_offering_qty"
   ]
 }

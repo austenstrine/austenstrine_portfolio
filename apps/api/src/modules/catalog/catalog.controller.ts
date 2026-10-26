@@ -238,6 +238,9 @@ export class CatalogController {
 		@Query('category') categorySlug?: string,
 		@Query('vendor') vendorSlug?: string,
 		@Query('limit') limit?: string,
+		@Query('offset') offset?: string,
+		@Query('sort') sort?: string,
+		@Query('inStock') inStock?: string,
 		@Query('rollupValueId') rollupValueId?: string | string[],
 		@Query('omitValueId') omitValueId?: string | string[],
 	) {
@@ -248,6 +251,9 @@ export class CatalogController {
 			categorySlug,
 			vendorSlug,
 			limit: limit ? Number(limit) : undefined,
+			offset: offset ? Number(offset) : undefined,
+			sort,
+			inStock: inStock === '1' || inStock === 'true',
 			rollupValueIds: asList(rollupValueId),
 			omitValueIds: asList(omitValueId),
 		});

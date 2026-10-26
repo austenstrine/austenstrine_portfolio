@@ -269,6 +269,9 @@ export class CatalogService {
 		categorySlug?: string;
 		vendorSlug?: string;
 		limit?: number;
+		offset?: number;
+		sort?: string;
+		inStock?: boolean;
 		rollupValueIds?: string[];
 		omitValueIds?: string[];
 	}) {
@@ -277,6 +280,9 @@ export class CatalogService {
 			items: result.items.map((product) => this.toSummary(product)),
 			appliedFilters: result.appliedFilters,
 			facets: result.facets,
+			categoryFacets: result.categoryFacets,
+			vendorFacets: result.vendorFacets,
+			total: result.total,
 			source: result.source,
 		};
 	}
