@@ -1,4 +1,4 @@
-import { API_BASE_URL } from './api';
+import { API_BASE_URL, PUBLIC_API_BASE_URL } from './api';
 import { apiTimeoutSignal } from './timed-fetch';
 
 export type AuthUser = {
@@ -210,5 +210,5 @@ export function setPassword(
 }
 
 export function googleSignInUrl(): string {
-	return `${API_BASE_URL}/auth/google`;
+	return `${PUBLIC_API_BASE_URL}/auth/google`;
 }

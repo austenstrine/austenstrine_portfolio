@@ -1,4 +1,4 @@
-import { API_BASE_URL } from './api';
+import { API_BASE_URL, PUBLIC_API_BASE_URL } from './api';
 import { authedFetch } from './auth-api';
 
 async function checkoutRequest<T>(path: string, options: RequestInit = {}): Promise<T> {
@@ -327,5 +327,5 @@ export function formatMoney(cents: number, currency = 'USD'): string {
 
 /** Public helper for docs / webhook URL */
 export function stripeWebhookUrl(): string {
-	return `${API_BASE_URL}/checkout/webhooks/stripe`;
+	return `${PUBLIC_API_BASE_URL}/checkout/webhooks/stripe`;
 }
