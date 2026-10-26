@@ -16,6 +16,12 @@ apps/api/generated/
 # Local TLS certs generated for dssh/nginx development proxy
 ops/nginx/certs/
 
+# CDN disk cache and uploaded origin objects (keep the folders)
+ops/cdn/data/cache/**
+!ops/cdn/data/cache/.gitkeep
+ops/cdn/data/origin/**
+!ops/cdn/data/origin/.gitkeep
+
 # rlog snapshots, history, pid, and stream files (keep the sampler script)
 ops/diagnostics/*
 !ops/diagnostics/rlog.sh
