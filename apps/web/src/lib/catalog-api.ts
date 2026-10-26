@@ -107,14 +107,24 @@ export type CatalogSearchFilter = {
 	source: 'auto' | 'manual';
 };
 
+export type CatalogSearchFacet = {
+	attributeId: string;
+	attributeName: string;
+	buckets: Array<{ valueId: string; value: string; count: number }>;
+};
+
+export type CatalogTermFacet = {
+	slug: string;
+	count: number;
+};
+
 export type CatalogSearchResult = {
 	items: CatalogProductSummary[];
 	appliedFilters: CatalogSearchFilter[];
-	facets: Array<{
-		attributeId: string;
-		attributeName: string;
-		buckets: Array<{ valueId: string; value: string; count: number }>;
-	}>;
+	facets: CatalogSearchFacet[];
+	categoryFacets?: CatalogTermFacet[];
+	vendorFacets?: CatalogTermFacet[];
+	total?: number;
 	source?: 'opensearch' | 'prisma';
 };
 
@@ -186,6 +196,10 @@ export function searchCatalogProducts(params: {
 	q?: string;
 	category?: string;
 	vendor?: string;
+	limit?: number;
+	offset?: number;
+	sort?: string;
+	inStock?: boolean;
 	rollupValueIds?: string[];
 	omitValueIds?: string[];
 }): Promise<CatalogSearchResult> {
@@ -198,6 +212,18 @@ export function searchCatalogProducts(params: {
 	}
 	if(params.vendor) {
 		query.set('vendor', params.vendor);
+	}
+	if(params.limit) {
+		query.set('limit', String(params.limit));
+	}
+	if(params.offset) {
+		query.set('offset', String(params.offset));
+	}
+	if(params.sort) {
+		query.set('sort', params.sort);
+	}
+	if(params.inStock) {
+		query.set('inStock', '1');
 	}
 	for(const id of params.rollupValueIds ?? []) {
 		query.append('rollupValueId', id);

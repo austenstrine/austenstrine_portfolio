@@ -6,6 +6,7 @@ import { CatalogArchiveService } from './archive/catalog-archive.service';
 import { AttributeService } from './attributes/attribute.service';
 import { CatalogController } from './catalog.controller';
 import { CatalogService } from './catalog.service';
+import { CatalogSearchListener } from './search/catalog-search.listener';
 import { CatalogSearchService } from './search/catalog-search.service';
 import { CatalogAuthGuard } from './guards/catalog-auth.guard';
 import { CatalogImportService } from './import/catalog-import.service';
@@ -25,6 +26,7 @@ import { VendorService } from './vendor.service';
 		CatalogService,
 		AttributeService,
 		CatalogSearchService,
+		CatalogSearchListener,
 		InventoryService,
 		VendorAccessService,
 		VendorService,

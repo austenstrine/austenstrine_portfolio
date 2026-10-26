@@ -42,6 +42,8 @@ backend_start="npm run build -w prisma-seed-migration-sync && npm run prisma:gen
 backend_start_detached=1
 backend_migrate_local="docker compose up -d postgres"
 backend_migrate="npm run prisma:migrate -w apps/api -- && npm run prisma:seed -w apps/api"
+backend_reindex_local="docker compose up -d postgres opensearch"
+backend_reindex="npx ts-node --transpile-only apps/api/scripts/reindex-catalog.ts"
 backend_mailtest="npx ts-node --transpile-only apps/api/scripts/send-test-email.ts"
 backend_mailtest_attach=0
 
