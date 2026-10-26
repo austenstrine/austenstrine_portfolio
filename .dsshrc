@@ -30,14 +30,14 @@
 #   dssh_rlog_archive_max=<max bytes for history.log + rotated/compressed archives>
 #   dssh_gpus=auto|off            (auto: --gpus all when NVIDIA Docker works)
 
-dssh_stop_local="ids=\$(docker ps -aq --filter label=dssh.image); if [[ -n \"\$ids\" ]]; then docker rm -f \$ids; fi; docker compose stop postgres redis opensearch; echo 'Stopped dssh app containers and compose infra services.'"
+dssh_stop_local="ids=\$(docker ps -aq --filter label=dssh.image); if [[ -n \"\$ids\" ]]; then docker rm -f \$ids; fi; docker compose stop postgres redis opensearch opensearch-dashboards; echo 'Stopped dssh app containers and compose infra services.'"
 dssh_mailtest_local="\"$script_dir/dssh\" backend mailtest"
 dssh_rlog_containers=backend,frontend,proxy
 
 # Nest API
 backend=./apps/api
 backend_image=portfolio-api
-backend_start_local="docker ps -q --filter ancestor=portfolio-api | xargs -r docker rm -f >/dev/null 2>&1 || true; docker compose up -d postgres redis opensearch"
+backend_start_local="docker ps -q --filter ancestor=portfolio-api | xargs -r docker rm -f >/dev/null 2>&1 || true; docker compose up -d postgres redis opensearch opensearch-dashboards"
 backend_start="npm run build -w prisma-seed-migration-sync && npm run prisma:generate -w apps/api && npm run dev -w apps/api"
 backend_start_detached=1
 backend_migrate_local="docker compose up -d postgres"
