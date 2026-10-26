@@ -513,6 +513,14 @@ rlog_stop() {
   fi
   pkill -f "$script_dir/ops/diagnostics/rlog.sh" 2>/dev/null || true
   pkill -f "$script_dir/ops/diagnostics/host-watch.sh" 2>/dev/null || true
+  while read -r pid rest; do
+    [[ -z "$pid" ]] && continue
+    case "$rest" in
+      *'docker stats --format {{.Name}}|{{.CPUPerc}}'*)
+        kill "$pid" 2>/dev/null || true
+        ;;
+    esac
+  done < <(pgrep -af 'docker stats --format' 2>/dev/null || true)
   rm -f "$pidfile"
 }
 

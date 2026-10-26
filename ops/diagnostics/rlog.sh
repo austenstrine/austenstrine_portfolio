@@ -28,6 +28,7 @@ cpu_prev_total=""
 nproc_count="$(nproc 2>/dev/null || echo 1)"
 
 printf '%s\n' "$$" > "$pidfile"
+reap_orphan_stats
 
 now_s() {
   if [[ -n "${EPOCHREALTIME-}" ]]; then
@@ -49,6 +50,18 @@ sleep_remaining() {
   fi
 }
 
+reap_orphan_stats() {
+  local pid rest
+  while read -r pid rest; do
+    [[ -z "$pid" || "$pid" == "$$" ]] && continue
+    case "$rest" in
+      *'docker stats --format {{.Name}}|{{.CPUPerc}}'*)
+        kill "$pid" 2>/dev/null || true
+        ;;
+    esac
+  done < <(pgrep -af 'docker stats --format' 2>/dev/null || true)
+}
+
 stop_stats_stream() {
   local child
   if [[ -n "${stats_pid:-}" ]]; then
@@ -59,6 +72,7 @@ stop_stats_stream() {
     kill "$child" 2>/dev/null || true
     kill -9 "$child" 2>/dev/null || true
   done < <(pgrep -P $$ -f 'docker stats' 2>/dev/null || true)
+  reap_orphan_stats
   if [[ -n "${stats_pid:-}" ]]; then
     kill -9 "$stats_pid" 2>/dev/null || true
     wait "$stats_pid" 2>/dev/null || true
@@ -69,15 +83,24 @@ stop_stats_stream() {
 
 trap 'stop_stats_stream' EXIT INT TERM
 
+trim_stats_stream() {
+  local size tmp
+  size="$(stat -c%s "$stats_file" 2>/dev/null || echo 0)"
+  if [[ "$size" -lt 262144 ]]; then
+    return 0
+  fi
+  tmp="$stats_file.trim"
+  tail -c 65536 "$stats_file" >"$tmp" 2>/dev/null || return 0
+  cat "$tmp" >"$stats_file"
+  rm -f "$tmp"
+}
+
 ensure_stats_stream() {
   local key="$1"
   shift
   if [[ -n "$stats_pid" ]] && kill -0 "$stats_pid" 2>/dev/null && [[ "$stats_key" == "$key" ]]; then
-    local size
-    size="$(stat -c%s "$stats_file" 2>/dev/null || echo 0)"
-    if [[ "$size" -lt 1048576 ]]; then
-      return 0
-    fi
+    trim_stats_stream
+    return 0
   fi
   stop_stats_stream
   stats_key="$key"
@@ -93,11 +116,13 @@ ensure_stats_stream() {
 latest_stats_line() {
   local n="$1"
   [[ -f "$stats_file" ]] || return 0
-  awk -F'|' -v n="$n" '{
+  tail -n 80 "$stats_file" | awk -F'|' -v n="$n" '{
     gsub(/\033\[[0-9;?]*[A-Za-z]/, "")
     gsub(/\r/, "")
+    if (NF < 7) next
+    if ($2 == "--" || $2 == "" || $3 ~ /^--/) next
     if ($1 == n) line = $0
-  } END { if (line != "") print line }' "$stats_file"
+  } END { if (line != "") print line }'
 }
 
 sample_gpu() {
