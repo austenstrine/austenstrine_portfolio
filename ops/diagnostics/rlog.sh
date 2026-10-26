@@ -23,12 +23,14 @@ stats_pid=""
 stats_key=""
 gpu_cache="n/a"
 gpu_skip_until=0
+docker_skip_until=0
+docker_skip_status="docker busy"
+docker_cli_pid=""
 cpu_prev_idle=""
 cpu_prev_total=""
 nproc_count="$(nproc 2>/dev/null || echo 1)"
 
 printf '%s\n' "$$" > "$pidfile"
-reap_orphan_stats
 
 now_s() {
   if [[ -n "${EPOCHREALTIME-}" ]]; then
@@ -82,6 +84,25 @@ stop_stats_stream() {
 }
 
 trap 'stop_stats_stream' EXIT INT TERM
+reap_orphan_stats
+
+# Docker CLI can block for minutes if dockerd is restarting or a container
+# is wedged. Never let that freeze the 1s snapshot loop, and never overlap
+# calls — leftover inspects in D-state fork-bomb the host.
+docker_cli() {
+  local rc=0
+  if [[ -n "${docker_cli_pid:-}" ]] && kill -0 "$docker_cli_pid" 2>/dev/null; then
+    return 124
+  fi
+  if command -v timeout >/dev/null 2>&1; then
+    timeout -k 0.3 1 docker "$@" &
+    docker_cli_pid=$!
+    wait "$docker_cli_pid" || rc=$?
+    docker_cli_pid=""
+    return "$rc"
+  fi
+  docker "$@"
+}
 
 trim_stats_stream() {
   local size tmp
@@ -474,7 +495,11 @@ sample_system() {
     | awk 'NR>1 && NR<=9 {printf "  %-7s %7sk %5s%% %5s%%  %s\n", $1, $2, $3, $4, $5}'
   echo
   local kernel
-  kernel="$(dmesg -T --level=err,warn 2>/dev/null | tail -n 8 || true)"
+  if command -v timeout >/dev/null 2>&1; then
+    kernel="$(timeout -k 0.2 0.4 dmesg -T --level=err,warn 2>/dev/null | tail -n 8 || true)"
+  else
+    kernel="$(dmesg -T --level=err,warn 2>/dev/null | tail -n 8 || true)"
+  fi
   echo "KERNEL"
   if [[ -n "$kernel" ]]; then
     printf '%s\n' "$kernel" | sed 's/^/  /'
@@ -494,7 +519,7 @@ sample_containers() {
   fi
 
   local live=() names=() aliases=() statuses=() inspect_names=()
-  local pair alias name alt status inspect_out
+  local pair alias name alt status inspect_out inspect_err inspect_rc default_status now
   IFS=',' read -ra pairs <<< "$targets"
   for pair in "${pairs[@]}"; do
     pair="${pair#"${pair%%[![:space:]]*}"}"
@@ -506,7 +531,7 @@ sample_containers() {
     alt="dssh-${alias}-start"
     aliases+=("$alias")
     names+=("$name")
-    statuses+=("not running")
+    statuses+=("pending")
     inspect_names+=("$name")
     if [[ "$alt" != "$name" ]]; then
       inspect_names+=("$alt")
@@ -514,8 +539,29 @@ sample_containers() {
   done
 
   inspect_out=""
-  if [[ ${#inspect_names[@]} -gt 0 ]]; then
-    inspect_out="$(docker inspect -f '{{.Name}} {{.State.Status}}' "${inspect_names[@]}" 2>/dev/null || true)"
+  inspect_err=""
+  inspect_rc=0
+  default_status="not running"
+  now="${EPOCHSECONDS:-$(date +%s)}"
+  if (( now < docker_skip_until )); then
+    default_status="$docker_skip_status"
+    ensure_stats_stream none
+  elif [[ ${#inspect_names[@]} -gt 0 ]]; then
+    docker_cli inspect --type container -f '{{.Name}} {{.State.Status}}' "${inspect_names[@]}" \
+      >"$out_dir/.inspect.out" 2>"$out_dir/.inspect.err" || inspect_rc=$?
+    inspect_out="$(cat "$out_dir/.inspect.out" 2>/dev/null || true)"
+    inspect_err="$(cat "$out_dir/.inspect.err" 2>/dev/null || true)"
+    if [[ "$inspect_rc" -eq 124 ]]; then
+      default_status="docker busy"
+      docker_skip_status="docker busy"
+      docker_skip_until=$((now + 8))
+      ensure_stats_stream none
+    elif [[ "$inspect_err" == *'Cannot connect'* || "$inspect_err" == *'error during connect'* || "$inspect_err" == *'Is the docker daemon running'* ]]; then
+      default_status="docker down"
+      docker_skip_status="docker down"
+      docker_skip_until=$((now + 8))
+      ensure_stats_stream none
+    fi
   fi
 
   local i found_name found_status
@@ -524,6 +570,7 @@ sample_containers() {
     alt="dssh-${aliases[$i]}-start"
     found_name=""
     found_status=""
+    statuses[$i]="$default_status"
     if [[ -n "$inspect_out" ]]; then
       found_status="$(printf '%s\n' "$inspect_out" | awk -v n="/$name" -v n2="$name" '
         $1==n || $1==n2 || substr($1,2)==n2 { print $2; exit }

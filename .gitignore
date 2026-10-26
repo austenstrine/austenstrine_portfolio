@@ -25,3 +25,6 @@ ops/cdn/data/origin/**
 # rlog snapshots, history, pid, and stream files (keep the sampler script)
 ops/diagnostics/*
 !ops/diagnostics/rlog.sh
+
+# Serializes dssh docker build/stop/run across terminals
+.dssh-docker.lock
