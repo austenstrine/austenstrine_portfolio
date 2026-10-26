@@ -1,4 +1,4 @@
-import { API_BASE_URL } from './api';
+import { PUBLIC_API_BASE_URL } from './api';
 import { authedFetch } from './auth-api';
 
 export type CatalogProductSummary = {
@@ -664,7 +664,7 @@ export function getCatalogImportJob(
 }
 
 export function catalogImportTemplateUrl(): string {
-	return `${API_BASE_URL}/catalog/imports/template.csv`;
+	return `${PUBLIC_API_BASE_URL}/catalog/imports/template.csv`;
 }
 
 export type CatalogDeleteResult = {
