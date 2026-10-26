@@ -9,74 +9,42 @@
     {
       "id": "d68d54a3-bd16-590c-ad34-bff43d725102",
       "name": "Color",
-      "vendorId": null,
-      "valueKind": "OPTION",
-      "unit": null,
-      "minNumeric": null,
-      "maxNumeric": null
+      "vendorId": null
     },
     {
       "id": "979c3004-a365-5bde-af8a-e271697ff13f",
       "name": "Size",
-      "vendorId": null,
-      "valueKind": "OPTION",
-      "unit": null,
-      "minNumeric": null,
-      "maxNumeric": null
+      "vendorId": null
     },
     {
       "id": "6831d1de-6f04-50fc-af21-2720ca5986b7",
       "name": "Material",
-      "vendorId": null,
-      "valueKind": "OPTION",
-      "unit": null,
-      "minNumeric": null,
-      "maxNumeric": null
+      "vendorId": null
     },
     {
       "id": "ae962b0a-e0bc-5677-ab73-d9e1fcf6a337",
       "name": "Pattern",
-      "vendorId": null,
-      "valueKind": "OPTION",
-      "unit": null,
-      "minNumeric": null,
-      "maxNumeric": null
+      "vendorId": null
     },
     {
       "id": "606d1f3a-2e3c-5829-9f7b-70bd5cb308bb",
       "name": "Gauge",
-      "vendorId": null,
-      "valueKind": "OPTION",
-      "unit": null,
-      "minNumeric": null,
-      "maxNumeric": null
+      "vendorId": null
     },
     {
       "id": "93c8e568-9054-5947-80e8-88c87fa25337",
       "name": "Conductor",
-      "vendorId": null,
-      "valueKind": "OPTION",
-      "unit": null,
-      "minNumeric": null,
-      "maxNumeric": null
+      "vendorId": null
     },
     {
       "id": "e9170d13-13c7-5ec8-a4a6-d20c0aba7a59",
       "name": "Insulation",
-      "vendorId": null,
-      "valueKind": "OPTION",
-      "unit": null,
-      "minNumeric": null,
-      "maxNumeric": null
+      "vendorId": null
     },
     {
       "id": "04cadfc2-0775-5cbf-9788-e8ce2a7b4eda",
       "name": "Demo finish",
-      "vendorId": "9d2b9484-4cae-5f72-9290-7c14cb148da1",
-      "valueKind": "OPTION",
-      "unit": null,
-      "minNumeric": null,
-      "maxNumeric": null
+      "vendorId": "9d2b9484-4cae-5f72-9290-7c14cb148da1"
     }
   ]
 }

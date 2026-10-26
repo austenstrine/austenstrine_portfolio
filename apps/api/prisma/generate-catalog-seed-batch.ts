@@ -62,6 +62,15 @@ function pick<T>(rand: () => number, items: T[]): T {
 	return items[Math.floor(rand() * items.length) % items.length];
 }
 
+function vendorValueCategories(key: string, leaves: LeafCategory[], limit: number): LeafCategory[] {
+	const start = Number.parseInt(seedId('cats', key).replace(/-/g, '').slice(0, 8), 16) % leaves.length;
+	const picked: LeafCategory[] = [];
+	for(let offset = 0; offset < leaves.length && picked.length < limit; offset += 1) {
+		picked.push(leaves[(start + offset * 17) % leaves.length]);
+	}
+	return picked;
+}
+
 function leafCategories(): LeafCategory[] {
 	const file = JSON.parse(
 		readFileSync(join(SEED_DIR, 'CatalogCategory.json'), 'utf8'),
@@ -210,18 +219,38 @@ function main(): void {
 			vendorId: attribute.vendorScoped ? vendor.id : null,
 		});
 		for(const [index, value] of attribute.values.entries()) {
-			const valueId = seedId('attribute-value', `${attribute.key}:${value.key}`);
-			valueIds.set(`${attribute.key}:${value.key}`, valueId);
 			const parentId = value.parentKey
 				? seedId('attribute-value', `${attribute.key}:${value.parentKey}`)
 				: null;
+			const vendorScoped = Boolean(value.vendorScoped || attribute.vendorScoped);
+			if(vendorScoped) {
+				const groupId = seedId('attr-group', `${attribute.key}:${value.key}`);
+				for(const category of vendorValueCategories(`${attribute.key}:${value.key}`, leaves, 3)) {
+					const valueKey = `${attribute.key}:${value.key}:${category.slug}`;
+					const valueId = seedId('attribute-value', valueKey);
+					valueIds.set(valueKey, valueId);
+					valueRecords.push({
+						id: valueId,
+						value: value.value,
+						sortOrder: index,
+						groupId,
+						attribute: { id: attributeId },
+						vendor: { id: vendor.id },
+						...(parentId ? { parent: { id: parentId } } : {}),
+						category: { slug: category.slug },
+					});
+				}
+				continue;
+			}
+
+			const valueId = seedId('attribute-value', `${attribute.key}:${value.key}`);
+			valueIds.set(`${attribute.key}:${value.key}`, valueId);
 			valueRecords.push({
 				id: valueId,
-				attributeId,
 				value: value.value,
-				vendorId: value.vendorScoped || attribute.vendorScoped ? vendor.id : null,
-				parentId,
 				sortOrder: index,
+				attribute: { id: attributeId },
+				...(parentId ? { parent: { id: parentId } } : {}),
 			});
 		}
 	}
@@ -249,7 +278,7 @@ function main(): void {
 	const offeringRecords: Record<string, unknown>[] = [];
 	const containmentRecords: Record<string, unknown>[] = [];
 	const junctionRecords: Record<string, unknown>[] = [];
-	const valueKeys = [...valueIds.keys()].filter((key) => !key.startsWith('demo-finish:'));
+	const globalValueKeys = [...valueIds.keys()].filter((key) => key.split(':').length === 2);
 
 	for(let index = 1; index <= PRODUCT_COUNT; index += 1) {
 		const n = String(index).padStart(4, '0');
@@ -257,6 +286,10 @@ function main(): void {
 		const productId = seedId('product', n);
 		const slug = `seed-listing-${n}`;
 		const tagPool = [category.slug, 'seed-batch', pick(rand, ['clearance', 'featured', 'new', 'bulk'])];
+		const electrical = /wire|electrical|cable/.test(category.slug);
+		const powered = /tv|video|audio|headphone|speaker|phone|computer|camera|gaming|lighting/.test(
+			`${category.slug} ${category.name}`.toLowerCase(),
+		);
 		productRecords.push({
 			id: productId,
 			slug,
@@ -269,9 +302,36 @@ function main(): void {
 			breakFeeCents: 0,
 			vendor: { slug: vendor.slug },
 			category: { slug: category.slug },
+			weightNumeric: (0.25 + (index % 40) * 0.15).toFixed(2),
+			weightUnit: 'lb',
+			gtin: `000${n}000000`.slice(-12),
+			mpn: `MPN-${n}`,
+			countryOfOrigin: pick(rand, ['US', 'CN', 'MX', 'DE', 'JP']),
+			condition: 'NEW',
+			...(powered
+				? {
+						voltageNumeric: pick(rand, ['5', '12', '120', '240']),
+						wattageNumeric: String(8 + (index % 180)),
+						frequencyHzNumeric: '60',
+					}
+				: {}),
+			...(index % 3 === 0
+				? {
+						packageLengthNumeric: String(6 + (index % 12)),
+						packageWidthNumeric: String(4 + (index % 8)),
+						packageHeightNumeric: String(2 + (index % 6)),
+						packageLinearUnit: 'in',
+						packageWeightNumeric: (0.4 + (index % 20) * 0.2).toFixed(2),
+						packageWeightUnit: 'lb',
+					}
+				: {}),
 		});
 
 		const pieceId = seedId('offering', `${n}:piece`);
+		const hasPack = index % 4 === 0;
+		const pieceQty = hasPack ? 0 : (index % 20) + 1;
+		const packQty = hasPack ? (index % 8) + 2 : 0;
+		const childQtyPerParent = 12;
 		offeringRecords.push({
 			id: pieceId,
 			sku: `SL-${n}`,
@@ -279,8 +339,8 @@ function main(): void {
 			role: 'PIECE',
 			priceCents: 400 + (index % 50) * 25,
 			currency: 'USD',
-			qtyOnHand: index % 4 === 0 ? '0' : String((index % 20) + 1),
-			availableQty: '0',
+			qtyOnHand: String(pieceQty),
+			availableQty: String(hasPack ? packQty * childQtyPerParent : pieceQty),
 			tracksOwnQty: true,
 			minUnbrokenQty: '-1',
 			breakPoolAboveQty: '0',
@@ -290,7 +350,7 @@ function main(): void {
 			uom: { code: 'EA' },
 		});
 
-		if(index % 4 === 0) {
+		if(hasPack) {
 			const packId = seedId('offering', `${n}:pack`);
 			offeringRecords.push({
 				id: packId,
@@ -299,8 +359,8 @@ function main(): void {
 				role: 'PACK',
 				priceCents: 4800 + (index % 10) * 100,
 				currency: 'USD',
-				qtyOnHand: String((index % 8) + 2),
-				availableQty: '0',
+				qtyOnHand: String(packQty),
+				availableQty: String(packQty),
 				tracksOwnQty: true,
 				minUnbrokenQty: '1',
 				breakPoolAboveQty: '0',
@@ -313,21 +373,29 @@ function main(): void {
 				id: seedId('containment', n),
 				parentOffering: { id: packId },
 				childOffering: { id: pieceId },
-				childQtyPerParent: '12',
+				childQtyPerParent: String(childQtyPerParent),
 			});
 		}
 
 		const assigned = new Set<string>();
-		const colorKey = pick(
-			rand,
-			['color:green', 'color:red', 'color:blue', 'color:black', 'color:algae', 'color:pine'],
-		);
-		assigned.add(colorKey);
-		assigned.add(pick(rand, valueKeys));
+		const colorChoices = [
+			'color:green',
+			'color:red',
+			'color:blue',
+			'color:black',
+			`color:algae:${category.slug}`,
+			`color:pine:${category.slug}`,
+		].filter((key) => valueIds.has(key));
+		assigned.add(pick(rand, colorChoices));
+		assigned.add(pick(rand, globalValueKeys));
 		if(rand() > 0.4) {
-			assigned.add(pick(rand, valueKeys));
+			assigned.add(pick(rand, globalValueKeys));
 		}
-		if(category.slug.includes('wire') || category.slug.includes('electrical')) {
+		const scopedKeys = [...valueIds.keys()].filter((key) => key.endsWith(`:${category.slug}`));
+		if(scopedKeys.length > 0 && rand() > 0.5) {
+			assigned.add(pick(rand, scopedKeys));
+		}
+		if(electrical) {
 			assigned.add(pick(rand, ['gauge:12awg', 'gauge:14awg', 'conductor:copper']));
 			assigned.add('insulation:thhn');
 		}

@@ -15,3 +15,7 @@ apps/api/generated/
 
 # Local TLS certs generated for dssh/nginx development proxy
 ops/nginx/certs/
+
+# rlog snapshots, history, pid, and stream files (keep the sampler script)
+ops/diagnostics/*
+!ops/diagnostics/rlog.sh

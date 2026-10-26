@@ -11,8 +11,18 @@ export class HealthController {
 
 	@Get()
 	async check() {
-		const redis = await this.redisService.ping();
-		const opensearch = await this.openSearchService.ping();
+		const redis = await Promise.race([
+			this.redisService.ping().catch(() => false),
+			new Promise<false>((resolve) => {
+				setTimeout(() => resolve(false), 800);
+			}),
+		]);
+		const opensearch = await Promise.race([
+			this.openSearchService.ping().catch(() => false),
+			new Promise<false>((resolve) => {
+				setTimeout(() => resolve(false), 800);
+			}),
+		]);
 
 		return {
 			status: 'ok',
