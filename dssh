@@ -74,8 +74,9 @@ Example:
 
 start always rebuilds the target image first. Pass -nobuild (or --nobuild)
 to skip that rebuild when you know the image is current.
-restart stops the target's start container, then runs start. -nobuild
-is passed through to start.
+restart is start: rebuild the image while the old container keeps running,
+then replace it. Docker build/stop/run share a lock so two restarts cannot
+unpack an image and force-remove a container at the same time.
 
 Optional global overrides:
   dssh_stop_local="..."
@@ -280,19 +281,51 @@ dssh_app_ids() {
   docker ps -aq --filter "label=dssh.image"
 }
 
+# Overlay unpack and container unmount share a dockerd lock. Overlapping
+# `docker build` with `docker rm -f` is what wedged the daemon (runc kill
+# spinning at 100%, inspect leak, reboot). One flock for all graph mutations.
+docker_lock_held=0
+acquire_docker_lock() {
+  local lock="$script_dir/.dssh-docker.lock"
+  if [[ "$docker_lock_held" == "1" ]]; then
+    return 0
+  fi
+  exec 9>>"$lock"
+  if ! flock -n 9; then
+    echo "Waiting for another dssh docker operation to finish..." >&2
+    flock 9
+  fi
+  docker_lock_held=1
+}
+
+remove_container() {
+  local name="$1"
+  acquire_docker_lock
+  if ! docker inspect --type container "$name" >/dev/null 2>&1; then
+    return 0
+  fi
+  # Graceful stop first. rm -f / SIGKILL is what spun runc kill on api.
+  if command -v timeout >/dev/null 2>&1; then
+    timeout -k 2 12 docker stop -t 8 "$name" >/dev/null 2>&1 || true
+  else
+    docker stop -t 8 "$name" >/dev/null 2>&1 || true
+  fi
+  docker rm "$name" >/dev/null 2>&1 || docker rm -f "$name" >/dev/null 2>&1 || true
+}
+
 stop_target_start_container() {
   local app="$1"
   local target="$2"
   local old="dssh-${target}-start"
   local stopped=0
 
-  if docker inspect "$app" >/dev/null 2>&1; then
-    docker rm -f "$app"
+  if docker inspect --type container "$app" >/dev/null 2>&1; then
+    remove_container "$app"
     echo "Stopped $app."
     stopped=1
   fi
-  if [[ "$old" != "$app" ]] && docker inspect "$old" >/dev/null 2>&1; then
-    docker rm -f "$old"
+  if [[ "$old" != "$app" ]] && docker inspect --type container "$old" >/dev/null 2>&1; then
+    remove_container "$old"
     echo "Stopped $old."
     stopped=1
   fi
@@ -333,6 +366,7 @@ build_image() {
   local context_path="$3"
   shift 3
 
+  acquire_docker_lock
   docker build "$@" -f "$dockerfile_path" -t "$image_name" "$context_path"
 }
 
@@ -349,8 +383,12 @@ seed_node_modules_volume() {
     docker volume create "$volume_name" >/dev/null
   fi
 
-  if ! docker run --rm -v "$volume_name:/node_modules" "$image_name" sh -lc "test -f /node_modules/.dssh-image-id && [ \"\$(cat /node_modules/.dssh-image-id)\" = '$image_id' ]" >/dev/null 2>&1; then
-    docker run --rm -v "$volume_name:/node_modules" "$image_name" sh -lc "rm -rf /node_modules/* /node_modules/.[!.]* /node_modules/..?* 2>/dev/null || true; cp -a /app/node_modules/. /node_modules/; echo '$image_id' > /node_modules/.dssh-image-id"
+  # Require .bin as well as the image-id stamp. A crashed copy used to write the
+  # stamp anyway (no set -e), so the next start skipped reseed and apps died
+  # with "next: not found" — which then wedged docker inspect / rlog.
+  if ! docker run --rm -v "$volume_name:/node_modules" "$image_name" sh -lc "test -f /node_modules/.dssh-image-id && [ \"\$(cat /node_modules/.dssh-image-id)\" = '$image_id' ] && test -d /node_modules/.bin" >/dev/null 2>&1; then
+    echo "Seeding $volume_name from $image_name..."
+    docker run --rm -v "$volume_name:/node_modules" "$image_name" sh -lc "set -e; rm -rf /node_modules/* /node_modules/.[!.]* /node_modules/..?* 2>/dev/null || true; cp -a /app/node_modules/. /node_modules/; echo '$image_id' > /node_modules/.dssh-image-id"
   fi
 
   docker run --rm -v "$volume_name:/node_modules" "$image_name" sh -lc "chown -R $host_spec /node_modules"
@@ -367,6 +405,8 @@ run_container() {
   shift 7
   local env_args=()
   local node_modules_volume="dssh-${image_name//[^a-zA-Z0-9_.-]/-}-node_modules"
+
+  acquire_docker_lock
 
   if [[ -f "$script_dir/.env" ]]; then
     env_args+=(--env-file "$script_dir/.env")
@@ -513,6 +553,14 @@ rlog_stop() {
   fi
   pkill -f "$script_dir/ops/diagnostics/rlog.sh" 2>/dev/null || true
   pkill -f "$script_dir/ops/diagnostics/host-watch.sh" 2>/dev/null || true
+  while read -r pid rest; do
+    [[ -z "$pid" ]] && continue
+    case "$rest" in
+      *'docker stats --format {{.Name}}|{{.CPUPerc}}'*)
+        kill "$pid" 2>/dev/null || true
+        ;;
+    esac
+  done < <(pgrep -af 'docker stats --format' 2>/dev/null || true)
   rm -f "$pidfile"
 }
 
@@ -595,16 +643,22 @@ run_global_action() {
 
   if [[ -n "$override_cmd" ]]; then
     shift
+    if [[ "$action_name" == "stop" ]]; then
+      acquire_docker_lock
+    fi
     run_local_shell "$(append_cli_args "$override_cmd" "$@")"
     return 0
   fi
 
   if [[ "$action_name" == "stop" ]]; then
-    local ids
+    local ids id
+    acquire_docker_lock
     ids="$(dssh_app_ids)"
     if [[ -n "$ids" ]]; then
       # shellcheck disable=SC2086
-      docker rm -f $ids
+      for id in $ids; do
+        remove_container "$id"
+      done
     fi
     compose stop postgres redis opensearch
     echo "Stopped dssh app containers and compose infra services."
@@ -779,7 +833,7 @@ fi
 
 if [[ "$1" == "restart" ]]; then
   shift
-  stop_target_start_container "$app_name" "$target_name"
+  # Keep the old container up during the image rebuild, then start replaces it.
   exec "$script_dir/dssh" "$target_name" start "$@"
 fi
 
@@ -814,6 +868,8 @@ if [[ -n "$action_local_cmd" || -n "$action_container_cmd" ]]; then
   done
   set -- "${action_args[@]+"${action_args[@]}"}"
 
+  acquire_docker_lock
+
   if [[ -n "$action_local_cmd" ]]; then
     run_local_shell "$(append_cli_args "$action_local_cmd" "$@")"
   fi
@@ -826,9 +882,9 @@ if [[ -n "$action_local_cmd" || -n "$action_container_cmd" ]]; then
       build_image "$image_name" "$dockerfile_path" "$context_path"
     fi
     action_container_name="$(container_name_for "$app_name" "$action_name")"
-    docker rm -f "$action_container_name" >/dev/null 2>&1 || true
+    remove_container "$action_container_name"
     if [[ "$action_name" == "start" ]]; then
-      docker rm -f "dssh-${target_name}-start" >/dev/null 2>&1 || true
+      remove_container "dssh-${target_name}-start"
     fi
     run_container_shell "$image_name" "$context_path" "$workdir_path" "$action_attach" "$action_container_name" "$mount_node_modules" "$action_detached" "$(append_cli_args "$action_container_cmd" "$@")"
     exit 0

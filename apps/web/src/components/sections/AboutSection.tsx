@@ -1,5 +1,6 @@
 import { recommendations } from '../../data/recommendations';
 import type { Recommendation } from '../../data/recommendations';
+import { CdnImg } from '../CdnImg';
 
 function RecommendationAttribution({
 	recommendation,
@@ -150,7 +151,7 @@ function FeaturedRecommendation({
 					rel="noreferrer"
 					target="_blank"
 				>
-					<img
+					<CdnImg
 						className="
 							h-28
 							w-28
@@ -162,6 +163,7 @@ function FeaturedRecommendation({
 						"
 						alt={recommendation.name}
 						src={recommendation.image}
+						cdn={{ w: 224, h: 224, fit: 'cover', fm: 'webp' }}
 					/>
 				</a>
 
@@ -212,7 +214,7 @@ function SupportingRecommendation({
 					rel="noreferrer"
 					target="_blank"
 				>
-					<img
+					<CdnImg
 						className="
 							h-20
 							w-20
@@ -224,6 +226,7 @@ function SupportingRecommendation({
 						"
 						alt={recommendation.name}
 						src={recommendation.image}
+						cdn={{ w: 160, h: 160, fit: 'cover', fm: 'webp' }}
 					/>
 				</a>
 

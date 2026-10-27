@@ -18,12 +18,16 @@ const loadProduct = cache(getCatalogProduct);
 async function relatedProducts(product: CatalogProductDetail): Promise<CatalogProductSummary[]> {
 	const seen = new Set([product.id]);
 	const items: CatalogProductSummary[] = [];
-	const queries = [
-		product.category
-			? { category: product.category.slug, limit: 8, inStock: true }
-			: null,
-		{ vendor: product.vendor.slug, limit: 8, inStock: true },
-	].filter((query): query is { category?: string; vendor?: string; limit: number; inStock: boolean } => Boolean(query));
+	const queries: Array<{
+		category?: string;
+		vendor?: string;
+		limit: number;
+		inStock: boolean;
+	}> = [];
+	if(product.category) {
+		queries.push({ category: product.category.slug, limit: 8, inStock: true });
+	}
+	queries.push({ vendor: product.vendor.slug, limit: 8, inStock: true });
 
 	for(const query of queries) {
 		if(items.length >= 6) {

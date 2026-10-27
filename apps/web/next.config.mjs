@@ -1,6 +1,12 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  reactStrictMode: true,
+	reactStrictMode: true,
+	images: {
+		remotePatterns: [
+			{ protocol: 'https', hostname: 'cdn.local.austenstrine.dev' },
+			{ protocol: 'https', hostname: 'cdn.austenstrine.dev' },
+		],
+	},
   async redirects() {
     return [
       {

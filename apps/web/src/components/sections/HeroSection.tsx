@@ -1,4 +1,5 @@
 import { AccountMenu } from '../AccountMenu';
+import { CdnImg } from '../CdnImg';
 
 export function HeroSection() {
 	return (
@@ -26,7 +27,7 @@ export function HeroSection() {
 					md:grid-cols-[220px,1fr]
 				"
 			>
-				<img
+				<CdnImg
 					className="
 						mx-auto
 						h-52
@@ -38,6 +39,7 @@ export function HeroSection() {
 						shadow-2xl
 					"
 					src="/pp1_sq_sm.jpg"
+					cdn={{ w: 416, h: 416, fit: 'cover', fm: 'webp' }}
 					alt="Austen Strine profile"
 				/>
 				<div>

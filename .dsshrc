@@ -32,7 +32,7 @@
 
 dssh_stop_local="ids=\$(docker ps -aq --filter label=dssh.image); if [[ -n \"\$ids\" ]]; then docker rm -f \$ids; fi; docker compose stop postgres redis opensearch opensearch-dashboards; echo 'Stopped dssh app containers and compose infra services.'"
 dssh_mailtest_local="\"$script_dir/dssh\" backend mailtest"
-dssh_rlog_containers=backend,frontend,proxy
+dssh_rlog_containers=backend,frontend,proxy,cdn
 
 # Nest API
 backend=./apps/api
@@ -63,3 +63,14 @@ proxy_mount_node_modules=0
 proxy_start_local="./ops/nginx/init-local-tls.sh"
 proxy_start="nginx -c /app/nginx.conf -g 'daemon off;'"
 proxy_start_detached=1
+
+# Local CDN. TLS still terminates on nginx; this process is the cache/origin.
+cdn=./ops/cdn
+cdn_image=portfolio-cdn
+cdn_name=portfolio-cdn
+cdn_context=./ops/cdn
+cdn_mount_node_modules=0
+cdn_start_local="./ops/cdn/init-local.sh"
+cdn_start=/usr/local/bin/cdn
+cdn_start_detached=1
+cdn_purge_local="./ops/cdn/purge.sh"
