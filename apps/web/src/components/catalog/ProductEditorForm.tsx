@@ -60,6 +60,7 @@ import {
 } from '../../lib/catalog-product-form';
 import { sortCategoryTree } from '../../lib/category-tree';
 import { useSession } from '../../lib/useSession';
+import { CatalogImageField } from './CatalogImageField';
 import { CatalogWorkspaceSwitcher } from './CatalogWorkspaceSwitcher';
 import { CompoundQtyField } from './CompoundQtyField';
 import { DisclosurePrompt } from './DisclosurePrompt';
@@ -112,6 +113,7 @@ export function ProductEditorForm({
 	const [slug, setSlug] = useState('');
 	const [slugTouched, setSlugTouched] = useState(false);
 	const [description, setDescription] = useState('');
+	const [imageUrls, setImageUrls] = useState<string[]>([]);
 	const [tags, setTags] = useState<string[]>([]);
 	const [breakFeeMode, setBreakFeeMode] = useState<BreakFeeMode>('OFF');
 	const [breakFeeDollars, setBreakFeeDollars] = useState('0');
@@ -259,6 +261,7 @@ export function ProductEditorForm({
 				setSlug(product.slug);
 				setSlugTouched(true);
 				setDescription(product.description ?? '');
+				setImageUrls(product.imageUrls ?? []);
 				setTags(product.tags ?? []);
 				setBreakFeeMode(
 					(product.breakFeeMode as BreakFeeMode | undefined) ?? 'OFF',
@@ -455,6 +458,7 @@ export function ProductEditorForm({
 			slug: slug.trim(),
 			title: title.trim(),
 			description: description.trim() || undefined,
+			imageUrls,
 			tags,
 			inventoryFromAllocations: containments.length > 0,
 			breakFeeMode: advancedFeatureEnabled('breakFees') ? breakFeeMode : 'OFF',
@@ -557,6 +561,7 @@ export function ProductEditorForm({
 			const product = await updateCatalogProduct(existingProductId, {
 				title: payload.title,
 				description: payload.description,
+				imageUrls: payload.imageUrls,
 				tags: payload.tags,
 				categoryId: payload.categoryId ?? null,
 				inventoryFromAllocations: payload.inventoryFromAllocations,
@@ -743,6 +748,16 @@ export function ProductEditorForm({
 							onChange={(event) => setDescription(event.target.value)}
 						/>
 					</label>
+
+					<CatalogImageField
+						kind="product"
+						value={imageUrls}
+						onChange={setImageUrls}
+						vendorId={vendorId || undefined}
+						productId={existingProductId}
+						disabled={!vendorId}
+						disabledReason="Choose a vendor before uploading photos."
+					/>
 
 					<ProductTagField
 						vendorId={vendorId}

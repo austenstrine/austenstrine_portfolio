@@ -171,6 +171,12 @@ export class CreateCatalogProductDto extends ProductMeasureFieldsDto {
 	@MaxLength(60, { each: true })
 	tags?: string[];
 
+	@IsOptional()
+	@IsArray()
+	@IsString({ each: true })
+	@MaxLength(500, { each: true })
+	imageUrls?: string[];
+
 	@ValidateNested({ each: true })
 	@Type(() => ProductOfferingInputDto)
 	@IsArray()

@@ -21,4 +21,10 @@ export class CreateCategoryDto {
 	@IsOptional()
 	@IsUUID()
 	parentId?: string;
+
+	@ApiPropertyOptional()
+	@IsOptional()
+	@IsString()
+	@MaxLength(500)
+	imageUrl?: string;
 }

@@ -1,3 +1,4 @@
+import { CatalogCover } from '../../components/catalog/CatalogCover';
 import { CatalogEmptyActions } from '../../components/catalog/CatalogEmptyActions';
 import { searchCatalogProducts } from '../../lib/catalog-api';
 import { formatQty } from '../../lib/uom-qty';
@@ -76,6 +77,22 @@ export default async function PlaceEtMarqueHomePage() {
 								key={product.id}
 								href={`/place-et-marque/${product.vendor.slug}/${product.slug}`}
 							>
+								<div className="mb-4 overflow-hidden rounded-xl bg-slate-100">
+									<div className="relative aspect-[5/3]">
+										<CatalogCover
+											src={product.imageUrls?.[0]}
+											alt={product.title}
+											width={720}
+											height={432}
+											className="absolute inset-0 h-full w-full object-cover"
+											fallback={
+												<div className="flex h-full items-center justify-center text-sm font-semibold text-slate-400">
+													{product.vendor.name}
+												</div>
+											}
+										/>
+									</div>
+								</div>
 								<p
 									className="
 										text-xs

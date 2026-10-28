@@ -48,15 +48,24 @@ function errorMessageFromBody(body: unknown): string {
 	return rawMessage ?? 'Something went wrong. Please try again.';
 }
 
+function requestHeaders(options: RequestInit): Headers {
+	const headers = new Headers(options.headers);
+	if(options.body instanceof FormData) {
+		headers.delete('Content-Type');
+		return headers;
+	}
+	if(!headers.has('Content-Type')) {
+		headers.set('Content-Type', 'application/json');
+	}
+	return headers;
+}
+
 async function rawRequest(path: string, options: RequestInit = {}): Promise<Response> {
 	return fetch(`${API_BASE_URL}${path}`, {
 		...options,
 		credentials: 'include',
 		signal: apiTimeoutSignal(options.signal),
-		headers: {
-			'Content-Type': 'application/json',
-			...options.headers,
-		},
+		headers: requestHeaders(options),
 	});
 }
 

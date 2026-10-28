@@ -11,8 +11,11 @@ import {
 	Query,
 	Req,
 	Res,
+	UploadedFile,
 	UseGuards,
+	UseInterceptors,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiTags } from '@nestjs/swagger';
 import { CatalogImportSource } from '@prisma/client';
 import type { Request, Response } from 'express';
@@ -21,6 +24,7 @@ import { OptionalJwtAuthGuard } from '../auth/guards/optional-jwt-auth.guard';
 import { CatalogArchiveService } from './archive/catalog-archive.service';
 import { AttributeService, assertCanReadHealth } from './attributes/attribute.service';
 import { CatalogService } from './catalog.service';
+import { CdnMediaService } from './cdn-media.service';
 import { CreateAttributeDto } from './dto/create-attribute.dto';
 import {
 	CreateGlobalAttributeValueDto,
@@ -39,6 +43,7 @@ import { DeleteCatalogProductsDto } from './dto/delete-catalog-products.dto';
 import { RequestCategoryDto } from './dto/request-category.dto';
 import { TrimInventoryDto } from './dto/trim-inventory.dto';
 import { UpdateCatalogProductDto } from './dto/update-catalog-product.dto';
+import { UpdateCatalogCategoryDto, UploadCatalogMediaDto } from './dto/upload-catalog-media.dto';
 import type { CatalogAuthedRequest } from './guards/catalog-auth.guard';
 import { CatalogAuthGuard } from './guards/catalog-auth.guard';
 import { CatalogImportService } from './import/catalog-import.service';
@@ -55,6 +60,7 @@ type AuthedRequest = Request & { user?: { id: string; email?: string } };
 export class CatalogController {
 	constructor(
 		private readonly catalog: CatalogService,
+		private readonly cdnMedia: CdnMediaService,
 		private readonly attributeService: AttributeService,
 		private readonly inventory: InventoryService,
 		private readonly vendors: VendorService,
@@ -137,6 +143,52 @@ export class CatalogController {
 	@Post('categories')
 	createCategory(@Req() req: AuthedRequest, @Body() dto: CreateCategoryDto) {
 		return this.catalog.createCategory(req.user!.id, dto);
+	}
+
+	@UseGuards(JwtAuthGuard)
+	@Patch('categories/:categoryId')
+	updateCategory(
+		@Req() req: AuthedRequest,
+		@Param('categoryId') categoryId: string,
+		@Body() dto: UpdateCatalogCategoryDto,
+	) {
+		return this.catalog.updateCategory(req.user!.id, categoryId, dto);
+	}
+
+	@UseGuards(JwtAuthGuard)
+	@Post('media')
+	@UseInterceptors(FileInterceptor('file', {
+		limits: { fileSize: 8 * 1024 * 1024 },
+	}))
+	async uploadMedia(
+		@Req() req: AuthedRequest,
+		@UploadedFile() file: { buffer: Buffer; mimetype: string; size: number; originalname: string },
+		@Body() dto: UploadCatalogMediaDto,
+	) {
+		this.cdnMedia.assertImageFile(file);
+		await this.catalog.assertCanUploadMedia(req.user!.id, dto);
+		const kind = dto.kind ?? (dto.categoryId ? 'category' : 'product');
+		const folder = kind === 'category'
+			? `catalog/categories/${dto.categoryId ?? 'new'}`
+			: `catalog/products/${dto.vendorId ?? dto.productId ?? 'new'}`;
+		const stored = await this.cdnMedia.putObject({
+			folder,
+			buffer: file.buffer,
+			mimeType: file.mimetype,
+			originalName: file.originalname,
+		});
+		if(dto.categoryId) {
+			await this.catalog.updateCategory(req.user!.id, dto.categoryId, { imageUrl: stored.path });
+		}
+		if(dto.productId) {
+			const imageUrls = await this.catalog.attachProductImage(
+				req.user!.id,
+				dto.productId,
+				stored.path,
+			);
+			return { ...stored, imageUrls };
+		}
+		return stored;
 	}
 
 	@UseGuards(JwtAuthGuard)

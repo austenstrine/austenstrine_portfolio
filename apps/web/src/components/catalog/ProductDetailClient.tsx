@@ -12,6 +12,7 @@ import {
 import { upsertCartLine } from '../../lib/checkout-api';
 import { ACCESS_REASONS, buildLoginUrl } from '../../lib/accessGate';
 import { useSession } from '../../lib/useSession';
+import { CatalogCover } from './CatalogCover';
 import { ProductQuickEdit } from './ProductQuickEdit';
 import { TermHint } from './TermHint';
 import { CompoundQtyField } from './CompoundQtyField';
@@ -160,6 +161,7 @@ export function ProductDetailClient({
 	const [deleteBusy, setDeleteBusy] = useState(false);
 	const [deleteError, setDeleteError] = useState<string | null>(null);
 	const [deletedNotice, setDeletedNotice] = useState<string | null>(null);
+	const [activeImage, setActiveImage] = useState(0);
 	const [selectedOfferingId, setSelectedOfferingId] = useState(() => firstBuyableId(initialProduct));
 	const [cartQty, setCartQty] = useState('1');
 	const [cartBusy, setCartBusy] = useState(false);
@@ -169,6 +171,8 @@ export function ProductDetailClient({
 	const selectedOffering = product.offerings.find((offering) => offering.id === selectedOfferingId);
 	const stock = stockCopy(selectedOffering);
 	const hero = heroMark(product);
+	const gallery = product.imageUrls ?? [];
+	const activeSrc = gallery[Math.min(activeImage, Math.max(gallery.length - 1, 0))];
 	const specs = useMemo(
 		() => specGroups(product, selectedOffering?.sku || product.sku),
 		[product, selectedOffering?.sku],
@@ -451,37 +455,82 @@ export function ProductDetailClient({
 
 			<div className="grid gap-10 lg:grid-cols-[minmax(0,1.15fr)_minmax(20rem,0.85fr)] lg:items-start">
 				<div className="flex flex-col gap-8">
-					<div className="relative aspect-[4/3] overflow-hidden rounded-2xl bg-[#cfd1cb] sm:aspect-[5/3]">
-						<div className="absolute inset-0 bg-[radial-gradient(ellipse_at_20%_15%,rgba(255,255,255,0.5),transparent_52%)]" />
-						<div className="absolute inset-0 flex flex-col justify-between p-6">
-							<div className="flex items-start justify-between gap-3">
-								<Link
-									href={vendorHref}
-									className="text-[11px] font-semibold uppercase tracking-[0.18em] text-ink/55 hover:text-ink"
-								>
-									{product.vendor.name}
-								</Link>
-								{stock.inStock
-									? null
-									: (
-										<span className="rounded-full bg-white/90 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-ink">
-											Sold out
-										</span>
-									)}
-							</div>
-							<div>
-								<p className="font-semibold tracking-tight text-ink/80" style={{ fontSize: '4.25rem', lineHeight: 0.85 }}>
-									{hero.mark}
-								</p>
-								{hero.label
-									? (
-										<p className="mt-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-ink/50">
-											{hero.label}
-										</p>
-									)
-									: null}
-							</div>
+					<div className="flex flex-col gap-3">
+						<div className="relative aspect-[4/3] overflow-hidden rounded-2xl bg-[#cfd1cb] sm:aspect-[5/3]">
+							<CatalogCover
+								src={activeSrc}
+								alt={product.title}
+								width={1400}
+								height={840}
+								className="absolute inset-0 h-full w-full object-cover"
+								fallback={(
+									<>
+										<div className="absolute inset-0 bg-[radial-gradient(ellipse_at_20%_15%,rgba(255,255,255,0.5),transparent_52%)]" />
+										<div className="absolute inset-0 flex flex-col justify-between p-6">
+											<div className="flex items-start justify-between gap-3">
+												<Link
+													href={vendorHref}
+													className="text-[11px] font-semibold uppercase tracking-[0.18em] text-ink/55 hover:text-ink"
+												>
+													{product.vendor.name}
+												</Link>
+												{stock.inStock
+													? null
+													: (
+														<span className="rounded-full bg-white/90 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-ink">
+															Sold out
+														</span>
+													)}
+											</div>
+											<div>
+												<p className="font-semibold tracking-tight text-ink/80" style={{ fontSize: '4.25rem', lineHeight: 0.85 }}>
+													{hero.mark}
+												</p>
+												{hero.label
+													? (
+														<p className="mt-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-ink/50">
+															{hero.label}
+														</p>
+													)
+													: null}
+											</div>
+										</div>
+									</>
+								)}
+							/>
+							{activeSrc && !stock.inStock
+								? (
+									<span className="absolute right-4 top-4 rounded-full bg-white/90 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-ink">
+										Sold out
+									</span>
+								)
+								: null}
 						</div>
+						{gallery.length > 1
+							? (
+								<div className="flex gap-2 overflow-x-auto">
+									{gallery.map((src, index) => (
+										<button
+											key={`${src}-${index}`}
+											type="button"
+											onClick={() => setActiveImage(index)}
+											className={`h-16 w-24 shrink-0 overflow-hidden rounded-lg border ${
+												index === activeImage ? 'border-ink' : 'border-transparent'
+											}`}
+										>
+											<CatalogCover
+												src={src}
+												alt=""
+												width={192}
+												height={128}
+												className="h-full w-full object-cover"
+												fallback={null}
+											/>
+										</button>
+									))}
+								</div>
+							)
+							: null}
 					</div>
 
 					<div className="lg:hidden">
@@ -675,14 +724,23 @@ function RelatedTile({ product }: { product: CatalogProductSummary }) {
 	return (
 		<Link href={`/place-et-marque/${product.vendor.slug}/${product.slug}`} className="group flex flex-col">
 			<div className="relative aspect-[5/3] overflow-hidden rounded-lg bg-[#cfd1cb]">
-				<div className="absolute inset-0 flex flex-col justify-between p-4">
-					<p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-ink/55">
-						{product.vendor.name}
-					</p>
-					<p className="font-semibold tracking-tight text-ink/80" style={{ fontSize: '2.1rem', lineHeight: 0.9 }}>
-						{initials(product.vendor.name)}
-					</p>
-				</div>
+				<CatalogCover
+					src={product.imageUrls?.[0]}
+					alt={product.title}
+					width={640}
+					height={384}
+					className="absolute inset-0 h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]"
+					fallback={(
+						<div className="absolute inset-0 flex flex-col justify-between p-4">
+							<p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-ink/55">
+								{product.vendor.name}
+							</p>
+							<p className="font-semibold tracking-tight text-ink/80" style={{ fontSize: '2.1rem', lineHeight: 0.9 }}>
+								{initials(product.vendor.name)}
+							</p>
+						</div>
+					)}
+				/>
 			</div>
 			<p className="mt-3 text-[11px] font-medium uppercase tracking-[0.14em] text-slate-500">
 				{product.category?.name ?? 'Uncategorized'}

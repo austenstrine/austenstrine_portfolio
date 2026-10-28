@@ -115,6 +115,12 @@ export class UpdateCatalogProductDto extends ProductMeasureFieldsDto {
 	tags?: string[];
 
 	@IsOptional()
+	@IsArray()
+	@IsString({ each: true })
+	@MaxLength(500, { each: true })
+	imageUrls?: string[];
+
+	@IsOptional()
 	@ValidateNested({ each: true })
 	@Type(() => ProductOfferingPatchDto)
 	@IsArray()
