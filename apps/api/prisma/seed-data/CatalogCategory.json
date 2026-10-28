@@ -18,43 +18,54 @@
           "children": [
             {
               "slug": "televisions",
-              "name": "Televisions"
+              "name": "Televisions",
+              "imageUrl": "/media/catalog/stock/tv/hero.jpg"
             },
             {
               "slug": "home-theater",
-              "name": "Home Theater Systems"
+              "name": "Home Theater Systems",
+              "imageUrl": "/media/catalog/stock/tv/hero.jpg"
             },
             {
               "slug": "streaming-media-players",
-              "name": "Streaming Media Players"
+              "name": "Streaming Media Players",
+              "imageUrl": "/media/catalog/stock/tv/hero.jpg"
             },
             {
               "slug": "projectors",
-              "name": "Projectors"
+              "name": "Projectors",
+              "imageUrl": "/media/catalog/stock/tv/hero.jpg"
             }
-          ]
+          ],
+          "imageUrl": "/media/catalog/stock/tv/hero.jpg"
         },
         {
           "slug": "headphones",
-          "name": "Headphones"
+          "name": "Headphones",
+          "imageUrl": "/media/catalog/stock/audio/hero.jpg"
         },
         {
           "slug": "speakers",
-          "name": "Speakers"
+          "name": "Speakers",
+          "imageUrl": "/media/catalog/stock/audio/hero.jpg"
         },
         {
           "slug": "wearable-technology",
-          "name": "Wearable Technology"
+          "name": "Wearable Technology",
+          "imageUrl": "/media/catalog/stock/phone/hero.jpg"
         },
         {
           "slug": "portable-audio",
-          "name": "Portable Audio & Video"
+          "name": "Portable Audio & Video",
+          "imageUrl": "/media/catalog/stock/tv/hero.jpg"
         },
         {
           "slug": "car-electronics-gps",
-          "name": "Car Electronics & GPS"
+          "name": "Car Electronics & GPS",
+          "imageUrl": "/media/catalog/stock/auto/hero.jpg"
         }
-      ]
+      ],
+      "imageUrl": "/media/catalog/stock/general/hero.jpg"
     },
     {
       "slug": "computers-tablets",
@@ -62,41 +73,51 @@
       "children": [
         {
           "slug": "laptops",
-          "name": "Laptops"
+          "name": "Laptops",
+          "imageUrl": "/media/catalog/stock/computer/hero.jpg"
         },
         {
           "slug": "desktops",
-          "name": "Desktops"
+          "name": "Desktops",
+          "imageUrl": "/media/catalog/stock/computer/hero.jpg"
         },
         {
           "slug": "tablets",
-          "name": "Tablets"
+          "name": "Tablets",
+          "imageUrl": "/media/catalog/stock/computer/hero.jpg"
         },
         {
           "slug": "computer-components",
-          "name": "Computer Components"
+          "name": "Computer Components",
+          "imageUrl": "/media/catalog/stock/computer/hero.jpg"
         },
         {
           "slug": "monitors",
-          "name": "Monitors"
+          "name": "Monitors",
+          "imageUrl": "/media/catalog/stock/computer/hero.jpg"
         },
         {
           "slug": "printers-scanners",
-          "name": "Printers & Scanners"
+          "name": "Printers & Scanners",
+          "imageUrl": "/media/catalog/stock/computer/hero.jpg"
         },
         {
           "slug": "networking",
-          "name": "Networking"
+          "name": "Networking",
+          "imageUrl": "/media/catalog/stock/computer/hero.jpg"
         },
         {
           "slug": "data-storage",
-          "name": "Data Storage"
+          "name": "Data Storage",
+          "imageUrl": "/media/catalog/stock/computer/hero.jpg"
         },
         {
           "slug": "computer-accessories",
-          "name": "Computer Accessories"
+          "name": "Computer Accessories",
+          "imageUrl": "/media/catalog/stock/computer/hero.jpg"
         }
-      ]
+      ],
+      "imageUrl": "/media/catalog/stock/computer/hero.jpg"
     },
     {
       "slug": "cell-phones-accessories",
@@ -104,29 +125,36 @@
       "children": [
         {
           "slug": "unlocked-cell-phones",
-          "name": "Cell Phones"
+          "name": "Cell Phones",
+          "imageUrl": "/media/catalog/stock/phone/hero.jpg"
         },
         {
           "slug": "phone-cases",
-          "name": "Cases, Holsters & Clips"
+          "name": "Cases, Holsters & Clips",
+          "imageUrl": "/media/catalog/stock/phone/hero.jpg"
         },
         {
           "slug": "phone-chargers",
-          "name": "Chargers & Power Adapters"
+          "name": "Chargers & Power Adapters",
+          "imageUrl": "/media/catalog/stock/phone/hero.jpg"
         },
         {
           "slug": "phone-screen-protectors",
-          "name": "Screen Protectors"
+          "name": "Screen Protectors",
+          "imageUrl": "/media/catalog/stock/phone/hero.jpg"
         },
         {
           "slug": "smartwatches",
-          "name": "Smartwatches"
+          "name": "Smartwatches",
+          "imageUrl": "/media/catalog/stock/phone/hero.jpg"
         },
         {
           "slug": "mobile-accessories",
-          "name": "Mobile Accessories"
+          "name": "Mobile Accessories",
+          "imageUrl": "/media/catalog/stock/phone/hero.jpg"
         }
-      ]
+      ],
+      "imageUrl": "/media/catalog/stock/phone/hero.jpg"
     },
     {
       "slug": "cameras-photo",
@@ -134,29 +162,36 @@
       "children": [
         {
           "slug": "digital-cameras",
-          "name": "Digital Cameras"
+          "name": "Digital Cameras",
+          "imageUrl": "/media/catalog/stock/camera/hero.jpg"
         },
         {
           "slug": "camera-lenses",
-          "name": "Lenses"
+          "name": "Lenses",
+          "imageUrl": "/media/catalog/stock/camera/hero.jpg"
         },
         {
           "slug": "camera-accessories",
-          "name": "Camera Accessories"
+          "name": "Camera Accessories",
+          "imageUrl": "/media/catalog/stock/camera/hero.jpg"
         },
         {
           "slug": "binoculars-telescopes",
-          "name": "Binoculars & Telescopes"
+          "name": "Binoculars & Telescopes",
+          "imageUrl": "/media/catalog/stock/camera/hero.jpg"
         },
         {
           "slug": "video-cameras",
-          "name": "Video Cameras"
+          "name": "Video Cameras",
+          "imageUrl": "/media/catalog/stock/tv/hero.jpg"
         },
         {
           "slug": "photo-lighting",
-          "name": "Lighting & Studio"
+          "name": "Lighting & Studio",
+          "imageUrl": "/media/catalog/stock/camera/hero.jpg"
         }
-      ]
+      ],
+      "imageUrl": "/media/catalog/stock/camera/hero.jpg"
     },
     {
       "slug": "home-kitchen",
@@ -164,33 +199,41 @@
       "children": [
         {
           "slug": "kitchen-dining",
-          "name": "Kitchen & Dining"
+          "name": "Kitchen & Dining",
+          "imageUrl": "/media/catalog/stock/kitchen/hero.jpg"
         },
         {
           "slug": "bedding",
-          "name": "Bedding"
+          "name": "Bedding",
+          "imageUrl": "/media/catalog/stock/furniture/hero.jpg"
         },
         {
           "slug": "bath",
-          "name": "Bath"
+          "name": "Bath",
+          "imageUrl": "/media/catalog/stock/general/hero.jpg"
         },
         {
           "slug": "home-storage",
-          "name": "Storage & Organization"
+          "name": "Storage & Organization",
+          "imageUrl": "/media/catalog/stock/computer/hero.jpg"
         },
         {
           "slug": "heating-cooling",
-          "name": "Heating, Cooling & Air Quality"
+          "name": "Heating, Cooling & Air Quality",
+          "imageUrl": "/media/catalog/stock/general/hero.jpg"
         },
         {
           "slug": "home-decor",
-          "name": "Home Décor"
+          "name": "Home Décor",
+          "imageUrl": "/media/catalog/stock/general/hero.jpg"
         },
         {
           "slug": "cleaning-supplies-home",
-          "name": "Cleaning Supplies"
+          "name": "Cleaning Supplies",
+          "imageUrl": "/media/catalog/stock/general/hero.jpg"
         }
-      ]
+      ],
+      "imageUrl": "/media/catalog/stock/kitchen/hero.jpg"
     },
     {
       "slug": "furniture",
@@ -198,29 +241,36 @@
       "children": [
         {
           "slug": "living-room-furniture",
-          "name": "Living Room Furniture"
+          "name": "Living Room Furniture",
+          "imageUrl": "/media/catalog/stock/furniture/hero.jpg"
         },
         {
           "slug": "bedroom-furniture",
-          "name": "Bedroom Furniture"
+          "name": "Bedroom Furniture",
+          "imageUrl": "/media/catalog/stock/furniture/hero.jpg"
         },
         {
           "slug": "office-furniture",
-          "name": "Office Furniture"
+          "name": "Office Furniture",
+          "imageUrl": "/media/catalog/stock/furniture/hero.jpg"
         },
         {
           "slug": "kitchen-dining-furniture",
-          "name": "Kitchen & Dining Furniture"
+          "name": "Kitchen & Dining Furniture",
+          "imageUrl": "/media/catalog/stock/furniture/hero.jpg"
         },
         {
           "slug": "outdoor-furniture",
-          "name": "Outdoor Furniture"
+          "name": "Outdoor Furniture",
+          "imageUrl": "/media/catalog/stock/furniture/hero.jpg"
         },
         {
           "slug": "entryway-furniture",
-          "name": "Entryway Furniture"
+          "name": "Entryway Furniture",
+          "imageUrl": "/media/catalog/stock/furniture/hero.jpg"
         }
-      ]
+      ],
+      "imageUrl": "/media/catalog/stock/furniture/hero.jpg"
     },
     {
       "slug": "appliances",
@@ -228,21 +278,26 @@
       "children": [
         {
           "slug": "major-appliances",
-          "name": "Major Appliances"
+          "name": "Major Appliances",
+          "imageUrl": "/media/catalog/stock/kitchen/hero.jpg"
         },
         {
           "slug": "small-appliances",
-          "name": "Small Appliances"
+          "name": "Small Appliances",
+          "imageUrl": "/media/catalog/stock/kitchen/hero.jpg"
         },
         {
           "slug": "vacuum-floor-care",
-          "name": "Vacuum & Floor Care"
+          "name": "Vacuum & Floor Care",
+          "imageUrl": "/media/catalog/stock/auto/hero.jpg"
         },
         {
           "slug": "laundry-appliances",
-          "name": "Laundry Appliances"
+          "name": "Laundry Appliances",
+          "imageUrl": "/media/catalog/stock/kitchen/hero.jpg"
         }
-      ]
+      ],
+      "imageUrl": "/media/catalog/stock/kitchen/hero.jpg"
     },
     {
       "slug": "patio-lawn-garden",
@@ -250,25 +305,31 @@
       "children": [
         {
           "slug": "outdoor-decor",
-          "name": "Outdoor Decor"
+          "name": "Outdoor Decor",
+          "imageUrl": "/media/catalog/stock/plant/hero.jpg"
         },
         {
           "slug": "gardening-lawn-care",
-          "name": "Gardening & Lawn Care"
+          "name": "Gardening & Lawn Care",
+          "imageUrl": "/media/catalog/stock/plant/hero.jpg"
         },
         {
           "slug": "grills-outdoor-cooking",
-          "name": "Grills & Outdoor Cooking"
+          "name": "Grills & Outdoor Cooking",
+          "imageUrl": "/media/catalog/stock/kitchen/hero.jpg"
         },
         {
           "slug": "pools-spas-supplies",
-          "name": "Pools, Hot Tubs & Supplies"
+          "name": "Pools, Hot Tubs & Supplies",
+          "imageUrl": "/media/catalog/stock/general/hero.jpg"
         },
         {
           "slug": "outdoor-power-tools",
-          "name": "Outdoor Power Tools"
+          "name": "Outdoor Power Tools",
+          "imageUrl": "/media/catalog/stock/tools/hero.jpg"
         }
-      ]
+      ],
+      "imageUrl": "/media/catalog/stock/plant/hero.jpg"
     },
     {
       "slug": "tools-home-improvement",
@@ -276,19 +337,23 @@
       "children": [
         {
           "slug": "power-tools",
-          "name": "Power Tools"
+          "name": "Power Tools",
+          "imageUrl": "/media/catalog/stock/tools/hero.jpg"
         },
         {
           "slug": "hand-tools",
-          "name": "Hand Tools"
+          "name": "Hand Tools",
+          "imageUrl": "/media/catalog/stock/tools/hero.jpg"
         },
         {
           "slug": "hardware",
-          "name": "Hardware"
+          "name": "Hardware",
+          "imageUrl": "/media/catalog/stock/tools/hero.jpg"
         },
         {
           "slug": "lighting-ceiling-fans",
-          "name": "Lighting & Ceiling Fans"
+          "name": "Lighting & Ceiling Fans",
+          "imageUrl": "/media/catalog/stock/lighting/hero.jpg"
         },
         {
           "slug": "electrical",
@@ -296,43 +361,54 @@
           "children": [
             {
               "slug": "wire-and-cable",
-              "name": "Wire & Cable"
+              "name": "Wire & Cable",
+              "imageUrl": "/media/catalog/stock/tools/hero.jpg"
             },
             {
               "slug": "conduit-raceway",
-              "name": "Conduit & Raceway"
+              "name": "Conduit & Raceway",
+              "imageUrl": "/media/catalog/stock/general/hero.jpg"
             },
             {
               "slug": "circuit-breakers-fuses",
-              "name": "Circuit Breakers & Fuses"
+              "name": "Circuit Breakers & Fuses",
+              "imageUrl": "/media/catalog/stock/general/hero.jpg"
             },
             {
               "slug": "outlets-switches",
-              "name": "Outlets & Switches"
+              "name": "Outlets & Switches",
+              "imageUrl": "/media/catalog/stock/general/hero.jpg"
             },
             {
               "slug": "electrical-boxes",
-              "name": "Electrical Boxes & Enclosures"
+              "name": "Electrical Boxes & Enclosures",
+              "imageUrl": "/media/catalog/stock/tools/hero.jpg"
             }
-          ]
+          ],
+          "imageUrl": "/media/catalog/stock/tools/hero.jpg"
         },
         {
           "slug": "plumbing",
-          "name": "Plumbing"
+          "name": "Plumbing",
+          "imageUrl": "/media/catalog/stock/tools/hero.jpg"
         },
         {
           "slug": "building-supplies",
-          "name": "Building Supplies"
+          "name": "Building Supplies",
+          "imageUrl": "/media/catalog/stock/general/hero.jpg"
         },
         {
           "slug": "safety-security",
-          "name": "Safety & Security"
+          "name": "Safety & Security",
+          "imageUrl": "/media/catalog/stock/general/hero.jpg"
         },
         {
           "slug": "painting-supplies",
-          "name": "Painting Supplies & Wall Treatments"
+          "name": "Painting Supplies & Wall Treatments",
+          "imageUrl": "/media/catalog/stock/tools/hero.jpg"
         }
-      ]
+      ],
+      "imageUrl": "/media/catalog/stock/tools/hero.jpg"
     },
     {
       "slug": "clothing-shoes-jewelry",
@@ -340,41 +416,51 @@
       "children": [
         {
           "slug": "womens-clothing",
-          "name": "Women's Clothing"
+          "name": "Women's Clothing",
+          "imageUrl": "/media/catalog/stock/apparel/hero.jpg"
         },
         {
           "slug": "mens-clothing",
-          "name": "Men's Clothing"
+          "name": "Men's Clothing",
+          "imageUrl": "/media/catalog/stock/apparel/hero.jpg"
         },
         {
           "slug": "girls-clothing",
-          "name": "Girls' Clothing"
+          "name": "Girls' Clothing",
+          "imageUrl": "/media/catalog/stock/apparel/hero.jpg"
         },
         {
           "slug": "boys-clothing",
-          "name": "Boys' Clothing"
+          "name": "Boys' Clothing",
+          "imageUrl": "/media/catalog/stock/apparel/hero.jpg"
         },
         {
           "slug": "baby-clothing",
-          "name": "Baby Clothing"
+          "name": "Baby Clothing",
+          "imageUrl": "/media/catalog/stock/apparel/hero.jpg"
         },
         {
           "slug": "shoes",
-          "name": "Shoes"
+          "name": "Shoes",
+          "imageUrl": "/media/catalog/stock/shoes/hero.jpg"
         },
         {
           "slug": "jewelry",
-          "name": "Jewelry"
+          "name": "Jewelry",
+          "imageUrl": "/media/catalog/stock/watch/hero.jpg"
         },
         {
           "slug": "watches",
-          "name": "Watches"
+          "name": "Watches",
+          "imageUrl": "/media/catalog/stock/watch/hero.jpg"
         },
         {
           "slug": "handbags-accessories",
-          "name": "Handbags & Accessories"
+          "name": "Handbags & Accessories",
+          "imageUrl": "/media/catalog/stock/bag/hero.jpg"
         }
-      ]
+      ],
+      "imageUrl": "/media/catalog/stock/watch/hero.jpg"
     },
     {
       "slug": "beauty-personal-care",
@@ -382,29 +468,36 @@
       "children": [
         {
           "slug": "makeup",
-          "name": "Makeup"
+          "name": "Makeup",
+          "imageUrl": "/media/catalog/stock/general/hero.jpg"
         },
         {
           "slug": "skin-care",
-          "name": "Skin Care"
+          "name": "Skin Care",
+          "imageUrl": "/media/catalog/stock/auto/hero.jpg"
         },
         {
           "slug": "hair-care",
-          "name": "Hair Care"
+          "name": "Hair Care",
+          "imageUrl": "/media/catalog/stock/auto/hero.jpg"
         },
         {
           "slug": "fragrance",
-          "name": "Fragrance"
+          "name": "Fragrance",
+          "imageUrl": "/media/catalog/stock/beauty/hero.jpg"
         },
         {
           "slug": "shave-hair-removal",
-          "name": "Shave & Hair Removal"
+          "name": "Shave & Hair Removal",
+          "imageUrl": "/media/catalog/stock/general/hero.jpg"
         },
         {
           "slug": "oral-care",
-          "name": "Oral Care"
+          "name": "Oral Care",
+          "imageUrl": "/media/catalog/stock/auto/hero.jpg"
         }
-      ]
+      ],
+      "imageUrl": "/media/catalog/stock/beauty/hero.jpg"
     },
     {
       "slug": "health-household",
@@ -412,29 +505,36 @@
       "children": [
         {
           "slug": "vitamins-supplements",
-          "name": "Vitamins & Dietary Supplements"
+          "name": "Vitamins & Dietary Supplements",
+          "imageUrl": "/media/catalog/stock/apparel/hero.jpg"
         },
         {
           "slug": "medical-supplies",
-          "name": "Medical Supplies & Equipment"
+          "name": "Medical Supplies & Equipment",
+          "imageUrl": "/media/catalog/stock/apparel/hero.jpg"
         },
         {
           "slug": "household-supplies",
-          "name": "Household Supplies"
+          "name": "Household Supplies",
+          "imageUrl": "/media/catalog/stock/general/hero.jpg"
         },
         {
           "slug": "baby-child-care",
-          "name": "Baby & Child Care"
+          "name": "Baby & Child Care",
+          "imageUrl": "/media/catalog/stock/auto/hero.jpg"
         },
         {
           "slug": "sports-nutrition",
-          "name": "Sports Nutrition"
+          "name": "Sports Nutrition",
+          "imageUrl": "/media/catalog/stock/sport/hero.jpg"
         },
         {
           "slug": "health-care",
-          "name": "Health Care"
+          "name": "Health Care",
+          "imageUrl": "/media/catalog/stock/beauty/hero.jpg"
         }
-      ]
+      ],
+      "imageUrl": "/media/catalog/stock/beauty/hero.jpg"
     },
     {
       "slug": "sports-outdoors",
@@ -442,37 +542,46 @@
       "children": [
         {
           "slug": "exercise-fitness",
-          "name": "Exercise & Fitness"
+          "name": "Exercise & Fitness",
+          "imageUrl": "/media/catalog/stock/sport/hero.jpg"
         },
         {
           "slug": "outdoor-recreation",
-          "name": "Outdoor Recreation"
+          "name": "Outdoor Recreation",
+          "imageUrl": "/media/catalog/stock/plant/hero.jpg"
         },
         {
           "slug": "cycling",
-          "name": "Cycling"
+          "name": "Cycling",
+          "imageUrl": "/media/catalog/stock/general/hero.jpg"
         },
         {
           "slug": "hunting-fishing",
-          "name": "Hunting & Fishing"
+          "name": "Hunting & Fishing",
+          "imageUrl": "/media/catalog/stock/general/hero.jpg"
         },
         {
           "slug": "team-sports",
-          "name": "Team Sports"
+          "name": "Team Sports",
+          "imageUrl": "/media/catalog/stock/grocery/hero.jpg"
         },
         {
           "slug": "fan-shop",
-          "name": "Fan Shop"
+          "name": "Fan Shop",
+          "imageUrl": "/media/catalog/stock/general/hero.jpg"
         },
         {
           "slug": "camping-hiking",
-          "name": "Camping & Hiking"
+          "name": "Camping & Hiking",
+          "imageUrl": "/media/catalog/stock/sport/hero.jpg"
         },
         {
           "slug": "water-sports",
-          "name": "Water Sports"
+          "name": "Water Sports",
+          "imageUrl": "/media/catalog/stock/sport/hero.jpg"
         }
-      ]
+      ],
+      "imageUrl": "/media/catalog/stock/plant/hero.jpg"
     },
     {
       "slug": "toys-games",
@@ -480,33 +589,41 @@
       "children": [
         {
           "slug": "action-figures",
-          "name": "Action Figures & Statues"
+          "name": "Action Figures & Statues",
+          "imageUrl": "/media/catalog/stock/general/hero.jpg"
         },
         {
           "slug": "dolls-accessories",
-          "name": "Dolls & Accessories"
+          "name": "Dolls & Accessories",
+          "imageUrl": "/media/catalog/stock/general/hero.jpg"
         },
         {
           "slug": "building-toys",
-          "name": "Building Toys"
+          "name": "Building Toys",
+          "imageUrl": "/media/catalog/stock/general/hero.jpg"
         },
         {
           "slug": "games-puzzles",
-          "name": "Games & Puzzles"
+          "name": "Games & Puzzles",
+          "imageUrl": "/media/catalog/stock/general/hero.jpg"
         },
         {
           "slug": "outdoor-play",
-          "name": "Sports & Outdoor Play"
+          "name": "Sports & Outdoor Play",
+          "imageUrl": "/media/catalog/stock/plant/hero.jpg"
         },
         {
           "slug": "kids-electronics",
-          "name": "Kids Electronics"
+          "name": "Kids Electronics",
+          "imageUrl": "/media/catalog/stock/apparel/hero.jpg"
         },
         {
           "slug": "stuffed-animals",
-          "name": "Stuffed Animals & Plush"
+          "name": "Stuffed Animals & Plush",
+          "imageUrl": "/media/catalog/stock/general/hero.jpg"
         }
-      ]
+      ],
+      "imageUrl": "/media/catalog/stock/general/hero.jpg"
     },
     {
       "slug": "baby",
@@ -514,29 +631,36 @@
       "children": [
         {
           "slug": "diapering",
-          "name": "Diapering"
+          "name": "Diapering",
+          "imageUrl": "/media/catalog/stock/general/hero.jpg"
         },
         {
           "slug": "baby-feeding",
-          "name": "Feeding"
+          "name": "Feeding",
+          "imageUrl": "/media/catalog/stock/general/hero.jpg"
         },
         {
           "slug": "baby-gear",
-          "name": "Gear"
+          "name": "Gear",
+          "imageUrl": "/media/catalog/stock/general/hero.jpg"
         },
         {
           "slug": "nursery",
-          "name": "Nursery"
+          "name": "Nursery",
+          "imageUrl": "/media/catalog/stock/general/hero.jpg"
         },
         {
           "slug": "strollers",
-          "name": "Strollers"
+          "name": "Strollers",
+          "imageUrl": "/media/catalog/stock/general/hero.jpg"
         },
         {
           "slug": "car-seats",
-          "name": "Car Seats"
+          "name": "Car Seats",
+          "imageUrl": "/media/catalog/stock/auto/hero.jpg"
         }
-      ]
+      ],
+      "imageUrl": "/media/catalog/stock/general/hero.jpg"
     },
     {
       "slug": "automotive",
@@ -544,37 +668,46 @@
       "children": [
         {
           "slug": "automotive-replacement-parts",
-          "name": "Replacement Parts"
+          "name": "Replacement Parts",
+          "imageUrl": "/media/catalog/stock/apparel/hero.jpg"
         },
         {
           "slug": "automotive-tools",
-          "name": "Tools & Equipment"
+          "name": "Tools & Equipment",
+          "imageUrl": "/media/catalog/stock/tools/hero.jpg"
         },
         {
           "slug": "tires-wheels",
-          "name": "Tires & Wheels"
+          "name": "Tires & Wheels",
+          "imageUrl": "/media/catalog/stock/auto/hero.jpg"
         },
         {
           "slug": "motorcycle-powersports",
-          "name": "Motorcycle & Powersports"
+          "name": "Motorcycle & Powersports",
+          "imageUrl": "/media/catalog/stock/sport/hero.jpg"
         },
         {
           "slug": "oils-fluids",
-          "name": "Oils & Fluids"
+          "name": "Oils & Fluids",
+          "imageUrl": "/media/catalog/stock/general/hero.jpg"
         },
         {
           "slug": "car-care",
-          "name": "Car Care"
+          "name": "Car Care",
+          "imageUrl": "/media/catalog/stock/auto/hero.jpg"
         },
         {
           "slug": "interior-accessories-auto",
-          "name": "Interior Accessories"
+          "name": "Interior Accessories",
+          "imageUrl": "/media/catalog/stock/auto/hero.jpg"
         },
         {
           "slug": "exterior-accessories-auto",
-          "name": "Exterior Accessories"
+          "name": "Exterior Accessories",
+          "imageUrl": "/media/catalog/stock/auto/hero.jpg"
         }
-      ]
+      ],
+      "imageUrl": "/media/catalog/stock/auto/hero.jpg"
     },
     {
       "slug": "industrial-scientific",
@@ -582,29 +715,36 @@
       "children": [
         {
           "slug": "test-measurement",
-          "name": "Test & Measurement"
+          "name": "Test & Measurement",
+          "imageUrl": "/media/catalog/stock/apparel/hero.jpg"
         },
         {
           "slug": "lab-scientific-products",
-          "name": "Lab & Scientific Products"
+          "name": "Lab & Scientific Products",
+          "imageUrl": "/media/catalog/stock/general/hero.jpg"
         },
         {
           "slug": "occupational-health-safety",
-          "name": "Occupational Health & Safety"
+          "name": "Occupational Health & Safety",
+          "imageUrl": "/media/catalog/stock/beauty/hero.jpg"
         },
         {
           "slug": "material-handling",
-          "name": "Material Handling"
+          "name": "Material Handling",
+          "imageUrl": "/media/catalog/stock/general/hero.jpg"
         },
         {
           "slug": "hydraulics-pneumatics",
-          "name": "Hydraulics, Pneumatics & Pumps"
+          "name": "Hydraulics, Pneumatics & Pumps",
+          "imageUrl": "/media/catalog/stock/general/hero.jpg"
         },
         {
           "slug": "industrial-electrical",
-          "name": "Industrial Electrical"
+          "name": "Industrial Electrical",
+          "imageUrl": "/media/catalog/stock/tools/hero.jpg"
         }
-      ]
+      ],
+      "imageUrl": "/media/catalog/stock/general/hero.jpg"
     },
     {
       "slug": "pet-supplies",
@@ -612,29 +752,36 @@
       "children": [
         {
           "slug": "dog-supplies",
-          "name": "Dogs"
+          "name": "Dogs",
+          "imageUrl": "/media/catalog/stock/general/hero.jpg"
         },
         {
           "slug": "cat-supplies",
-          "name": "Cats"
+          "name": "Cats",
+          "imageUrl": "/media/catalog/stock/general/hero.jpg"
         },
         {
           "slug": "fish-aquatic-pets",
-          "name": "Fish & Aquatic Pets"
+          "name": "Fish & Aquatic Pets",
+          "imageUrl": "/media/catalog/stock/general/hero.jpg"
         },
         {
           "slug": "bird-supplies",
-          "name": "Birds"
+          "name": "Birds",
+          "imageUrl": "/media/catalog/stock/general/hero.jpg"
         },
         {
           "slug": "small-animal-supplies",
-          "name": "Small Animals"
+          "name": "Small Animals",
+          "imageUrl": "/media/catalog/stock/general/hero.jpg"
         },
         {
           "slug": "horse-supplies",
-          "name": "Horses"
+          "name": "Horses",
+          "imageUrl": "/media/catalog/stock/general/hero.jpg"
         }
-      ]
+      ],
+      "imageUrl": "/media/catalog/stock/general/hero.jpg"
     },
     {
       "slug": "grocery-gourmet",
@@ -642,29 +789,36 @@
       "children": [
         {
           "slug": "beverages",
-          "name": "Beverages"
+          "name": "Beverages",
+          "imageUrl": "/media/catalog/stock/grocery/hero.jpg"
         },
         {
           "slug": "snack-foods",
-          "name": "Snack Foods"
+          "name": "Snack Foods",
+          "imageUrl": "/media/catalog/stock/grocery/hero.jpg"
         },
         {
           "slug": "pantry-staples",
-          "name": "Pantry Staples"
+          "name": "Pantry Staples",
+          "imageUrl": "/media/catalog/stock/grocery/hero.jpg"
         },
         {
           "slug": "breakfast-foods",
-          "name": "Breakfast Foods"
+          "name": "Breakfast Foods",
+          "imageUrl": "/media/catalog/stock/grocery/hero.jpg"
         },
         {
           "slug": "produce",
-          "name": "Produce"
+          "name": "Produce",
+          "imageUrl": "/media/catalog/stock/general/hero.jpg"
         },
         {
           "slug": "meat-seafood",
-          "name": "Meat & Seafood"
+          "name": "Meat & Seafood",
+          "imageUrl": "/media/catalog/stock/grocery/hero.jpg"
         }
-      ]
+      ],
+      "imageUrl": "/media/catalog/stock/grocery/hero.jpg"
     },
     {
       "slug": "office-products",
@@ -672,25 +826,31 @@
       "children": [
         {
           "slug": "office-electronics",
-          "name": "Office Electronics"
+          "name": "Office Electronics",
+          "imageUrl": "/media/catalog/stock/book/hero.jpg"
         },
         {
           "slug": "office-supplies",
-          "name": "Office Supplies"
+          "name": "Office Supplies",
+          "imageUrl": "/media/catalog/stock/book/hero.jpg"
         },
         {
           "slug": "school-supplies",
-          "name": "School Supplies"
+          "name": "School Supplies",
+          "imageUrl": "/media/catalog/stock/general/hero.jpg"
         },
         {
           "slug": "office-furniture-lighting",
-          "name": "Office Furniture & Lighting"
+          "name": "Office Furniture & Lighting",
+          "imageUrl": "/media/catalog/stock/furniture/hero.jpg"
         },
         {
           "slug": "calendars-planners",
-          "name": "Calendars, Planners & Personal Organizers"
+          "name": "Calendars, Planners & Personal Organizers",
+          "imageUrl": "/media/catalog/stock/general/hero.jpg"
         }
-      ]
+      ],
+      "imageUrl": "/media/catalog/stock/book/hero.jpg"
     },
     {
       "slug": "arts-crafts-sewing",
@@ -698,29 +858,36 @@
       "children": [
         {
           "slug": "painting",
-          "name": "Painting"
+          "name": "Painting",
+          "imageUrl": "/media/catalog/stock/tools/hero.jpg"
         },
         {
           "slug": "drawing",
-          "name": "Drawing"
+          "name": "Drawing",
+          "imageUrl": "/media/catalog/stock/general/hero.jpg"
         },
         {
           "slug": "beading-jewelry-making",
-          "name": "Beading & Jewelry Making"
+          "name": "Beading & Jewelry Making",
+          "imageUrl": "/media/catalog/stock/watch/hero.jpg"
         },
         {
           "slug": "sewing",
-          "name": "Sewing"
+          "name": "Sewing",
+          "imageUrl": "/media/catalog/stock/general/hero.jpg"
         },
         {
           "slug": "scrapbooking",
-          "name": "Scrapbooking & Stamping"
+          "name": "Scrapbooking & Stamping",
+          "imageUrl": "/media/catalog/stock/book/hero.jpg"
         },
         {
           "slug": "crafting",
-          "name": "Crafting"
+          "name": "Crafting",
+          "imageUrl": "/media/catalog/stock/general/hero.jpg"
         }
-      ]
+      ],
+      "imageUrl": "/media/catalog/stock/general/hero.jpg"
     },
     {
       "slug": "musical-instruments",
@@ -728,29 +895,36 @@
       "children": [
         {
           "slug": "guitars",
-          "name": "Guitars"
+          "name": "Guitars",
+          "imageUrl": "/media/catalog/stock/general/hero.jpg"
         },
         {
           "slug": "keyboards",
-          "name": "Keyboards"
+          "name": "Keyboards",
+          "imageUrl": "/media/catalog/stock/computer/hero.jpg"
         },
         {
           "slug": "drums-percussion",
-          "name": "Drums & Percussion"
+          "name": "Drums & Percussion",
+          "imageUrl": "/media/catalog/stock/general/hero.jpg"
         },
         {
           "slug": "dj-karaoke",
-          "name": "DJ, Electronic Music & Karaoke"
+          "name": "DJ, Electronic Music & Karaoke",
+          "imageUrl": "/media/catalog/stock/book/hero.jpg"
         },
         {
           "slug": "band-orchestra",
-          "name": "Band & Orchestra"
+          "name": "Band & Orchestra",
+          "imageUrl": "/media/catalog/stock/general/hero.jpg"
         },
         {
           "slug": "instrument-accessories",
-          "name": "Instrument Accessories"
+          "name": "Instrument Accessories",
+          "imageUrl": "/media/catalog/stock/apparel/hero.jpg"
         }
-      ]
+      ],
+      "imageUrl": "/media/catalog/stock/apparel/hero.jpg"
     },
     {
       "slug": "books",
@@ -758,25 +932,31 @@
       "children": [
         {
           "slug": "literature-fiction",
-          "name": "Literature & Fiction"
+          "name": "Literature & Fiction",
+          "imageUrl": "/media/catalog/stock/general/hero.jpg"
         },
         {
           "slug": "childrens-books",
-          "name": "Children's Books"
+          "name": "Children's Books",
+          "imageUrl": "/media/catalog/stock/book/hero.jpg"
         },
         {
           "slug": "textbooks",
-          "name": "Textbooks"
+          "name": "Textbooks",
+          "imageUrl": "/media/catalog/stock/book/hero.jpg"
         },
         {
           "slug": "comics-graphic-novels",
-          "name": "Comics & Graphic Novels"
+          "name": "Comics & Graphic Novels",
+          "imageUrl": "/media/catalog/stock/general/hero.jpg"
         },
         {
           "slug": "magazines",
-          "name": "Magazines"
+          "name": "Magazines",
+          "imageUrl": "/media/catalog/stock/general/hero.jpg"
         }
-      ]
+      ],
+      "imageUrl": "/media/catalog/stock/book/hero.jpg"
     },
     {
       "slug": "movies-tv",
@@ -784,21 +964,26 @@
       "children": [
         {
           "slug": "movies",
-          "name": "Movies"
+          "name": "Movies",
+          "imageUrl": "/media/catalog/stock/book/hero.jpg"
         },
         {
           "slug": "tv-shows",
-          "name": "TV"
+          "name": "TV",
+          "imageUrl": "/media/catalog/stock/tv/hero.jpg"
         },
         {
           "slug": "blu-ray",
-          "name": "Blu-ray"
+          "name": "Blu-ray",
+          "imageUrl": "/media/catalog/stock/general/hero.jpg"
         },
         {
           "slug": "4k-ultra-hd",
-          "name": "4K Ultra HD"
+          "name": "4K Ultra HD",
+          "imageUrl": "/media/catalog/stock/general/hero.jpg"
         }
-      ]
+      ],
+      "imageUrl": "/media/catalog/stock/tv/hero.jpg"
     },
     {
       "slug": "video-games",
@@ -806,25 +991,31 @@
       "children": [
         {
           "slug": "video-game-consoles",
-          "name": "Consoles"
+          "name": "Consoles",
+          "imageUrl": "/media/catalog/stock/tv/hero.jpg"
         },
         {
           "slug": "video-game-software",
-          "name": "Games"
+          "name": "Games",
+          "imageUrl": "/media/catalog/stock/tv/hero.jpg"
         },
         {
           "slug": "video-game-accessories",
-          "name": "Accessories"
+          "name": "Accessories",
+          "imageUrl": "/media/catalog/stock/tv/hero.jpg"
         },
         {
           "slug": "pc-gaming",
-          "name": "PC Gaming"
+          "name": "PC Gaming",
+          "imageUrl": "/media/catalog/stock/general/hero.jpg"
         },
         {
           "slug": "virtual-reality",
-          "name": "Virtual Reality"
+          "name": "Virtual Reality",
+          "imageUrl": "/media/catalog/stock/general/hero.jpg"
         }
-      ]
+      ],
+      "imageUrl": "/media/catalog/stock/tv/hero.jpg"
     },
     {
       "slug": "collectibles-art",
@@ -832,25 +1023,31 @@
       "children": [
         {
           "slug": "sports-memorabilia",
-          "name": "Sports Memorabilia"
+          "name": "Sports Memorabilia",
+          "imageUrl": "/media/catalog/stock/sport/hero.jpg"
         },
         {
           "slug": "coins-paper-money",
-          "name": "Coins & Paper Money"
+          "name": "Coins & Paper Money",
+          "imageUrl": "/media/catalog/stock/book/hero.jpg"
         },
         {
           "slug": "stamps",
-          "name": "Stamps"
+          "name": "Stamps",
+          "imageUrl": "/media/catalog/stock/general/hero.jpg"
         },
         {
           "slug": "collectible-art",
-          "name": "Art"
+          "name": "Art",
+          "imageUrl": "/media/catalog/stock/general/hero.jpg"
         },
         {
           "slug": "entertainment-memorabilia",
-          "name": "Entertainment Memorabilia"
+          "name": "Entertainment Memorabilia",
+          "imageUrl": "/media/catalog/stock/apparel/hero.jpg"
         }
-      ]
+      ],
+      "imageUrl": "/media/catalog/stock/general/hero.jpg"
     },
     {
       "slug": "business-industrial",
@@ -858,29 +1055,36 @@
       "children": [
         {
           "slug": "agriculture-forestry",
-          "name": "Agriculture & Forestry"
+          "name": "Agriculture & Forestry",
+          "imageUrl": "/media/catalog/stock/general/hero.jpg"
         },
         {
           "slug": "construction",
-          "name": "Construction"
+          "name": "Construction",
+          "imageUrl": "/media/catalog/stock/general/hero.jpg"
         },
         {
           "slug": "healthcare-lab",
-          "name": "Healthcare, Lab & Life Science"
+          "name": "Healthcare, Lab & Life Science",
+          "imageUrl": "/media/catalog/stock/beauty/hero.jpg"
         },
         {
           "slug": "restaurant-food-service",
-          "name": "Restaurant & Food Service"
+          "name": "Restaurant & Food Service",
+          "imageUrl": "/media/catalog/stock/grocery/hero.jpg"
         },
         {
           "slug": "retail-services",
-          "name": "Retail & Services"
+          "name": "Retail & Services",
+          "imageUrl": "/media/catalog/stock/general/hero.jpg"
         },
         {
           "slug": "heavy-equipment",
-          "name": "Heavy Equipment"
+          "name": "Heavy Equipment",
+          "imageUrl": "/media/catalog/stock/apparel/hero.jpg"
         }
-      ]
+      ],
+      "imageUrl": "/media/catalog/stock/general/hero.jpg"
     },
     {
       "slug": "travel",
@@ -888,21 +1092,26 @@
       "children": [
         {
           "slug": "luggage",
-          "name": "Luggage"
+          "name": "Luggage",
+          "imageUrl": "/media/catalog/stock/bag/hero.jpg"
         },
         {
           "slug": "travel-accessories",
-          "name": "Travel Accessories"
+          "name": "Travel Accessories",
+          "imageUrl": "/media/catalog/stock/general/hero.jpg"
         },
         {
           "slug": "backpacks",
-          "name": "Backpacks"
+          "name": "Backpacks",
+          "imageUrl": "/media/catalog/stock/bag/hero.jpg"
         },
         {
           "slug": "laptop-bags",
-          "name": "Laptop Bags"
+          "name": "Laptop Bags",
+          "imageUrl": "/media/catalog/stock/computer/hero.jpg"
         }
-      ]
+      ],
+      "imageUrl": "/media/catalog/stock/bag/hero.jpg"
     }
   ]
 }

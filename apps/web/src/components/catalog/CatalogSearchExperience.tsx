@@ -12,6 +12,7 @@ import {
 } from '../../lib/catalog-api';
 import { sortCategoryTree } from '../../lib/category-tree';
 import { formatQty } from '../../lib/uom-qty';
+import { CatalogCover } from './CatalogCover';
 
 const PAGE_SIZE = 24;
 const SORTS = [
@@ -795,23 +796,39 @@ function ProductCard({ product }: { product: CatalogProductSummary }) {
 			className="group flex flex-col"
 		>
 			<div className="relative aspect-[5/3] overflow-hidden rounded-lg bg-[#cfd1cb]">
-				<div className="absolute inset-0 flex flex-col justify-between p-4">
-					<div className="flex items-start justify-between gap-3">
-						<p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-ink/55">
-							{product.vendor.name}
-						</p>
-						{inStock
-							? null
-							: (
-								<span className="rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-ink">
-									Sold out
-								</span>
-							)}
-					</div>
-					<p className="font-semibold tracking-tight text-ink/80" style={{ fontSize: '2.35rem', lineHeight: 0.9 }}>
-						{initials(product.vendor.name)}
-					</p>
-				</div>
+				<CatalogCover
+					src={product.imageUrls?.[0]}
+					alt={product.title}
+					width={800}
+					height={480}
+					className="absolute inset-0 h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]"
+					fallback={(
+						<div className="absolute inset-0 flex flex-col justify-between p-4">
+							<div className="flex items-start justify-between gap-3">
+								<p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-ink/55">
+									{product.vendor.name}
+								</p>
+								{inStock
+									? null
+									: (
+										<span className="rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-ink">
+											Sold out
+										</span>
+									)}
+							</div>
+							<p className="font-semibold tracking-tight text-ink/80" style={{ fontSize: '2.35rem', lineHeight: 0.9 }}>
+								{initials(product.vendor.name)}
+							</p>
+						</div>
+					)}
+				/>
+				{product.imageUrls?.[0] && !inStock
+					? (
+						<span className="absolute right-3 top-3 rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-ink">
+							Sold out
+						</span>
+					)
+					: null}
 				<div className="pointer-events-none absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-black/10 to-transparent opacity-0 transition group-hover:opacity-100" />
 			</div>
 			<div className="mt-3 flex flex-1 flex-col gap-1">

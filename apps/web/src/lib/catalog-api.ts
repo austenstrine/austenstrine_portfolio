@@ -9,6 +9,7 @@ export type CatalogProductSummary = {
 	slug: string;
 	title: string;
 	description: string | null;
+	imageUrls?: string[];
 	tags?: string[];
 	inventoryFromAllocations: boolean;
 	primaryPriceCents: number | null;
@@ -175,12 +176,13 @@ export type CatalogProductDetail = Omit<CatalogProductSummary, 'offerings'> & Pr
 };
 
 async function catalogRequest<T>(path: string, options: RequestInit = {}): Promise<T> {
+	const headers = new Headers(options.headers);
+	if(!(options.body instanceof FormData) && !headers.has('Content-Type')) {
+		headers.set('Content-Type', 'application/json');
+	}
 	const response = await authedFetch(`/catalog${path}`, {
 		...options,
-		headers: {
-			'Content-Type': 'application/json',
-			...options.headers,
-		},
+		headers,
 	});
 
 	const body = await response.json().catch(() => null);
@@ -297,6 +299,7 @@ export function updateCatalogProduct(
 	payload: ProductMeasuresPayload & {
 		title?: string;
 		description?: string;
+		imageUrls?: string[];
 		tags?: string[];
 		categoryId?: string | null;
 		inventoryFromAllocations?: boolean;
@@ -327,16 +330,17 @@ export function updateCatalogProduct(
 	});
 }
 
-export function listCatalogCategories(): Promise<
-	Array<{
-		id: string;
-		slug: string;
-		name: string;
-		parentId?: string | null;
-		parent?: { id: string; name: string; slug: string } | null;
-		_count?: { products: number; children: number };
-	}>
-> {
+export type CatalogCategoryRow = {
+	id: string;
+	slug: string;
+	name: string;
+	imageUrl?: string | null;
+	parentId?: string | null;
+	parent?: { id: string; name: string; slug: string } | null;
+	_count?: { products: number; children: number };
+};
+
+export function listCatalogCategories(): Promise<CatalogCategoryRow[]> {
 	return catalogRequest('/categories');
 }
 
@@ -344,14 +348,58 @@ export function createCatalogCategory(payload: {
 	name: string;
 	slug: string;
 	parentId?: string;
-}): Promise<{
-	id: string;
-	slug: string;
-	name: string;
-}> {
+	imageUrl?: string;
+}): Promise<CatalogCategoryRow> {
 	return catalogRequest('/categories', {
 		method: 'POST',
 		body: JSON.stringify(payload),
+	});
+}
+
+export function updateCatalogCategory(
+	categoryId: string,
+	payload: { imageUrl?: string | null },
+): Promise<CatalogCategoryRow> {
+	return catalogRequest(`/categories/${categoryId}`, {
+		method: 'PATCH',
+		body: JSON.stringify(payload),
+	});
+}
+
+export type CatalogMediaUpload = {
+	path: string;
+	url: string;
+	imageUrls?: string[];
+};
+
+export function uploadCatalogMedia(input: {
+	file: File;
+	kind?: 'product' | 'category';
+	productId?: string;
+	categoryId?: string;
+	vendorId?: string;
+	alt?: string;
+}): Promise<CatalogMediaUpload> {
+	const body = new FormData();
+	body.append('file', input.file);
+	if(input.kind) {
+		body.append('kind', input.kind);
+	}
+	if(input.productId) {
+		body.append('productId', input.productId);
+	}
+	if(input.categoryId) {
+		body.append('categoryId', input.categoryId);
+	}
+	if(input.vendorId) {
+		body.append('vendorId', input.vendorId);
+	}
+	if(input.alt) {
+		body.append('alt', input.alt);
+	}
+	return catalogRequest('/media', {
+		method: 'POST',
+		body,
 	});
 }
 
@@ -521,6 +569,7 @@ export type CreateProductPayload = ProductMeasuresPayload & {
 	slug: string;
 	title: string;
 	description?: string;
+	imageUrls?: string[];
 	tags?: string[];
 	inventoryFromAllocations?: boolean;
 	breakFeeMode?: 'OFF' | 'PER_PARENT_OPENED' | 'ONCE_PER_LINE' | 'PRODUCT_ONCE';

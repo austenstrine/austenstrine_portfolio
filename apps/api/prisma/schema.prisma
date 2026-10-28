@@ -416,6 +416,7 @@ model CatalogCategory {
   id        String            @id @default(uuid())
   slug      String            @unique
   name      String
+  imageUrl  String?
   parentId  String?
   parent    CatalogCategory?  @relation("CategoryTree", fields: [parentId], references: [id])
   children  CatalogCategory[] @relation("CategoryTree")
@@ -438,6 +439,7 @@ model CatalogProduct {
   slug                     String
   title                    String
   description              String?
+  imageUrls                String[]         @default([])
   tags                     String[]         @default([])
   active                   Boolean          @default(true)
   /// Legacy; prefer offering inheritQtyToChildren + containment graph

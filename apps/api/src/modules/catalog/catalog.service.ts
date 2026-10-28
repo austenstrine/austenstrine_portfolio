@@ -19,6 +19,7 @@ import { CreateCategoryDto } from './dto/create-category.dto';
 import { CreateUomDto } from './dto/create-uom.dto';
 import { RequestCategoryDto } from './dto/request-category.dto';
 import { TrimInventoryDto } from './dto/trim-inventory.dto';
+import { UpdateCatalogCategoryDto } from './dto/upload-catalog-media.dto';
 import { UpdateCatalogProductDto } from './dto/update-catalog-product.dto';
 import { UomMergeService } from './uom-merge.service';
 import { resolveQty } from './uom-qty';
@@ -169,6 +170,62 @@ export class CatalogService {
 				name,
 				slug,
 				parentId: dto.parentId,
+				imageUrl: this.normalizeImageUrl(dto.imageUrl),
+			},
+			include: {
+				parent: { select: { id: true, name: true, slug: true } },
+				_count: { select: { products: true, children: true } },
+			},
+		});
+	}
+
+	async assertCanUploadMedia(
+		userId: string,
+		input: { productId?: string; categoryId?: string; vendorId?: string; kind?: string },
+	) {
+		if(input.productId) {
+			await this.vendorAccess.assertCanEditProduct(userId, input.productId);
+			return;
+		}
+		if(input.categoryId || input.kind === 'category') {
+			await this.vendorAccess.assertIsSuperVendorMember(userId);
+			return;
+		}
+		if(input.vendorId) {
+			await this.vendorAccess.assertCanEditVendor(userId, input.vendorId);
+			return;
+		}
+		throw new BadRequestException('Provide a product, category, or vendor to attach this image to.');
+	}
+
+	async attachProductImage(userId: string, productId: string, imageUrl: string) {
+		await this.vendorAccess.assertCanEditProduct(userId, productId);
+		const product = await this.prisma.catalogProduct.findUnique({
+			where: { id: productId },
+			select: { imageUrls: true },
+		});
+		if(!product) {
+			throw new NotFoundException('Product not found.');
+		}
+		const imageUrls = this.normalizeImageUrls([...product.imageUrls, imageUrl]);
+		await this.prisma.catalogProduct.update({
+			where: { id: productId },
+			data: { imageUrls },
+		});
+		await this.catalogSearch.indexProduct(productId);
+		return imageUrls;
+	}
+
+	async updateCategory(userId: string, categoryId: string, dto: UpdateCatalogCategoryDto) {
+		await this.vendorAccess.assertIsSuperVendorMember(userId);
+		const existing = await this.prisma.catalogCategory.findUnique({ where: { id: categoryId } });
+		if(!existing) {
+			throw new NotFoundException('Category not found.');
+		}
+		return this.prisma.catalogCategory.update({
+			where: { id: categoryId },
+			data: {
+				imageUrl: dto.imageUrl === undefined ? existing.imageUrl : this.normalizeImageUrl(dto.imageUrl),
 			},
 			include: {
 				parent: { select: { id: true, name: true, slug: true } },
@@ -264,6 +321,40 @@ export class CatalogService {
 		return normalized.slice(0, 40);
 	}
 
+	normalizeImageUrl(url?: string | null): string | null {
+		if(url == null) {
+			return null;
+		}
+		const trimmed = url.trim();
+		if(!trimmed) {
+			return null;
+		}
+		if(!trimmed.startsWith('/media/')) {
+			throw new BadRequestException('Image paths must be CDN media URLs.');
+		}
+		return trimmed.slice(0, 500);
+	}
+
+	normalizeImageUrls(urls?: string[]): string[] {
+		if(!urls) {
+			return [];
+		}
+		const seen = new Set<string>();
+		const normalized: string[] = [];
+		for(const raw of urls) {
+			const url = this.normalizeImageUrl(raw);
+			if(!url || seen.has(url)) {
+				continue;
+			}
+			seen.add(url);
+			normalized.push(url);
+			if(normalized.length >= 8) {
+				break;
+			}
+		}
+		return normalized;
+	}
+
 	async searchProducts(query: {
 		q?: string;
 		categorySlug?: string;
@@ -332,6 +423,7 @@ export class CatalogService {
 				slug: dto.slug,
 				title: dto.title,
 				description: dto.description,
+				imageUrls: this.normalizeImageUrls(dto.imageUrls),
 				tags,
 				inventoryFromAllocations: dto.inventoryFromAllocations ?? false,
 				breakFeeMode: dto.breakFeeMode,
@@ -405,6 +497,7 @@ export class CatalogService {
 			data: {
 				title: dto.title,
 				description: dto.description,
+				...(dto.imageUrls !== undefined ? { imageUrls: this.normalizeImageUrls(dto.imageUrls) } : {}),
 				active: dto.active,
 				inventoryFromAllocations: dto.inventoryFromAllocations,
 				categoryId: dto.categoryId,
@@ -808,6 +901,7 @@ export class CatalogService {
 			slug: product.slug,
 			title: product.title,
 			description: product.description,
+			imageUrls: product.imageUrls,
 			tags: product.tags,
 			inventoryFromAllocations: product.inventoryFromAllocations,
 			breakFeeMode: product.breakFeeMode,
@@ -844,6 +938,7 @@ export class CatalogService {
 			slug: product.slug,
 			title: product.title,
 			description: product.description,
+			imageUrls: product.imageUrls,
 			tags: product.tags,
 			inventoryFromAllocations: product.inventoryFromAllocations,
 			breakFeeMode: product.breakFeeMode,

@@ -6,6 +6,7 @@ import { CatalogArchiveService } from './archive/catalog-archive.service';
 import { AttributeService } from './attributes/attribute.service';
 import { CatalogController } from './catalog.controller';
 import { CatalogService } from './catalog.service';
+import { CdnMediaService } from './cdn-media.service';
 import { CatalogSearchListener } from './search/catalog-search.listener';
 import { CatalogSearchService } from './search/catalog-search.service';
 import { CatalogAuthGuard } from './guards/catalog-auth.guard';
@@ -24,6 +25,7 @@ import { VendorService } from './vendor.service';
 	controllers: [CatalogController],
 	providers: [
 		CatalogService,
+		CdnMediaService,
 		AttributeService,
 		CatalogSearchService,
 		CatalogSearchListener,
