@@ -1,11 +1,10 @@
 {
-  "name": "austenstrine-portfolio-platform",
+  "name": "austenstrine-portfolio",
   "private": true,
   "version": "0.1.0",
   "workspaces": [
     "apps/api",
-    "apps/web",
-    "packages/prisma-seed-migration-sync"
+    "apps/web"
   ],
   "scripts": {
     "dev": "npm run dev -w apps/api & npm run dev -w apps/web",

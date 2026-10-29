@@ -1,6 +1,5 @@
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
-import { BackendDownBanner } from '../components/BackendDownBanner';
 import { JsonLd } from '../components/JsonLd';
 import {
 	SITE_DESCRIPTION,
@@ -60,7 +59,6 @@ export default function RootLayout({
 					id="person-jsonld"
 					data={personJsonLd}
 				/>
-				<BackendDownBanner />
 				{children}
 			</body>
 		</html>

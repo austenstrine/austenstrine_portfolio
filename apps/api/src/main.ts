@@ -2,15 +2,13 @@ import './load-env';
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import cookieParser from 'cookie-parser';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
-	const app = await NestFactory.create(AppModule, { rawBody: true });
+	const app = await NestFactory.create(AppModule);
 
 	app.setGlobalPrefix('api');
-	app.enableCors({ origin: process.env.WEB_URL ?? true, credentials: true });
-	app.use(cookieParser());
+	app.enableCors({ origin: process.env.WEB_URL ?? true });
 	app.useGlobalPipes(
 		new ValidationPipe({
 			whitelist: true,
@@ -21,7 +19,7 @@ async function bootstrap() {
 
 	const config = new DocumentBuilder()
 		.setTitle('Portfolio API')
-		.setDescription('Portfolio backend with NestJS, Prisma, Redis, and OpenSearch')
+		.setDescription('Health and docs for austenstrine.dev')
 		.setVersion('1.0.0')
 		.build();
 

@@ -1,12 +1,20 @@
-import { AccountMenu } from '../AccountMenu';
 import { CdnImg } from '../CdnImg';
-import { SITE_HEADLINE } from '../../lib/site';
+import { DocumentIcon } from '../icons/DocumentIcon';
+import { EmailIcon } from '../icons/EmailIcon';
+import { GithubIcon } from '../icons/GithubIcon';
+import { LinkedInIcon } from '../icons/LinkedInIcon';
+import {
+	SITE_GITHUB,
+	SITE_HEADLINE,
+	SITE_LINKEDIN,
+} from '../../lib/site';
 
 export function HeroSection() {
 	return (
 		<section
 			className="
 				relative
+				overflow-hidden
 				rounded-3xl
 				bg-gradient-to-br
 				from-ink
@@ -18,34 +26,40 @@ export function HeroSection() {
 				shadow-2xl
 			"
 		>
-			<AccountMenu />
-
 			<div
 				className="
 					grid
 					items-center
-					gap-8
-					md:grid-cols-[220px,1fr]
+					gap-10
+					md:grid-cols-[auto,1fr]
 				"
 			>
 				<CdnImg
 					className="
 						mx-auto
-						h-52
-						w-52
+						h-56
+						w-56
 						rounded-full
 						border-4
-						border-white/40
+						border-white/50
 						object-cover
 						shadow-2xl
+						md:mx-0
 					"
 					src="/pp1_sq_sm.jpg"
-					cdn={{ w: 416, h: 416, fit: 'cover', fm: 'webp' }}
+					cdn={{ w: 448, h: 448, fit: 'cover', fm: 'webp' }}
 					alt="Austen Strine"
 				/>
 				<div>
 					<p
 						className="
+							inline-flex
+							rounded-full
+							border
+							border-white/20
+							bg-white/10
+							px-3
+							py-1
 							text-xs
 							font-semibold
 							uppercase
@@ -57,7 +71,7 @@ export function HeroSection() {
 					</p>
 					<h1
 						className="
-							mt-2
+							mt-4
 							text-4xl
 							font-semibold
 							tracking-tight
@@ -71,7 +85,7 @@ export function HeroSection() {
 							mt-4
 							max-w-2xl
 							text-lg
-							text-slate-100
+							text-white/90
 						"
 					>
 						{SITE_HEADLINE}
@@ -81,6 +95,7 @@ export function HeroSection() {
 							mt-4
 							max-w-2xl
 							text-base
+							leading-relaxed
 							text-slate-100
 						"
 					>
@@ -94,12 +109,15 @@ export function HeroSection() {
 							mt-8
 							flex
 							flex-wrap
+							items-center
 							gap-3
 						"
 					>
 						<a
 							className="
-								inline-block
+								inline-flex
+								items-center
+								gap-2
 								rounded-full
 								bg-white
 								px-6
@@ -113,30 +131,14 @@ export function HeroSection() {
 							"
 							href="/cv.html"
 						>
+							<DocumentIcon className="h-4 w-4" />
 							View CV
 						</a>
 						<a
 							className="
-								inline-block
-								rounded-full
-								border
-								border-white/60
-								px-6
-								py-3
-								text-sm
-								font-semibold
-								text-white
-								transition
-								hover:-translate-y-0.5
-								hover:bg-white/10
-							"
-							href="/place-et-marque"
-						>
-							Open Place et Marque
-						</a>
-						<a
-							className="
-								inline-block
+								inline-flex
+								items-center
+								gap-2
 								rounded-full
 								border
 								border-white/60
@@ -151,7 +153,50 @@ export function HeroSection() {
 							"
 							href="#contact"
 						>
+							<EmailIcon className="h-4 w-4" />
 							Email
+						</a>
+					</div>
+					<div
+						className="
+							mt-6
+							flex
+							flex-wrap
+							items-center
+							gap-5
+							text-sm
+							text-white/80
+						"
+					>
+						<a
+							className="
+								inline-flex
+								items-center
+								gap-2
+								transition
+								hover:text-white
+							"
+							href={SITE_LINKEDIN}
+							rel="noreferrer"
+							target="_blank"
+						>
+							<LinkedInIcon className="h-4 w-4" />
+							LinkedIn
+						</a>
+						<a
+							className="
+								inline-flex
+								items-center
+								gap-2
+								transition
+								hover:text-white
+							"
+							href={SITE_GITHUB}
+							rel="noreferrer"
+							target="_blank"
+						>
+							<GithubIcon className="h-4 w-4" />
+							GitHub
 						</a>
 					</div>
 				</div>

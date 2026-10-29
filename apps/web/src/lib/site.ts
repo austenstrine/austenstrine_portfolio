@@ -19,12 +19,6 @@ export const SITE_HEADLINE =
 
 export const SITE_OG_IMAGE = '/pp1_sq_sm.jpg';
 
-export const GUIDED_DEMO_PRODUCT = {
-	href: '/place-et-marque/demo-supply/mira-line-10-awg-wire-cable-0057',
-	title: '10 AWG building wire',
-	summary: '10 AWG THHN building wire from Demo Supply Co.',
-};
-
 export const personJsonLd = {
 	'@context': 'https://schema.org',
 	'@type': 'Person',
