@@ -1,5 +1,6 @@
 import { AccountMenu } from '../AccountMenu';
 import { CdnImg } from '../CdnImg';
+import { SITE_HEADLINE } from '../../lib/site';
 
 export function HeroSection() {
 	return (
@@ -40,11 +41,23 @@ export function HeroSection() {
 					"
 					src="/pp1_sq_sm.jpg"
 					cdn={{ w: 416, h: 416, fit: 'cover', fm: 'webp' }}
-					alt="Austen Strine profile"
+					alt="Austen Strine"
 				/>
 				<div>
+					<p
+						className="
+							text-xs
+							font-semibold
+							uppercase
+							tracking-[0.18em]
+							text-white/80
+						"
+					>
+						Parowan, Utah · Murray in December 2026
+					</p>
 					<h1
 						className="
+							mt-2
 							text-4xl
 							font-semibold
 							tracking-tight
@@ -61,7 +74,20 @@ export function HeroSection() {
 							text-slate-100
 						"
 					>
-						Full-Stack Developer who makes teams sharper, steadier, and faster.
+						{SITE_HEADLINE}
+					</p>
+					<p
+						className="
+							mt-4
+							max-w-2xl
+							text-base
+							text-slate-100
+						"
+					>
+						Six and a half years of paid software work on catalog, search, and live
+						commerce sites. I live in Parowan, Utah. I am in Murray Mondays and
+						Tuesdays, and I am moving there full-time in December 2026. Open to
+						on-site and hybrid roles in the Salt Lake Valley.
 					</p>
 					<div
 						className="
@@ -85,9 +111,28 @@ export function HeroSection() {
 								hover:-translate-y-0.5
 								hover:bg-frost
 							"
+							href="/cv.html"
+						>
+							View CV
+						</a>
+						<a
+							className="
+								inline-block
+								rounded-full
+								border
+								border-white/60
+								px-6
+								py-3
+								text-sm
+								font-semibold
+								text-white
+								transition
+								hover:-translate-y-0.5
+								hover:bg-white/10
+							"
 							href="/place-et-marque"
 						>
-							Explore Place et Marque
+							Open Place et Marque
 						</a>
 						<a
 							className="
@@ -106,7 +151,7 @@ export function HeroSection() {
 							"
 							href="#contact"
 						>
-							Get in touch
+							Email
 						</a>
 					</div>
 				</div>

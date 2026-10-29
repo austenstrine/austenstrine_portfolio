@@ -1,5 +1,6 @@
 import { AboutSection } from '../components/sections/AboutSection';
 import { ContactSection } from '../components/sections/ContactSection';
+import { ExperienceSection } from '../components/sections/ExperienceSection';
 import { FeaturedBuildSection } from '../components/sections/FeaturedBuildSection';
 import { HeroSection } from '../components/sections/HeroSection';
 import { SiteFooter } from '../components/sections/SiteFooter';
@@ -21,6 +22,7 @@ export default function Home() {
 				"
 			>
 				<HeroSection />
+				<ExperienceSection />
 				<AboutSection />
 				<SkillsSection />
 				<FeaturedBuildSection />
