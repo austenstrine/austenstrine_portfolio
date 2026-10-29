@@ -290,8 +290,7 @@ export function AboutSection() {
 						text-slate-600
 					"
 				>
-					I&apos;d rather let people I&apos;ve worked with speak. These are LinkedIn
-					recommendations from managers and peers.
+					From managers and peers at Lumber Marketplace and GO Green.
 				</p>
 			</div>
 

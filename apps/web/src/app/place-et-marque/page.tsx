@@ -1,12 +1,18 @@
 import { CatalogCover } from '../../components/catalog/CatalogCover';
 import { CatalogEmptyActions } from '../../components/catalog/CatalogEmptyActions';
-import { searchCatalogProducts } from '../../lib/catalog-api';
+import { DemoIntro } from '../../components/catalog/DemoIntro';
+import { searchCatalogProducts, type CatalogProductSummary } from '../../lib/catalog-api';
 import { formatQty } from '../../lib/uom-qty';
 
 export default async function PlaceEtMarqueHomePage() {
-	const products = await searchCatalogProducts({})
-		.then((result) => result.items)
-		.catch(() => []);
+	let products: CatalogProductSummary[] = [];
+	let loadFailed = false;
+	try {
+		products = (await searchCatalogProducts({})).items;
+	}
+	catch {
+		loadFailed = true;
+	}
 
 	return (
 		<div
@@ -16,16 +22,18 @@ export default async function PlaceEtMarqueHomePage() {
 				gap-8
 			"
 		>
+			<DemoIntro />
+
 			<div>
-				<h1
+				<h2
 					className="
-						text-3xl
+						text-2xl
 						font-semibold
 						tracking-tight
 					"
 				>
 					Catalog
-				</h1>
+				</h2>
 				<p
 					className="
 						mt-2
@@ -33,8 +41,7 @@ export default async function PlaceEtMarqueHomePage() {
 						text-slate-600
 					"
 				>
-					Products with flexible units, pack/piece pairs, broken-pack remainders, and cached
-					availability for fast search.
+					Browse by vendor, or open a listing to see units and buying options.
 				</p>
 			</div>
 
@@ -50,9 +57,27 @@ export default async function PlaceEtMarqueHomePage() {
 						"
 					>
 						<p className="font-semibold text-ink">
-							No products yet
+							{loadFailed
+								? 'Could not load the catalog'
+								: 'No products in the index'
+							}
 						</p>
-						<CatalogEmptyActions />
+						<p
+							className="
+								mt-2
+								text-sm
+								text-slate-600
+							"
+						>
+							{loadFailed
+								? 'The API or search index did not respond. That is a real outage, not an empty store.'
+								: 'Seed data may not have been applied, or search has nothing to return.'
+							}
+						</p>
+						{loadFailed
+							? null
+							: <CatalogEmptyActions />
+						}
 					</div>
 				)
 				: (

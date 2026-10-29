@@ -1,6 +1,22 @@
-import { showcasePortals } from '../../lib/showcasePortals';
+import { GUIDED_DEMO_PRODUCT, SITE_REPO } from '../../lib/site';
 
-const REPO_URL = 'https://github.com/austenstrine/austenstrine_portfolio';
+const steps = [
+	{
+		title: 'Search',
+		href: '/place-et-marque/search',
+		summary: 'Catalog search with category, vendor, and attribute filters.',
+	},
+	{
+		title: GUIDED_DEMO_PRODUCT.title,
+		href: GUIDED_DEMO_PRODUCT.href,
+		summary: GUIDED_DEMO_PRODUCT.summary,
+	},
+	{
+		title: 'Cart',
+		href: '/place-et-marque/cart',
+		summary: 'Sign in to add items, then check out with Stripe.',
+	},
+];
 
 export function FeaturedBuildSection() {
 	return (
@@ -15,58 +31,48 @@ export function FeaturedBuildSection() {
 			"
 			id="featured-build"
 		>
-			<div
+			<p
 				className="
-					flex
-					flex-col
-					gap-3
+					text-xs
+					font-semibold
+					uppercase
+					tracking-[0.22em]
+					text-sky
 				"
 			>
-				<p
-					className="
-						text-xs
-						font-semibold
-						uppercase
-						tracking-[0.22em]
-						text-sky
-					"
+				Featured build
+			</p>
+			<h2
+				className="
+					mt-2
+					text-3xl
+					font-semibold
+					text-ink
+				"
+			>
+				Place et Marque
+			</h2>
+			<p
+				className="
+					mt-3
+					max-w-3xl
+					text-slate-700
+				"
+			>
+				A live multi-vendor catalog I designed and built: packs, pieces, units of
+				measure, search, and checkout. Source is public on
+				{' '}
+				<a
+					className="font-semibold text-sky hover:underline"
+					href={SITE_REPO}
+					rel="noreferrer"
+					target="_blank"
 				>
-					Featured build
-				</p>
-				<h2
-					className="
-						text-3xl
-						font-semibold
-						text-ink
-					"
-				>
-					Place et Marque
-				</h2>
-				<p
-					className="
-						max-w-3xl
-						text-slate-700
-					"
-				>
-					Place et Marque is a live multi-vendor storefront and the demonstration—real catalog, inventory, search, and checkout
-					surfaces, not mocks. Source is public on{' '}
-					<a
-						className="
-							font-semibold
-							text-sky
-							hover:underline
-						"
-						href={REPO_URL}
-						rel="noreferrer"
-						target="_blank"
-					>
-						GitHub
-					</a>
-					.
-				</p>
-			</div>
+					GitHub
+				</a>.
+			</p>
 
-			<ul
+			<ol
 				className="
 					mt-8
 					divide-y
@@ -75,8 +81,8 @@ export function FeaturedBuildSection() {
 					border-slate-200
 				"
 			>
-				{showcasePortals.map((portal) => (
-					<li key={portal.id}>
+				{steps.map((step, index) => (
+					<li key={step.href}>
 						<a
 							className="
 								group
@@ -91,7 +97,7 @@ export function FeaturedBuildSection() {
 								sm:justify-between
 								sm:gap-6
 							"
-							href={portal.href}
+							href={step.href}
 						>
 							<div className="min-w-0">
 								<p
@@ -102,7 +108,7 @@ export function FeaturedBuildSection() {
 										group-hover:text-sky
 									"
 								>
-									{portal.title}
+									{`${index + 1}. ${step.title}`}
 								</p>
 								<p
 									className="
@@ -111,7 +117,7 @@ export function FeaturedBuildSection() {
 										text-slate-600
 									"
 								>
-									{portal.summary}
+									{step.summary}
 								</p>
 							</div>
 							<span
@@ -127,7 +133,7 @@ export function FeaturedBuildSection() {
 						</a>
 					</li>
 				))}
-			</ul>
+			</ol>
 
 			<p
 				className="
@@ -137,17 +143,11 @@ export function FeaturedBuildSection() {
 				"
 			>
 				<a
-					className="
-						font-semibold
-						text-sky
-						hover:underline
-					"
+					className="font-semibold text-sky hover:underline"
 					href="/place-et-marque"
 				>
 					Enter Place et Marque
 				</a>
-				{' '}
-				or browse the full stack in the repository.
 			</p>
 		</section>
 	);

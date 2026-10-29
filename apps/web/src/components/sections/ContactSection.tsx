@@ -6,6 +6,8 @@ import { DocumentIcon } from '../icons/DocumentIcon';
 import { EmailIcon } from '../icons/EmailIcon';
 import { GithubIcon } from '../icons/GithubIcon';
 import { LinkedInIcon } from '../icons/LinkedInIcon';
+import { PhoneIcon } from '../icons/PhoneIcon';
+import { SITE_EMAIL, SITE_PHONE, SITE_PHONE_HREF } from '../../lib/site';
 import { ContactMethodRow } from './ContactMethodRow';
 
 type ContactMethod = {
@@ -21,12 +23,24 @@ type ContactMethod = {
 const methods: ContactMethod[] = [
 	{
 		copyLabel: 'Email',
-		copyValue: 'austen.strine.dev@gmail.com',
-		href: 'mailto:austen.strine.dev@gmail.com?subject=Portfolio Inquiry',
+		copyValue: SITE_EMAIL,
+		href: `mailto:${SITE_EMAIL}?subject=Portfolio Inquiry`,
 		linkTitle: 'Email Me',
 		linkSummary: 'Send me a direct email',
 		icon: (
 			<EmailIcon
+				className="h-5 w-5"
+			/>
+		),
+	},
+	{
+		copyLabel: 'Phone',
+		copyValue: SITE_PHONE,
+		href: SITE_PHONE_HREF,
+		linkTitle: 'Call me',
+		linkSummary: 'Reach me by phone',
+		icon: (
+			<PhoneIcon
 				className="h-5 w-5"
 			/>
 		),
@@ -61,7 +75,7 @@ const methods: ContactMethod[] = [
 		copyValue: 'austenstrine.dev/cv.html',
 		href: '/cv.html',
 		linkTitle: 'View CV',
-		linkSummary: 'Printable full work history',
+		linkSummary: 'Printable work history',
 		icon: (
 			<DocumentIcon
 				className="h-5 w-5"
@@ -101,7 +115,7 @@ export function ContactSection() {
 			id="contact"
 		>
 			<h2 className="text-3xl font-semibold">
-				Get In Touch
+				Get in touch
 			</h2>
 			<p
 				className="
@@ -110,8 +124,9 @@ export function ContactSection() {
 					text-slate-200
 				"
 			>
-				I am always interested in hearing about new opportunities and projects.
-				Whether you have a question or just want to say hi, feel free to reach out.
+				I am looking for full-stack engineering work in the Salt Lake Valley. I live
+				in Parowan, Utah, I am in Murray Mondays and Tuesdays, and I relocate to
+				Murray full-time in December 2026.
 			</p>
 
 			<div

@@ -1,19 +1,29 @@
 const skills = [
 	{
-		title: 'Frontend Development',
-		summary: 'Next.js, TypeScript, Tailwind CSS, MUI, React, HTML5/CSS3, Responsive Design',
+		title: 'Frontend',
+		summary: 'Next.js, React, TypeScript, Tailwind CSS, MUI, HTML5, CSS3',
 	},
 	{
-		title: 'Backend Development',
-		summary: 'Node.js, Nest.js, PHP, Laravel, REST APIs, Prisma, PostgreSQL, MySQL, MongoDB',
+		title: 'Backend',
+		summary: 'Node.js, NestJS (Nest.js), REST APIs, Prisma, PHP, Laravel',
 	},
 	{
-		title: 'Mobile & Native',
-		summary: 'Swift (iOS), Mobile-first Design, App Store Deployment',
+		title: 'Data and search',
+		summary: 'PostgreSQL (Postgres), MySQL, MongoDB, Elasticsearch, OpenSearch',
 	},
 	{
-		title: 'Cloud & Infrastructure',
-		summary: 'AWS, OpenSearch, Elasticsearch, Ubuntu/Apache, Bash, Git, CI/CD Pipelines',
+		title: 'Cloud and operations',
+		summary: 'AWS, Ubuntu, Apache, Bash, Git, CI/CD',
+	},
+	{
+		title: 'Mobile',
+		summary:
+			'Swift (iOS) and SQLite on a paid in-house app at GO Green. Dart/Flutter used there as well; TypeScript, Node.js, and React also from that period.',
+	},
+	{
+		title: 'How I actually work',
+		summary:
+			'Unsupervised ownership, talking with product owners, mentoring juniors, and keeping production sites up. I have not used AI on a paid team.',
 	},
 ];
 
@@ -37,7 +47,7 @@ export function SkillsSection() {
 					text-ink
 				"
 			>
-				Skills & Expertise
+				Skills
 			</h2>
 			<div
 				className="
@@ -47,39 +57,37 @@ export function SkillsSection() {
 					md:grid-cols-2
 				"
 			>
-				{
-					skills.map((skill) => (
-						<article
+				{skills.map((skill) => (
+					<article
+						className="
+							rounded-xl
+							border
+							border-slate-200
+							bg-slate-50
+							p-5
+						"
+						key={skill.title}
+					>
+						<h3
 							className="
-								rounded-xl
-								border
-								border-slate-200
-								bg-slate-50
-								p-5
+								text-lg
+								font-semibold
+								text-ink
 							"
-							key={skill.title}
 						>
-							<h3
-								className="
-									text-lg
-									font-semibold
-									text-ink
-								"
-							>
-								{skill.title}
-							</h3>
-							<p
-								className="
-									mt-2
-									text-sm
-									text-slate-700
-								"
-							>
-								{skill.summary}
-							</p>
-						</article>
-					))
-				}
+							{skill.title}
+						</h3>
+						<p
+							className="
+								mt-2
+								text-sm
+								text-slate-700
+							"
+						>
+							{skill.summary}
+						</p>
+					</article>
+				))}
 			</div>
 		</section>
 	);

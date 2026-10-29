@@ -11,7 +11,7 @@ export function SiteFooter() {
 				text-slate-300
 			"
 		>
-			© 2025 Austen Strine. All rights reserved.
+			© 2026 Austen Strine
 		</footer>
 	);
 }
