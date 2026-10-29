@@ -5,6 +5,14 @@ const nextConfig = {
 	images: {
 		unoptimized: true,
 	},
+	async rewrites() {
+		return [
+			{
+				source: '/cv.html',
+				destination: '/cv',
+			},
+		];
+	},
 };
 
 export default nextConfig;

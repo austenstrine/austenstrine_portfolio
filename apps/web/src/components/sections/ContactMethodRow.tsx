@@ -1,6 +1,7 @@
 'use client';
 
 import type { ReactNode } from 'react';
+import { ArrowRightIcon } from '../icons/ArrowRightIcon';
 import { CopyIcon } from '../icons/CopyIcon';
 
 type ContactMethodRowProps = {
@@ -169,12 +170,14 @@ export function ContactMethodRow({
 				</div>
 				<span
 					className="
-						text-xl
 						transition
 						group-hover:translate-x-0.5
 					"
+					aria-hidden="true"
 				>
-					›
+					<ArrowRightIcon
+						className="h-5 w-5"
+					/>
 				</span>
 			</a>
 		</div>

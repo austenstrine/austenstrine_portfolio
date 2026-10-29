@@ -1,0 +1,293 @@
+.cv-page,
+.cv-page * {
+	box-sizing: border-box;
+}
+
+.cv-page {
+	min-height: 100vh;
+	font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+	font-size: 10.5pt;
+	line-height: 1.55;
+	color: #1a1a1a;
+	background: #f0f2f4;
+}
+
+.cv-page .page-shell {
+	max-width: 820px;
+	margin: 2rem auto 4rem;
+	background: #fff;
+	box-shadow: 0 4px 32px rgba(0, 0, 0, 0.12);
+	border-radius: 4px;
+	overflow: hidden;
+}
+
+.cv-page .screen-toolbar {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 0.7rem 1.5rem;
+	background: #0d1b2a;
+	gap: 1rem;
+}
+
+.cv-page .screen-toolbar a,
+.cv-page .back-btn,
+.cv-page .print-btn {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.4rem;
+	color: #e0e1dd;
+	text-decoration: none;
+	font-size: 0.8rem;
+	font-weight: 500;
+	line-height: 1;
+	letter-spacing: 0.01em;
+	background: none;
+	border: none;
+	padding: 0;
+	cursor: pointer;
+	font-family: inherit;
+	transition: color 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+}
+
+.cv-page .back-btn svg,
+.cv-page .print-btn svg {
+	display: block;
+	flex-shrink: 0;
+}
+
+.cv-page .screen-toolbar a:hover,
+.cv-page .back-btn:hover {
+	color: #fff;
+}
+
+.cv-page .print-btn {
+	padding: 0.45rem 0.85rem;
+	border: 1px solid rgba(224, 225, 221, 0.28);
+	border-radius: 6px;
+}
+
+.cv-page .print-btn:hover {
+	color: #fff;
+	background: rgba(224, 225, 221, 0.08);
+	border-color: rgba(224, 225, 221, 0.55);
+}
+
+.cv-page .cv {
+	padding: 2.2rem 2.6rem 2.8rem;
+}
+
+.cv-page .cv-header {
+	border-bottom: 1.5px solid #0d1b2a;
+	padding-bottom: 1rem;
+	margin-bottom: 1.4rem;
+}
+
+.cv-page .cv-header h1 {
+	margin: 0;
+	font-size: 22pt;
+	font-weight: 700;
+	color: #0d1b2a;
+	letter-spacing: -0.5px;
+	line-height: 1.1;
+}
+
+.cv-page .cv-headline {
+	font-size: 10.5pt;
+	color: #1b263b;
+	font-weight: 500;
+	margin-top: 0.3rem;
+	margin-bottom: 0.85rem;
+}
+
+.cv-page .cv-contact {
+	display: flex;
+	flex-direction: column;
+	gap: 0.35rem;
+	font-size: 9.5pt;
+	color: #4a5560;
+}
+
+.cv-page .cv-contact-row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	row-gap: 0.25rem;
+	margin: 0;
+}
+
+.cv-page .cv-sep {
+	margin: 0 0.65rem;
+	color: #9aa3ad;
+	user-select: none;
+}
+
+.cv-page .cv-contact a {
+	color: #0d1b2a;
+	text-decoration: none;
+}
+
+.cv-page .cv-contact a:hover {
+	text-decoration: underline;
+	text-underline-offset: 0.15em;
+}
+
+.cv-page .cv-location {
+	margin: 0;
+	color: #5c6570;
+	font-size: 9pt;
+}
+
+.cv-page .cv-section {
+	margin-top: 1.4rem;
+}
+
+.cv-page .cv-section-title {
+	font-size: 9pt;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 1.2px;
+	color: #0d1b2a;
+	border-bottom: 1px solid #d0d5da;
+	padding-bottom: 0.25rem;
+	margin: 0 0 0.9rem;
+}
+
+.cv-page .cv-summary p {
+	margin: 0 0 0.5rem;
+}
+
+.cv-page .cv-job {
+	margin-bottom: 1.2rem;
+}
+
+.cv-page .cv-job:last-child {
+	margin-bottom: 0;
+}
+
+.cv-page .cv-job-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: baseline;
+	flex-wrap: wrap;
+	gap: 0.2rem;
+}
+
+.cv-page .cv-job-title {
+	font-size: 10.5pt;
+	font-weight: 700;
+	color: #0d1b2a;
+}
+
+.cv-page .cv-job-dates {
+	font-size: 9pt;
+	color: #666;
+	white-space: nowrap;
+}
+
+.cv-page .cv-job-company {
+	font-size: 9.5pt;
+	color: #1b263b;
+	font-weight: 600;
+	margin-bottom: 0.1rem;
+}
+
+.cv-page .cv-job-meta {
+	font-size: 8.5pt;
+	color: #777;
+	margin-bottom: 0.5rem;
+}
+
+.cv-page .cv-job ul {
+	padding-left: 1.2rem;
+	margin: 0.3rem 0 0;
+}
+
+.cv-page .cv-job li {
+	margin-bottom: 0.3rem;
+	font-size: 10pt;
+}
+
+.cv-page .cv-additional {
+	width: 100%;
+	border-collapse: collapse;
+	font-size: 9.5pt;
+}
+
+.cv-page .cv-additional td {
+	padding: 0.2rem 0.5rem 0.2rem 0;
+	vertical-align: top;
+	color: #444;
+}
+
+.cv-page .cv-additional td:first-child {
+	font-weight: 600;
+	color: #0d1b2a;
+	width: 40%;
+	white-space: nowrap;
+}
+
+.cv-page .cv-additional td:last-child {
+	color: #666;
+	font-size: 8.5pt;
+	text-align: right;
+	white-space: nowrap;
+	padding-left: 1rem;
+}
+
+.cv-page .cv-skills-grid {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 0.5rem 2rem;
+}
+
+.cv-page .cv-skill-label {
+	font-size: 8.5pt;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 0.8px;
+	color: #0d1b2a;
+	margin-bottom: 0.15rem;
+}
+
+.cv-page .cv-skill-list {
+	font-size: 9.5pt;
+	color: #444;
+}
+
+@media print {
+	@page {
+		size: letter;
+		margin: 0.65in 0.7in 0.65in 0.7in;
+	}
+
+	.cv-page {
+		background: #fff;
+		min-height: 0;
+	}
+
+	.cv-page .page-shell {
+		max-width: 100%;
+		margin: 0;
+		box-shadow: none;
+		border-radius: 0;
+	}
+
+	.cv-page .screen-toolbar {
+		display: none;
+	}
+
+	.cv-page .cv {
+		padding: 0;
+	}
+
+	.cv-page .cv-job,
+	.cv-page .cv-section {
+		page-break-inside: avoid;
+	}
+
+	.cv-page a {
+		color: inherit !important;
+		text-decoration: none !important;
+	}
+}
