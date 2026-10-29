@@ -11,6 +11,7 @@ const config: Config = {
       colors: {
         ink: '#0d1b2a',
         sky: '#1b263b',
+        asgreen: '#257257',
         signal: '#e76f51',
         frost: '#e0e1dd',
       },
