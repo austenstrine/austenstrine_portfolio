@@ -26,6 +26,7 @@ import {
 } from '../../../../lib/checkout-api';
 import { useSession } from '../../../../lib/useSession';
 import { RequireAccess } from '../../../../components/auth/RequireAccess';
+import { BackLink } from '../../../../components/BackLink';
 
 function VendorDetailContent() {
 	const params = useParams<{ vendorId: string }>();
@@ -222,17 +223,9 @@ function VendorDetailContent() {
 				gap-6
 			"
 		>
-			<a
-				className="
-					text-sm
-					font-semibold
-					text-sky
-					hover:underline
-				"
-				href="/place-et-marque/vendors"
-			>
-				← Back to vendors
-			</a>
+			<BackLink href="/place-et-marque/vendors">
+				Back to vendors
+			</BackLink>
 
 			{sessionLoading || loading
 				? (

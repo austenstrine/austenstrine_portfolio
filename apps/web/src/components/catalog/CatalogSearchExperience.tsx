@@ -13,6 +13,7 @@ import {
 import { sortCategoryTree } from '../../lib/category-tree';
 import { formatQty } from '../../lib/uom-qty';
 import { CatalogCover } from './CatalogCover';
+import { ArrowLeftIcon } from '../icons/ArrowLeftIcon';
 
 const PAGE_SIZE = 24;
 const SORTS = [
@@ -333,7 +334,12 @@ export function CatalogSearchExperience() {
 					{selectedCategory?.parent
 						? (
 							<FacetRow
-								label={`← ${selectedCategory.parent.name}`}
+								icon={(
+									<ArrowLeftIcon
+										className="h-3.5 w-3.5 shrink-0"
+									/>
+								)}
+								label={selectedCategory.parent.name}
 								onClick={() => {
 									setCategory(selectedCategory.parent!.slug);
 									resetPage();
@@ -739,11 +745,13 @@ function FacetRow({
 	count,
 	active = false,
 	onClick,
+	icon,
 }: {
 	label: string;
 	count?: number;
 	active?: boolean;
 	onClick: () => void;
+	icon?: ReactNode;
 }) {
 	return (
 		<button
@@ -753,7 +761,12 @@ function FacetRow({
 				active ? 'bg-ink text-white' : 'text-slate-700 hover:bg-white'
 			}`}
 		>
-			<span className="truncate">{label}</span>
+			<span className="flex min-w-0 items-center gap-1 truncate">
+				{icon}
+				<span className="truncate">
+					{label}
+				</span>
+			</span>
 			{typeof count === 'number'
 				? (
 					<span className={`ml-2 shrink-0 text-[11px] tabular-nums ${active ? 'text-white/70' : 'text-slate-400'}`}>

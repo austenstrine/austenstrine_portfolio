@@ -1,6 +1,5 @@
 'use client';
 
-import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import {
@@ -10,6 +9,7 @@ import {
 	type PlaceEtMarqueOrder,
 } from '../../../../lib/checkout-api';
 import { useSession } from '../../../../lib/useSession';
+import { BackLink } from '../../../../components/BackLink';
 
 export default function OrderDetailPage() {
 	const params = useParams<{ orderId: string }>();
@@ -80,17 +80,9 @@ export default function OrderDetailPage() {
 				gap-6
 			"
 		>
-			<Link
-				className="
-					text-sm
-					font-semibold
-					text-sky
-					hover:underline
-				"
-				href="/place-et-marque/orders"
-			>
-				← Back to orders
-			</Link>
+			<BackLink href="/place-et-marque/orders">
+				Back to orders
+			</BackLink>
 
 			{sessionLoading
 				? (

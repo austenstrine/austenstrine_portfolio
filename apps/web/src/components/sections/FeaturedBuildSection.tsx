@@ -1,4 +1,5 @@
 import { GUIDED_DEMO_PRODUCT, SITE_REPO } from '../../lib/site';
+import { ArrowRightIcon } from '../icons/ArrowRightIcon';
 
 const steps = [
 	{
@@ -150,12 +151,13 @@ export function FeaturedBuildSection() {
 								<span
 									aria-hidden="true"
 									className="
-										mb-0.5
 										transition-transform
 										group-hover:translate-x-0.5
 									"
 								>
-									→
+									<ArrowRightIcon
+										className="h-4 w-4"
+									/>
 								</span>
 							</span>
 						</a>

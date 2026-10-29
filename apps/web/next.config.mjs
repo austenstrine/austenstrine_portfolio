@@ -7,7 +7,15 @@ const nextConfig = {
 			{ protocol: 'https', hostname: 'cdn.austenstrine.dev' },
 		],
 	},
-  async redirects() {
+	async rewrites() {
+		return [
+			{
+				source: '/cv.html',
+				destination: '/cv',
+			},
+		];
+	},
+	async redirects() {
     return [
       {
         source: '/shop',

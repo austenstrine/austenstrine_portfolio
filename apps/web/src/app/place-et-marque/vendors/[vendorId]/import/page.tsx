@@ -13,6 +13,7 @@ import {
 	type VendorDetail,
 } from '../../../../../lib/catalog-api';
 import { RequireAccess } from '../../../../../components/auth/RequireAccess';
+import { BackLink } from '../../../../../components/BackLink';
 import { TermHint } from '../../../../../components/catalog/TermHint';
 import { useSession } from '../../../../../lib/useSession';
 
@@ -129,17 +130,9 @@ function VendorImportPageContent() {
 				gap-6
 			"
 		>
-			<a
-				className="
-					text-sm
-					font-semibold
-					text-sky
-					hover:underline
-				"
-				href={`/place-et-marque/vendors/${vendorId}`}
-			>
-				← Back to vendor
-			</a>
+			<BackLink href={`/place-et-marque/vendors/${vendorId}`}>
+				Back to vendor
+			</BackLink>
 
 			<div>
 				<p

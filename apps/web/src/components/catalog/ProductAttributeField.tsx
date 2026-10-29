@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import type { CatalogAttributeDefinition } from '../../lib/catalog-api';
+import { ArrowLeftIcon } from '../icons/ArrowLeftIcon';
 
 type ProductAttributeFieldProps = {
 	catalog: CatalogAttributeDefinition[];
@@ -265,6 +266,9 @@ export function ProductAttributeField({
 							<button
 								type="button"
 								className="
+									inline-flex
+									items-center
+									gap-1
 									text-xs
 									font-medium
 									text-slate-500
@@ -277,7 +281,10 @@ export function ProductAttributeField({
 									setQuery('');
 								}}
 							>
-								← All attributes
+								<ArrowLeftIcon
+									className="h-3.5 w-3.5"
+								/>
+								All attributes
 							</button>
 						)
 					: null

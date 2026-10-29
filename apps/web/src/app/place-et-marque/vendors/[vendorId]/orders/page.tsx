@@ -1,6 +1,5 @@
 'use client';
 
-import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';
 import {
@@ -11,6 +10,7 @@ import {
 	type PlaceEtMarqueOrder,
 } from '../../../../../lib/checkout-api';
 import { RequireAccess } from '../../../../../components/auth/RequireAccess';
+import { BackLink } from '../../../../../components/BackLink';
 import { useSession } from '../../../../../lib/useSession';
 
 function VendorOrdersPageContent() {
@@ -102,17 +102,9 @@ function VendorOrdersPageContent() {
 				gap-6
 			"
 		>
-			<Link
-				className="
-					text-sm
-					font-semibold
-					text-sky
-					hover:underline
-				"
-				href={`/place-et-marque/vendors/${vendorId}`}
-			>
-				← Back to vendor
-			</Link>
+			<BackLink href={`/place-et-marque/vendors/${vendorId}`}>
+				Back to vendor
+			</BackLink>
 
 			<h1
 				className="
