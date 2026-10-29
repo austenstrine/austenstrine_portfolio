@@ -2,6 +2,8 @@
 
 This file tracks personal formatting preferences for this project so they are easy to apply consistently during edits.
 
+Cursor always loads the copy at `.cursor/rules/code-style-preferences.mdc` (`alwaysApply: true`). Edit both files together, or treat the `.mdc` as the one the agent holds in context.
+
 ## JSX / TSX Tag Layout
 
 - Prefer opening tags, content, and closing tags on separate lines for readability.
@@ -91,7 +93,9 @@ This file tracks personal formatting preferences for this project so they are ea
 - Prefer extracting repeated or self-contained UI into dedicated components instead of copying markup.
 - Do not paste a second copy of a block that already exists as a widget; import and reuse it.
 - SVG markup belongs in dedicated icon widgets (for this app, under `apps/web/src/components/icons/`), not inlined in pages, buttons, or section components.
+- Never paste a raw `<svg>` into a page or HTML file. Import an icon widget instead.
 - Icon widgets should accept a `className` prop so callers can size and color them without forking the SVG.
+- Directional UI uses one stroke-arrow family: `ArrowLeftIcon` for back/up, `ArrowRightIcon` for open/go. Do not mix in a caret, chevron, or unicode `←` `→` `›` for the same job.
 
 ### Enforcement
 

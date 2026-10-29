@@ -1,26 +1,33 @@
 # Project map for dssh.
+# Image and container names are unique to this checkout so they do not
+# replace the marketplace copy's portfolio-web / ops-nginx containers.
 
-dssh_stop_local="ids=\$(docker ps -aq --filter label=dssh.image); if [[ -n \"\$ids\" ]]; then docker rm -f \$ids; fi; echo 'Stopped dssh app containers.'"
+dssh_stop_local="docker rm -f live-web live-api live-nginx >/dev/null 2>&1 || true; echo 'Stopped this checkout dssh containers.'"
 dssh_rlog_containers=backend,frontend,proxy
 
-# Nest API (health only; no Postgres, Redis, or OpenSearch)
+# Nest API (health only). 4010 so the other checkout can keep 4000.
 backend=./apps/api
-backend_image=portfolio-api
-backend_start="npm run dev -w apps/api"
+backend_image=portfolio-live-api
+backend_name=live-api
+backend_start="npm run build -w apps/api && PORT=4010 npm run start -w apps/api"
 backend_start_detached=1
 
-# Next.js app
+# Next.js app. 3011 so the other checkout can keep 3000.
+# Proxy: https://local1.austenstrine.dev -> 3011
 frontend=./apps/web
-frontend_image=portfolio-web
+frontend_image=portfolio-live-web
+frontend_name=live-web
 frontend_start="npm run dev -w apps/web"
 frontend_start_detached=1
 
-# Local TLS + nginx.
+# Local TLS + nginx. This vhost file routes local. to :3000 and local1. to :3011,
+# so it can be the single process on :443. Stop the other checkout’s proxy first.
 proxy=./ops/nginx
-proxy_image=portfolio-proxy
+proxy_image=portfolio-live-proxy
+proxy_name=live-nginx
 proxy_context=./ops/nginx
 proxy_user=root
 proxy_mount_node_modules=0
-proxy_start_local="./ops/nginx/init-local-tls.sh"
+proxy_start_local="./ops/nginx/init-local-tls.sh; docker rm -f ops-nginx >/dev/null 2>&1 || true"
 proxy_start="nginx -c /app/nginx.conf -g 'daemon off;'"
 proxy_start_detached=1
