@@ -1,8 +1,6 @@
 # austenstrine.dev
 
-Public site for Austen Strine: homepage and CV, running on Next.js with a NestJS health API.
-
-There is no login, catalog, or marketplace on this branch.
+Public site for Austen Strine: homepage and CV. Next.js builds the pages. NestJS serves `/api/health`. There is no login, catalog, or marketplace on this branch.
 
 ## Apps
 
@@ -21,8 +19,8 @@ npm run dev:web
 - API health: http://localhost:4000/api/health
 - API docs: http://localhost:4000/api/docs
 
-Or `docker compose up --build`.
+`npm run build` writes a static export to `apps/web/out`. Production deploy copies that export into the nginx document root so the current EC2 `git pull` host keeps serving files.
 
 ## Live
 
-`ops/deploy/live.sh` builds and starts Nest + Next. Production nginx should reverse-proxy `/` to port 3000 and `/api/` to port 4000; see `ops/nginx/austenstrine.dev.conf`.
+`ops/deploy/live.sh` (run after `git pull` on master) does `npm ci`, builds Nest + Next, copies the Next export to the repo root and `www/`, and starts Nest on port 4000. Optional reverse-proxy notes are in `ops/nginx/austenstrine.dev.conf`.
