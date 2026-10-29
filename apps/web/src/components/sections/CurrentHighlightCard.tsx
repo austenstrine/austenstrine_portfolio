@@ -52,7 +52,7 @@ export function CurrentHighlightCard({
 					bg-gradient-to-br
 					from-ink
 					via-sky
-					to-emerald-800
+					to-asgreen
 					shadow-xl
 					transition-opacity
 					duration-300

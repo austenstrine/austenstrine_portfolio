@@ -11,7 +11,7 @@ export function HeroSection() {
 				bg-gradient-to-br
 				from-ink
 				via-sky
-				to-emerald-800
+				to-asgreen
 				px-8
 				py-16
 				text-white
