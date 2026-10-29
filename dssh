@@ -283,10 +283,16 @@ dssh_app_ids() {
 
 # Overlay unpack and container unmount share a dockerd lock. Overlapping
 # `docker build` with `docker rm -f` is what wedged the daemon (runc kill
-# spinning at 100%, inspect leak, reboot). One flock for all graph mutations.
+# spinning at 100%, inspect leak, reboot). One flock for all graph mutations
+# across every checkout, plus rlog inspect/stats.
 docker_lock_held=0
+dssh_docker_lock_path() {
+  printf '%s\n' "${XDG_RUNTIME_DIR:-/tmp}/dssh-docker.lock"
+}
+
 acquire_docker_lock() {
-  local lock="$script_dir/.dssh-docker.lock"
+  local lock
+  lock="$(dssh_docker_lock_path)"
   if [[ "$docker_lock_held" == "1" ]]; then
     return 0
   fi
@@ -870,10 +876,6 @@ if [[ -n "$action_local_cmd" || -n "$action_container_cmd" ]]; then
 
   acquire_docker_lock
 
-  if [[ -n "$action_local_cmd" ]]; then
-    run_local_shell "$(append_cli_args "$action_local_cmd" "$@")"
-  fi
-
   if [[ -n "$action_container_cmd" ]]; then
     if [[ "$action_name" == "start" && "$skip_build" != "1" ]]; then
       echo "Building $image_name before start (pass -nobuild to skip)..."
@@ -881,6 +883,13 @@ if [[ -n "$action_local_cmd" || -n "$action_container_cmd" ]]; then
     elif ! docker image inspect "$image_name" >/dev/null 2>&1; then
       build_image "$image_name" "$dockerfile_path" "$context_path"
     fi
+  fi
+
+  if [[ -n "$action_local_cmd" ]]; then
+    run_local_shell "$(append_cli_args "$action_local_cmd" "$@")"
+  fi
+
+  if [[ -n "$action_container_cmd" ]]; then
     action_container_name="$(container_name_for "$app_name" "$action_name")"
     remove_container "$action_container_name"
     if [[ "$action_name" == "start" ]]; then

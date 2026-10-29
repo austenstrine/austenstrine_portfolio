@@ -25,7 +25,6 @@ gpu_cache="n/a"
 gpu_skip_until=0
 docker_skip_until=0
 docker_skip_status="docker busy"
-docker_cli_pid=""
 cpu_prev_idle=""
 cpu_prev_total=""
 nproc_count="$(nproc 2>/dev/null || echo 1)"
@@ -52,52 +51,97 @@ sleep_remaining() {
   fi
 }
 
+docker_lock_path() {
+  printf '%s\n' "${XDG_RUNTIME_DIR:-/tmp}/dssh-docker.lock"
+}
+
+cli_pid_file() {
+  printf '%s\n' "$out_dir/.docker-cli.pid"
+}
+
+read_cli_pid() {
+	local f
+	f="$(cli_pid_file)"
+	[[ -f "$f" ]] || return 0
+	tr -d '[:space:]' < "$f" 2>/dev/null || true
+}
+
+rlog_cli_stuck() {
+  local pid
+  pid="$(read_cli_pid)"
+  if [[ -n "$pid" ]] && kill -0 "$pid" 2>/dev/null; then
+    return 0
+  fi
+  if pgrep -P $$ -f 'docker inspect' >/dev/null 2>&1; then
+    return 0
+  fi
+  return 1
+}
+
+docker_graph_busy() {
+  local lock
+  lock="$(docker_lock_path)"
+  : >>"$lock"
+  if flock -n "$lock" true 2>/dev/null; then
+    return 1
+  fi
+  return 0
+}
+
 reap_orphan_stats() {
-  local pid rest
+  local pid rest ppid
   while read -r pid rest; do
-    [[ -z "$pid" || "$pid" == "$$" ]] && continue
-    case "$rest" in
-      *'docker stats --format {{.Name}}|{{.CPUPerc}}'*)
-        kill "$pid" 2>/dev/null || true
-        ;;
-    esac
+    [[ -z "$pid" || "$pid" == "$$" || "$pid" == "${stats_pid:-}" ]] && continue
+    [[ "$rest" == *"docker stats --format"* ]] || continue
+    ppid="$(ps -o ppid= -p "$pid" 2>/dev/null | tr -d '[:space:]')"
+    if [[ "$ppid" == "$$" || "$ppid" == "1" ]]; then
+      kill "$pid" 2>/dev/null || true
+      kill -9 "$pid" 2>/dev/null || true
+    fi
   done < <(pgrep -af 'docker stats --format' 2>/dev/null || true)
 }
 
 stop_stats_stream() {
-  local child
   if [[ -n "${stats_pid:-}" ]]; then
     kill "$stats_pid" 2>/dev/null || true
-  fi
-  while read -r child; do
-    [[ -z "$child" ]] && continue
-    kill "$child" 2>/dev/null || true
-    kill -9 "$child" 2>/dev/null || true
-  done < <(pgrep -P $$ -f 'docker stats' 2>/dev/null || true)
-  reap_orphan_stats
-  if [[ -n "${stats_pid:-}" ]]; then
     kill -9 "$stats_pid" 2>/dev/null || true
     wait "$stats_pid" 2>/dev/null || true
   fi
   stats_pid=""
   stats_key=""
+  reap_orphan_stats
 }
 
 trap 'stop_stats_stream' EXIT INT TERM
 reap_orphan_stats
 
-# Docker CLI can block for minutes if dockerd is restarting or a container
-# is wedged. Never let that freeze the 1s snapshot loop, and never overlap
-# calls — leftover inspects in D-state fork-bomb the host.
+# Fast path for `docker inspect` only. Stats come from the background stream.
+# Skip while dssh holds the graph lock, and do not start another inspect if
+# the last one is still alive.
 docker_cli() {
-  local rc=0
-  if [[ -n "${docker_cli_pid:-}" ]] && kill -0 "$docker_cli_pid" 2>/dev/null; then
+  local rc=0 child docker_cli_pid
+  if rlog_cli_stuck; then
     return 124
   fi
+  if docker_graph_busy; then
+    return 124
+  fi
+  rm -f "$(cli_pid_file)"
   if command -v timeout >/dev/null 2>&1; then
-    timeout -k 0.3 1 docker "$@" &
+    timeout --foreground -k 0.3 1 docker "$@" &
     docker_cli_pid=$!
+    printf '%s\n' "$docker_cli_pid" > "$(cli_pid_file)"
     wait "$docker_cli_pid" || rc=$?
+    child="$(pgrep -P "$docker_cli_pid" 2>/dev/null | head -n1 || true)"
+    if [[ -n "$child" ]] && kill -0 "$child" 2>/dev/null; then
+      printf '%s\n' "$child" > "$(cli_pid_file)"
+      docker_cli_pid=""
+      return 124
+    fi
+    if kill -0 "$docker_cli_pid" 2>/dev/null; then
+      return 124
+    fi
+    rm -f "$(cli_pid_file)"
     docker_cli_pid=""
     return "$rc"
   fi
@@ -116,9 +160,15 @@ trim_stats_stream() {
   rm -f "$tmp"
 }
 
+# One `docker stats` covers every live container. Keep a single writer process
+# and let the 1s snapshot loop only read the file.
 ensure_stats_stream() {
   local key="$1"
   shift
+  if docker_graph_busy; then
+    stop_stats_stream
+    return 0
+  fi
   if [[ -n "$stats_pid" ]] && kill -0 "$stats_pid" 2>/dev/null && [[ "$stats_key" == "$key" ]]; then
     trim_stats_stream
     return 0
@@ -129,8 +179,8 @@ ensure_stats_stream() {
   if [[ $# -eq 0 || "$key" == "none" ]]; then
     return 0
   fi
-  docker stats --format '{{.Name}}|{{.CPUPerc}}|{{.MemUsage}}|{{.MemPerc}}|{{.NetIO}}|{{.BlockIO}}|{{.PIDs}}' "$@" 2>/dev/null \
-    | sed -u 's/\x1B\[[0-9;?]*[A-Za-z]//g' >>"$stats_file" &
+  docker stats --format '{{.Name}}|{{.CPUPerc}}|{{.MemUsage}}|{{.MemPerc}}|{{.NetIO}}|{{.BlockIO}}|{{.PIDs}}' "$@" \
+    >>"$stats_file" 2>/dev/null &
   stats_pid=$!
 }
 
@@ -519,7 +569,7 @@ sample_containers() {
   fi
 
   local live=() names=() aliases=() statuses=() inspect_names=()
-  local pair alias name alt status inspect_out inspect_err inspect_rc default_status now
+  local pair alias name alt inspect_out inspect_err inspect_rc default_status now
   IFS=',' read -ra pairs <<< "$targets"
   for pair in "${pairs[@]}"; do
     pair="${pair#"${pair%%[![:space:]]*}"}"
@@ -543,7 +593,7 @@ sample_containers() {
   inspect_rc=0
   default_status="not running"
   now="${EPOCHSECONDS:-$(date +%s)}"
-  if (( now < docker_skip_until )); then
+  if (( now < docker_skip_until )) || docker_graph_busy || rlog_cli_stuck; then
     default_status="$docker_skip_status"
     ensure_stats_stream none
   elif [[ ${#inspect_names[@]} -gt 0 ]]; then
