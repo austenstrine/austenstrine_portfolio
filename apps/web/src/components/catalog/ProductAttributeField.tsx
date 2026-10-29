@@ -142,7 +142,7 @@ export function ProductAttributeField({
 	if(catalog.length === 0) {
 		return (
 			<p className="text-sm text-slate-500">
-				No attributes seeded yet.
+				No attributes yet.
 			</p>
 		);
 	}

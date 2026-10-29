@@ -1,9 +1,12 @@
+export type ExperienceKind = 'software' | 'non-software';
+
 export type ExperienceRole = {
 	id: string;
+	kind: ExperienceKind;
 	title: string;
 	organization: string;
 	dates: string;
-	location: string;
+	location?: string;
 	bullets: string[];
 };
 
@@ -18,28 +21,31 @@ export type EducationEntry = {
 export const professionalExperience: ExperienceRole[] = [
 	{
 		id: 'timberline',
+		kind: 'non-software',
 		title: 'Door Builder',
 		organization: 'Timberline Cabinets (via Express Employment Professionals)',
 		dates: 'Jul 2026 – Aug 2026 · 2 mos',
 		location: 'Cedar City, UT',
 		bullets: [
 			'Cut, ripped, drilled, banded, assembled, ran CNC, cleaned, and palletized cabinet doors.',
-			'Color matching, detail work, and shop problem-solving. Not a software role.',
+			'Color matching, detail work, and shop problem-solving.',
 		],
 	},
 	{
 		id: 'burger-king',
+		kind: 'non-software',
 		title: 'Team Member',
 		organization: 'Burger King (New Era Management, LLC)',
 		dates: 'Aug 2025 – May 2026 · 10 mos',
 		location: 'Cedar City, UT',
 		bullets: [
 			'Drive-through, front counter, cash handling, fryers, fryer maintenance, quality control, and expediting.',
-			'Received C-suite commendation for drive-through customer service. Began management training. Not a software role.',
+			'Received C-suite commendation for drive-through customer service. Began management training.',
 		],
 	},
 	{
 		id: 'lumber',
+		kind: 'software',
 		title: 'Full-stack Developer',
 		organization: 'Lumber Marketplace',
 		dates: 'Jan 2024 – Jun 2025 · 1 yr 6 mos',
@@ -55,6 +61,7 @@ export const professionalExperience: ExperienceRole[] = [
 	},
 	{
 		id: 'gogreen',
+		kind: 'software',
 		title: 'Senior Application Developer',
 		organization: 'GO Green Enterprises',
 		dates: 'Nov 2018 – Nov 2023 · 5 yrs 1 mo',
@@ -69,7 +76,28 @@ export const professionalExperience: ExperienceRole[] = [
 		],
 	},
 	{
+		id: 'anderson',
+		kind: 'non-software',
+		title: 'Territory Sales Lead',
+		organization: 'Anderson Merchandisers',
+		dates: 'Jul–Nov 2018',
+		bullets: [
+			'Delegation and deadline management across two Walmart locations.',
+		],
+	},
+	{
+		id: 'vivint',
+		kind: 'non-software',
+		title: 'Smart Secure Specialist',
+		organization: 'Vivint Smart Home',
+		dates: 'Oct–Dec 2017',
+		bullets: [
+			'Inbound tech support for smart home and security systems.',
+		],
+	},
+	{
 		id: 'infowest',
+		kind: 'software',
 		title: 'Tech Support',
 		organization: 'Infowest Inc.',
 		dates: 'Mar 2016 – Sep 2017 · 1 yr 7 mos',
@@ -79,44 +107,57 @@ export const professionalExperience: ExperienceRole[] = [
 			'Built an internal troubleshooting flow app (WISP-T) that reached beta.',
 		],
 	},
+	{
+		id: 'shakespeare',
+		kind: 'non-software',
+		title: 'House Management',
+		organization: 'Utah Shakespeare Festival',
+		dates: 'Jun–Nov 2015',
+		location: 'Cedar City, UT',
+		bullets: [
+			'Guest experience, ushers, seating, and accessibility for assigned shows.',
+		],
+	},
+	{
+		id: 'gateway',
+		kind: 'non-software',
+		title: 'Sales Representative',
+		organization: 'Gateway Management Group',
+		dates: 'Oct 2013–Jun 2014',
+		bullets: [
+			'Ranked #1 nationally for installs; trained junior reps.',
+		],
+	},
+	{
+		id: 'old-navy',
+		kind: 'non-software',
+		title: 'Salesman / Cashier',
+		organization: 'Gap Inc. / Old Navy',
+		dates: 'Oct 2012–Jan 2013',
+		location: 'Chico, CA',
+		bullets: [
+			'Floor sales, checkout, and restocking.',
+		],
+	},
+	{
+		id: 'chartwells',
+		kind: 'non-software',
+		title: 'Dishwasher / Floor man',
+		organization: 'Chartwells',
+		dates: '2012',
+		bullets: [
+			'Dish area, closing the cafeteria, on-call and scheduled shifts.',
+		],
+	},
 ];
 
-export const additionalExperience: Array<{
-	title: string;
-	detail: string;
-	dates: string;
-}> = [
-	{
-		title: 'Territory Sales Lead — Anderson Merchandisers',
-		detail: 'Delegation and deadline management across two Walmart locations',
-		dates: 'Jul–Nov 2018',
-	},
-	{
-		title: 'Smart Secure Specialist — Vivint Smart Home',
-		detail: 'Inbound tech support for smart home and security systems',
-		dates: 'Oct–Dec 2017',
-	},
-	{
-		title: 'House Management — Utah Shakespeare Festival',
-		detail: 'Guest experience, ushers, seating, and accessibility for assigned shows',
-		dates: 'Jun–Nov 2015',
-	},
-	{
-		title: 'Sales Representative — Gateway Management Group',
-		detail: 'Ranked #1 nationally for installs; trained junior reps',
-		dates: 'Oct 2013–Jun 2014',
-	},
-	{
-		title: 'Salesman / Cashier — Gap Inc. / Old Navy',
-		detail: 'Floor sales, checkout, and restocking in Chico, CA',
-		dates: 'Oct 2012–Jan 2013',
-	},
-	{
-		title: 'Dishwasher / Floor man — Chartwells',
-		detail: 'Dish area, closing the cafeteria, on-call and scheduled shifts',
-		dates: '2012',
-	},
-];
+export const softwareExperience = professionalExperience.filter(
+	(role) => role.kind === 'software',
+);
+
+export const otherRecentExperience = professionalExperience.filter(
+	(role) => role.kind === 'non-software',
+);
 
 export const education: EducationEntry[] = [
 	{
@@ -125,20 +166,6 @@ export const education: EducationEntry[] = [
 			'Southwest Applied Technology College (now Southwest Technical College)',
 		place: 'Cedar City, UT',
 		dates: '2016–2018',
-		note: 'Coursework in C++, Python, Java, and Swift. A technical certificate, not a bachelor’s degree.',
-	},
-	{
-		credential: 'Theatre (no degree)',
-		school: 'Southern Utah University',
-		place: 'Cedar City, UT',
-		dates: '2015–2016',
-		note: 'Attended; no degree.',
-	},
-	{
-		credential: 'Music Theory and Composition (no degree)',
-		school: 'Simpson University',
-		place: 'Redding, CA',
-		dates: '2009–2012',
-		note: 'Attended; no degree.',
+		note: 'Certified proficiency in C++, Python, Java, and Swift.',
 	},
 ];

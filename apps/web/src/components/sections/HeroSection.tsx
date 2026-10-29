@@ -132,7 +132,7 @@ export function HeroSection() {
 							"
 							href="/place-et-marque"
 						>
-							Open the catalog demo
+							Open Place et Marque
 						</a>
 						<a
 							className="

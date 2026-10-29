@@ -21,9 +21,9 @@ const skills = [
 			'Swift (iOS) and SQLite on a paid in-house app at GO Green. Dart/Flutter used there as well; TypeScript, Node.js, and React also from that period.',
 	},
 	{
-		title: 'How I actually work',
+		title: 'Working style',
 		summary:
-			'Unsupervised ownership, talking with product owners, mentoring juniors, and keeping production sites up. I have not used AI on a paid team.',
+			'Unsupervised ownership, product-owner communication, junior mentorship, and production incident response.',
 	},
 ];
 

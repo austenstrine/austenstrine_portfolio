@@ -59,8 +59,8 @@ export function FeaturedBuildSection() {
 					text-slate-700
 				"
 			>
-				A live multi-vendor catalog I designed and built: packs, pieces, units of
-				measure, search, and checkout. Source is public on
+				A live multi-vendor catalog: packs, pieces, units of measure, search, and
+				checkout. Source is public on
 				{' '}
 				<a
 					className="font-semibold text-sky hover:underline"
@@ -75,10 +75,9 @@ export function FeaturedBuildSection() {
 			<ol
 				className="
 					mt-8
-					divide-y
-					divide-slate-200
-					border-y
-					border-slate-200
+					grid
+					gap-4
+					md:grid-cols-3
 				"
 			>
 				{steps.map((step, index) => (
@@ -87,68 +86,105 @@ export function FeaturedBuildSection() {
 							className="
 								group
 								flex
+								h-full
 								flex-col
-								gap-1
-								py-4
+								rounded-2xl
+								border
+								border-slate-200
+								bg-frost/60
+								p-5
 								transition
-								hover:bg-slate-50
-								sm:flex-row
-								sm:items-baseline
-								sm:justify-between
-								sm:gap-6
+								hover:border-ink
+								hover:bg-white
+								focus-visible:outline-none
+								focus-visible:ring-2
+								focus-visible:ring-ink
+								focus-visible:ring-offset-2
 							"
 							href={step.href}
 						>
-							<div className="min-w-0">
-								<p
-									className="
-										text-base
-										font-semibold
-										text-ink
-										group-hover:text-sky
-									"
-								>
-									{`${index + 1}. ${step.title}`}
-								</p>
-								<p
-									className="
-										mt-1
-										text-sm
-										text-slate-600
-									"
-								>
-									{step.summary}
-								</p>
-							</div>
 							<span
 								className="
-									shrink-0
-									text-sm
+									text-[11px]
 									font-semibold
-									text-sky
+									uppercase
+									tracking-[0.18em]
+									text-slate-500
 								"
 							>
-								Open →
+								{`Step ${index + 1}`}
+							</span>
+							<p
+								className="
+									mt-3
+									text-lg
+									font-semibold
+									text-ink
+								"
+							>
+								{step.title}
+							</p>
+							<p
+								className="
+									mt-2
+									flex-1
+									text-sm
+									leading-relaxed
+									text-slate-600
+								"
+							>
+								{step.summary}
+							</p>
+							<span
+								className="
+									mt-5
+									inline-flex
+									items-center
+									gap-1
+									text-sm
+									font-semibold
+									text-ink
+								"
+							>
+								Open
+								<span
+									aria-hidden="true"
+									className="
+										mb-0.5
+										transition-transform
+										group-hover:translate-x-0.5
+									"
+								>
+									→
+								</span>
 							</span>
 						</a>
 					</li>
 				))}
 			</ol>
 
-			<p
+			<a
 				className="
-					mt-6
+					mt-8
+					inline-flex
+					rounded-full
+					bg-ink
+					px-5
+					py-2.5
 					text-sm
-					text-slate-600
+					font-semibold
+					text-white
+					transition
+					hover:bg-sky
+					focus-visible:outline-none
+					focus-visible:ring-2
+					focus-visible:ring-ink
+					focus-visible:ring-offset-2
 				"
+				href="/place-et-marque"
 			>
-				<a
-					className="font-semibold text-sky hover:underline"
-					href="/place-et-marque"
-				>
-					Enter Place et Marque
-				</a>
-			</p>
+				Enter Place et Marque
+			</a>
 		</section>
 	);
 }

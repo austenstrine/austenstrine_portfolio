@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
 import { BackendDownBanner } from '../components/BackendDownBanner';
+import { JsonLd } from '../components/JsonLd';
 import {
 	SITE_DESCRIPTION,
 	SITE_NAME,
@@ -55,9 +56,9 @@ export default function RootLayout({
 	return (
 		<html lang="en">
 			<body>
-				<script
-					dangerouslySetInnerHTML={{ __html: JSON.stringify(personJsonLd) }}
-					type="application/ld+json"
+				<JsonLd
+					id="person-jsonld"
+					data={personJsonLd}
 				/>
 				<BackendDownBanner />
 				{children}
