@@ -1,0 +1,23 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    container_name: portfolio-api
+    ports:
+      - "4000:4000"
+    environment:
+      PORT: 4000
+      WEB_URL: ${WEB_URL:-https://austenstrine.dev}
+    restart: unless-stopped
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    container_name: portfolio-web
+    ports:
+      - "3000:80"
+    depends_on:
+      - api
+    restart: unless-stopped

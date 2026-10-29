@@ -1,0 +1,47 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+body {
+  @apply bg-frost text-ink antialiased;
+}
+
+.main-grid {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none'%3E%3Ccircle cx='1' cy='1' r='0.75' fill='%230d1b2a' fill-opacity='0.06'/%3E%3C/svg%3E");
+  background-size: 24px 24px;
+}
+
+.timeline-list {
+  overflow-anchor: none;
+}
+
+.timeline-fold {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    grid-template-rows 280ms ease,
+    opacity 200ms ease;
+}
+
+.timeline-fold-open {
+  grid-template-rows: 1fr;
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.timeline-fold-inner {
+  min-height: 0;
+  overflow: hidden;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .timeline-fold {
+    transition: none;
+  }
+}

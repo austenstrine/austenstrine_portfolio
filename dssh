@@ -1,0 +1,900 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+config_file="${DSSH_CONFIG_FILE:-$script_dir/.dsshrc}"
+default_target="${DSSH_DEFAULT_TARGET:-}"
+
+if [[ -f "$config_file" ]]; then
+  # shellcheck disable=SC1090
+  source "$config_file"
+fi
+
+usage() {
+  cat <<'EOF'
+Usage:
+  dssh <global-action>
+  dssh <target> [build|<action>|<command...>]
+
+dssh always uses the directory that contains this script (the project
+root), not your current working directory. It is safe to run from ~.
+
+Global actions:
+  stop      stop dssh app containers and local infra
+  status    show dssh app containers and local infra status
+  logs      follow logs for all dssh app containers
+  logs <t>  follow logs for one target's start container
+  logs rlog follow the resource logger snapshot (latest.txt)
+  rlog      toggle the host resource logger (survives container restarts)
+  rlog on|off|status
+  gpu-setup install NVIDIA Container Toolkit so dssh can pass --gpus all
+  help      show this help
+
+Examples:
+  ./dssh stop
+  ./dssh status
+  ./dssh logs backend
+  ./dssh backend build
+  ./dssh backend start
+  ./dssh backend start -nobuild
+  ./dssh backend restart
+  ./dssh backend restart -nobuild
+  ./dssh mailtest
+  ./dssh mailtest you@example.com
+  ./dssh mailtest you@example.com "SMTP check" "Hello from local"
+  ./dssh backend mailtest
+  ./dssh backend migrate
+  ./dssh backend
+
+Targets are user-defined shorthand in .dsshrc. dssh does not ship with
+names like backend or frontend; this project maps each name to an app
+directory (and optional host scripts on actions):
+
+  backend=./apps/api
+  frontend=./apps/web
+  proxy=./ops/nginx
+
+Optional overrides:
+  <target>_dockerfile  custom Dockerfile path relative to the repo root
+  <target>_context     custom build context relative to the repo root
+  <target>_image       custom image name
+  <target>_name        custom container app name
+  <target>_user        container user (default: host uid:gid)
+  <target>_workdir     custom container workdir
+
+Optional actions from .dsshrc:
+  <target>_<action>_local   host command (scripts, compose, TLS setup, ...)
+  <target>_<action>         command to run inside the container
+  Extra CLI args after <action> are appended to those commands.
+
+Example:
+  backend_start_local="docker compose up -d postgres redis opensearch"
+  backend_start="npm run dev -w apps/api"
+  proxy_start_local="./ops/nginx/init-local-tls.sh"
+
+start always rebuilds the target image first. Pass -nobuild (or --nobuild)
+to skip that rebuild when you know the image is current.
+restart is start: rebuild the image while the old container keeps running,
+then replace it. Docker build/stop/run share a lock so two restarts cannot
+unpack an image and force-remove a container at the same time.
+
+Optional global overrides:
+  dssh_stop_local="..."
+  dssh_status_local="..."
+  dssh_logs_local="..."
+
+Resource logger (.dsshrc):
+  dssh_rlog_containers=backend,frontend,proxy
+      comma-separated target aliases whose running containers are sampled.
+      Omit this to log host/system info only.
+  dssh_rlog_interval=1
+  dssh_rlog_dir=./ops/diagnostics
+  dssh_rlog_history_max=16777216
+  dssh_rlog_history_keep=3
+  dssh_rlog_archive_max=268435456
+  dssh_gpus=auto
+      auto (default): pass --gpus all when nvidia-smi and Docker GPU work.
+      off: never request a GPU. Missing GPU/toolkit falls back to a normal run.
+EOF
+}
+
+append_cli_args() {
+  local cmd="$1"
+  shift
+  if [[ $# -eq 0 ]]; then
+    printf '%s\n' "$cmd"
+    return
+  fi
+  local extra
+  printf -v extra ' %q' "$@"
+  printf '%s\n' "$cmd$extra"
+}
+
+use_tty() {
+  [[ -t 0 && -t 1 ]]
+}
+
+gpu_probe_done=0
+gpu_args=()
+
+detect_docker_gpu() {
+  if [[ "$gpu_probe_done" == "1" ]]; then
+    return 0
+  fi
+  gpu_probe_done=1
+  gpu_args=()
+  case "${dssh_gpus-auto}" in
+    0|off|false|no) return 0 ;;
+  esac
+  if ! command -v nvidia-smi >/dev/null 2>&1; then
+    return 0
+  fi
+  if ! nvidia-smi >/dev/null 2>&1; then
+    return 0
+  fi
+  if docker info --format '{{range $k, $v := .Runtimes}}{{println $k}}{{end}}' 2>/dev/null | grep -qx nvidia; then
+    gpu_args=(--gpus all)
+    return 0
+  fi
+  local probe_img=""
+  if docker image inspect alpine:latest >/dev/null 2>&1; then
+    probe_img="alpine:latest"
+  elif docker image inspect hello-world:latest >/dev/null 2>&1; then
+    probe_img="hello-world:latest"
+  fi
+  if [[ -z "$probe_img" ]]; then
+    return 0
+  fi
+  if docker run --rm --gpus all "$probe_img" true >/dev/null 2>&1 \
+    || docker run --rm --gpus all "$probe_img" >/dev/null 2>&1; then
+    gpu_args=(--gpus all)
+  fi
+}
+
+gpu_setup() {
+  local list_url="https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list"
+  local key_url="https://nvidia.github.io/libnvidia-container/gpgkey"
+  local keyring="/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg"
+  local list_file="/etc/apt/sources.list.d/nvidia-container-toolkit.list"
+
+  if ! command -v nvidia-smi >/dev/null 2>&1 || ! nvidia-smi >/dev/null 2>&1; then
+    echo "nvidia-smi is not working on the host yet. Enroll the NVIDIA MOK / load the driver first." >&2
+    return 1
+  fi
+
+  if ! sudo -n true 2>/dev/null && [[ ! -t 0 ]]; then
+    echo "gpu-setup needs sudo in a real terminal (this session has no TTY):" >&2
+    echo "  $script_dir/dssh gpu-setup" >&2
+    return 1
+  fi
+
+  echo "Installing NVIDIA Container Toolkit (sudo)..."
+  if [[ ! -f "$keyring" ]]; then
+    curl -fsSL "$key_url" | sudo gpg --dearmor -o "$keyring"
+  fi
+  curl -fsSL "$list_url" \
+    | sed "s#deb https://#deb [signed-by=$keyring] https://#g" \
+    | sudo tee "$list_file" >/dev/null
+  sudo apt-get update -qq
+  sudo DEBIAN_FRONTEND=noninteractive apt-get install -y nvidia-container-toolkit
+  sudo nvidia-ctk runtime configure --runtime=docker
+  sudo systemctl restart docker
+  gpu_probe_done=0
+  detect_docker_gpu
+  if [[ ${#gpu_args[@]} -eq 0 ]]; then
+    echo "Toolkit installed, but Docker could not attach the GPU yet." >&2
+    echo "Try: docker run --rm --gpus all alpine:latest nvidia-smi" >&2
+    return 1
+  fi
+  echo "dssh GPU ready  (--gpus all)"
+  docker run --rm --gpus all alpine:latest nvidia-smi -L 2>/dev/null \
+    || docker run --rm --gpus all hello-world:latest >/dev/null
+}
+
+detect_shell() {
+  local image_name="$1"
+
+  if docker run --rm "$image_name" sh -lc 'command -v bash >/dev/null 2>&1'; then
+    printf '%s\n' bash
+  else
+    printf '%s\n' sh
+  fi
+}
+
+resolve_path() {
+  local path="$1"
+  if [[ "$path" == /* ]]; then
+    printf '%s\n' "$path"
+  else
+    (cd "$script_dir" && cd "$path" && pwd)
+  fi
+}
+
+sanitize_docker_name() {
+  local raw="$1"
+  raw="${raw#@}"
+  raw="${raw//\//-}"
+  local cleaned
+  cleaned="$(printf '%s' "$raw" | tr '[:upper:]' '[:lower:]' | tr -cs 'a-z0-9_.-' '-')"
+  cleaned="${cleaned#-}"
+  cleaned="${cleaned%-}"
+  if [[ -z "$cleaned" ]]; then
+    cleaned="app"
+  fi
+  printf '%s\n' "$cleaned"
+}
+
+read_package_json_name() {
+  local pkg="$1/package.json"
+  if [[ ! -f "$pkg" ]]; then
+    return 1
+  fi
+  local name
+  name="$(sed -n 's/^[[:space:]]*"name"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "$pkg" | head -n1)"
+  if [[ -z "$name" ]]; then
+    return 1
+  fi
+  printf '%s\n' "$name"
+}
+
+derive_app_name() {
+  local target="$1"
+  local override_var="${target}_name"
+  if [[ -n "${!override_var-}" ]]; then
+    sanitize_docker_name "${!override_var}"
+    return 0
+  fi
+
+  local path="${!target-}"
+  if [[ -z "$path" ]]; then
+    if [[ -d "$script_dir/$target" ]]; then
+      path="$target"
+    else
+      echo "Unknown target: $target" >&2
+      return 1
+    fi
+  fi
+
+  local abs
+  abs="$(resolve_path "$path")"
+  local pkg_name
+  if pkg_name="$(read_package_json_name "$abs")"; then
+    sanitize_docker_name "$pkg_name"
+    return 0
+  fi
+
+  local rel="${abs#"$script_dir"/}"
+  sanitize_docker_name "$rel"
+}
+
+container_name_for() {
+  local app="$1"
+  local action="$2"
+  if [[ "$action" == "start" ]]; then
+    printf '%s\n' "$app"
+  else
+    printf '%s\n' "$app-$action"
+  fi
+}
+
+dssh_app_ids() {
+  docker ps -aq --filter "label=dssh.image"
+}
+
+# Overlay unpack and container unmount share a dockerd lock. Overlapping
+# `docker build` with `docker rm -f` is what wedged the daemon (runc kill
+# spinning at 100%, inspect leak, reboot). One flock for all graph mutations.
+docker_lock_held=0
+acquire_docker_lock() {
+  local lock="$script_dir/.dssh-docker.lock"
+  if [[ "$docker_lock_held" == "1" ]]; then
+    return 0
+  fi
+  exec 9>>"$lock"
+  if ! flock -n 9; then
+    echo "Waiting for another dssh docker operation to finish..." >&2
+    flock 9
+  fi
+  docker_lock_held=1
+}
+
+remove_container() {
+  local name="$1"
+  acquire_docker_lock
+  if ! docker inspect --type container "$name" >/dev/null 2>&1; then
+    return 0
+  fi
+  # Graceful stop first. rm -f / SIGKILL is what spun runc kill on api.
+  if command -v timeout >/dev/null 2>&1; then
+    timeout -k 2 12 docker stop -t 8 "$name" >/dev/null 2>&1 || true
+  else
+    docker stop -t 8 "$name" >/dev/null 2>&1 || true
+  fi
+  docker rm "$name" >/dev/null 2>&1 || docker rm -f "$name" >/dev/null 2>&1 || true
+}
+
+stop_target_start_container() {
+  local app="$1"
+  local target="$2"
+  local old="dssh-${target}-start"
+  local stopped=0
+
+  if docker inspect --type container "$app" >/dev/null 2>&1; then
+    remove_container "$app"
+    echo "Stopped $app."
+    stopped=1
+  fi
+  if [[ "$old" != "$app" ]] && docker inspect --type container "$old" >/dev/null 2>&1; then
+    remove_container "$old"
+    echo "Stopped $old."
+    stopped=1
+  fi
+  if [[ "$stopped" -eq 0 ]]; then
+    echo "$app was not running."
+  fi
+}
+
+parse_workdir() {
+  local dockerfile_path="$1"
+  awk 'BEGIN { workdir = "" } toupper($1) == "WORKDIR" { workdir = $2 } END { print workdir }' "$dockerfile_path" | tr -d '\r'
+}
+
+host_user_spec() {
+  printf '%s:%s\n' "$(id -u)" "$(id -g)"
+}
+
+is_root_user_spec() {
+  local spec="$1"
+  [[ "$spec" == "root" || "$spec" == "0" || "$spec" == "0:0" ]]
+}
+
+container_user_spec() {
+  local target="${1-}"
+  if [[ -n "$target" ]]; then
+    local user_var="${target}_user"
+    if [[ -n "${!user_var-}" ]]; then
+      printf '%s\n' "${!user_var}"
+      return 0
+    fi
+  fi
+  host_user_spec
+}
+
+build_image() {
+  local image_name="$1"
+  local dockerfile_path="$2"
+  local context_path="$3"
+  shift 3
+
+  acquire_docker_lock
+  docker build "$@" -f "$dockerfile_path" -t "$image_name" "$context_path"
+}
+
+seed_node_modules_volume() {
+  local image_name="$1"
+  local volume_name="$2"
+  local image_id
+  local host_spec
+  host_spec="$(host_user_spec)"
+
+  image_id="$(docker image inspect -f '{{.Id}}' "$image_name")"
+
+  if ! docker volume inspect "$volume_name" >/dev/null 2>&1; then
+    docker volume create "$volume_name" >/dev/null
+  fi
+
+  # Require .bin as well as the image-id stamp. A crashed copy used to write the
+  # stamp anyway (no set -e), so the next start skipped reseed and apps died
+  # with "next: not found" — which then wedged docker inspect / rlog.
+  if ! docker run --rm -v "$volume_name:/node_modules" "$image_name" sh -lc "test -f /node_modules/.dssh-image-id && [ \"\$(cat /node_modules/.dssh-image-id)\" = '$image_id' ] && test -d /node_modules/.bin" >/dev/null 2>&1; then
+    echo "Seeding $volume_name from $image_name..."
+    docker run --rm -v "$volume_name:/node_modules" "$image_name" sh -lc "set -e; rm -rf /node_modules/* /node_modules/.[!.]* /node_modules/..?* 2>/dev/null || true; cp -a /app/node_modules/. /node_modules/; echo '$image_id' > /node_modules/.dssh-image-id"
+  fi
+
+  docker run --rm -v "$volume_name:/node_modules" "$image_name" sh -lc "chown -R $host_spec /node_modules"
+}
+
+run_container() {
+  local image_name="$1"
+  local context_path="$2"
+  local workdir_path="$3"
+  local interactive="$4"
+  local container_name="$5"
+  local mount_node_modules="$6"
+  local detached="$7"
+  shift 7
+  local env_args=()
+  local node_modules_volume="dssh-${image_name//[^a-zA-Z0-9_.-]/-}-node_modules"
+
+  acquire_docker_lock
+
+  if [[ -f "$script_dir/.env" ]]; then
+    env_args+=(--env-file "$script_dir/.env")
+  fi
+
+  if [[ "$mount_node_modules" == "1" ]]; then
+    seed_node_modules_volume "$image_name" "$node_modules_volume"
+  fi
+
+  detect_docker_gpu
+
+  local run_args=(--rm)
+  if [[ ${#gpu_args[@]} -gt 0 ]]; then
+    run_args+=("${gpu_args[@]}")
+  fi
+  if [[ "$detached" == "1" ]]; then
+    run_args+=(-d)
+  elif [[ "$interactive" == "1" ]] && use_tty; then
+    run_args+=(-it)
+  fi
+  if [[ -n "$container_name" ]]; then
+    run_args+=(--name "$container_name")
+  fi
+  local container_user
+  container_user="$(container_user_spec "${target_name-}")"
+  run_args+=(-u "$container_user")
+  if ! is_root_user_spec "$container_user"; then
+    env_args+=(-e "HOME=/tmp" -e "npm_config_cache=/tmp/npm-cache")
+  fi
+  run_args+=(--label "dssh.image=$image_name")
+  if [[ -n "${target_name-}" ]]; then
+    run_args+=(--label "dssh.target=$target_name")
+  fi
+  if [[ -n "${app_name-}" ]]; then
+    run_args+=(--label "dssh.app=$app_name")
+  fi
+  if [[ -n "${action_name-}" ]]; then
+    run_args+=(--label "dssh.action=$action_name")
+  fi
+
+  local mount_args=(
+    -v "$context_path:$workdir_path"
+  )
+  if [[ "$mount_node_modules" == "1" ]]; then
+    mount_args+=(-v "$node_modules_volume:$workdir_path/node_modules")
+  fi
+
+  docker run "${run_args[@]}" \
+    --network host \
+    "${env_args[@]}" \
+    "${mount_args[@]}" \
+    -w "$workdir_path" \
+    "$image_name" \
+    "$@"
+}
+
+run_container_shell() {
+  local image_name="$1"
+  local context_path="$2"
+  local workdir_path="$3"
+  local interactive="$4"
+  local container_name="$5"
+  local mount_node_modules="$6"
+  local detached="$7"
+  local shell_cmd="$8"
+
+  run_container "$image_name" "$context_path" "$workdir_path" "$interactive" "$container_name" "$mount_node_modules" "$detached" bash -lc "$shell_cmd"
+}
+
+run_local_shell() {
+  local shell_cmd="$1"
+  local root
+  printf -v root '%q' "$script_dir"
+  bash -lc "cd $root && $shell_cmd"
+}
+
+compose() {
+  docker compose --project-directory "$script_dir" "$@"
+}
+
+rlog_dir() {
+  local dir="${dssh_rlog_dir-}"
+  if [[ -z "$dir" ]]; then
+    dir="$script_dir/ops/diagnostics"
+  elif [[ "$dir" != /* ]]; then
+    dir="$script_dir/$dir"
+  fi
+  printf '%s\n' "$dir"
+}
+
+rlog_pid_file() {
+  printf '%s\n' "$(rlog_dir)/rlog.pid"
+}
+
+rlog_is_running() {
+  local pidfile pid
+  pidfile="$(rlog_pid_file)"
+  if [[ -f "$pidfile" ]]; then
+    pid="$(tr -d '[:space:]' < "$pidfile" 2>/dev/null || true)"
+    if [[ -n "$pid" ]] && kill -0 "$pid" 2>/dev/null; then
+      printf '%s\n' "$pid"
+      return 0
+    fi
+  fi
+  pid="$(pgrep -f "$script_dir/ops/diagnostics/rlog.sh" 2>/dev/null | head -n1 || true)"
+  if [[ -n "$pid" ]] && kill -0 "$pid" 2>/dev/null; then
+    printf '%s\n' "$pid"
+    return 0
+  fi
+  return 1
+}
+
+rlog_resolve_targets() {
+  local raw="${dssh_rlog_containers-}"
+  local alias name pairs=()
+  raw="${raw// /}"
+  if [[ -z "$raw" ]]; then
+    return 0
+  fi
+  IFS=',' read -ra aliases <<< "$raw"
+  for alias in "${aliases[@]}"; do
+    [[ -z "$alias" ]] && continue
+    if name="$(derive_app_name "$alias" 2>/dev/null)"; then
+      pairs+=("$alias=$name")
+    else
+      pairs+=("$alias=$alias")
+    fi
+  done
+  local IFS=','
+  printf '%s\n' "${pairs[*]}"
+}
+
+rlog_stop() {
+  local pidfile pid
+  pidfile="$(rlog_pid_file)"
+  pid=""
+  if [[ -f "$pidfile" ]]; then
+    pid="$(tr -d '[:space:]' < "$pidfile" 2>/dev/null || true)"
+  fi
+  if [[ -n "$pid" ]] && kill -0 "$pid" 2>/dev/null; then
+    kill "$pid" 2>/dev/null || true
+    sleep 0.2
+    kill -0 "$pid" 2>/dev/null && kill -9 "$pid" 2>/dev/null || true
+  fi
+  pkill -f "$script_dir/ops/diagnostics/rlog.sh" 2>/dev/null || true
+  pkill -f "$script_dir/ops/diagnostics/host-watch.sh" 2>/dev/null || true
+  while read -r pid rest; do
+    [[ -z "$pid" ]] && continue
+    case "$rest" in
+      *'docker stats --format {{.Name}}|{{.CPUPerc}}'*)
+        kill "$pid" 2>/dev/null || true
+        ;;
+    esac
+  done < <(pgrep -af 'docker stats --format' 2>/dev/null || true)
+  rm -f "$pidfile"
+}
+
+rlog_start() {
+  local dir interval targets script pidfile
+  dir="$(rlog_dir)"
+  mkdir -p "$dir"
+  interval="${dssh_rlog_interval:-1}"
+  targets="$(rlog_resolve_targets)"
+  script="$script_dir/ops/diagnostics/rlog.sh"
+  pidfile="$(rlog_pid_file)"
+  if [[ ! -x "$script" ]]; then
+    chmod +x "$script" 2>/dev/null || true
+  fi
+  rlog_stop
+  DSSH_RLOG_DIR="$dir" \
+    DSSH_RLOG_INTERVAL="$interval" \
+    DSSH_RLOG_TARGETS="$targets" \
+    DSSH_RLOG_HISTORY_MAX_BYTES="${dssh_rlog_history_max:-16777216}" \
+    DSSH_RLOG_HISTORY_KEEP_PLAIN="${dssh_rlog_history_keep:-3}" \
+    DSSH_RLOG_ARCHIVE_MAX_BYTES="${dssh_rlog_archive_max:-268435456}" \
+    nohup bash "$script" >>"$dir/rlog.stdout" 2>&1 &
+  echo $! > "$pidfile"
+  disown $! 2>/dev/null || true
+  echo "rlog on  pid=$(tr -d '[:space:]' < "$pidfile")  dir=$dir  containers=${dssh_rlog_containers:-none}"
+}
+
+rlog_status() {
+  local pid dir
+  dir="$(rlog_dir)"
+  if pid="$(rlog_is_running)"; then
+    echo "rlog on  pid=$pid  dir=$dir  containers=${dssh_rlog_containers:-none}"
+    if [[ -f "$dir/latest.txt" ]]; then
+      echo "latest $(stat -c '%y' "$dir/latest.txt" 2>/dev/null || stat -f '%Sm' "$dir/latest.txt")"
+    fi
+  else
+    echo "rlog off  dir=$dir  containers=${dssh_rlog_containers:-none}"
+  fi
+}
+
+rlog_toggle() {
+  local mode="${1-}"
+  case "$mode" in
+    on|start)
+      rlog_start
+      ;;
+    off|stop)
+      rlog_stop
+      echo "rlog off"
+      ;;
+    status)
+      rlog_status
+      ;;
+    "")
+      if rlog_is_running >/dev/null; then
+        rlog_stop
+        echo "rlog off"
+      else
+        rlog_start
+      fi
+      ;;
+    *)
+      echo "Usage: dssh rlog [on|off|status]" >&2
+      return 1
+      ;;
+  esac
+}
+
+bash_ident() {
+  [[ "$1" =~ ^[a-zA-Z_][a-zA-Z0-9_]*$ ]]
+}
+
+run_global_action() {
+  local action_name="$1"
+  local action_var="" override_cmd=""
+  if bash_ident "$action_name"; then
+    action_var="dssh_${action_name}_local"
+    override_cmd="${!action_var-}"
+  fi
+
+  if [[ -n "$override_cmd" ]]; then
+    shift
+    if [[ "$action_name" == "stop" ]]; then
+      acquire_docker_lock
+    fi
+    run_local_shell "$(append_cli_args "$override_cmd" "$@")"
+    return 0
+  fi
+
+  if [[ "$action_name" == "stop" ]]; then
+    local ids id
+    acquire_docker_lock
+    ids="$(dssh_app_ids)"
+    if [[ -n "$ids" ]]; then
+      # shellcheck disable=SC2086
+      for id in $ids; do
+        remove_container "$id"
+      done
+    fi
+    compose stop postgres redis opensearch
+    echo "Stopped dssh app containers and compose infra services."
+    return 0
+  fi
+
+  if [[ "$action_name" == "rlog" ]]; then
+    shift
+    rlog_toggle "${1-}"
+    return 0
+  fi
+
+  if [[ "$action_name" == "gpu-setup" ]]; then
+    gpu_setup
+    return $?
+  fi
+
+  if [[ "$action_name" == "status" ]]; then
+    echo "=== dssh app containers ==="
+    docker ps --filter "label=dssh.image" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+    echo
+    echo "=== compose infra services ==="
+    compose ps postgres redis opensearch 2>/dev/null || compose ps
+    echo
+    echo "=== resource logger ==="
+    rlog_status
+    echo
+    echo "=== gpu ==="
+    detect_docker_gpu
+    if [[ ${#gpu_args[@]} -gt 0 ]]; then
+      echo "dssh docker: --gpus all"
+    elif command -v nvidia-smi >/dev/null 2>&1 && nvidia-smi >/dev/null 2>&1; then
+      echo "dssh docker: cpu-only (host GPU is up; install toolkit with: ./dssh gpu-setup)"
+    else
+      echo "dssh docker: cpu-only"
+    fi
+    return 0
+  fi
+
+  if [[ "$action_name" == "logs" ]]; then
+    local target="${2-}"
+    if [[ "$target" == "rlog" ]]; then
+      local dir latest
+      dir="$(rlog_dir)"
+      latest="$dir/latest.txt"
+      if [[ ! -f "$latest" ]]; then
+        echo "No rlog snapshot at $latest (start with: dssh rlog on)." >&2
+        return 1
+      fi
+      if command -v watch >/dev/null 2>&1; then
+        exec watch -n "${dssh_rlog_interval:-1}" cat "$latest"
+      fi
+      exec tail -F "$latest"
+    fi
+    if [[ -n "$target" ]]; then
+      docker logs -f "$(derive_app_name "$target")"
+      return 0
+    fi
+    local ids
+    ids="$(docker ps -q --filter "label=dssh.image")"
+    if [[ -z "$ids" ]]; then
+      echo "No dssh app containers are running."
+      return 0
+    fi
+    # shellcheck disable=SC2086
+    docker logs -f $ids
+    return 0
+  fi
+
+  return 1
+}
+
+if [[ $# -lt 1 ]]; then
+  usage
+  exit 1
+fi
+
+if [[ "$1" == "help" || "$1" == "-h" || "$1" == "--help" ]]; then
+  usage
+  exit 0
+fi
+
+run_as_global=0
+if [[ "$1" == "stop" || "$1" == "status" || "$1" == "logs" || "$1" == "rlog" || "$1" == "gpu-setup" ]]; then
+  run_as_global=1
+elif bash_ident "$1"; then
+  global_action_var="dssh_${1}_local"
+  if [[ -n "${!global_action_var-}" ]]; then
+    run_as_global=1
+  fi
+fi
+if [[ "$run_as_global" == "1" ]]; then
+  run_global_action "$@"
+  exit 0
+fi
+
+target_name="$1"
+shift
+
+target_path_var="$target_name"
+target_path="${!target_path_var-}"
+
+if [[ -z "$target_path" ]]; then
+  if [[ -d "$script_dir/$target_name" ]]; then
+    target_path="$target_name"
+  else
+    echo "Unknown target: $target_name" >&2
+    usage
+    exit 1
+  fi
+fi
+
+dockerfile_var="${target_name}_dockerfile"
+context_var="${target_name}_context"
+image_var="${target_name}_image"
+workdir_var="${target_name}_workdir"
+mount_node_modules_var="${target_name}_mount_node_modules"
+
+target_abs_path="$(resolve_path "$target_path")"
+dockerfile_path="${!dockerfile_var-}"
+if [[ -n "$dockerfile_path" ]]; then
+  dockerfile_path="$(resolve_path "$dockerfile_path")"
+else
+  dockerfile_path="$target_abs_path/Dockerfile"
+fi
+
+if [[ ! -f "$dockerfile_path" ]]; then
+  echo "Dockerfile not found for target '$target_name': $dockerfile_path" >&2
+  exit 1
+fi
+
+context_path="${!context_var-}"
+if [[ -n "$context_path" ]]; then
+  context_path="$(resolve_path "$context_path")"
+else
+  context_path="$script_dir"
+fi
+
+image_name="${!image_var-}"
+if [[ -z "$image_name" ]]; then
+  image_name="dssh-${target_name}"
+fi
+
+workdir_path="${!workdir_var-}"
+if [[ -z "$workdir_path" ]]; then
+  workdir_path="$(parse_workdir "$dockerfile_path")"
+fi
+if [[ -z "$workdir_path" ]]; then
+  workdir_path="/app"
+fi
+
+mount_node_modules="${!mount_node_modules_var-1}"
+app_name="$(derive_app_name "$target_name")"
+
+if [[ $# -eq 0 ]]; then
+  interactive_mode=1
+  set -- "$(detect_shell "$image_name")"
+else
+  interactive_mode=0
+fi
+
+if [[ "$1" == "build" ]]; then
+  shift
+  build_image "$image_name" "$dockerfile_path" "$context_path" "$@"
+  exit 0
+fi
+
+if [[ "$1" == "stop" ]]; then
+  stop_target_start_container "$app_name" "$target_name"
+  exit 0
+fi
+
+if [[ "$1" == "restart" ]]; then
+  shift
+  # Keep the old container up during the image rebuild, then start replaces it.
+  exec "$script_dir/dssh" "$target_name" start "$@"
+fi
+
+action_name="$1"
+action_local_var="${target_name}_${action_name}_local"
+action_container_var="${target_name}_${action_name}"
+action_attach_var="${target_name}_${action_name}_attach"
+action_detached_var="${target_name}_${action_name}_detached"
+action_local_cmd="${!action_local_var-}"
+action_container_cmd="${!action_container_var-}"
+action_attach="${!action_attach_var-1}"
+action_detached="${!action_detached_var-0}"
+
+if [[ "$action_detached" == "1" ]]; then
+  action_attach=0
+fi
+
+if [[ -n "$action_local_cmd" || -n "$action_container_cmd" ]]; then
+  shift
+
+  skip_build=0
+  action_args=()
+  for arg in "$@"; do
+    case "$arg" in
+      -nobuild|--nobuild)
+        skip_build=1
+        ;;
+      *)
+        action_args+=("$arg")
+        ;;
+    esac
+  done
+  set -- "${action_args[@]+"${action_args[@]}"}"
+
+  acquire_docker_lock
+
+  if [[ -n "$action_local_cmd" ]]; then
+    run_local_shell "$(append_cli_args "$action_local_cmd" "$@")"
+  fi
+
+  if [[ -n "$action_container_cmd" ]]; then
+    if [[ "$action_name" == "start" && "$skip_build" != "1" ]]; then
+      echo "Building $image_name before start (pass -nobuild to skip)..."
+      build_image "$image_name" "$dockerfile_path" "$context_path"
+    elif ! docker image inspect "$image_name" >/dev/null 2>&1; then
+      build_image "$image_name" "$dockerfile_path" "$context_path"
+    fi
+    action_container_name="$(container_name_for "$app_name" "$action_name")"
+    remove_container "$action_container_name"
+    if [[ "$action_name" == "start" ]]; then
+      remove_container "dssh-${target_name}-start"
+    fi
+    run_container_shell "$image_name" "$context_path" "$workdir_path" "$action_attach" "$action_container_name" "$mount_node_modules" "$action_detached" "$(append_cli_args "$action_container_cmd" "$@")"
+    exit 0
+  fi
+
+  exit 0
+fi
+
+if ! docker image inspect "$image_name" >/dev/null 2>&1; then
+  build_image "$image_name" "$dockerfile_path" "$context_path"
+fi
+
+run_container "$image_name" "$context_path" "$workdir_path" "$interactive_mode" "" "$mount_node_modules" "0" "$@"
