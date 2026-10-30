@@ -45,23 +45,14 @@ function DateConnector({
 				className="
 					grid
 					h-4
-					grid-cols-[calc(1.25rem+1px)_1px_minmax(0,1fr)_auto]
+					grid-cols-[auto_minmax(0,1fr)_1px_calc(1.25rem+1px)]
 					items-center
-					md:grid-cols-[calc(1.5rem+1px)_1px_minmax(0,1fr)_auto]
+					md:grid-cols-[auto_minmax(0,1fr)_1px_calc(1.5rem+1px)]
 				"
 			>
-				<span
-					aria-hidden="true"
-					className="
-						col-start-2
-						col-end-4
-						h-px
-						bg-slate-200
-					"
-				/>
 				<p
 					className="
-						col-start-4
+						col-start-1
 						pl-2
 						pr-2
 						text-sm
@@ -71,17 +62,26 @@ function DateConnector({
 				>
 					{range}
 				</p>
+				<span
+					aria-hidden="true"
+					className="
+						col-start-2
+						col-end-4
+						h-px
+						bg-slate-200
+					"
+				/>
 			</div>
 			<span
 				aria-hidden="true"
 				className="
 					absolute
 					bottom-0
-					left-[calc(1.25rem+1px)]
+					right-[calc(1.25rem+1px)]
 					top-2
 					w-px
 					bg-slate-200
-					md:left-[calc(1.5rem+1px)]
+					md:right-[calc(1.5rem+1px)]
 				"
 			/>
 			<div
@@ -251,7 +251,7 @@ export function ExperienceSection() {
 		'software',
 	]);
 	const [peekedIds, setPeekedIds] = useState<string[]>([]);
-	const [filtersOpen, setFiltersOpen] = useState(false);
+	const [filtersOpen, setFiltersOpen] = useState(true);
 	const sectionRef = useRef<HTMLElement>(null);
 	const sentinelRef = useRef<HTMLDivElement>(null);
 	const slotRef = useRef<HTMLDivElement>(null);
@@ -575,71 +575,56 @@ export function ExperienceSection() {
 				>
 					{filtersOpen
 						? (
-								<>
-									<div
-										className="
-											flex
-											min-w-0
-											items-center
-											gap-x-4
-										"
-									>
-										<FacetCheck
-											checked={selectedKinds.includes('software')}
-											count={SOFTWARE_COUNT}
-											label="Software"
-											onChange={() => toggleKind('software')}
-										/>
-										<FacetCheck
-											checked={selectedKinds.includes('non-software')}
-											count={NON_SOFTWARE_COUNT}
-											label="Non-software"
-											onChange={() => toggleKind('non-software')}
-										/>
-									</div>
-									<button
-										className="
-											shrink-0
-											text-sm
-											font-semibold
-											text-ink
-										"
-										onClick={() => setFiltersOpen(false)}
-										type="button"
-									>
-										Hide filters
-									</button>
-								</>
-							)
-							: (
-								<>
-									<button
-										className="
-											shrink-0
-											text-sm
-											font-semibold
-											text-ink
-										"
-										onClick={() => setFiltersOpen(true)}
-										type="button"
-									>
-										Show filters
-									</button>
-									<p
-										aria-live="polite"
-										className="
-											truncate
-											text-sm
-											text-slate-600
-										"
-									>
-										{hasFilter
-											? `Showing ${shownCount} of ${ROLE_COUNT}`
-											: `${ROLE_COUNT} roles`}
-									</p>
-								</>
-							)
-					}
+							<div
+								className="
+									flex
+									min-w-0
+									items-center
+									gap-x-4
+								"
+							>
+								<FacetCheck
+									checked={selectedKinds.includes('software')}
+									count={SOFTWARE_COUNT}
+									label="Software"
+									onChange={() => toggleKind('software')}
+								/>
+								<FacetCheck
+									checked={selectedKinds.includes('non-software')}
+									count={NON_SOFTWARE_COUNT}
+									label="Non-software"
+									onChange={() => toggleKind('non-software')}
+								/>
+							</div>
+						)
+						: (
+							<p
+								aria-live="polite"
+								className="
+									truncate
+									text-sm
+									text-slate-600
+								"
+							>
+								{hasFilter
+									? `Showing ${shownCount} of ${ROLE_COUNT}`
+									: `${ROLE_COUNT} roles`}
+							</p>
+						)}
+					<button
+						className="
+							shrink-0
+							text-sm
+							font-semibold
+							text-ink
+						"
+						onClick={() => setFiltersOpen((open) => !open)}
+						type="button"
+					>
+						{filtersOpen
+							? 'Hide filters'
+							: 'View filters'}
+					</button>
 				</div>
 				<div
 					className="
@@ -698,7 +683,7 @@ export function ExperienceSection() {
 					className="
 						absolute
 						bottom-3
-						right-[7px]
+						left-[7px]
 						top-3
 						w-px
 						bg-slate-200
@@ -734,7 +719,6 @@ export function ExperienceSection() {
 									? `
 										relative
 										flex
-										flex-row-reverse
 										items-start
 										gap-4
 										pb-6
@@ -745,7 +729,6 @@ export function ExperienceSection() {
 									: `
 										relative
 										flex
-										flex-row-reverse
 										items-start
 										gap-4
 										pb-3
@@ -764,7 +747,7 @@ export function ExperienceSection() {
 										className="
 											pointer-events-none
 											absolute
-											right-4
+											left-4
 											top-[0.875rem]
 											z-[1]
 											h-px
@@ -886,7 +869,7 @@ export function ExperienceSection() {
 												flex
 												h-4
 												items-center
-												justify-end
+												justify-start
 												text-sm
 												leading-none
 												text-slate-400
@@ -907,7 +890,7 @@ export function ExperienceSection() {
 												h-4
 												w-full
 												items-center
-												justify-end
+												justify-start
 												text-sm
 												leading-none
 												text-slate-400
