@@ -24,7 +24,7 @@ export const professionalExperience: ExperienceRole[] = [
 		kind: 'non-software',
 		title: 'Door Builder',
 		organization: 'Timberline Cabinets (via Express Employment Professionals)',
-		dates: 'Jul 2026 – Aug 2026 · 2 mos',
+		dates: 'Jul 2026 – Sep 2026 · 3 mos',
 		location: 'Cedar City, UT',
 		bullets: [
 			'Cut, ripped, drilled, banded, assembled, ran CNC, cleaned, and palletized cabinet doors.',

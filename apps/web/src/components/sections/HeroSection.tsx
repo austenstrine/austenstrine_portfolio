@@ -94,7 +94,8 @@ export function HeroSection() {
 						"
 					>
 						I&apos;ve spent six and a half years as a product, catalog, and search
-						software engineer on commerce sites. I live in Parowan, Utah. I&apos;m
+						software engineer developing several production e-commerce sites. I live
+						in Parowan, Utah. I&apos;m
 						in Murray Mondays and Tuesdays, and I&apos;m moving there full-time in
 						December 2026. I&apos;m open to on-site and hybrid roles in the Salt
 						Lake Valley.

@@ -105,13 +105,15 @@ export function ContactSection() {
 		<section
 			className="
 				rounded-none
-				bg-gradient-to-br
-				from-ink
-				to-sky
+				bg-ink
 				p-8
 				text-white
-				shadow-xl
+				shadow-none
 				sm:rounded-2xl
+				sm:bg-gradient-to-br
+				sm:from-ink
+				sm:to-sky
+				sm:shadow-xl
 			"
 			id="contact"
 		>
@@ -125,7 +127,7 @@ export function ContactSection() {
 					text-slate-200
 				"
 			>
-				I&apos;m looking for full-stack engineering work in the Salt Lake Valley. I
+				I&apos;m looking for software engineering work in the Salt Lake Valley. I
 				live in Parowan, Utah. I&apos;m in Murray Mondays and Tuesdays, and I&apos;m
 				moving to Murray full-time in December 2026.
 			</p>
