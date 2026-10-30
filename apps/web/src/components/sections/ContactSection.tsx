@@ -104,13 +104,14 @@ export function ContactSection() {
 	return (
 		<section
 			className="
-				rounded-2xl
+				rounded-none
 				bg-gradient-to-br
 				from-ink
 				to-sky
 				p-8
 				text-white
 				shadow-xl
+				sm:rounded-2xl
 			"
 			id="contact"
 		>
@@ -124,16 +125,17 @@ export function ContactSection() {
 					text-slate-200
 				"
 			>
-				I am looking for full-stack engineering work in the Salt Lake Valley. I live
-				in Parowan, Utah, I am in Murray Mondays and Tuesdays, and I relocate to
-				Murray full-time in December 2026.
+				I&apos;m looking for full-stack engineering work in the Salt Lake Valley. I
+				live in Parowan, Utah. I&apos;m in Murray Mondays and Tuesdays, and I&apos;m
+				moving to Murray full-time in December 2026.
 			</p>
 
 			<div
 				className="
 					mt-6
 					grid
-					gap-3
+					gap-4
+					md:gap-3
 				"
 			>
 				{

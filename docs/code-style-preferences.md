@@ -95,7 +95,7 @@ Cursor always loads the copy at `.cursor/rules/code-style-preferences.mdc` (`alw
 - SVG markup belongs in dedicated icon widgets (for this app, under `apps/web/src/components/icons/`), not inlined in pages, buttons, or section components.
 - Never paste a raw `<svg>` into a page or HTML file. Import an icon widget instead.
 - Icon widgets should accept a `className` prop so callers can size and color them without forking the SVG.
-- Directional UI uses one stroke-arrow family: `ArrowLeftIcon` for back/up, `ArrowRightIcon` for open/go. Do not mix in a caret, chevron, or unicode `←` `→` `›` for the same job.
+- Back/caret controls use `CaretLeftIcon` (shaft + head, matching `←`), not a chevron and not a unicode arrow character.
 
 ### Enforcement
 

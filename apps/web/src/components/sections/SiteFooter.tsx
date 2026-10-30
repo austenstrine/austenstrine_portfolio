@@ -2,8 +2,9 @@ export function SiteFooter() {
 	return (
 		<footer
 			className="
-				rounded-2xl
+				rounded-none
 				bg-slate-900
+				sm:rounded-2xl
 				px-6
 				py-6
 				text-center

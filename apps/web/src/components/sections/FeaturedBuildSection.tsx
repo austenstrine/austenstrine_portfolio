@@ -23,12 +23,14 @@ export function FeaturedBuildSection() {
 	return (
 		<section
 			className="
-				rounded-2xl
+				rounded-none
 				border
 				border-slate-200
 				bg-white
-				p-8
+				px-gutter
+				py-8
 				shadow-sm
+				sm:rounded-2xl
 			"
 			id="featured-build"
 		>

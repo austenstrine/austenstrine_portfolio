@@ -84,10 +84,10 @@ export function CvDocument() {
 					Summary
 				</h2>
 				<p>
-					Senior product, catalog, and search software engineer with six and a half years of professional software work (November 2018–June 2025) on commerce sites. I work best on small teams where I can own a problem without close supervision and talk plainly with a product owner. Most of the work I am proudest of made the people around me faster, not only the thing that shipped.
+					I&apos;m a Senior Product, Catalog, and Search Software Engineer with six and a half years of professional software work (November 2018–June 2025) on commerce sites. I work best on small teams where I can own a problem without close supervision and talk plainly with a product owner. Most of the work I&apos;m proudest of made the people around me faster, not only the thing that shipped.
 				</p>
 				<p>
-					After Lumber Marketplace in June 2025, I worked as a Burger King team member (August 2025–May 2026) and as a door builder at Timberline Cabinets (July–August 2026), with unemployment between those jobs. I live in Parowan, Utah. I am in Murray Mondays and Tuesdays, and I relocate there full-time in December 2026.
+					After Lumber Marketplace in June 2025, I worked as a Burger King team member (August 2025–May 2026) and as a door builder at Timberline Cabinets (July–August 2026), with unemployment between those jobs. I live in Parowan, Utah. I&apos;m in Murray Mondays and Tuesdays, and I&apos;m moving there full-time in December 2026.
 				</p>
 			</section>
 

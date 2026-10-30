@@ -7,15 +7,22 @@ export function HeroSection() {
 		<section
 			className="
 				relative
-				rounded-3xl
+				rounded-none
+				sm:rounded-3xl
 				bg-gradient-to-br
 				from-ink
 				via-sky
 				to-asgreen
-				px-8
-				py-16
+				flex
+				min-h-screen
+				items-center
+				px-gutter
+				py-4
 				text-white
 				shadow-2xl
+				sm:block
+				sm:min-h-0
+				sm:py-16
 			"
 		>
 			<AccountMenu />
@@ -23,9 +30,11 @@ export function HeroSection() {
 			<div
 				className="
 					grid
+					w-full
 					items-center
-					gap-8
+					gap-5
 					md:grid-cols-[220px,1fr]
+					md:gap-8
 				"
 			>
 				<CdnImg
@@ -84,10 +93,11 @@ export function HeroSection() {
 							text-slate-100
 						"
 					>
-						Six and a half years of paid software work on catalog, search, and live
-						commerce sites. I live in Parowan, Utah. I am in Murray Mondays and
-						Tuesdays, and I am moving there full-time in December 2026. Open to
-						on-site and hybrid roles in the Salt Lake Valley.
+						I&apos;ve spent six and a half years as a product, catalog, and search
+						software engineer on commerce sites. I live in Parowan, Utah. I&apos;m
+						in Murray Mondays and Tuesdays, and I&apos;m moving there full-time in
+						December 2026. I&apos;m open to on-site and hybrid roles in the Salt
+						Lake Valley.
 					</p>
 					<div
 						className="
