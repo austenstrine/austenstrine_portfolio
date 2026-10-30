@@ -84,10 +84,10 @@ export function CvDocument() {
 					Summary
 				</h2>
 				<p>
-					I&apos;m a Senior Product, Catalog, and Search Software Engineer with six and a half years of professional software work (November 2018–June 2025) on commerce sites. I work best on small teams where I can own a problem without close supervision and talk plainly with a product owner. I&apos;m as proud of the work that made the people around me faster as I am of what shipped.
+					I&apos;m a Senior Product, Catalog, and Search Software Engineer with six and a half years of professional software work (November 2018–June 2025) developing several production e-commerce sites. I work best on small teams where I can own a problem without close supervision and talk plainly with a product owner. I&apos;m as proud of the work that made the people around me faster as I am of what shipped.
 				</p>
 				<p>
-					After Lumber Marketplace in June 2025, I worked as a Burger King team member (August 2025–May 2026) and as a door builder at Timberline Cabinets (July–August 2026), with unemployment between those jobs. I live in Parowan, Utah. I&apos;m in Murray Mondays and Tuesdays, and I&apos;m moving there full-time in December 2026.
+					After Lumber Marketplace in June 2025, I worked as a Burger King team member (August 2025–May 2026) and as a door builder at Timberline Cabinets (July–September 2026), with unemployment between those jobs. I live in Parowan, Utah. I&apos;m in Murray Mondays and Tuesdays, and I&apos;m moving there full-time in December 2026.
 				</p>
 			</section>
 
@@ -102,7 +102,7 @@ export function CvDocument() {
 							Door Builder
 						</span>
 						<span className="cv-job-dates">
-							Jul 2026 – Aug 2026 · 2 mos
+							Jul 2026 – Sep 2026 · 3 mos
 						</span>
 					</div>
 					<div className="cv-job-company">
@@ -245,7 +245,12 @@ export function CvDocument() {
 					<tbody>
 						<tr>
 							<td>
-								Territory Sales Lead — Anderson Merchandisers
+								<div>
+									Territory Sales Lead
+								</div>
+								<div className="cv-additional-org">
+									Anderson Merchandisers
+								</div>
 							</td>
 							<td>
 								Delegation and deadline management across two Walmart locations
@@ -256,7 +261,12 @@ export function CvDocument() {
 						</tr>
 						<tr>
 							<td>
-								Smart Secure Specialist — Vivint Smart Home
+								<div>
+									Smart Secure Specialist
+								</div>
+								<div className="cv-additional-org">
+									Vivint Smart Home
+								</div>
 							</td>
 							<td>
 								Inbound tech support for smart home and security systems
@@ -267,7 +277,12 @@ export function CvDocument() {
 						</tr>
 						<tr>
 							<td>
-								House Management — Utah Shakespeare Festival
+								<div>
+									House Management
+								</div>
+								<div className="cv-additional-org">
+									Utah Shakespeare Festival
+								</div>
 							</td>
 							<td>
 								Guest experience, ushers, seating, and accessibility
@@ -278,7 +293,12 @@ export function CvDocument() {
 						</tr>
 						<tr>
 							<td>
-								Sales Representative — Gateway Management Group
+								<div>
+									Sales Representative
+								</div>
+								<div className="cv-additional-org">
+									Gateway Management Group
+								</div>
 							</td>
 							<td>
 								Ranked #1 nationally for installs; trained junior reps
@@ -289,7 +309,12 @@ export function CvDocument() {
 						</tr>
 						<tr>
 							<td>
-								Salesman / Cashier — Gap Inc. / Old Navy
+								<div>
+									Salesman / Cashier
+								</div>
+								<div className="cv-additional-org">
+									Gap Inc. / Old Navy
+								</div>
 							</td>
 							<td>
 								Floor sales, checkout, and restocking in Chico, CA
@@ -300,7 +325,12 @@ export function CvDocument() {
 						</tr>
 						<tr>
 							<td>
-								Dishwasher / Floor man — Chartwells
+								<div>
+									Dishwasher / Floor man
+								</div>
+								<div className="cv-additional-org">
+									Chartwells
+								</div>
 							</td>
 							<td>
 								Dish area and closing the cafeteria

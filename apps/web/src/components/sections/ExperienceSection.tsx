@@ -566,6 +566,7 @@ export function ExperienceSection() {
 				<div
 					className="
 						flex
+						h-11
 						flex-nowrap
 						items-center
 						justify-between
@@ -870,6 +871,7 @@ export function ExperienceSection() {
 												h-4
 												items-center
 												justify-start
+												gap-1.5
 												text-sm
 												leading-none
 												text-slate-400
@@ -879,8 +881,12 @@ export function ExperienceSection() {
 											<span className="font-medium">
 												{role.title}
 											</span>
-											{' · '}
-											{splitRoleDates(role.dates).range}
+											<span aria-hidden="true">
+												·
+											</span>
+											<span>
+												{splitRoleDates(role.dates).range}
+											</span>
 										</p>
 										<button
 											aria-label={`Peek ${role.title}`}
@@ -891,6 +897,7 @@ export function ExperienceSection() {
 												w-full
 												items-center
 												justify-start
+												gap-1.5
 												text-sm
 												leading-none
 												text-slate-400
@@ -904,8 +911,12 @@ export function ExperienceSection() {
 											<span className="font-medium">
 												{role.title}
 											</span>
-											{' · '}
-											{splitRoleDates(role.dates).range}
+											<span aria-hidden="true">
+												·
+											</span>
+											<span>
+												{splitRoleDates(role.dates).range}
+											</span>
 										</button>
 									</div>
 								</div>
