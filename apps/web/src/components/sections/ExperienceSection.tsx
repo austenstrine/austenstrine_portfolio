@@ -261,13 +261,18 @@ export function ExperienceSection() {
 	const pinUntilRef = useRef(0);
 
 	useLayoutEffect(() => {
-		const section = sectionRef.current;
-		const sentinel = sentinelRef.current;
-		const slot = slotRef.current;
-		const bar = stickyRef.current;
-		if(!section || !sentinel || !slot || !bar) {
+		const sectionNode = sectionRef.current;
+		const sentinelNode = sentinelRef.current;
+		const slotNode = slotRef.current;
+		const barNode = stickyRef.current;
+		if(!sectionNode || !sentinelNode || !slotNode || !barNode) {
 			return;
 		}
+
+		const sectionEl: HTMLElement = sectionNode;
+		const sentinelEl: HTMLDivElement = sentinelNode;
+		const slotEl: HTMLDivElement = slotNode;
+		const barEl: HTMLDivElement = barNode;
 
 		let frame = 0;
 		let stuck = false;
@@ -287,8 +292,8 @@ export function ExperienceSection() {
 		}
 
 		function measureBox() {
-			const sectionRect = section.getBoundingClientRect();
-			const styles = getComputedStyle(section);
+			const sectionRect = sectionEl.getBoundingClientRect();
+			const styles = getComputedStyle(sectionEl);
 			const borderLeft = Number.parseFloat(styles.borderLeftWidth);
 			const borderRight = Number.parseFloat(styles.borderRightWidth);
 			box.left = snapCssPixel(sectionRect.left + borderLeft);
@@ -298,18 +303,18 @@ export function ExperienceSection() {
 		}
 
 		function release() {
-			write(slot, 'height', '');
-			bar.removeAttribute('data-stuck');
-			write(bar, 'position', '');
-			write(bar, 'top', '');
-			write(bar, 'left', '');
-			write(bar, 'width', '');
+			write(slotEl, 'height', '');
+			barEl.removeAttribute('data-stuck');
+			write(barEl, 'position', '');
+			write(barEl, 'top', '');
+			write(barEl, 'left', '');
+			write(barEl, 'width', '');
 		}
 
 		function dock() {
-			const sentinelRect = sentinel.getBoundingClientRect();
-			const sectionRect = section.getBoundingClientRect();
-			const height = bar.offsetHeight;
+			const sentinelRect = sentinelEl.getBoundingClientRect();
+			const sectionRect = sectionEl.getBoundingClientRect();
+			const height = barEl.offsetHeight;
 
 			if(sentinelRect.bottom <= 0) {
 				stuck = true;
@@ -323,16 +328,16 @@ export function ExperienceSection() {
 				return;
 			}
 
-			if(bar.style.position !== 'fixed') {
+			if(barEl.style.position !== 'fixed') {
 				measureBox();
 			}
 
-			write(slot, 'height', `${height}px`);
-			bar.setAttribute('data-stuck', '');
-			write(bar, 'position', 'fixed');
-			write(bar, 'left', `${box.left}px`);
-			write(bar, 'width', `${box.width}px`);
-			write(bar, 'top', `${
+			write(slotEl, 'height', `${height}px`);
+			barEl.setAttribute('data-stuck', '');
+			write(barEl, 'position', 'fixed');
+			write(barEl, 'left', `${box.left}px`);
+			write(barEl, 'width', `${box.width}px`);
+			write(barEl, 'top', `${
 				snapCssPixel(Math.min(0, sectionRect.bottom - height))
 			}px`);
 		}
@@ -360,7 +365,7 @@ export function ExperienceSection() {
 		window.addEventListener('scroll', requestDock, { passive: true });
 		window.addEventListener('resize', onResize);
 		const observer = new ResizeObserver(onResize);
-		observer.observe(section);
+		observer.observe(sectionEl);
 
 		return () => {
 			if(frame !== 0) {
