@@ -10,6 +10,7 @@ export function SiteFooter() {
 				text-center
 				text-sm
 				text-slate-300
+				sm:mt-0
 				sm:rounded-2xl
 			"
 		>
