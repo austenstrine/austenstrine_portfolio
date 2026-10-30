@@ -1,184 +1,230 @@
 'use client';
 
-import type { ReactNode } from 'react';
+import { useCallback, type ReactNode } from 'react';
 import { ArrowRightIcon } from '../icons/ArrowRightIcon';
 import { CopyIcon } from '../icons/CopyIcon';
 
 type ContactMethodRowProps = {
-	rowId?: string;
 	copyLabel: string;
 	copyValue: string;
 	href: string;
-	linkTitle: string;
-	linkSummary: string;
 	icon: ReactNode;
+	linkSummary: string;
+	linkTitle: string;
+	mobileSummary: string;
 	onCopied: () => void;
+	rowId?: string;
 };
 
 export function ContactMethodRow({
-	rowId,
 	copyLabel,
 	copyValue,
 	href,
-	linkTitle,
-	linkSummary,
 	icon,
+	linkSummary,
+	linkTitle,
+	mobileSummary,
 	onCopied,
+	rowId,
 }: ContactMethodRowProps) {
+	const copyId = `${rowId ?? copyLabel}-copy`;
 	const isExternal = href.startsWith('http');
-	const linkTarget = isExternal
-		? '_blank'
-		: undefined;
-	const linkRel = isExternal
-		? 'noreferrer'
-		: undefined;
+	const displayValue = copyValue.replace(/^https?:\/\//, '');
 
-	const onCopy = async () => {
+	const copyValueToClipboard = useCallback(async() => {
 		try {
 			await navigator.clipboard.writeText(copyValue);
 			onCopied();
+		} catch{
+			window.prompt(
+				`Copy ${copyLabel}`,
+				copyValue,
+			);
 		}
-		catch {
-			return;
-		}
-	};
+	}, [copyLabel, copyValue, onCopied]);
 
 	return (
 		<div
 			className="
-				grid
-				items-stretch
-				gap-3
+				max-md:contents
+				md:grid
 				md:grid-cols-[minmax(0,1fr),minmax(0,1fr)]
+				md:gap-3
 			"
 			id={rowId}
 		>
-			<div className="relative">
+			<div className="md:min-w-0">
 				<button
+					aria-label={`Copy ${copyLabel} to clipboard`}
 					className="
 						group
 						inline-flex
-						max-w-full
+						h-full
+						min-h-14
+						w-full
+						flex-col
 						items-center
-						justify-start
-						gap-3
-						px-1
-						py-2
-						text-left
+						justify-center
+						gap-1
+						py-3
+						pl-0
+						text-center
 						transition
 						hover:opacity-90
+						md:w-auto
+						md:min-h-0
+						md:flex-row
+						md:items-center
+						md:justify-start
+						md:gap-2
+						md:px-1
+						md:py-2
+						md:text-left
 					"
+					id={copyId}
+					onClick={copyValueToClipboard}
 					type="button"
-					onClick={onCopy}
-					aria-label={`Copy ${copyLabel} to clipboard`}
 				>
-					<div className="min-w-0">
-						<p
+					<span className="min-w-0 md:text-left">
+						<span
 							className="
-								text-[11px]
+								block
+								text-[10px]
 								font-semibold
 								uppercase
-								tracking-wide
-								leading-none
+								tracking-[0.18em]
 								text-slate-300
 							"
 						>
 							{copyLabel}
-						</p>
-						<div
+						</span>
+						<span
 							className="
-								flex
-								items-center
-								justify-between
-								gap-2
-							"
-						>
-						<p
-							className="
-								min-w-0
+								mt-0.5
+								hidden
 								truncate
 								text-sm
-								text-slate-100
+								text-white
+								md:block
 							"
 						>
-							{copyValue}
-						</p>
-							<span
-								className="
-									shrink-0
-									text-slate-200
-									transition
-									opacity-100
-									md:opacity-0
-									md:group-hover:opacity-100
-									md:group-focus-visible:opacity-100
-									group-hover:text-white
-								"
-								aria-hidden="true"
-							>
-								<CopyIcon />
-							</span>
-						</div>
-					</div>
+							{displayValue}
+						</span>
+					</span>
+					<CopyIcon
+						className="
+							h-4
+							w-4
+							shrink-0
+							text-slate-300
+							opacity-70
+							transition
+							group-hover:opacity-100
+						"
+					/>
 				</button>
 			</div>
-
 			<a
+				aria-describedby={copyId}
 				className="
 					group
 					flex
+					min-w-0
+					flex-1
 					items-center
 					justify-between
-					rounded-xl
+					gap-4
+					rounded-2xl
 					border
-					border-white/20
-					bg-white/10
+					border-white/10
+					bg-white/5
 					px-4
-					py-3
+					py-4
 					transition
-					hover:-translate-y-0.5
-					hover:bg-white/20
+					hover:bg-white/10
 				"
 				href={href}
-				target={linkTarget}
-				rel={linkRel}
+				rel={
+					isExternal
+						? 'noreferrer'
+						: undefined
+				}
+				target={
+					isExternal
+						? '_blank'
+						: undefined
+				}
 			>
-				<div
+				<span
 					className="
+						relative
+						z-10
 						flex
+						min-w-0
 						items-center
 						gap-3
+						overflow-visible
 					"
 				>
 					<span
 						className="
-							rounded-md
-							bg-white/15
-							p-2
+							flex
+							h-10
+							w-10
+							shrink-0
+							items-center
+							justify-center
+							rounded-full
+							bg-white/10
+							text-white
 						"
 					>
 						{icon}
 					</span>
-					<div>
-						<p className="font-semibold">
+					<span className="min-w-0 overflow-visible">
+						<span
+							className="
+								block
+								font-semibold
+							"
+						>
 							{linkTitle}
-						</p>
-						<p className="text-sm text-slate-200">
+						</span>
+						<span
+							className="
+								block
+								overflow-visible
+								whitespace-nowrap
+								text-sm
+								text-slate-300
+								md:hidden
+							"
+						>
+							{mobileSummary}
+						</span>
+						<span
+							className="
+								hidden
+								truncate
+								text-sm
+								text-slate-300
+								md:block
+							"
+						>
 							{linkSummary}
-						</p>
-					</div>
-				</div>
-				<span
+						</span>
+					</span>
+				</span>
+				<ArrowRightIcon
 					className="
+						h-4
+						w-4
+						shrink-0
+						text-slate-300
 						transition
 						group-hover:translate-x-0.5
 					"
-					aria-hidden="true"
-				>
-					<ArrowRightIcon
-						className="h-5 w-5"
-					/>
-				</span>
+				/>
 			</a>
 		</div>
 	);

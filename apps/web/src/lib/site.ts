@@ -9,13 +9,13 @@ export const SITE_REPO =
 	'https://github.com/austenstrine/austenstrine_portfolio';
 
 export const SITE_TITLE =
-	'Austen Strine — Senior product, catalog, and search software engineer';
+	'Austen Strine — Senior Product, Catalog, and Search Software Engineer';
 
 export const SITE_DESCRIPTION =
-	'Senior product, catalog, and search software engineer with six and a half years of professional work on commerce sites. Based in Parowan, Utah; in Murray Mondays and Tuesdays; relocating to Murray full-time in December 2026.';
+	'Senior Product, Catalog, and Search Software Engineer with six and a half years of professional work on commerce sites. Based in Parowan, Utah; in Murray Mondays and Tuesdays; relocating to Murray full-time in December 2026.';
 
 export const SITE_HEADLINE =
-	'Senior product, catalog, and search software engineer';
+	'Senior Product, Catalog, and Search Software Engineer';
 
 export const SITE_OG_IMAGE = '/pp1_sq_sm.jpg';
 
@@ -27,7 +27,7 @@ export const personJsonLd = {
 	email: SITE_EMAIL,
 	telephone: SITE_PHONE_HREF.replace('tel:', ''),
 	image: `${SITE_URL}${SITE_OG_IMAGE}`,
-	jobTitle: 'Senior product, catalog, and search software engineer',
+	jobTitle: 'Senior Product, Catalog, and Search Software Engineer',
 	homeLocation: {
 		'@type': 'Place',
 		name: 'Parowan, Utah',

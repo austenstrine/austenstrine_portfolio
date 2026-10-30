@@ -17,6 +17,7 @@ type ContactMethod = {
 	href: string;
 	linkTitle: string;
 	linkSummary: string;
+	mobileSummary: string;
 	icon: ReactNode;
 };
 
@@ -26,7 +27,8 @@ const methods: ContactMethod[] = [
 		copyValue: SITE_EMAIL,
 		href: `mailto:${SITE_EMAIL}?subject=Portfolio Inquiry`,
 		linkTitle: 'Email Me',
-		linkSummary: 'Send me a direct email',
+		linkSummary: 'Send me an email',
+		mobileSummary: SITE_EMAIL,
 		icon: (
 			<EmailIcon
 				className="h-5 w-5"
@@ -39,6 +41,7 @@ const methods: ContactMethod[] = [
 		href: SITE_PHONE_HREF,
 		linkTitle: 'Call me',
 		linkSummary: 'Reach me by phone',
+		mobileSummary: SITE_PHONE,
 		icon: (
 			<PhoneIcon
 				className="h-5 w-5"
@@ -50,7 +53,8 @@ const methods: ContactMethod[] = [
 		copyValue: 'linkedin.com/in/austen-loren-strine',
 		href: 'https://www.linkedin.com/in/austen-loren-strine/',
 		linkTitle: 'LinkedIn',
-		linkSummary: 'Connect with me professionally',
+		linkSummary: 'Connect with me',
+		mobileSummary: '/in/austen-loren-strine',
 		icon: (
 			<LinkedInIcon
 				className="h-5 w-5"
@@ -63,6 +67,7 @@ const methods: ContactMethod[] = [
 		href: 'https://github.com/austenstrine',
 		linkTitle: 'GitHub',
 		linkSummary: 'Check out my code',
+		mobileSummary: 'github.com/austenstrine',
 		icon: (
 			<GithubIcon
 				className="h-5 w-5"
@@ -75,7 +80,8 @@ const methods: ContactMethod[] = [
 		copyValue: 'austenstrine.dev/cv.html',
 		href: '/cv.html',
 		linkTitle: 'View CV',
-		linkSummary: 'Printable work history',
+		linkSummary: 'Printable experience',
+		mobileSummary: 'austenstrine.dev/cv.html',
 		icon: (
 			<DocumentIcon
 				className="h-5 w-5"
@@ -104,13 +110,15 @@ export function ContactSection() {
 	return (
 		<section
 			className="
-				rounded-2xl
+				rounded-none
 				bg-gradient-to-br
 				from-ink
 				to-sky
-				p-8
+				px-gutter
+				py-8
 				text-white
 				shadow-xl
+				sm:rounded-2xl
 			"
 			id="contact"
 		>
@@ -124,16 +132,20 @@ export function ContactSection() {
 					text-slate-200
 				"
 			>
-				I am looking for full-stack engineering work in the Salt Lake Valley. I live
-				in Parowan, Utah, I am in Murray Mondays and Tuesdays, and I relocate to
-				Murray full-time in December 2026.
+				I&apos;m looking for full-stack engineering work in the Salt Lake Valley. I
+				live in Parowan, Utah. I&apos;m in Murray Mondays and Tuesdays, and I&apos;m
+				moving to Murray full-time in December 2026.
 			</p>
 
 			<div
 				className="
 					mt-6
 					grid
-					gap-3
+					grid-cols-[max-content,minmax(0,1fr)]
+					gap-x-3
+					gap-y-4
+					md:grid-cols-1
+					md:gap-3
 				"
 			>
 				{
@@ -146,6 +158,7 @@ export function ContactSection() {
 							href={method.href}
 							linkTitle={method.linkTitle}
 							linkSummary={method.linkSummary}
+							mobileSummary={method.mobileSummary}
 							icon={method.icon}
 							onCopied={onCopied}
 						/>

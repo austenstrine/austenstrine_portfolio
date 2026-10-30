@@ -9,7 +9,7 @@ export default function NotFound() {
 				items-center
 				justify-center
 				bg-frost
-				px-6
+				px-gutter
 			"
 		>
 			<div

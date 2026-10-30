@@ -2,13 +2,15 @@ export function SiteFooter() {
 	return (
 		<footer
 			className="
-				rounded-2xl
+				-mt-6
+				rounded-none
 				bg-slate-900
-				px-6
+				px-gutter
 				py-6
 				text-center
 				text-sm
 				text-slate-300
+				sm:rounded-2xl
 			"
 		>
 			© 2026 Austen Strine

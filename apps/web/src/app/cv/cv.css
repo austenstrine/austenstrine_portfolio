@@ -11,7 +11,7 @@ html:has(.cv-page) body {
 .cv-page {
 	--asgreen: #257257;
 	min-height: 100vh;
-	padding: 2rem 0 4rem;
+	padding: 0 0 4rem;
 	font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 	font-size: 10.5pt;
 	line-height: 1.55;
@@ -24,8 +24,18 @@ html:has(.cv-page) body {
 	margin: 0 auto;
 	background: #fff;
 	box-shadow: 0 4px 32px rgba(0, 0, 0, 0.12);
-	border-radius: 4px;
+	border-radius: 0;
 	overflow: hidden;
+}
+
+@media (min-width: 640px) {
+	.cv-page {
+		padding-top: 2rem;
+	}
+
+	.cv-page .page-shell {
+		border-radius: 4px;
+	}
 }
 
 .cv-page .screen-toolbar {

@@ -1,17 +1,12 @@
 'use client';
 
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 import {
 	education,
 	professionalExperience,
 	type ExperienceKind,
 	type ExperienceRole,
 } from '../../data/experience';
-
-const KIND_LABEL: Record<ExperienceKind, string> = {
-	software: 'Software',
-	'non-software': 'Non-software',
-};
 
 const SOFTWARE_COUNT = professionalExperience.filter(
 	(role) => role.kind === 'software',
@@ -22,6 +17,81 @@ const NON_SOFTWARE_COUNT = professionalExperience.filter(
 const ROLE_COUNT = professionalExperience.length;
 const PIN_MS = 360;
 
+function snapCssPixel(value: number) {
+	return Math.round(value);
+}
+
+function splitRoleDates(dates: string) {
+	const [range, duration] = dates.split(' · ');
+	return {
+		range,
+		duration: duration ?? null,
+	};
+}
+
+function DateConnector({
+	range,
+}: {
+	range: string;
+}) {
+	return (
+		<div
+			className="
+				relative
+				mt-1.5
+			"
+		>
+			<div
+				className="
+					grid
+					h-4
+					grid-cols-[calc(1.25rem+1px)_1px_minmax(0,1fr)_auto]
+					items-center
+					md:grid-cols-[calc(1.5rem+1px)_1px_minmax(0,1fr)_auto]
+				"
+			>
+				<span
+					aria-hidden="true"
+					className="
+						col-start-2
+						col-end-4
+						h-px
+						bg-slate-200
+					"
+				/>
+				<p
+					className="
+						col-start-4
+						pl-2
+						pr-2
+						text-sm
+						leading-none
+						text-slate-500
+					"
+				>
+					{range}
+				</p>
+			</div>
+			<span
+				aria-hidden="true"
+				className="
+					absolute
+					bottom-0
+					left-[calc(1.25rem+1px)]
+					top-2
+					w-px
+					bg-slate-200
+					md:left-[calc(1.5rem+1px)]
+				"
+			/>
+			<div
+				aria-hidden="true"
+				className="h-4"
+			/>
+		</div>
+	);
+}
+
 function ExperienceRoleCard({
 	className = '',
 	role,
@@ -29,6 +99,8 @@ function ExperienceRoleCard({
 	className?: string;
 	role: ExperienceRole;
 }) {
+	const { duration } = splitRoleDates(role.dates);
+
 	return (
 		<article
 			className={`
@@ -44,16 +116,15 @@ function ExperienceRoleCard({
 			<div
 				className="
 					flex
-					flex-col
-					gap-1
-					md:flex-row
-					md:items-baseline
-					md:justify-between
+					items-baseline
+					justify-between
+					gap-4
 					md:gap-6
 				"
 			>
 				<h3
 					className="
+						min-w-0
 						text-lg
 						font-semibold
 						text-ink
@@ -61,15 +132,19 @@ function ExperienceRoleCard({
 				>
 					{role.title}
 				</h3>
-				<p
-					className="
-						shrink-0
-						text-sm
-						text-slate-500
-					"
-				>
-					{role.dates}
-				</p>
+				{duration
+					? (
+						<p
+							className="
+								shrink-0
+								text-sm
+								text-slate-500
+							"
+						>
+							{duration}
+						</p>
+					)
+					: null}
 			</div>
 			<p
 				className="
@@ -132,6 +207,7 @@ function FacetCheck({
 		<label
 			className="
 				flex
+				min-h-11
 				cursor-pointer
 				items-center
 				gap-2
@@ -142,12 +218,14 @@ function FacetCheck({
 			<input
 				checked={checked}
 				className="
-					h-4
-					w-4
+					h-5
+					w-5
 					shrink-0
 					rounded
 					border-slate-300
 					accent-ink
+					md:h-4
+					md:w-4
 				"
 				onChange={onChange}
 				type="checkbox"
@@ -168,68 +246,133 @@ function FacetCheck({
 	);
 }
 
-function FilterChip({
-	children,
-	onClick,
-}: {
-	children: string;
-	onClick: () => void;
-}) {
-	return (
-		<button
-			className="
-				inline-flex
-				items-center
-				gap-2
-				rounded-full
-				border
-				border-slate-300
-				bg-white
-				px-3
-				py-1
-				text-xs
-				font-semibold
-				text-slate-700
-			"
-			onClick={onClick}
-			type="button"
-		>
-			{children}
-			<span
-				aria-hidden="true"
-				className="text-slate-400"
-			>
-				×
-			</span>
-		</button>
-	);
-}
-
 export function ExperienceSection() {
 	const [selectedKinds, setSelectedKinds] = useState<ExperienceKind[]>([
 		'software',
 	]);
 	const [peekedIds, setPeekedIds] = useState<string[]>([]);
-	const [stuck, setStuck] = useState(false);
+	const [filtersOpen, setFiltersOpen] = useState(false);
+	const sectionRef = useRef<HTMLElement>(null);
 	const sentinelRef = useRef<HTMLDivElement>(null);
+	const slotRef = useRef<HTMLDivElement>(null);
 	const stickyRef = useRef<HTMLDivElement>(null);
 	const listRef = useRef<HTMLOListElement>(null);
 	const pinRef = useRef<{ id: string; offset: number } | null>(null);
 	const pinUntilRef = useRef(0);
 
-	useEffect(() => {
-		const node = sentinelRef.current;
-		if(!node) {
+	useLayoutEffect(() => {
+		const section = sectionRef.current;
+		const sentinel = sentinelRef.current;
+		const slot = slotRef.current;
+		const bar = stickyRef.current;
+		if(!section || !sentinel || !slot || !bar) {
 			return;
 		}
 
-		const observer = new IntersectionObserver(
-			([entry]) => setStuck(!entry.isIntersecting),
-			{ threshold: 0 },
-		);
-		observer.observe(node);
-		return () => observer.disconnect();
-	}, []);
+		let frame = 0;
+		let stuck = false;
+		const box = {
+			left: 0,
+			width: 0,
+		};
+
+		function write(
+			el: HTMLElement,
+			key: 'height' | 'left' | 'position' | 'top' | 'width',
+			value: string,
+		) {
+			if(el.style[key] !== value) {
+				el.style[key] = value;
+			}
+		}
+
+		function measureBox() {
+			const sectionRect = section.getBoundingClientRect();
+			const styles = getComputedStyle(section);
+			const borderLeft = Number.parseFloat(styles.borderLeftWidth);
+			const borderRight = Number.parseFloat(styles.borderRightWidth);
+			box.left = snapCssPixel(sectionRect.left + borderLeft);
+			box.width = snapCssPixel(
+				sectionRect.width - borderLeft - borderRight,
+			);
+		}
+
+		function release() {
+			write(slot, 'height', '');
+			bar.removeAttribute('data-stuck');
+			write(bar, 'position', '');
+			write(bar, 'top', '');
+			write(bar, 'left', '');
+			write(bar, 'width', '');
+		}
+
+		function dock() {
+			const sentinelRect = sentinel.getBoundingClientRect();
+			const sectionRect = section.getBoundingClientRect();
+			const height = bar.offsetHeight;
+
+			if(sentinelRect.bottom <= 0) {
+				stuck = true;
+			}
+			else if(sentinelRect.top >= 0) {
+				stuck = false;
+			}
+
+			if(!stuck) {
+				release();
+				return;
+			}
+
+			if(bar.style.position !== 'fixed') {
+				measureBox();
+			}
+
+			write(slot, 'height', `${height}px`);
+			bar.setAttribute('data-stuck', '');
+			write(bar, 'position', 'fixed');
+			write(bar, 'left', `${box.left}px`);
+			write(bar, 'width', `${box.width}px`);
+			write(bar, 'top', `${
+				snapCssPixel(Math.min(0, sectionRect.bottom - height))
+			}px`);
+		}
+
+		function onFrame() {
+			frame = 0;
+			dock();
+		}
+
+		function requestDock() {
+			if(frame !== 0) {
+				return;
+			}
+
+			frame = window.requestAnimationFrame(onFrame);
+		}
+
+		function onResize() {
+			measureBox();
+			requestDock();
+		}
+
+		measureBox();
+		dock();
+		window.addEventListener('scroll', requestDock, { passive: true });
+		window.addEventListener('resize', onResize);
+		const observer = new ResizeObserver(onResize);
+		observer.observe(section);
+
+		return () => {
+			if(frame !== 0) {
+				window.cancelAnimationFrame(frame);
+			}
+
+			window.removeEventListener('scroll', requestDock);
+			window.removeEventListener('resize', onResize);
+			observer.disconnect();
+			release();
+		};
+	}, [filtersOpen]);
 
 	function pinFromSticky(preferredId?: string) {
 		const sticky = stickyRef.current;
@@ -329,16 +472,6 @@ export function ExperienceSection() {
 		));
 	}
 
-	function clearKind(kind: ExperienceKind) {
-		pinFromSticky();
-		setSelectedKinds((current) => current.filter((row) => row !== kind));
-	}
-
-	function clearFilters() {
-		pinFromSticky();
-		setSelectedKinds([]);
-	}
-
 	function peekRole(id: string) {
 		pinFromSticky(id);
 		setPeekedIds((current) => (
@@ -356,14 +489,17 @@ export function ExperienceSection() {
 	return (
 		<section
 			className="
-				rounded-2xl
+				rounded-none
 				border
 				border-slate-200
 				bg-white
-				p-8
+				px-gutter
+				py-8
 				shadow-sm
+				sm:rounded-2xl
 			"
 			id="experience"
+			ref={sectionRef}
 		>
 			<div
 				className="
@@ -395,148 +531,153 @@ export function ExperienceSection() {
 
 			<div
 				aria-hidden="true"
-				className="h-px"
+				className="h-4"
 				ref={sentinelRef}
 			/>
 			<div
-				className={
-					stuck
-						? `
-							sticky
-							top-0
-							z-20
-							-mx-8
-							mt-6
-							border-y
-							border-slate-200
-							bg-white/95
-							px-8
-							py-3
-							shadow-[0_10px_30px_rgba(13,27,42,0.06)]
-							backdrop-blur-md
-						`
-						: `
-							sticky
-							top-0
-							z-20
-							-mx-8
-							mt-6
-							border-y
-							border-slate-200/80
-							bg-white/95
-							px-8
-							py-3
-							backdrop-blur-md
-						`
-				}
+				className="-mx-gutter"
+				ref={slotRef}
+			>
+			<div
+				className="
+					z-20
+					bg-white
+					px-gutter
+					py-2
+					[overflow-anchor:none]
+					after:pointer-events-none
+					after:absolute
+					after:inset-x-0
+					after:bottom-0
+					after:h-px
+					after:bg-slate-200
+					after:content-['']
+					after:opacity-0
+					data-[stuck]:after:opacity-100
+					data-[stuck]:shadow-[0_-1rem_0_0_#fff]
+				"
 				ref={stickyRef}
 			>
 				<div
 					className="
 						flex
-						flex-col
+						flex-nowrap
+						items-center
+						justify-between
 						gap-3
-						sm:flex-row
-						sm:items-end
-						sm:justify-between
+						md:hidden
 					"
 				>
-					<div>
-						<p
-							className="
-								text-[11px]
-								font-semibold
-								uppercase
-								tracking-[0.2em]
-								text-slate-500
-							"
-						>
-							Kind
-						</p>
-						<div
-							className="
-								mt-2
-								flex
-								flex-wrap
-								items-center
-								gap-x-5
-								gap-y-2
-							"
-						>
-							<FacetCheck
-								checked={selectedKinds.includes('software')}
-								count={SOFTWARE_COUNT}
-								label="Software"
-								onChange={() => toggleKind('software')}
-							/>
-							<FacetCheck
-								checked={selectedKinds.includes('non-software')}
-								count={NON_SOFTWARE_COUNT}
-								label="Non-software"
-								onChange={() => toggleKind('non-software')}
-							/>
-						</div>
-					</div>
+					{filtersOpen
+						? (
+								<>
+									<div
+										className="
+											flex
+											min-w-0
+											items-center
+											gap-x-4
+										"
+									>
+										<FacetCheck
+											checked={selectedKinds.includes('software')}
+											count={SOFTWARE_COUNT}
+											label="Software"
+											onChange={() => toggleKind('software')}
+										/>
+										<FacetCheck
+											checked={selectedKinds.includes('non-software')}
+											count={NON_SOFTWARE_COUNT}
+											label="Non-software"
+											onChange={() => toggleKind('non-software')}
+										/>
+									</div>
+									<button
+										className="
+											shrink-0
+											text-sm
+											font-semibold
+											text-ink
+										"
+										onClick={() => setFiltersOpen(false)}
+										type="button"
+									>
+										Hide filters
+									</button>
+								</>
+							)
+							: (
+								<>
+									<button
+										className="
+											shrink-0
+											text-sm
+											font-semibold
+											text-ink
+										"
+										onClick={() => setFiltersOpen(true)}
+										type="button"
+									>
+										Show filters
+									</button>
+									<p
+										aria-live="polite"
+										className="
+											truncate
+											text-sm
+											text-slate-600
+										"
+									>
+										{hasFilter
+											? `Showing ${shownCount} of ${ROLE_COUNT}`
+											: `${ROLE_COUNT} roles`}
+									</p>
+								</>
+							)
+					}
+				</div>
+				<div
+					className="
+						hidden
+						items-center
+						justify-between
+						gap-x-4
+						md:flex
+					"
+				>
 					<div
 						className="
 							flex
-							flex-wrap
 							items-center
-							gap-3
+							gap-x-5
+						"
+					>
+						<FacetCheck
+							checked={selectedKinds.includes('software')}
+							count={SOFTWARE_COUNT}
+							label="Software"
+							onChange={() => toggleKind('software')}
+						/>
+						<FacetCheck
+							checked={selectedKinds.includes('non-software')}
+							count={NON_SOFTWARE_COUNT}
+							label="Non-software"
+							onChange={() => toggleKind('non-software')}
+						/>
+					</div>
+					<p
+						aria-live="polite"
+						className="
 							text-sm
 							text-slate-600
 						"
 					>
-						<p aria-live="polite">
-							{hasFilter
-								? `Showing ${shownCount} of ${ROLE_COUNT}`
-								: `${ROLE_COUNT} roles`}
-						</p>
 						{hasFilter
-							? (
-								<button
-									className="
-										font-semibold
-										text-ink
-										underline-offset-4
-										hover:underline
-									"
-									onClick={clearFilters}
-									type="button"
-								>
-									Clear all
-								</button>
-							)
-							: null}
-					</div>
+							? `Showing ${shownCount} of ${ROLE_COUNT}`
+							: `${ROLE_COUNT} roles`}
+					</p>
 				</div>
-				<div
-					className={
-						hasFilter
-							? 'timeline-fold timeline-fold-open'
-							: 'timeline-fold'
-					}
-				>
-					<div className="timeline-fold-inner">
-						<div
-							className="
-								mt-3
-								flex
-								flex-wrap
-								gap-2
-							"
-						>
-							{selectedKinds.map((kind) => (
-								<FilterChip
-									key={kind}
-									onClick={() => clearKind(kind)}
-								>
-									{`Kind: ${KIND_LABEL[kind]}`}
-								</FilterChip>
-							))}
-						</div>
-					</div>
-				</div>
+			</div>
 			</div>
 
 			<ol
@@ -552,7 +693,7 @@ export function ExperienceSection() {
 					className="
 						absolute
 						bottom-3
-						left-[7px]
+						right-[7px]
 						top-3
 						w-px
 						bg-slate-200
@@ -588,8 +729,9 @@ export function ExperienceSection() {
 									? `
 										relative
 										flex
+										flex-row-reverse
 										items-start
-										gap-5
+										gap-4
 										pb-6
 										transition-[padding]
 										duration-300
@@ -598,8 +740,9 @@ export function ExperienceSection() {
 									: `
 										relative
 										flex
+										flex-row-reverse
 										items-start
-										gap-5
+										gap-4
 										pb-3
 										transition-[padding]
 										duration-300
@@ -609,11 +752,30 @@ export function ExperienceSection() {
 							data-role-id={role.id}
 							key={role.id}
 						>
+							{expanded
+								? (
+									<span
+										aria-hidden="true"
+										className="
+											pointer-events-none
+											absolute
+											right-4
+											top-[0.875rem]
+											z-[1]
+											h-px
+											w-4
+											bg-slate-200
+										"
+									/>
+								)
+								: null}
 							<div
 								className="
 									relative
 									z-10
 									mt-1.5
+									h-4
+									w-4
 									shrink-0
 								"
 							>
@@ -632,7 +794,20 @@ export function ExperienceSection() {
 													? `Hide ${role.title}`
 													: `Peek ${role.title}`
 											}
-											className={markClass}
+											className="
+												absolute
+												left-1/2
+												top-1/2
+												flex
+												h-11
+												w-11
+												-translate-x-1/2
+												-translate-y-1/2
+												items-center
+												justify-center
+												md:h-4
+												md:w-4
+											"
 											data-role-mark={role.id}
 											onClick={() => (
 												expanded
@@ -643,30 +818,35 @@ export function ExperienceSection() {
 										>
 											<span
 												aria-hidden="true"
-												className={
-													expanded
-														? `
-															block
-															h-0.5
-															w-2
-															rounded-full
-															bg-slate-400
-															opacity-100
-															transition-opacity
-															duration-300
-														`
-														: `
-															block
-															h-0.5
-															w-2
-															rounded-full
-															bg-slate-400
-															opacity-0
-															transition-opacity
-															duration-300
-														`
-												}
-											/>
+												className={markClass}
+											>
+												<span
+													aria-hidden="true"
+													className={
+														expanded
+															? `
+																block
+																h-0.5
+																w-2
+																rounded-full
+																bg-slate-400
+																opacity-100
+																transition-opacity
+																duration-300
+															`
+															: `
+																block
+																h-0.5
+																w-2
+																rounded-full
+																bg-slate-400
+																opacity-0
+																transition-opacity
+																duration-300
+															`
+													}
+												/>
+											</span>
 										</button>
 									)}
 							</div>
@@ -680,6 +860,9 @@ export function ExperienceSection() {
 									}
 								>
 									<div className="timeline-fold-inner">
+										<DateConnector
+											range={splitRoleDates(role.dates).range}
+										/>
 										<ExperienceRoleCard role={role} />
 									</div>
 								</div>
@@ -692,14 +875,39 @@ export function ExperienceSection() {
 									}
 								>
 									<div className="timeline-fold-inner">
+										<p
+											className="
+												mt-1.5
+												flex
+												h-4
+												items-center
+												justify-end
+												text-sm
+												leading-none
+												text-slate-400
+												md:hidden
+											"
+										>
+											<span className="font-medium">
+												{role.title}
+											</span>
+											{' · '}
+											{splitRoleDates(role.dates).range}
+										</p>
 										<button
 											aria-label={`Peek ${role.title}`}
 											className="
-												py-0.5
-												text-left
+												mt-1.5
+												hidden
+												h-4
+												w-full
+												items-center
+												justify-end
 												text-sm
+												leading-none
 												text-slate-400
 												hover:text-slate-600
+												md:flex
 											"
 											onClick={() => peekRole(role.id)}
 											tabIndex={expanded ? -1 : 0}
@@ -709,7 +917,7 @@ export function ExperienceSection() {
 												{role.title}
 											</span>
 											{' · '}
-											{role.dates.split(' · ')[0]}
+											{splitRoleDates(role.dates).range}
 										</button>
 									</div>
 								</div>

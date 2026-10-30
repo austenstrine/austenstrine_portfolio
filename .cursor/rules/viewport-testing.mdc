@@ -1,0 +1,27 @@
+---
+description: Viewport bands and devices for layout testing
+alwaysApply: true
+---
+
+# Viewport testing
+
+Do not override the user's current browser width unless you are explicitly testing a band below.
+
+## Bands
+
+- **Micromobile**: width `<= 399`. Always Galaxy S22 at **360×780**.
+- **Mobile**: phones `400–639`. Test the most popular in-update-cycle iOS and Android used on the web.
+- **Macromobile / tablet**: `640+` in the tablet range. Same: most popular in-update-cycle iOS and Android tablets.
+- Prefer in-use web traffic. If that is missing, use estimated in-update-cycle units sold.
+
+## Devices (May–Sep 2026 traffic)
+
+- Micromobile: Galaxy S22, **360×780**
+- Mobile iOS: iPhone 12 / 13 / 14 / 16e, **390×844** (largest iPhone web-traffic viewport)
+- Mobile Android: Samsung FHD+ default, **384×832** (most common Android web viewport)
+- Tablet iOS: iPad 11" / Air 11", **820×1180** (current in-cycle; 768×1024 is more traffic but aging 9.7" iPads)
+- Tablet Android: Galaxy Tab / Fire HD 10 class, **800×1280**
+
+## Gutters
+
+Horizontal section padding uses `--gutter` (`clamp(0.75rem, 4vw, 2rem)`), exposed as Tailwind `gutter`. Do not pile `max-[399px]:px-*` classes for that job.

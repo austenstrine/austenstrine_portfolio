@@ -15,6 +15,9 @@ const config: Config = {
         signal: '#e76f51',
         frost: '#e0e1dd',
       },
+      spacing: {
+        gutter: 'var(--gutter)',
+      },
     },
   },
   plugins: [],

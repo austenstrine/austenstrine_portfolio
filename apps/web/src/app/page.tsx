@@ -16,8 +16,12 @@ export default function Home() {
 					max-w-6xl
 					flex-col
 					gap-6
-					px-6
-					py-10
+					px-0
+					pt-0
+					pb-0
+					sm:px-gutter
+					sm:pt-10
+					sm:pb-10
 				"
 			>
 				<HeroSection />
