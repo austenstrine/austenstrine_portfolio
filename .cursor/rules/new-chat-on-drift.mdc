@@ -1,0 +1,10 @@
+---
+description: Ask to start a new chat when the topic has clearly drifted
+alwaysApply: true
+---
+
+# New chat on subject drift
+
+If this thread has clearly switched to a new subject, and a fresh chat would be cheaper or clearer (long history, compacted context, or leftover files/screenshots from the old task), ask once whether to start a new chat.
+
+Do not stop the current work. Do not ask on small follow-ups of the same task. One question, then continue if they stay.

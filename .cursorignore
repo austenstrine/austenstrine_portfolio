@@ -1,0 +1,36 @@
+# Dependencies and build output
+node_modules/
+dist/
+.next/
+apps/web/out/
+coverage/
+*.tsbuildinfo
+/www/
+/_next/
+/index.html
+/404.html
+
+# Env and local secrets
+.env
+.env.local
+.env.*.local
+ops/nginx/certs/
+
+# Ops caches and lockfiles
+ops/cdn/data/cache/
+ops/cdn/data/origin/
+ops/diagnostics/*
+!ops/diagnostics/rlog.sh
+.dssh-docker.lock
+
+# Logs and OS junk
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.DS_Store
+__MACOSX/
+
+# Large binaries the agent does not need to index
+linkedin-recommendations/**/*.pdf
