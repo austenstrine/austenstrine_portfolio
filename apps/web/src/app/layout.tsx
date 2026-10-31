@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import type { ReactNode } from 'react';
 import { BackendDownBanner } from '../components/BackendDownBanner';
 import { JsonLd } from '../components/JsonLd';
@@ -46,6 +46,43 @@ export const metadata: Metadata = {
 		index: true,
 		follow: true,
 	},
+	icons: {
+		icon: [
+			{
+				url: '/favicon.ico',
+				sizes: '48x48',
+			},
+			{
+				url: '/favicon.svg',
+				type: 'image/svg+xml',
+			},
+			{
+				url: '/favicon-32.png',
+				sizes: '32x32',
+				type: 'image/png',
+			},
+			{
+				url: '/icon-192.png',
+				sizes: '192x192',
+				type: 'image/png',
+			},
+			{
+				url: '/icon-512.png',
+				sizes: '512x512',
+				type: 'image/png',
+			},
+		],
+		apple: [
+			{
+				url: '/apple-touch-icon.png',
+				sizes: '180x180',
+			},
+		],
+	},
+};
+
+export const viewport: Viewport = {
+	themeColor: '#0d1b2a',
 };
 
 export default function RootLayout({
