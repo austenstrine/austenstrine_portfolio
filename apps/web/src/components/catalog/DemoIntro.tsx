@@ -4,105 +4,80 @@ export function DemoIntro() {
 	return (
 		<section
 			className="
-				rounded-2xl
-				border
-				border-slate-200
-				bg-white
-				p-6
+				overflow-hidden
+				rounded-3xl
+				bg-ink
+				px-6
+				py-8
+				text-white
+				md:px-10
+				md:py-12
 			"
 		>
 			<h1
 				className="
+					max-w-xl
 					text-3xl
 					font-semibold
 					tracking-tight
+					md:text-5xl
 				"
 			>
-				Place et Marque
+				Shop independent sellers in one cart
 			</h1>
 			<p
 				className="
-					mt-3
-					max-w-3xl
-					text-slate-700
-				"
-			>
-				A live multi-vendor catalog: search, pack and piece units, vendor tools, and
-				checkout. Sign in to add items to a cart.
-			</p>
-			<ol
-				className="
-					mt-5
-					grid
-					gap-3
+					mt-4
+					max-w-xl
 					text-sm
-					md:grid-cols-3
+					leading-6
+					text-white/75
+					md:text-base
 				"
 			>
-				<li
+				Live inventory from multiple vendors, pack and piece units, and Stripe
+				checkout. This catalog is a working demo — sign in to buy.
+			</p>
+			<div
+				className="
+					mt-6
+					flex
+					flex-wrap
+					gap-3
+				"
+			>
+				<a
 					className="
-						rounded-xl
-						border
-						border-slate-100
-						bg-frost/60
-						p-4
+						rounded-full
+						bg-white
+						px-5
+						py-2.5
+						text-sm
+						font-semibold
+						text-ink
+						hover:bg-frost
 					"
+					href="/place-et-marque/search"
 				>
-					<p className="font-semibold text-ink">
-						1. Search
-					</p>
-					<p className="mt-1 text-slate-600">
-						<a className="font-semibold text-sky hover:underline" href="/place-et-marque/search">
-							Open search
-						</a>
-						{' '}
-						and try a term like wire or television.
-					</p>
-				</li>
-				<li
+					Shop all products
+				</a>
+				<a
 					className="
-						rounded-xl
+						rounded-full
 						border
-						border-slate-100
-						bg-frost/60
-						p-4
+						border-white/30
+						px-5
+						py-2.5
+						text-sm
+						font-semibold
+						text-white
+						hover:border-white
 					"
+					href={GUIDED_DEMO_PRODUCT.href}
 				>
-					<p className="font-semibold text-ink">
-						2. A wire listing
-					</p>
-					<p className="mt-1 text-slate-600">
-						<a
-							className="font-semibold text-sky hover:underline"
-							href={GUIDED_DEMO_PRODUCT.href}
-						>
-							{GUIDED_DEMO_PRODUCT.title}
-						</a>
-						{' — '}
-						{GUIDED_DEMO_PRODUCT.summary}
-					</p>
-				</li>
-				<li
-					className="
-						rounded-xl
-						border
-						border-slate-100
-						bg-frost/60
-						p-4
-					"
-				>
-					<p className="font-semibold text-ink">
-						3. Cart
-					</p>
-					<p className="mt-1 text-slate-600">
-						<a className="font-semibold text-sky hover:underline" href="/auth/login">
-							Sign in
-						</a>
-						{' '}
-						to add items, then check out with Stripe.
-					</p>
-				</li>
-			</ol>
+					{GUIDED_DEMO_PRODUCT.title}
+				</a>
+			</div>
 		</section>
 	);
 }

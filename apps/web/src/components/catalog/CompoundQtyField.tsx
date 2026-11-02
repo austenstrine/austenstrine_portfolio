@@ -104,6 +104,10 @@ export function CompoundQtyField({
 								<input
 									type="checkbox"
 									checked={compoundMode}
+									className="
+										accent-asgreen
+										text-asgreen
+									"
 									disabled={disabled}
 									onChange={(event) => {
 										setCompoundMode(event.target.checked);

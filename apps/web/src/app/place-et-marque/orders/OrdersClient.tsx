@@ -58,7 +58,7 @@ function OrdersContent() {
 								mt-2
 								text-sm
 								font-semibold
-								text-emerald-700
+								text-asgreen
 							"
 						>
 							Payment received. Orders appear below once Stripe confirms.

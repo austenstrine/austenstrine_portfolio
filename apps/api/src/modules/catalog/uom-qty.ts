@@ -159,6 +159,17 @@ export function resolveQty(
 	return trimDecimal(parsed);
 }
 
+export function formatAvailableQty(
+	decimal: string,
+	uomCode: string | null | undefined,
+	omitFromAvailability?: boolean,
+): string {
+	if(omitFromAvailability) {
+		return decimal;
+	}
+	return formatQty(decimal, uomCode);
+}
+
 export function formatQty(
 	decimal: string,
 	uomCode: string | null | undefined,

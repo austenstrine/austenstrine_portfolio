@@ -1,6 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
 	IsArray,
+	IsBoolean,
 	IsNumberString,
 	IsOptional,
 	IsString,
@@ -48,6 +49,14 @@ export class CreateUomDto {
 	@IsString({ each: true })
 	@MaxLength(40, { each: true })
 	aliases?: string[];
+
+	@ApiPropertyOptional({
+		description: 'When true, availability copy omits this UOM token ("16 available").',
+		default: false,
+	})
+	@IsOptional()
+	@IsBoolean()
+	omitFromAvailability?: boolean;
 
 	@ApiPropertyOptional()
 	@IsOptional()

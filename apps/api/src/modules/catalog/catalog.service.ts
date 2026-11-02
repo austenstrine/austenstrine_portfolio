@@ -121,6 +121,7 @@ export class CatalogService {
 				aliases,
 				dimensionKey,
 				factorToReference: new Decimal(dto.factorToReference),
+				omitFromAvailability: dto.omitFromAvailability === true,
 				metadata: dto.metadata as Prisma.InputJsonValue | undefined,
 			},
 			include: {
@@ -916,6 +917,7 @@ export class CatalogService {
 				role: offering.role,
 				priceCents: offering.priceCents,
 				uom: offering.uom.code,
+				omitFromAvailability: offering.uom.omitFromAvailability,
 				availableQty: offering.availableQty.toString(),
 			})),
 		};
@@ -977,6 +979,7 @@ export class CatalogService {
 					code: offering.uom.code,
 					label: offering.uom.label,
 					dimensionKey: offering.uom.dimensionKey,
+					omitFromAvailability: offering.uom.omitFromAvailability,
 				},
 				childContainments: offering.containmentsAsParent.map((link) => ({
 					id: link.id,

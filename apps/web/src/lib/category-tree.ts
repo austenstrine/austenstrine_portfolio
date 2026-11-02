@@ -2,6 +2,7 @@ export type CategoryNode = {
 	id: string;
 	slug: string;
 	name: string;
+	parentId?: string | null;
 	parent?: { id: string; name: string; slug: string } | null;
 };
 
@@ -10,13 +11,44 @@ export type CategoryTreeRow<T extends CategoryNode> = T & {
 	label: string;
 };
 
+export type NestedCategory<T extends CategoryNode> = T & {
+	children: NestedCategory<T>[];
+};
+
+export function allCategoryLabel(name: string) {
+	return `All ${name}`;
+}
+
+export function nestCategoryTree<T extends CategoryNode>(rows: T[]): NestedCategory<T>[] {
+	const byParent = new Map<string | null, T[]>();
+
+	for(const row of rows) {
+		const key = row.parent?.id ?? row.parentId ?? null;
+		const list = byParent.get(key) ?? [];
+		list.push(row);
+		byParent.set(key, list);
+	}
+
+	for(const list of byParent.values()) {
+		list.sort((left, right) => left.name.localeCompare(right.name));
+	}
+
+	const walk = (parentId: string | null): NestedCategory<T>[] =>
+		(byParent.get(parentId) ?? []).map((row) => ({
+			...row,
+			children: walk(row.id),
+		}));
+
+	return walk(null);
+}
+
 export function sortCategoryTree<T extends CategoryNode>(
 	rows: T[],
 ): CategoryTreeRow<T>[] {
 	const byParent = new Map<string | null, T[]>();
 
 	for(const row of rows) {
-		const key = row.parent?.id ?? null;
+		const key = row.parent?.id ?? row.parentId ?? null;
 		const list = byParent.get(key) ?? [];
 		list.push(row);
 		byParent.set(key, list);

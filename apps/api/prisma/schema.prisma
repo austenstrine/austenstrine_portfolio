@@ -392,6 +392,8 @@ model UnitOfMeasure {
   dimensionKey      String
   /// Multiply quantity in this UOM by factorToReference to reach the dimension reference unit
   factorToReference Decimal  @db.Decimal(24, 8)
+  /// When true, availability copy is "{qty} available" with no UOM token.
+  omitFromAvailability Boolean @default(false)
   metadata          Json?
   createdAt         DateTime @default(now())
 

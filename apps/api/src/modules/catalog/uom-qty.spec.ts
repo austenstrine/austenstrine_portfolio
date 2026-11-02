@@ -1,6 +1,7 @@
 import {
 	compoundToDecimal,
 	decimalToCompound,
+	formatAvailableQty,
 	formatQty,
 	resolveQty,
 } from './uom-qty';
@@ -40,5 +41,12 @@ describe('uom-qty', () => {
 		expect(formatQty('10.5', 'FT')).toBe('10 feet 6 inches');
 		expect(formatQty('2.5', 'LB')).toBe('2 pounds 8 ounces');
 		expect(formatQty('4', 'EA')).toBe('4 ea');
+	});
+
+	it('omits UOM from availability when the flag is true', () => {
+		expect(formatAvailableQty('16', 'EA', true)).toBe('16');
+		expect(formatAvailableQty('4', 'PK', true)).toBe('4');
+		expect(formatAvailableQty('16', 'EA', false)).toBe('16 ea');
+		expect(formatAvailableQty('10.5', 'FT', false)).toBe('10 feet 6 inches');
 	});
 });

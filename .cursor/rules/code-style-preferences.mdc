@@ -22,6 +22,11 @@ Keep in sync with `docs/code-style-preferences.md`. Preferences, not build error
 
 - Class tokens are static string literals only (no runtime-built names). Multiline static strings are fine.
 
+### Catalog chrome
+
+- One radius for search controls: `rounded-full` (search field, Sort, chips, facet rows). Do not mix `rounded-md` selected rows with `rounded-full` fields.
+- Selected/highlight uses primary `asgreen` `#257257` (text and/or soft fill). Secondary navy is `sky` `#1b263b`. Never `ink` `#0d1b2a` as a selected fill — ink is body text, not a highlight.
+
 ## Indentation
 
 - Tabs, not spaces, except where the format requires spaces (YAML, etc.).

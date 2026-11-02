@@ -13,10 +13,11 @@ import { upsertCartLine } from '../../lib/checkout-api';
 import { ACCESS_REASONS, buildLoginUrl } from '../../lib/accessGate';
 import { useSession } from '../../lib/useSession';
 import { CatalogCover } from './CatalogCover';
+import { ProductCard } from './ProductCard';
 import { ProductQuickEdit } from './ProductQuickEdit';
 import { TermHint } from './TermHint';
 import { CompoundQtyField } from './CompoundQtyField';
-import { formatQty } from '../../lib/uom-qty';
+import { formatAvailableQty } from '../../lib/uom-qty';
 
 type ProductDetailClientProps = {
 	initialProduct: CatalogProductDetail;
@@ -74,11 +75,15 @@ function stockCopy(offering: CatalogOfferingDetail | undefined) {
 		};
 	}
 	const low = qty < 5;
-	const amount = formatQty(offering.availableQty, offering.uom.code);
+	const amount = formatAvailableQty(
+		offering.availableQty,
+		offering.uom.code,
+		offering.uom.omitFromAvailability,
+	);
 	return {
 		status: low ? `Only ${amount} left` : 'In stock',
 		detail: low ? '' : `${amount} available`,
-		tone: low ? 'text-amber-800' : 'text-emerald-800',
+		tone: low ? 'text-amber-800' : 'text-asgreen',
 		inStock: true,
 		low,
 	};
@@ -123,7 +128,7 @@ function specGroups(product: CatalogProductDetail, selectedSku?: string) {
 
 	push(identifiers, 'SKU', selectedSku || product.sku);
 	push(details, 'Brand', product.vendor.name);
-	push(details, 'Department', product.category?.name);
+	push(details, 'Category', product.category?.name);
 	for(const attribute of product.attributes) {
 		push(details, attribute.attributeName, attribute.value);
 	}
@@ -286,11 +291,32 @@ export function ProductDetailClient({
 											key={offering.id}
 											type="button"
 											onClick={() => selectOffering(offering.id)}
-											className={`rounded-xl border px-4 py-3 text-left transition ${
+											className={
 												selected
-													? 'border-ink bg-ink text-white'
-													: 'border-slate-200 bg-white text-ink hover:border-ink/40'
-											}`}
+													? `
+														rounded-xl
+														border
+														border-asgreen/40
+														bg-asgreen/15
+														px-4
+														py-3
+														text-left
+														text-asgreen
+														transition
+													`
+													: `
+														rounded-xl
+														border
+														border-slate-200
+														bg-white
+														px-4
+														py-3
+														text-left
+														text-ink
+														transition
+														hover:border-asgreen/40
+													`
+											}
 										>
 											<div className="flex items-baseline justify-between gap-3">
 												<p className="text-sm font-semibold">{offeringTitle(offering)}</p>
@@ -298,9 +324,19 @@ export function ProductDetailClient({
 													{formatPrice(offering.priceCents, offering.currency)}
 												</p>
 											</div>
-											<p className={`mt-1 text-xs ${selected ? 'text-white/70' : 'text-slate-500'}`}>
-												{offeringStock.inStock ? offeringStock.status : 'Unavailable'}
-												{offeringStock.detail ? ` · ${offeringStock.detail}` : ''}
+											<p
+												className={
+													selected
+														? 'mt-1 text-xs text-asgreen/70'
+														: 'mt-1 text-xs text-slate-500'
+												}
+											>
+												{offeringStock.inStock
+													? offeringStock.status
+													: 'Unavailable'}
+												{offeringStock.detail
+													? ` · ${offeringStock.detail}`
+													: ''}
 											</p>
 										</button>
 									);
@@ -320,7 +356,18 @@ export function ProductDetailClient({
 
 				{cartMessage
 					? (
-						<p className="rounded-lg bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-800" aria-live="polite">
+						<p
+							className="
+								rounded-lg
+								bg-asgreen/15
+								px-3
+								py-2
+								text-sm
+								font-medium
+								text-asgreen
+							"
+							aria-live="polite"
+						>
 							{cartMessage}.{' '}
 							<Link href="/place-et-marque/cart" className="underline underline-offset-2">
 								View cart
@@ -341,13 +388,35 @@ export function ProductDetailClient({
 						type="button"
 						disabled={cartBusy || !stock.inStock}
 						onClick={() => void onAddToCart()}
-						className="w-full rounded-full bg-ink px-5 py-3 text-sm font-semibold text-white hover:bg-sky disabled:opacity-40"
+						className="
+							w-full
+							rounded-full
+							bg-asgreen
+							px-5
+							py-3
+							text-sm
+							font-semibold
+							text-white
+							hover:bg-asgreen/90
+							disabled:opacity-40
+						"
 					>
-						{cartBusy ? 'Adding…' : stock.inStock ? 'Add to cart' : 'Unavailable'}
+						{cartBusy
+							? 'Adding…'
+							: stock.inStock
+								? 'Add to cart'
+								: 'Unavailable'}
 					</button>
 					<Link
 						href="/place-et-marque/cart"
-						className="text-center text-sm font-semibold text-ink underline-offset-4 hover:underline"
+						className="
+							text-center
+							text-sm
+							font-semibold
+							text-asgreen
+							underline-offset-4
+							hover:underline
+						"
 					>
 						View cart
 					</Link>
@@ -356,7 +425,14 @@ export function ProductDetailClient({
 				<div className="border-t border-slate-100 pt-4 text-[12px] leading-5 text-slate-500">
 					<p>
 						Sold by{' '}
-						<Link href={vendorHref} className="font-semibold text-ink hover:underline">
+						<Link
+							href={vendorHref}
+							className="
+								font-semibold
+								text-asgreen
+								hover:underline
+							"
+						>
 							{product.vendor.name}
 						</Link>
 					</p>
@@ -385,18 +461,31 @@ export function ProductDetailClient({
 			<nav className="text-[12px] text-slate-500" aria-label="Breadcrumb">
 				<ol className="flex flex-wrap items-center gap-2">
 					<li>
-						<Link className="hover:text-ink" href="/place-et-marque">Place et Marque</Link>
+						<a
+							className="hover:text-asgreen"
+							href="/place-et-marque"
+						>
+							Place et Marque
+						</a>
 					</li>
 					<li aria-hidden="true">/</li>
 					<li>
-						<Link className="hover:text-ink" href="/place-et-marque/search">Search</Link>
+						<Link
+							className="hover:text-asgreen"
+							href="/place-et-marque/search"
+						>
+							Shop
+						</Link>
 					</li>
 					{product.category
 						? (
 							<>
 								<li aria-hidden="true">/</li>
 								<li>
-									<Link className="hover:text-ink" href={searchHref}>
+									<Link
+										className="hover:text-asgreen"
+										href={searchHref}
+									>
 										{product.category.name}
 									</Link>
 								</li>
@@ -410,7 +499,12 @@ export function ProductDetailClient({
 
 			<div>
 				<p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
-					<Link className="hover:text-ink" href={vendorHref}>{product.vendor.name}</Link>
+					<Link
+						className="hover:text-asgreen"
+						href={vendorHref}
+					>
+						{product.vendor.name}
+					</Link>
 					{selectedOffering?.sku || product.sku ? ` · ${selectedOffering?.sku || product.sku}` : ''}
 				</p>
 				<h1 className="mt-2 max-w-3xl text-3xl font-semibold tracking-tight text-ink md:text-4xl">
@@ -470,7 +564,14 @@ export function ProductDetailClient({
 											<div className="flex items-start justify-between gap-3">
 												<Link
 													href={vendorHref}
-													className="text-[11px] font-semibold uppercase tracking-[0.18em] text-ink/55 hover:text-ink"
+													className="
+														text-[11px]
+														font-semibold
+														uppercase
+														tracking-[0.18em]
+														text-ink/55
+														hover:text-asgreen
+													"
 												>
 													{product.vendor.name}
 												</Link>
@@ -514,9 +615,27 @@ export function ProductDetailClient({
 											key={`${src}-${index}`}
 											type="button"
 											onClick={() => setActiveImage(index)}
-											className={`h-16 w-24 shrink-0 overflow-hidden rounded-lg border ${
-												index === activeImage ? 'border-ink' : 'border-transparent'
-											}`}
+											className={
+												index === activeImage
+													? `
+														h-16
+														w-24
+														shrink-0
+														overflow-hidden
+														rounded-lg
+														border
+														border-asgreen
+													`
+													: `
+														h-16
+														w-24
+														shrink-0
+														overflow-hidden
+														rounded-lg
+														border
+														border-transparent
+													`
+											}
 										>
 											<CatalogCover
 												src={src}
@@ -574,15 +693,53 @@ export function ProductDetailClient({
 												<button
 													type="button"
 													onClick={() => selectOffering(offering.id)}
-													className={`flex w-full flex-wrap items-baseline justify-between gap-3 py-3 text-left text-sm ${
-														selected ? 'text-ink' : 'text-slate-700 hover:text-ink'
-													}`}
+													className={
+														selected
+															? `
+																flex
+																w-full
+																flex-wrap
+																items-baseline
+																justify-between
+																gap-3
+																py-3
+																text-left
+																text-sm
+																text-asgreen
+															`
+															: `
+																flex
+																w-full
+																flex-wrap
+																items-baseline
+																justify-between
+																gap-3
+																py-3
+																text-left
+																text-sm
+																text-slate-700
+																hover:text-asgreen
+															`
+													}
 												>
 													<div>
 														<p className="font-semibold">
 															{offeringTitle(offering)}
 															{selected
-																? <span className="ml-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500">Selected</span>
+																? (
+																	<span
+																		className="
+																			ml-2
+																			text-[11px]
+																			font-semibold
+																			uppercase
+																			tracking-wide
+																			text-asgreen
+																		"
+																	>
+																		Selected
+																	</span>
+																)
 																: null}
 														</p>
 														<p className="mt-0.5 text-xs text-slate-500">
@@ -616,8 +773,18 @@ export function ProductDetailClient({
 						: null}
 
 					<p className="text-sm text-slate-500">
-						<Link className="font-semibold text-ink underline-offset-4 hover:underline" href={searchHref}>
-							{product.category ? `More in ${product.category.name}` : 'Back to the catalog'}
+						<Link
+							className="
+								font-semibold
+								text-asgreen
+								underline-offset-4
+								hover:underline
+							"
+							href={searchHref}
+						>
+							{product.category
+								? `More in ${product.category.name}`
+								: 'Back to the catalog'}
 						</Link>
 					</p>
 				</div>
@@ -636,13 +803,22 @@ export function ProductDetailClient({
 							<h2 className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
 								{product.category ? `More in ${product.category.name}` : 'Related products'}
 							</h2>
-							<Link className="text-sm font-semibold text-ink underline-offset-4 hover:underline" href={searchHref}>
+							<Link
+								className="
+									text-sm
+									font-semibold
+									text-asgreen
+									underline-offset-4
+									hover:underline
+								"
+								href={searchHref}
+							>
 								View all
 							</Link>
 						</div>
-						<div className="mt-5 grid gap-x-5 gap-y-8 sm:grid-cols-2 lg:grid-cols-3">
+						<div className="mt-5 grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-3">
 							{relatedProducts.map((item) => (
-								<RelatedTile key={item.id} product={item} />
+								<ProductCard key={item.id} product={item} />
 							))}
 						</div>
 					</section>
@@ -680,7 +856,17 @@ export function ProductDetailClient({
 
 			{deletedNotice
 				? (
-					<p className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900">
+					<p
+						className="
+							rounded-2xl
+							border
+							border-asgreen/30
+							bg-asgreen/15
+							p-4
+							text-sm
+							text-asgreen
+						"
+					>
 						{deletedNotice}
 					</p>
 				)
@@ -701,9 +887,22 @@ export function ProductDetailClient({
 								type="button"
 								disabled={cartBusy || !stock.inStock}
 								onClick={() => void onAddToCart()}
-								className="rounded-full bg-ink px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-40"
+								className="
+									rounded-full
+									bg-asgreen
+									px-5
+									py-2.5
+									text-sm
+									font-semibold
+									text-white
+									disabled:opacity-40
+								"
 							>
-								{cartBusy ? 'Adding…' : stock.inStock ? 'Add to cart' : 'Unavailable'}
+								{cartBusy
+									? 'Adding…'
+									: stock.inStock
+										? 'Add to cart'
+										: 'Unavailable'}
 							</button>
 						</div>
 					</div>
@@ -713,50 +912,3 @@ export function ProductDetailClient({
 	);
 }
 
-function RelatedTile({ product }: { product: CatalogProductSummary }) {
-	const prices = product.offerings.map((row) => row.priceCents);
-	const min = prices.length ? Math.min(...prices) : product.primaryPriceCents;
-	const stocked = product.offerings.find((row) => Number(row.availableQty) > 0);
-	const qty = Number(stocked?.availableQty ?? product.availableQty);
-	const uom = stocked?.uom ?? product.primaryUom;
-	const inStock = Number.isFinite(qty) && qty > 0;
-
-	return (
-		<Link href={`/place-et-marque/${product.vendor.slug}/${product.slug}`} className="group flex flex-col">
-			<div className="relative aspect-[5/3] overflow-hidden rounded-lg bg-[#cfd1cb]">
-				<CatalogCover
-					src={product.imageUrls?.[0]}
-					alt={product.title}
-					width={640}
-					height={384}
-					className="absolute inset-0 h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]"
-					fallback={(
-						<div className="absolute inset-0 flex flex-col justify-between p-4">
-							<p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-ink/55">
-								{product.vendor.name}
-							</p>
-							<p className="font-semibold tracking-tight text-ink/80" style={{ fontSize: '2.1rem', lineHeight: 0.9 }}>
-								{initials(product.vendor.name)}
-							</p>
-						</div>
-					)}
-				/>
-			</div>
-			<p className="mt-3 text-[11px] font-medium uppercase tracking-[0.14em] text-slate-500">
-				{product.category?.name ?? 'Uncategorized'}
-			</p>
-			<h3 className="mt-1 line-clamp-2 text-[15px] font-medium leading-snug text-ink group-hover:underline group-hover:decoration-slate-300 group-hover:underline-offset-4">
-				{product.title}
-			</h3>
-			<p className="mt-2 text-[15px] font-semibold tabular-nums text-ink">
-				{min == null ? 'Price on request' : formatPrice(min)}
-				{uom && min != null
-					? <span className="ml-1 text-[12px] font-medium text-slate-500">/ {uom}</span>
-					: null}
-			</p>
-			<p className={`mt-0.5 text-[12px] ${inStock ? 'text-slate-500' : 'text-signal'}`}>
-				{inStock ? 'In stock' : 'Currently unavailable'}
-			</p>
-		</Link>
-	);
-}

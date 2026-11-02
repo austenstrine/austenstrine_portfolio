@@ -6,7 +6,7 @@ import {
 import { Decimal } from '@prisma/client/runtime/library';
 import { PrismaService } from '../../infra/prisma/prisma.service';
 import type { QtyCompoundDto } from '../catalog/dto/qty-compound.dto';
-import { formatQty, resolveQty } from '../catalog/uom-qty';
+import { formatAvailableQty, resolveQty } from '../catalog/uom-qty';
 
 @Injectable()
 export class CartService {
@@ -59,7 +59,11 @@ export class CartService {
 
 		if(offering.availableQty.lt(quantity)) {
 			throw new BadRequestException(
-				`Only ${formatQty(offering.availableQty.toString(), offering.uom.code)} available for this offering.`,
+				`Only ${formatAvailableQty(
+					offering.availableQty.toString(),
+					offering.uom.code,
+					offering.uom.omitFromAvailability,
+				)} available for this offering.`,
 			);
 		}
 
@@ -137,6 +141,7 @@ export class CartService {
 				offeringKey: line.offering.offeringKey,
 				role: line.offering.role,
 				uom: line.offering.uom.code,
+				omitFromAvailability: line.offering.uom.omitFromAvailability,
 				title: line.offering.product.title,
 				productSlug: line.offering.product.slug,
 				vendor: {

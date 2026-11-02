@@ -43,6 +43,7 @@
       "dimensionKey": "count",
       "factorToReference": "1",
       "aliases": ["ea", "each"],
+      "omitFromAvailability": true,
       "metadata": null
     },
     {
@@ -51,6 +52,7 @@
       "dimensionKey": "count",
       "factorToReference": "1",
       "aliases": ["pk", "pack"],
+      "omitFromAvailability": true,
       "metadata": null
     },
     {

@@ -34,6 +34,7 @@ export type CartDto = {
 		offeringKey: string;
 		role: string;
 		uom: string;
+		omitFromAvailability?: boolean;
 		title: string;
 		productSlug: string;
 		vendor: { id: string; slug: string; name: string };

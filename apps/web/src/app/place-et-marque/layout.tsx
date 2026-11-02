@@ -1,6 +1,9 @@
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
 import { CatalogHeader } from '../../components/catalog/CatalogHeader';
+import { CatalogSearchProvider } from '../../components/catalog/CatalogSearchContext';
+import { JumpToTop } from '../../components/catalog/JumpToTop';
+import { MarketplaceFooter } from '../../components/catalog/MarketplaceFooter';
 
 export const metadata: Metadata = {
 	title: 'Place et Marque',
@@ -12,22 +15,31 @@ export default function PlaceEtMarqueLayout({ children }: { children: ReactNode 
 	return (
 		<div
 			className="
+				flex
 				min-h-screen
+				flex-col
 				bg-frost
 				text-ink
 			"
 		>
-			<CatalogHeader />
-			<main
-				className="
-					mx-auto
-					max-w-6xl
-					px-6
-					py-10
-				"
-			>
-				{children}
-			</main>
+			<CatalogSearchProvider>
+				<CatalogHeader />
+				<main
+					className="
+						mx-auto
+						w-full
+						max-w-7xl
+						flex-1
+						px-gutter
+						py-6
+						md:py-8
+					"
+				>
+					{children}
+				</main>
+				<MarketplaceFooter />
+				<JumpToTop />
+			</CatalogSearchProvider>
 		</div>
 	);
 }
