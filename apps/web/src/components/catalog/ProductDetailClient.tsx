@@ -13,6 +13,7 @@ import { upsertCartLine } from '../../lib/checkout-api';
 import { ACCESS_REASONS, buildLoginUrl } from '../../lib/accessGate';
 import { useSession } from '../../lib/useSession';
 import { CatalogCover } from './CatalogCover';
+import { ProductCard } from './ProductCard';
 import { ProductQuickEdit } from './ProductQuickEdit';
 import { TermHint } from './TermHint';
 import { CompoundQtyField } from './CompoundQtyField';
@@ -385,11 +386,16 @@ export function ProductDetailClient({
 			<nav className="text-[12px] text-slate-500" aria-label="Breadcrumb">
 				<ol className="flex flex-wrap items-center gap-2">
 					<li>
-						<Link className="hover:text-ink" href="/place-et-marque">Place et Marque</Link>
+						<a
+							className="hover:text-ink"
+							href="/place-et-marque"
+						>
+							Place et Marque
+						</a>
 					</li>
 					<li aria-hidden="true">/</li>
 					<li>
-						<Link className="hover:text-ink" href="/place-et-marque/search">Search</Link>
+						<Link className="hover:text-ink" href="/place-et-marque/search">Shop</Link>
 					</li>
 					{product.category
 						? (
@@ -640,9 +646,9 @@ export function ProductDetailClient({
 								View all
 							</Link>
 						</div>
-						<div className="mt-5 grid gap-x-5 gap-y-8 sm:grid-cols-2 lg:grid-cols-3">
+						<div className="mt-5 grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-3">
 							{relatedProducts.map((item) => (
-								<RelatedTile key={item.id} product={item} />
+								<ProductCard key={item.id} product={item} />
 							))}
 						</div>
 					</section>
@@ -713,50 +719,3 @@ export function ProductDetailClient({
 	);
 }
 
-function RelatedTile({ product }: { product: CatalogProductSummary }) {
-	const prices = product.offerings.map((row) => row.priceCents);
-	const min = prices.length ? Math.min(...prices) : product.primaryPriceCents;
-	const stocked = product.offerings.find((row) => Number(row.availableQty) > 0);
-	const qty = Number(stocked?.availableQty ?? product.availableQty);
-	const uom = stocked?.uom ?? product.primaryUom;
-	const inStock = Number.isFinite(qty) && qty > 0;
-
-	return (
-		<Link href={`/place-et-marque/${product.vendor.slug}/${product.slug}`} className="group flex flex-col">
-			<div className="relative aspect-[5/3] overflow-hidden rounded-lg bg-[#cfd1cb]">
-				<CatalogCover
-					src={product.imageUrls?.[0]}
-					alt={product.title}
-					width={640}
-					height={384}
-					className="absolute inset-0 h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]"
-					fallback={(
-						<div className="absolute inset-0 flex flex-col justify-between p-4">
-							<p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-ink/55">
-								{product.vendor.name}
-							</p>
-							<p className="font-semibold tracking-tight text-ink/80" style={{ fontSize: '2.1rem', lineHeight: 0.9 }}>
-								{initials(product.vendor.name)}
-							</p>
-						</div>
-					)}
-				/>
-			</div>
-			<p className="mt-3 text-[11px] font-medium uppercase tracking-[0.14em] text-slate-500">
-				{product.category?.name ?? 'Uncategorized'}
-			</p>
-			<h3 className="mt-1 line-clamp-2 text-[15px] font-medium leading-snug text-ink group-hover:underline group-hover:decoration-slate-300 group-hover:underline-offset-4">
-				{product.title}
-			</h3>
-			<p className="mt-2 text-[15px] font-semibold tabular-nums text-ink">
-				{min == null ? 'Price on request' : formatPrice(min)}
-				{uom && min != null
-					? <span className="ml-1 text-[12px] font-medium text-slate-500">/ {uom}</span>
-					: null}
-			</p>
-			<p className={`mt-0.5 text-[12px] ${inStock ? 'text-slate-500' : 'text-signal'}`}>
-				{inStock ? 'In stock' : 'Currently unavailable'}
-			</p>
-		</Link>
-	);
-}

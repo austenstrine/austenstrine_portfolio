@@ -1,14 +1,41 @@
-import { CatalogCover } from '../../components/catalog/CatalogCover';
 import { CatalogEmptyActions } from '../../components/catalog/CatalogEmptyActions';
 import { DemoIntro } from '../../components/catalog/DemoIntro';
-import { searchCatalogProducts, type CatalogProductSummary } from '../../lib/catalog-api';
-import { formatQty } from '../../lib/uom-qty';
+import { ProductCard } from '../../components/catalog/ProductCard';
+import {
+	listCatalogCategories,
+	searchCatalogProducts,
+	type CatalogCategoryRow,
+	type CatalogProductSummary,
+	type CatalogTermFacet,
+} from '../../lib/catalog-api';
+import { sortCategoryTree } from '../../lib/category-tree';
+import { ArrowRightIcon } from '../../components/icons/ArrowRightIcon';
+
+function titleCaseSlug(slug: string) {
+	return slug
+		.split(/[-_]+/)
+		.filter(Boolean)
+		.map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+		.join(' ');
+}
 
 export default async function PlaceEtMarqueHomePage() {
 	let products: CatalogProductSummary[] = [];
+	let departments: CatalogCategoryRow[] = [];
+	let vendors: CatalogTermFacet[] = [];
+	let total = 0;
 	let loadFailed = false;
 	try {
-		products = (await searchCatalogProducts({})).items;
+		const [catalog, categories] = await Promise.all([
+			searchCatalogProducts({ limit: 16 }),
+			listCatalogCategories(),
+		]);
+		products = catalog.items;
+		total = catalog.total ?? catalog.items.length;
+		vendors = catalog.vendorFacets ?? [];
+		departments = sortCategoryTree(categories)
+			.filter((row) => row.depth === 0)
+			.slice(0, 12);
 	}
 	catch {
 		loadFailed = true;
@@ -19,162 +46,291 @@ export default async function PlaceEtMarqueHomePage() {
 			className="
 				flex
 				flex-col
-				gap-8
+				gap-10
 			"
 		>
 			<DemoIntro />
 
-			<div>
-				<h2
-					className="
-						text-2xl
-						font-semibold
-						tracking-tight
-					"
-				>
-					Catalog
-				</h2>
-				<p
-					className="
-						mt-2
-						max-w-2xl
-						text-slate-600
-					"
-				>
-					Browse by vendor, or open a listing to see units and buying options.
-				</p>
-			</div>
-
-			{products.length === 0
+			{departments.length > 0
 				? (
-					<div
-						className="
-							rounded-2xl
-							border
-							border-slate-200
-							bg-white
-							p-6
-						"
-					>
-						<p className="font-semibold text-ink">
-							{loadFailed
-								? 'Could not load the catalog'
-								: 'No products in the index'
-							}
-						</p>
+					<section>
+						<div
+							className="
+								flex
+								flex-col
+								gap-2
+								sm:flex-row
+								sm:items-end
+								sm:justify-between
+							"
+						>
+							<div>
+								<h2
+									className="
+										text-2xl
+										font-semibold
+										tracking-tight
+									"
+								>
+									Shop by department
+								</h2>
+								<p
+									className="
+										mt-1
+										text-sm
+										text-slate-600
+									"
+								>
+									Jump into a category instead of scrolling the whole catalog.
+								</p>
+							</div>
+							<a
+								className="
+									inline-flex
+									items-center
+									gap-1
+									text-sm
+									font-semibold
+									text-ink
+									hover:underline
+								"
+								href="/place-et-marque/search"
+							>
+								All departments
+								<ArrowRightIcon className="h-3.5 w-3.5" />
+							</a>
+						</div>
+						<div
+							className="
+								mt-5
+								grid
+								grid-cols-2
+								gap-3
+								sm:grid-cols-3
+								lg:grid-cols-4
+								xl:grid-cols-6
+							"
+						>
+							{departments.map((row) => (
+								<a
+									className="
+										rounded-2xl
+										border
+										border-slate-200
+										bg-white
+										px-4
+										py-4
+										transition
+										hover:border-ink/20
+										hover:shadow-[0_8px_24px_rgba(13,27,42,0.06)]
+									"
+									href={`/place-et-marque/search?category=${encodeURIComponent(row.slug)}`}
+									key={row.id}
+								>
+									<p
+										className="
+											text-sm
+											font-semibold
+											text-ink
+										"
+									>
+										{row.name}
+									</p>
+									{row._count?.products
+										? (
+											<p
+												className="
+													mt-1
+													text-[12px]
+													text-slate-500
+												"
+											>
+												{row._count.products.toLocaleString()} product
+												{row._count.products === 1 ? '' : 's'}
+											</p>
+										)
+										: null
+									}
+								</a>
+							))}
+						</div>
+					</section>
+				)
+				: null
+			}
+
+			{vendors.length > 1
+				? (
+					<section>
+						<h2
+							className="
+								text-2xl
+								font-semibold
+								tracking-tight
+							"
+						>
+							Shop by seller
+						</h2>
+						<div
+							className="
+								mt-5
+								flex
+								flex-wrap
+								gap-2
+							"
+						>
+							{vendors.map((row) => (
+								<a
+									className="
+										rounded-full
+										border
+										border-slate-200
+										bg-white
+										px-4
+										py-2
+										text-sm
+										font-semibold
+										text-ink
+										hover:border-ink/30
+									"
+									href={`/place-et-marque/search?vendor=${encodeURIComponent(row.slug)}`}
+									key={row.slug}
+								>
+									{titleCaseSlug(row.slug)}
+									<span
+										className="
+											ml-2
+											text-[12px]
+											font-medium
+											text-slate-500
+										"
+									>
+										{row.count.toLocaleString()}
+									</span>
+								</a>
+							))}
+						</div>
+					</section>
+				)
+				: null
+			}
+
+			<section>
+				<div
+					className="
+						flex
+						flex-col
+						gap-2
+						sm:flex-row
+						sm:items-end
+						sm:justify-between
+					"
+				>
+					<div>
+						<h2
+							className="
+								text-2xl
+								font-semibold
+								tracking-tight
+							"
+						>
+							Shop the store
+						</h2>
 						<p
 							className="
-								mt-2
+								mt-1
 								text-sm
 								text-slate-600
 							"
 						>
 							{loadFailed
-								? 'The API or search index did not respond. That is a real outage, not an empty store.'
-								: 'Seed data may not have been applied, or search has nothing to return.'
+								? 'The catalog could not be loaded.'
+								: total > 0
+									? `${total.toLocaleString()} product${total === 1 ? '' : 's'} from live inventory.`
+									: 'No products in the index yet.'
 							}
 						</p>
-						{loadFailed
-							? null
-							: <CatalogEmptyActions />
-						}
 					</div>
-				)
-				: (
-					<div
-						className="
-							grid
-							gap-4
-							md:grid-cols-2
-						"
-					>
-						{products.map((product) => (
+					{products.length > 0
+						? (
 							<a
 								className="
-									rounded-2xl
-									border
-									border-slate-200
-									bg-white
-									p-5
-									transition
-									hover:border-sky
+									inline-flex
+									items-center
+									gap-1
+									text-sm
+									font-semibold
+									text-ink
+									hover:underline
 								"
-								key={product.id}
-								href={`/place-et-marque/${product.vendor.slug}/${product.slug}`}
+								href="/place-et-marque/search"
 							>
-								<div className="mb-4 overflow-hidden rounded-xl bg-slate-100">
-									<div className="relative aspect-[5/3]">
-										<CatalogCover
-											src={product.imageUrls?.[0]}
-											alt={product.title}
-											width={720}
-											height={432}
-											className="absolute inset-0 h-full w-full object-cover"
-											fallback={
-												<div className="flex h-full items-center justify-center text-sm font-semibold text-slate-400">
-													{product.vendor.name}
-												</div>
-											}
-										/>
-									</div>
-								</div>
-								<p
-									className="
-										text-xs
-										font-semibold
-										uppercase
-										tracking-wide
-										text-slate-500
-									"
-								>
-									{product.vendor.name}
-								</p>
-								<h2
-									className="
-										mt-1
-										text-xl
-										font-semibold
-									"
-								>
-									{product.title}
-								</h2>
-								<p
-									className="
-										mt-2
-										text-sm
-										text-slate-600
-									"
-								>
-									{product.description}
-								</p>
-								<p
-									className="
-										mt-4
-										text-sm
-										font-semibold
-										text-ink
-									"
-								>
-									From ${((product.primaryPriceCents ?? 0) / 100).toFixed(2)}
-									{product.primaryUom
-										? ` / ${product.primaryUom}`
-										: ''
-									}
-								</p>
-								<p
-									className="
-										mt-1
-										text-xs
-										text-slate-500
-									"
-								>
-									Available: {formatQty(product.availableQty, product.primaryUom)}
-								</p>
+								View all
+								<ArrowRightIcon className="h-3.5 w-3.5" />
 							</a>
-						))}
-					</div>
-				)
-			}
+						)
+						: null
+					}
+				</div>
+
+				{products.length === 0
+					? (
+						<div
+							className="
+								mt-5
+								rounded-2xl
+								border
+								border-slate-200
+								bg-white
+								p-6
+							"
+						>
+							<p className="font-semibold text-ink">
+								{loadFailed
+									? 'Could not load the catalog'
+									: 'No products in the index'
+								}
+							</p>
+							<p
+								className="
+									mt-2
+									text-sm
+									text-slate-600
+								"
+							>
+								{loadFailed
+									? 'The API or search index did not respond. That is a real outage, not an empty store.'
+									: 'Seed data may not have been applied, or search has nothing to return.'
+								}
+							</p>
+							{loadFailed
+								? null
+								: <CatalogEmptyActions />
+							}
+						</div>
+					)
+					: (
+						<div
+							className="
+								mt-5
+								grid
+								grid-cols-2
+								gap-3
+								sm:gap-5
+								lg:grid-cols-3
+								xl:grid-cols-4
+							"
+						>
+							{products.map((product) => (
+								<ProductCard
+									key={product.id}
+									product={product}
+								/>
+							))}
+						</div>
+					)
+				}
+			</section>
 		</div>
 	);
 }
