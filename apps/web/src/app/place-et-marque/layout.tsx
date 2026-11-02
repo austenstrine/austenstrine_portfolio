@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
 import { CatalogHeader } from '../../components/catalog/CatalogHeader';
 import { CatalogSearchProvider } from '../../components/catalog/CatalogSearchContext';
+import { JumpToTop } from '../../components/catalog/JumpToTop';
 import { MarketplaceFooter } from '../../components/catalog/MarketplaceFooter';
 
 export const metadata: Metadata = {
@@ -37,6 +38,7 @@ export default function PlaceEtMarqueLayout({ children }: { children: ReactNode 
 					{children}
 				</main>
 				<MarketplaceFooter />
+				<JumpToTop />
 			</CatalogSearchProvider>
 		</div>
 	);

@@ -1,6 +1,6 @@
 import type { CatalogProductSummary } from '../../lib/catalog-api';
-import { formatQty } from '../../lib/uom-qty';
-import { CatalogCover } from './CatalogCover';
+import { formatAvailableQty } from '../../lib/uom-qty';
+import { ProductCardImageCarousel } from './ProductCardImageCarousel';
 
 function formatPrice(cents: number) {
 	return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(cents / 100);
@@ -24,12 +24,17 @@ export function ProductCard({ product }: { product: CatalogProductSummary }) {
 	const stocked = product.offerings.find((row) => Number(row.availableQty) > 0);
 	const qty = Number(stocked?.availableQty ?? product.availableQty);
 	const uom = stocked?.uom ?? product.primaryUom;
+	const qtyCopy = formatAvailableQty(
+		String(qty),
+		uom,
+		stocked?.omitFromAvailability,
+	);
 	const inStock = Number.isFinite(qty) && qty > 0;
 	const low = inStock && qty < 5;
+	const href = `/place-et-marque/${product.vendor.slug}/${product.slug}`;
 
 	return (
-		<a
-			href={`/place-et-marque/${product.vendor.slug}/${product.slug}`}
+		<article
 			className="
 				group
 				flex
@@ -53,21 +58,10 @@ export function ProductCard({ product }: { product: CatalogProductSummary }) {
 					bg-[#d8d9d4]
 				"
 			>
-				<CatalogCover
-					src={product.imageUrls?.[0]}
+				<ProductCardImageCarousel
+					href={href}
+					images={product.imageUrls ?? []}
 					alt={product.title}
-					width={800}
-					height={800}
-					className="
-						absolute
-						inset-0
-						h-full
-						w-full
-						object-cover
-						transition
-						duration-300
-						group-hover:scale-[1.03]
-					"
 					fallback={
 						(
 							<div
@@ -113,6 +107,7 @@ export function ProductCard({ product }: { product: CatalogProductSummary }) {
 								absolute
 								right-3
 								top-3
+								z-20
 								rounded-full
 								bg-white/95
 								px-2
@@ -129,7 +124,7 @@ export function ProductCard({ product }: { product: CatalogProductSummary }) {
 					)
 				}
 			</div>
-			<div
+			<a
 				className="
 					flex
 					flex-1
@@ -139,6 +134,7 @@ export function ProductCard({ product }: { product: CatalogProductSummary }) {
 					pb-4
 					pt-3
 				"
+				href={href}
 			>
 				<p
 					className="
@@ -215,12 +211,12 @@ export function ProductCard({ product }: { product: CatalogProductSummary }) {
 						}
 					>
 						{inStock
-							? `${low ? 'Low stock · ' : ''}${formatQty(String(qty), uom)} available`
+							? `${low ? 'Low stock · ' : ''}${qtyCopy} available`
 							: 'Currently unavailable'
 						}
 					</p>
 				</div>
-			</div>
-		</a>
+			</a>
+		</article>
 	);
 }

@@ -1,4 +1,9 @@
 import { CatalogEmptyActions } from '../../components/catalog/CatalogEmptyActions';
+import {
+	CATEGORY_BENTO_VARIANTS,
+	CategoryCard,
+	nestedCategoryImages,
+} from '../../components/catalog/CategoryCard';
 import { DemoIntro } from '../../components/catalog/DemoIntro';
 import { ProductCard } from '../../components/catalog/ProductCard';
 import {
@@ -8,7 +13,7 @@ import {
 	type CatalogProductSummary,
 	type CatalogTermFacet,
 } from '../../lib/catalog-api';
-import { sortCategoryTree } from '../../lib/category-tree';
+import { nestCategoryTree, type NestedCategory } from '../../lib/category-tree';
 import { ArrowRightIcon } from '../../components/icons/ArrowRightIcon';
 
 function titleCaseSlug(slug: string) {
@@ -21,7 +26,8 @@ function titleCaseSlug(slug: string) {
 
 export default async function PlaceEtMarqueHomePage() {
 	let products: CatalogProductSummary[] = [];
-	let departments: CatalogCategoryRow[] = [];
+	let departments: NestedCategory<CatalogCategoryRow>[] = [];
+	let nestedProducts: CatalogProductSummary[][] = [];
 	let vendors: CatalogTermFacet[] = [];
 	let total = 0;
 	let loadFailed = false;
@@ -33,9 +39,18 @@ export default async function PlaceEtMarqueHomePage() {
 		products = catalog.items;
 		total = catalog.total ?? catalog.items.length;
 		vendors = catalog.vendorFacets ?? [];
-		departments = sortCategoryTree(categories)
-			.filter((row) => row.depth === 0)
-			.slice(0, 12);
+		departments = nestCategoryTree(categories).slice(0, 12);
+		nestedProducts = await Promise.all(
+			departments.map((row, index) => {
+				const variant = CATEGORY_BENTO_VARIANTS[index] ?? 'compact';
+				if(variant === 'compact') {
+					return Promise.resolve([] as CatalogProductSummary[]);
+				}
+				return searchCatalogProducts({ category: row.slug, limit: 4 })
+					.then((result) => result.items)
+					.catch(() => [] as CatalogProductSummary[]);
+			}),
+		);
 	}
 	catch {
 		loadFailed = true;
@@ -72,7 +87,7 @@ export default async function PlaceEtMarqueHomePage() {
 										tracking-tight
 									"
 								>
-									Shop by department
+									Shop by category
 								</h2>
 								<p
 									className="
@@ -96,7 +111,7 @@ export default async function PlaceEtMarqueHomePage() {
 								"
 								href="/place-et-marque/search"
 							>
-								All departments
+								All categories
 								<ArrowRightIcon className="h-3.5 w-3.5" />
 							</a>
 						</div>
@@ -106,53 +121,28 @@ export default async function PlaceEtMarqueHomePage() {
 								grid
 								grid-cols-2
 								gap-3
-								sm:grid-cols-3
+								sm:gap-5
 								lg:grid-cols-4
-								xl:grid-cols-6
+								lg:auto-rows-[minmax(12.5rem,auto)]
 							"
 						>
-							{departments.map((row) => (
-								<a
-									className="
-										rounded-2xl
-										border
-										border-slate-200
-										bg-white
-										px-4
-										py-4
-										transition
-										hover:border-ink/20
-										hover:shadow-[0_8px_24px_rgba(13,27,42,0.06)]
-									"
-									href={`/place-et-marque/search?category=${encodeURIComponent(row.slug)}`}
-									key={row.id}
-								>
-									<p
-										className="
-											text-sm
-											font-semibold
-											text-ink
-										"
-									>
-										{row.name}
-									</p>
-									{row._count?.products
-										? (
-											<p
-												className="
-													mt-1
-													text-[12px]
-													text-slate-500
-												"
-											>
-												{row._count.products.toLocaleString()} product
-												{row._count.products === 1 ? '' : 's'}
-											</p>
-										)
-										: null
-									}
-								</a>
-							))}
+							{departments.map((row, index) => {
+								const variant = CATEGORY_BENTO_VARIANTS[index] ?? 'compact';
+								return (
+									<CategoryCard
+										category={row}
+										key={row.id}
+										nested={
+											nestedCategoryImages(
+												row,
+												nestedProducts[index] ?? [],
+												variant,
+											)
+										}
+										variant={variant}
+									/>
+								);
+							})}
 						</div>
 					</section>
 				)

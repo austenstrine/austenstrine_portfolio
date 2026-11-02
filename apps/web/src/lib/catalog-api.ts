@@ -22,6 +22,7 @@ export type CatalogProductSummary = {
 		role: string;
 		priceCents: number;
 		uom: string;
+		omitFromAvailability?: boolean;
 		availableQty: string;
 	}>;
 	breakFeeMode?: string;
@@ -41,7 +42,12 @@ export type CatalogOfferingDetail = {
 	minUnbrokenQty?: string;
 	breakPoolAboveQty?: string;
 	inheritQtyToChildren?: boolean;
-	uom: { code: string; label: string; dimensionKey: string };
+	uom: {
+		code: string;
+		label: string;
+		dimensionKey: string;
+		omitFromAvailability?: boolean;
+	};
 	childContainments?: Array<{
 		id: string;
 		childOfferingId: string;
@@ -183,6 +189,7 @@ async function catalogRequest<T>(path: string, options: RequestInit = {}): Promi
 	const response = await authedFetch(`/catalog${path}`, {
 		...options,
 		headers,
+		cache: 'no-store',
 	});
 
 	const body = await response.json().catch(() => null);
@@ -528,6 +535,7 @@ export type UnitOfMeasure = {
 	label: string;
 	dimensionKey: string;
 	factorToReference: string;
+	omitFromAvailability?: boolean;
 	vendorId?: string | null;
 	aliases?: string[];
 	vendor?: { id: string; name: string; slug: string } | null;
@@ -545,6 +553,7 @@ export function createUom(payload: {
 	factorToReference: string;
 	vendorId?: string;
 	aliases?: string[];
+	omitFromAvailability?: boolean;
 }): Promise<UnitOfMeasure> {
 	return catalogRequest<UnitOfMeasure>('/uoms', {
 		method: 'POST',

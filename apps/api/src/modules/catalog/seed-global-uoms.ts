@@ -9,6 +9,7 @@ type UomSeedRow = {
 	dimensionKey: string;
 	factorToReference: string;
 	aliases: string[];
+	omitFromAvailability?: boolean;
 };
 
 export async function seedGlobalUoms(prisma: PrismaClient): Promise<void> {
@@ -23,6 +24,7 @@ export async function seedGlobalUoms(prisma: PrismaClient): Promise<void> {
 		const existing = await prisma.unitOfMeasure.findFirst({
 			where: { vendorId: null, code: row.code },
 		});
+		const omitFromAvailability = row.omitFromAvailability === true;
 		if(existing) {
 			await prisma.unitOfMeasure.update({
 				where: { id: existing.id },
@@ -31,6 +33,7 @@ export async function seedGlobalUoms(prisma: PrismaClient): Promise<void> {
 					dimensionKey: row.dimensionKey,
 					factorToReference: new Decimal(row.factorToReference),
 					aliases: row.aliases,
+					omitFromAvailability,
 					vendorId: null,
 				},
 			});
@@ -43,6 +46,7 @@ export async function seedGlobalUoms(prisma: PrismaClient): Promise<void> {
 					dimensionKey: row.dimensionKey,
 					factorToReference: new Decimal(row.factorToReference),
 					aliases: row.aliases,
+					omitFromAvailability,
 					vendorId: null,
 				},
 			});

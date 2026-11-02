@@ -1,11 +1,12 @@
 'use client';
 
-import { useEffect, useRef, useState, type RefObject } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type RefObject } from 'react';
+import { usePathname } from 'next/navigation';
 import { getCart } from '../../lib/checkout-api';
-import { listCatalogCategories, type CatalogCategoryRow } from '../../lib/catalog-api';
-import { sortCategoryTree } from '../../lib/category-tree';
 import { useSession } from '../../lib/useSession';
+import { CaretDownIcon } from '../icons/CaretDownIcon';
 import { CartIcon } from '../icons/CartIcon';
+import { CatalogCategoryBar } from './CatalogCategoryBar';
 import { MarketplaceBrandLink } from './MarketplaceBrandLink';
 import { useCatalogSearch } from './CatalogSearchContext';
 import { CatalogSearchField } from './CatalogSearchField';
@@ -21,7 +22,21 @@ const vendorToolLinks = [
 	{ href: '/place-et-marque/categories', label: 'Categories' },
 ];
 
-function SellMenu() {
+function accountLabel(email: string) {
+	const at = email.indexOf('@');
+	if(at <= 0) {
+		return email;
+	}
+	return email.slice(0, at);
+}
+
+function AccountMenu({
+	email,
+	onSignOut,
+}: {
+	email: string;
+	onSignOut: () => void;
+}) {
 	const [open, setOpen] = useState(false);
 	const rootRef = useRef<HTMLDivElement>(null);
 
@@ -51,24 +66,47 @@ function SellMenu() {
 
 	return (
 		<div
-			className="
-				relative
-				hidden
-				lg:block
-			"
+			className="relative"
 			ref={rootRef}
 		>
 			<button
 				aria-expanded={open}
 				aria-haspopup="menu"
+				aria-label={`${accountLabel(email)} account menu`}
 				className="
+					inline-flex
+					max-w-[9rem]
+					items-center
+					gap-1
 					text-slate-600
 					hover:text-ink
+					sm:max-w-[14rem]
 				"
 				onClick={() => setOpen((current) => !current)}
+				title={email}
 				type="button"
 			>
-				Sell
+				<span className="truncate">
+					{accountLabel(email)}
+				</span>
+				<CaretDownIcon
+					className={
+						open
+							? `
+								h-3
+								w-3
+								shrink-0
+								rotate-180
+								transition
+							`
+							: `
+								h-3
+								w-3
+								shrink-0
+								transition
+							`
+					}
+				/>
 			</button>
 			{open
 				? (
@@ -95,6 +133,34 @@ function SellMenu() {
 								gap-2
 							"
 						>
+							<li>
+								<a
+									className="
+										text-ink
+										hover:underline
+									"
+									href="/auth/account"
+									onClick={() => setOpen(false)}
+									role="menuitem"
+								>
+									Your account
+								</a>
+							</li>
+							<li
+								className="
+									mt-1
+									border-t
+									border-slate-100
+									pt-2
+									text-[11px]
+									font-semibold
+									uppercase
+									tracking-[0.16em]
+									text-slate-500
+								"
+							>
+								Sell
+							</li>
 							{vendorToolLinks.map((link) => (
 								<li key={link.href}>
 									<a
@@ -110,6 +176,29 @@ function SellMenu() {
 									</a>
 								</li>
 							))}
+							<li
+								className="
+									mt-1
+									border-t
+									border-slate-100
+									pt-2
+								"
+							>
+								<button
+									className="
+										text-slate-500
+										hover:text-ink
+									"
+									onClick={() => {
+										setOpen(false);
+										onSignOut();
+									}}
+									role="menuitem"
+									type="button"
+								>
+									Sign out
+								</button>
+							</li>
 						</ul>
 					</div>
 				)
@@ -143,7 +232,6 @@ function HeaderSearch({
 				inputId={inputId}
 				inputRef={inputRef}
 				showShortcut
-				variant="header"
 			/>
 			<div
 				className="
@@ -158,8 +246,16 @@ function HeaderSearch({
 	);
 }
 
+const HEADER_SCROLL_DELTA = 8;
+const HEADER_SHOW_TOP = 16;
+
 export function CatalogHeader() {
+	const pathname = usePathname();
 	const {
+		applyCategory,
+		categories,
+		category,
+		extrasHost,
 		headerDesktopRef,
 		headerMobileRef,
 		setHeaderDesktopExtras,
@@ -167,17 +263,62 @@ export function CatalogHeader() {
 	} = useCatalogSearch();
 	const { user, loading, signOut } = useSession();
 	const [cartCount, setCartCount] = useState(0);
-	const [departments, setDepartments] = useState<CatalogCategoryRow[]>([]);
+	const [headerHeight, setHeaderHeight] = useState(0);
+	const [headerHidden, setHeaderHidden] = useState(false);
+	const lastScrollY = useRef(0);
+	const showDepartmentBar =
+		categories.length > 0
+		&& pathname !== '/place-et-marque/search';
+	const headerRef = useRef<HTMLElement>(null);
+
+	useLayoutEffect(() => {
+		const header = headerRef.current;
+		if(!header) {
+			return;
+		}
+		const sync = () => {
+			const height = header.offsetHeight;
+			setHeaderHeight(height);
+			document.documentElement.style.setProperty(
+				'--catalog-header-h',
+				`${headerHidden ? 0 : height}px`,
+			);
+		};
+		sync();
+		const observer = new ResizeObserver(sync);
+		observer.observe(header);
+		return () => {
+			observer.disconnect();
+			document.documentElement.style.removeProperty('--catalog-header-h');
+		};
+	}, [headerHidden]);
 
 	useEffect(() => {
-		listCatalogCategories()
-			.then((rows) => {
-				setDepartments(
-					sortCategoryTree(rows).filter((row) => row.depth === 0),
-				);
-			})
-			.catch(() => undefined);
+		lastScrollY.current = window.scrollY;
+		const onScroll = () => {
+			const y = Math.max(0, window.scrollY);
+			const delta = y - lastScrollY.current;
+			if(y <= HEADER_SHOW_TOP) {
+				setHeaderHidden(false);
+				lastScrollY.current = y;
+				return;
+			}
+			if(delta > HEADER_SCROLL_DELTA) {
+				setHeaderHidden(true);
+				lastScrollY.current = y;
+			}
+			else if(delta < -HEADER_SCROLL_DELTA) {
+				setHeaderHidden(false);
+				lastScrollY.current = y;
+			}
+		};
+		window.addEventListener('scroll', onScroll, { passive: true });
+		return () => window.removeEventListener('scroll', onScroll);
 	}, []);
+
+	useLayoutEffect(() => {
+		lastScrollY.current = window.scrollY;
+	}, [extrasHost]);
 
 	useEffect(() => {
 		if(!user) {
@@ -190,225 +331,170 @@ export function CatalogHeader() {
 	}, [user]);
 
 	return (
-		<header
-			className="
-				sticky
-				top-0
-				z-30
-				border-b
-				border-slate-200
-				bg-white/95
-				backdrop-blur
-			"
-		>
+		<>
 			<div
+				aria-hidden="true"
+				className={
+					headerHeight > 0
+						? undefined
+						: 'h-[var(--catalog-header-h)]'
+				}
+				style={
+					headerHeight > 0
+						? { height: headerHeight }
+						: undefined
+				}
+			/>
+			<header
 				className="
-					mx-auto
-					flex
-					max-w-7xl
-					flex-col
-					gap-3
-					px-gutter
-					py-3
+					fixed
+					inset-x-0
+					top-0
+					z-30
+					border-b
+					border-slate-200
+					bg-white/95
+					backdrop-blur
+					transition-transform
+					duration-200
+					ease-out
+					motion-reduce:transition-none
 				"
+				data-hidden={headerHidden ? 'true' : 'false'}
+				onFocusCapture={() => setHeaderHidden(false)}
+				ref={headerRef}
+				style={{
+					transform: headerHidden ? 'translateY(-100%)' : 'translateY(0)',
+				}}
 			>
 				<div
 					className="
+						mx-auto
 						flex
-						items-center
+						max-w-7xl
+						flex-col
 						gap-3
+						px-gutter
+						py-3
 					"
 				>
-					<MarketplaceBrandLink />
-					<div className="hidden min-w-0 flex-1 md:flex">
-						<HeaderSearch
-							inputId="store-search-desktop"
-							inputRef={headerDesktopRef}
-							setExtras={setHeaderDesktopExtras}
-						/>
-					</div>
-					<nav
+					<div
 						className="
-							ml-auto
 							flex
-							shrink-0
 							items-center
-							gap-2
-							text-sm
-							font-semibold
-							sm:gap-3
+							gap-3
 						"
 					>
-						{!loading && user
-							? <SellMenu />
-							: null
-						}
-						<a
+						<MarketplaceBrandLink />
+						<div className="hidden min-w-0 flex-1 md:flex">
+							<HeaderSearch
+								inputId="store-search-desktop"
+								inputRef={headerDesktopRef}
+								setExtras={setHeaderDesktopExtras}
+							/>
+						</div>
+						<nav
 							className="
-								relative
-								inline-flex
-								h-10
-								w-10
-								items-center
-								justify-center
-								rounded-full
-								text-ink
-								hover:bg-frost
-							"
-							href="/place-et-marque/cart"
-						>
-							<CartIcon />
-							<span className="sr-only">Cart</span>
-							{cartCount > 0
-								? (
-									<span
-										className="
-											absolute
-											right-0.5
-											top-0.5
-											min-w-4
-											rounded-full
-											bg-signal
-											px-1
-											text-center
-											text-[10px]
-											font-semibold
-											leading-4
-											text-white
-										"
-									>
-										{cartCount}
-									</span>
-								)
-								: null
-							}
-						</a>
-						{loading
-							? null
-							: user
-								? (
-									<span
-										className="
-											flex
-											items-center
-											gap-3
-										"
-									>
-										<a
-											className="
-												text-slate-600
-												hover:text-ink
-											"
-											href="/auth/account"
-										>
-											Account
-										</a>
-										<button
-											className="
-												hidden
-												text-slate-500
-												hover:text-ink
-												sm:inline
-											"
-											type="button"
-											onClick={() => {
-												void signOut().then(() => {
-													window.location.reload();
-												});
-											}}
-										>
-											Sign out
-										</button>
-									</span>
-								)
-								: (
-									<a
-										className="
-											rounded-full
-											bg-ink
-											px-3.5
-											py-2
-											text-white
-											hover:bg-sky
-										"
-										href="/auth/login"
-									>
-										Sign in
-									</a>
-								)
-						}
-					</nav>
-				</div>
-				<div className="md:hidden">
-					<HeaderSearch
-						inputId="store-search-mobile"
-						inputRef={headerMobileRef}
-						setExtras={setHeaderMobileExtras}
-					/>
-				</div>
-			</div>
-			{departments.length > 0
-				? (
-					<nav
-						aria-label="Shop by department"
-						className="
-							hidden
-							border-t
-							border-slate-100
-							bg-white
-							md:block
-						"
-					>
-						<div
-							className="
-								mx-auto
+								ml-auto
 								flex
-								max-w-7xl
-								gap-1
-								overflow-x-auto
-								px-gutter
-								py-2
-								text-[13px]
+								shrink-0
+								items-center
+								gap-2
+								text-sm
 								font-semibold
-								[scrollbar-width:none]
-								[&::-webkit-scrollbar]:hidden
+								sm:gap-3
 							"
 						>
 							<a
 								className="
-									shrink-0
+									relative
+									inline-flex
+									h-10
+									w-10
+									items-center
+									justify-center
 									rounded-full
-									px-3
-									py-1.5
 									text-ink
 									hover:bg-frost
 								"
-								href="/place-et-marque/search"
+								href="/place-et-marque/cart"
 							>
-								All
+								<CartIcon />
+								<span className="sr-only">Cart</span>
+								{cartCount > 0
+									? (
+										<span
+											className="
+												absolute
+												right-0.5
+												top-0.5
+												min-w-4
+												rounded-full
+												bg-signal
+												px-1
+												text-center
+												text-[10px]
+												font-semibold
+												leading-4
+												text-white
+											"
+										>
+											{cartCount}
+										</span>
+									)
+									: null
+								}
 							</a>
-							{departments.map((row) => (
-								<a
-									className="
-										shrink-0
-										rounded-full
-										px-3
-										py-1.5
-										text-slate-600
-										hover:bg-frost
-										hover:text-ink
-									"
-									href={`/place-et-marque/search?category=${encodeURIComponent(row.slug)}`}
-									key={row.id}
-								>
-									{row.name}
-								</a>
-							))}
-						</div>
-					</nav>
-				)
-				: null
-			}
-		</header>
+							{loading
+								? null
+								: user
+									? (
+										<AccountMenu
+											email={user.email}
+											onSignOut={() => {
+												void signOut().then(() => {
+													window.location.reload();
+												});
+											}}
+										/>
+									)
+									: (
+										<a
+											className="
+												rounded-full
+												bg-ink
+												px-3.5
+												py-2
+												text-white
+												hover:bg-sky
+											"
+											href="/auth/login"
+										>
+											Sign in
+										</a>
+									)
+							}
+						</nav>
+					</div>
+					<div className="md:hidden">
+						<HeaderSearch
+							inputId="store-search-mobile"
+							inputRef={headerMobileRef}
+							setExtras={setHeaderMobileExtras}
+						/>
+					</div>
+				</div>
+				{showDepartmentBar
+					? (
+						<CatalogCategoryBar
+							categories={categories}
+							category={category}
+							onChoose={applyCategory}
+						/>
+					)
+					: null
+				}
+			</header>
+		</>
 	);
 }

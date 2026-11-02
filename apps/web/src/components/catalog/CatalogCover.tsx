@@ -1,6 +1,6 @@
 'use client';
 
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { CdnImg } from '../CdnImg';
 
 type CatalogCoverProps = {
@@ -20,7 +20,9 @@ export function CatalogCover({
 	width = 900,
 	height = 540,
 }: CatalogCoverProps) {
-	if(!src) {
+	const [failed, setFailed] = useState(false);
+
+	if(!src || failed) {
 		return <>{fallback}</>;
 	}
 
@@ -30,6 +32,7 @@ export function CatalogCover({
 			alt={alt}
 			className={className}
 			cdn={{ w: width, h: height, fit: 'cover', q: 72 }}
+			onError={() => setFailed(true)}
 		/>
 	);
 }

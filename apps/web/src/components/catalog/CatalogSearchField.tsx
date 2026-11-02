@@ -2,92 +2,94 @@
 
 import type { RefObject } from 'react';
 import { SearchIcon } from '../icons/SearchIcon';
+import { CatalogCategoryMenu } from './CatalogCategoryMenu';
 import { useCatalogSearch } from './CatalogSearchContext';
 
 export function CatalogSearchField({
 	inputId,
 	inputRef,
 	showShortcut = false,
-	variant = 'header',
 }: {
 	inputId: string;
 	inputRef: RefObject<HTMLInputElement | null>;
 	showShortcut?: boolean;
-	variant?: 'header' | 'page';
 }) {
-	const { query, setQuery, committedQuery, submit } = useCatalogSearch();
-	const header = variant === 'header';
+	const {
+		query,
+		setQuery,
+		committedQuery,
+		submit,
+		category,
+		applyCategory,
+		categories,
+	} = useCatalogSearch();
 
 	return (
 		<form
-			className={
-				header
-					? 'relative min-w-0 flex-1'
-					: `
-						relative
-						min-w-0
-						flex-1
-					`
-			}
+			className="
+				relative
+				flex
+				min-w-0
+				flex-1
+				items-stretch
+				overflow-hidden
+				rounded-full
+				border
+				border-slate-300
+				bg-white
+				transition
+				focus-within:border-ink
+			"
 			onSubmit={(event) => {
 				event.preventDefault();
 				submit();
 			}}
 			role="search"
 		>
+			<CatalogCategoryMenu
+				categories={categories}
+				category={category}
+				onChoose={applyCategory}
+			/>
 			<label
-				className="relative block min-w-0"
+				className="relative min-w-0 flex-1"
 				htmlFor={inputId}
 			>
 				<span className="sr-only">Search products</span>
-				<SearchIcon
-					className="
-						pointer-events-none
-						absolute
-						left-3.5
-						top-1/2
-						h-4
-						w-4
-						-translate-y-1/2
-						text-slate-400
-					"
-				/>
 				<input
 					className={
-						header
+						showShortcut
 							? `
+								h-full
 								w-full
-								rounded-full
-								border
-								border-slate-300
-								bg-frost
+								appearance-none
+								border-0
+								bg-transparent
 								py-2.5
-								pl-10
-								pr-16
+								pl-3.5
+								pr-12
 								text-sm
 								text-ink
 								outline-none
-								transition
 								placeholder:text-slate-400
-								focus:border-ink
-								focus:bg-white
+								[&::-webkit-search-cancel-button]:appearance-none
+								[&::-webkit-search-decoration]:appearance-none
 							`
 							: `
+								h-full
 								w-full
-								rounded-xl
-								border
-								border-slate-300
-								bg-frost
-								py-3
-								pl-11
-								pr-4
+								appearance-none
+								border-0
+								bg-transparent
+								py-2.5
+								pl-3.5
+								pr-3
 								text-sm
 								text-ink
 								outline-none
-								transition
 								placeholder:text-slate-400
-								focus:border-ink
-								focus:bg-white
+								[&::-webkit-search-cancel-button]:appearance-none
+								[&::-webkit-search-decoration]:appearance-none
 							`
 					}
 					id={inputId}
@@ -103,7 +105,7 @@ export function CatalogSearchField({
 						}
 					}}
 					placeholder="Search products, brands, and SKUs"
-					ref={inputRef}
+					ref={inputRef as RefObject<HTMLInputElement>}
 					type="search"
 					value={query}
 				/>
@@ -112,7 +114,7 @@ export function CatalogSearchField({
 						<kbd
 							className="
 								absolute
-								right-3
+								right-2
 								top-1/2
 								hidden
 								-translate-y-1/2
@@ -133,6 +135,24 @@ export function CatalogSearchField({
 					)
 					: null}
 			</label>
+			<button
+				aria-label="Search"
+				className="
+					flex
+					w-11
+					shrink-0
+					items-center
+					justify-center
+					border-l
+					border-slate-300
+					text-ink
+					hover:bg-white
+					hover:text-asgreen
+				"
+				type="submit"
+			>
+				<SearchIcon className="h-4 w-4" />
+			</button>
 		</form>
 	);
 }

@@ -3,31 +3,22 @@
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import {
-	listCatalogCategories,
 	searchCatalogProducts,
 	type CatalogProductSummary,
 	type CatalogSearchFilter,
 	type CatalogSearchResult,
 	type CatalogTermFacet,
 } from '../../lib/catalog-api';
-import { sortCategoryTree } from '../../lib/category-tree';
 import { ArrowLeftIcon } from '../icons/ArrowLeftIcon';
-import { SearchIcon } from '../icons/SearchIcon';
-import { SortIcon } from '../icons/SortIcon';
+import { ArrowRightIcon } from '../icons/ArrowRightIcon';
 import {
 	SearchExtrasPortal,
 	useCatalogSearch,
 } from './CatalogSearchContext';
-import { CatalogSearchField } from './CatalogSearchField';
+import { CatalogSortMenu } from './CatalogSortMenu';
 import { ProductCard } from './ProductCard';
 
 const PAGE_SIZE = 24;
-const SORTS = [
-	{ id: 'relevance', label: 'Featured' },
-	{ id: 'price-asc', label: 'Price: Low to High' },
-	{ id: 'price-desc', label: 'Price: High to Low' },
-	{ id: 'title', label: 'Name: A to Z' },
-] as const;
 
 function parseList(raw: string | null) {
 	return (raw ?? '').split(',').map((row) => row.trim()).filter(Boolean);
@@ -113,11 +104,10 @@ export function CatalogSearchExperience() {
 	const pathname = usePathname();
 	const searchParams = useSearchParams();
 	const {
-		query,
 		setQuery,
 		setCommittedQuery,
-		submit,
-		pageInputRef,
+		syncCategory,
+		categories,
 		setPageDock,
 		setPageExtras,
 	} = useCatalogSearch();
@@ -138,18 +128,9 @@ export function CatalogSearchExperience() {
 	const [filtersOpen, setFiltersOpen] = useState(false);
 	const [expandedFacets, setExpandedFacets] = useState<string[]>([]);
 
-	const [categories, setCategories] = useState<Array<{
-		id: string;
-		slug: string;
-		name: string;
-		parent?: { id: string; name: string; slug: string } | null;
-	}>>([]);
-	const categoryTree = sortCategoryTree(categories);
-
 	const [results, setResults] = useState<CatalogProductSummary[]>([]);
 	const [appliedFilters, setAppliedFilters] = useState<CatalogSearchFilter[]>([]);
 	const [facets, setFacets] = useState<CatalogSearchResult['facets']>([]);
-	const [categoryFacets, setCategoryFacets] = useState<CatalogTermFacet[]>([]);
 	const [vendorFacets, setVendorFacets] = useState<CatalogTermFacet[]>([]);
 	const [total, setTotal] = useState(0);
 	const [loading, setLoading] = useState(true);
@@ -158,7 +139,8 @@ export function CatalogSearchExperience() {
 	useEffect(() => {
 		setQuery(committedQuery);
 		setCommittedQuery(committedQuery);
-	}, [committedQuery, setCommittedQuery, setQuery]);
+		syncCategory(category);
+	}, [category, committedQuery, setCommittedQuery, setQuery, syncCategory]);
 
 	const commit = (patch: Partial<SearchUrlState>) => {
 		const next = searchQueryString({
@@ -170,12 +152,6 @@ export function CatalogSearchExperience() {
 		}
 		router.push(next ? `${pathname}?${next}` : pathname, { scroll: false });
 	};
-
-	useEffect(() => {
-		listCatalogCategories()
-			.then((rows) => setCategories(rows))
-			.catch(() => undefined);
-	}, []);
 
 	useEffect(() => {
 		const onKey = (event: KeyboardEvent) => {
@@ -208,7 +184,6 @@ export function CatalogSearchExperience() {
 				setResults(result.items);
 				setAppliedFilters(result.appliedFilters);
 				setFacets(result.facets);
-				setCategoryFacets(result.categoryFacets ?? []);
 				setVendorFacets(result.vendorFacets ?? []);
 				setTotal(result.total ?? result.items.length);
 				setHasLoaded(true);
@@ -220,7 +195,6 @@ export function CatalogSearchExperience() {
 				setResults([]);
 				setAppliedFilters([]);
 				setFacets([]);
-				setCategoryFacets([]);
 				setVendorFacets([]);
 				setTotal(0);
 				setHasLoaded(true);
@@ -239,34 +213,11 @@ export function CatalogSearchExperience() {
 	const rangeStart = total === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
 	const rangeEnd = Math.min(page * PAGE_SIZE, total);
 	const selectedCategory = categories.find((row) => row.slug === category);
-	const rolledDepartmentCounts = new Map<string, number>();
-	for(const facet of categoryFacets) {
-		let node = categories.find((row) => row.slug === facet.slug) ?? null;
-		const seen = new Set<string>();
-		while(node && !seen.has(node.id)) {
-			seen.add(node.id);
-			rolledDepartmentCounts.set(node.slug, (rolledDepartmentCounts.get(node.slug) ?? 0) + facet.count);
-			node = node.parent
-				? categories.find((row) => row.id === node!.parent!.id) ?? null
-				: null;
-		}
-	}
-	const withProducts = (rows: typeof categoryTree) =>
-		rows.filter((row) => (rolledDepartmentCounts.get(row.slug) ?? 0) > 0);
-	const departmentRows = selectedCategory
-		? (() => {
-			const children = withProducts(categoryTree.filter((row) => row.parent?.id === selectedCategory.id));
-			if(children.length > 0) {
-				return children;
-			}
-			return withProducts(categoryTree.filter((row) =>
-				(row.parent?.id ?? null) === (selectedCategory.parent?.id ?? null)));
-		})()
-		: withProducts(categoryTree.filter((row) => row.depth === 0));
+	const catalogHeading = selectedCategory?.name
+		?? (committedQuery.trim() ? `Results for “${committedQuery.trim()}”` : null);
 	const vendorLabel = vendor ? titleCaseSlug(vendor) : '';
-	const activeFilterCount = [
+	const clearableFilterCount = [
 		committedQuery.trim() ? 1 : 0,
-		category ? 1 : 0,
 		vendor ? 1 : 0,
 		inStock ? 1 : 0,
 		manualValueIds.length,
@@ -277,7 +228,6 @@ export function CatalogSearchExperience() {
 		setQuery('');
 		commit({
 			q: '',
-			category: '',
 			vendor: '',
 			inStock: false,
 			manualValueIds: [],
@@ -324,60 +274,17 @@ export function CatalogSearchExperience() {
 								page: 1,
 							});
 						}}
-						className="h-4 w-4 rounded border-slate-300 text-ink accent-ink"
+						className="
+							h-4
+							w-4
+							rounded
+							border-slate-300
+							text-asgreen
+							accent-asgreen
+						"
 					/>
 					In stock
 				</label>
-			</section>
-
-			<section>
-				<h2 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">
-					Department
-				</h2>
-				<div className="mt-2 max-h-72 space-y-0.5 overflow-y-auto pr-1">
-					<FacetRow
-						label="All departments"
-						active={!category}
-						onClick={() => {
-							commit({
-								category: '',
-								page: 1,
-							});
-						}}
-					/>
-					{selectedCategory?.parent
-						? (
-							<FacetRow
-								icon={(
-									<ArrowLeftIcon
-										className="h-3.5 w-3.5 shrink-0"
-									/>
-								)}
-								label={selectedCategory.parent.name}
-								onClick={() => {
-									commit({
-										category: selectedCategory.parent!.slug,
-										page: 1,
-									});
-								}}
-							/>
-						)
-						: null}
-					{departmentRows.map((row) => (
-						<FacetRow
-							key={row.slug}
-							label={row.name}
-							count={rolledDepartmentCounts.get(row.slug)}
-							active={category === row.slug}
-							onClick={() => {
-								commit({
-									category: row.slug,
-									page: 1,
-								});
-							}}
-						/>
-					))}
-				</div>
 			</section>
 
 			{vendorFacets.length > 1 || vendor
@@ -386,7 +293,7 @@ export function CatalogSearchExperience() {
 						<h2 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">
 							Brand
 						</h2>
-						<div className="mt-2 max-h-56 space-y-0.5 overflow-y-auto pr-1">
+						<div className="mt-2 space-y-0.5">
 							<FacetRow
 								label="All brands"
 								active={!vendor}
@@ -438,11 +345,27 @@ export function CatalogSearchExperience() {
 												type="checkbox"
 												checked={checked}
 												onChange={() => toggleValue(bucket.valueId, checked)}
-												className="h-4 w-4 shrink-0 rounded border-slate-300 text-ink accent-ink"
+												className="
+													h-4
+													w-4
+													shrink-0
+													rounded
+													border-slate-300
+													text-asgreen
+													accent-asgreen
+												"
 											/>
 											<span className="truncate">{bucket.value}</span>
 										</span>
-										<span className="shrink-0 text-[11px] tabular-nums text-slate-400">
+										<span
+											className="
+												shrink-0
+												pr-1
+												text-[11px]
+												tabular-nums
+												text-slate-400
+											"
+										>
 											{bucket.count.toLocaleString()}
 										</span>
 									</label>
@@ -503,171 +426,26 @@ export function CatalogSearchExperience() {
 					</ol>
 				</nav>
 
-				<div className="mt-5 flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
-					<div>
-						<h1 className="text-3xl font-semibold tracking-tight text-ink md:text-4xl">
-							{selectedCategory?.name ?? (committedQuery.trim() ? `Results for “${committedQuery.trim()}”` : 'All products')}
-						</h1>
-						<p className="mt-1 text-sm text-slate-600" aria-live="polite">
-							{loading && !hasLoaded
-								? 'Loading the catalog'
-								: total === 0
-									? 'No matching products'
-									: `${total.toLocaleString()} product${total === 1 ? '' : 's'}`}
-						</p>
-					</div>
-				</div>
+				{catalogHeading
+					? (
+						<div className="mt-5">
+							<h1 className="text-3xl font-semibold tracking-tight text-ink md:text-4xl">
+								{catalogHeading}
+							</h1>
+							<p className="mt-1 text-sm text-slate-600" aria-live="polite">
+								{loading && !hasLoaded
+									? 'Loading the catalog'
+									: total === 0
+										? 'No matching products'
+										: `${total.toLocaleString()} product${total === 1 ? '' : 's'}`}
+							</p>
+						</div>
+					)
+					: null}
 
-				<div
-					className="relative mt-6 rounded-2xl border border-slate-200 bg-white px-4 py-3"
-					ref={setPageDock}
-				>
-					{loading
-						? <div className="absolute inset-x-0 top-0 h-0.5 overflow-hidden rounded-t-2xl bg-slate-200"><div className="h-full w-1/3 animate-pulse bg-ink" /></div>
-						: null}
-					<div className="flex flex-col gap-3 lg:flex-row lg:items-center">
-						<CatalogSearchField
-							inputId="store-search-page"
-							inputRef={pageInputRef}
-							variant="page"
-						/>
-						<div
-							className="
-								flex
-								flex-wrap
-								items-center
-								gap-2
-								empty:hidden
-							"
-							ref={setPageExtras}
-						/>
-						<SearchExtrasPortal>
-							<button
-								aria-label="Search"
-								className="
-									inline-flex
-									h-10
-									w-10
-									shrink-0
-									items-center
-									justify-center
-									rounded-full
-									bg-ink
-									text-white
-								"
-								onClick={submit}
-								type="button"
-							>
-								<SearchIcon className="h-4 w-4" />
-							</button>
-							<button
-								className="
-									inline-flex
-									items-center
-									gap-2
-									rounded-xl
-									border
-									border-slate-300
-									bg-white
-									px-4
-									py-3
-									text-sm
-									font-semibold
-									lg:hidden
-								"
-								onClick={() => setFiltersOpen(true)}
-								type="button"
-							>
-								Filters
-								{activeFilterCount > 0
-									? (
-										<span className="rounded-full bg-ink px-1.5 py-0.5 text-[10px] text-white">
-											{activeFilterCount}
-										</span>
-									)
-									: null}
-							</button>
-							<label
-								className="
-									relative
-									inline-flex
-									h-10
-									w-10
-									shrink-0
-									items-center
-									justify-center
-									rounded-full
-									border
-									border-slate-300
-									bg-white
-									text-ink
-								"
-								title={
-									`Sort: ${SORTS.find((row) => row.id === sort)?.label ?? 'Featured'}`
-								}
-							>
-								<span className="sr-only">Sort</span>
-								<SortIcon
-									className="
-										pointer-events-none
-										h-4
-										w-4
-									"
-								/>
-								<select
-									aria-label="Sort"
-									className="
-										absolute
-										inset-0
-										cursor-pointer
-										opacity-0
-									"
-									onChange={(event) => {
-										commit({
-											sort: event.target.value,
-											page: 1,
-										});
-									}}
-									value={sort}
-								>
-									{SORTS.map((row) => (
-										<option key={row.id} value={row.id}>
-											{row.label}
-										</option>
-									))}
-								</select>
-							</label>
-						</SearchExtrasPortal>
-					</div>
-				</div>
-
-				<div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-sm text-slate-600">
-					<p>
-						{hasLoaded && total > 0
-							? `Showing ${rangeStart.toLocaleString()}–${rangeEnd.toLocaleString()} of ${total.toLocaleString()}`
-							: hasLoaded
-								? 'Try a broader search or reset filters'
-								: ' '}
-					</p>
-					{activeFilterCount > 0
-						? (
-							<button type="button" className="font-semibold text-ink underline-offset-4 hover:underline" onClick={clearAll}>
-								Clear all
-							</button>
-						)
-						: null}
-				</div>
-
-				{vendor || selectedCategory || appliedFilters.length > 0
+				{vendor || appliedFilters.length > 0
 					? (
 						<div className="mt-3 flex flex-wrap gap-2">
-							{selectedCategory
-								? (
-									<Chip onClick={() => commit({ category: '', page: 1 })}>
-										{selectedCategory.name}
-									</Chip>
-								)
-								: null}
 							{vendor
 								? (
 									<Chip onClick={() => commit({ vendor: '', page: 1 })}>
@@ -706,11 +484,147 @@ export function CatalogSearchExperience() {
 					: null}
 
 				<div className="mt-8 grid gap-10 lg:grid-cols-[240px_minmax(0,1fr)]">
-					<aside className="hidden lg:block">
+					<aside
+						className="
+							hidden
+							lg:sticky
+							lg:top-[var(--catalog-header-h)]
+							lg:block
+							lg:h-0
+							lg:min-h-[min(100%,calc(100vh-var(--catalog-header-h)))]
+							lg:max-h-[calc(100vh-var(--catalog-header-h))]
+							lg:self-start
+							lg:overflow-y-auto
+							lg:py-3
+							lg:pr-4
+							lg:scrollbar-thin-quiet
+						"
+					>
 						{facetRail}
 					</aside>
 
 					<div aria-busy={loading}>
+						<div
+							className="
+								relative
+								mb-4
+								flex
+								min-h-10
+								flex-wrap
+								items-center
+								justify-between
+								gap-3
+								text-sm
+								text-slate-600
+							"
+							ref={setPageDock}
+						>
+							{loading
+								? (
+									<div
+										className="
+											absolute
+											inset-x-0
+											-top-1
+											h-0.5
+											overflow-hidden
+											bg-slate-200
+										"
+									>
+										<div
+											className="
+												h-full
+												w-1/3
+												animate-pulse
+												bg-ink
+											"
+										/>
+									</div>
+								)
+								: null}
+							<div
+								className="
+									flex
+									min-w-0
+									flex-wrap
+									items-center
+									gap-3
+								"
+							>
+								<p>
+									{hasLoaded && total > 0
+										? `Showing ${rangeStart.toLocaleString()}–${rangeEnd.toLocaleString()} of ${total.toLocaleString()}`
+										: hasLoaded
+											? 'Try a broader search or reset filters'
+											: ' '}
+								</p>
+								{clearableFilterCount > 0
+									? (
+										<button
+											type="button"
+											className="
+												font-semibold
+												text-ink
+												underline-offset-4
+												hover:underline
+											"
+											onClick={clearAll}
+										>
+											Clear all
+										</button>
+									)
+									: null}
+							</div>
+							<div
+								className="
+									ml-auto
+									flex
+									flex-wrap
+									items-center
+									gap-2
+									empty:hidden
+								"
+								ref={setPageExtras}
+							/>
+							<SearchExtrasPortal>
+								<button
+									className="
+										inline-flex
+										items-center
+										gap-2
+										rounded-xl
+										border
+										border-slate-300
+										bg-white
+										px-4
+										py-3
+										text-sm
+										font-semibold
+										lg:hidden
+									"
+									onClick={() => setFiltersOpen(true)}
+									type="button"
+								>
+									Filters
+									{clearableFilterCount > 0
+										? (
+											<span className="rounded-full bg-ink px-1.5 py-0.5 text-[10px] text-white">
+												{clearableFilterCount}
+											</span>
+										)
+										: null}
+								</button>
+								<CatalogSortMenu
+									onChoose={(id) => {
+										commit({
+											page: 1,
+											sort: id,
+										});
+									}}
+									sort={sort}
+								/>
+							</SearchExtrasPortal>
+						</div>
 						{!hasLoaded
 							? <ProductGridSkeleton />
 							: results.length === 0
@@ -718,9 +632,9 @@ export function CatalogSearchExperience() {
 									<div className="rounded-2xl border border-dashed border-slate-300 bg-white px-8 py-20 text-center">
 										<p className="text-xl font-semibold text-ink">No products match these filters</p>
 										<p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-600">
-											Clear a department, brand, or attribute, or search by SKU to find an exact listing.
+											Clear a category, brand, or attribute, or search by SKU to find an exact listing.
 										</p>
-										{activeFilterCount > 0
+										{clearableFilterCount > 0
 											? (
 												<button
 													type="button"
@@ -743,45 +657,55 @@ export function CatalogSearchExperience() {
 
 						{pageCount > 1 && hasLoaded && results.length > 0
 							? (
-								<nav className="mt-12 flex flex-wrap items-center justify-center gap-1.5" aria-label="Pagination">
-									<button
-										type="button"
+								<nav
+									aria-label="Pagination"
+									className="
+										mt-12
+										flex
+										flex-wrap
+										items-center
+										justify-center
+										gap-1.5
+									"
+								>
+									<PagerButton
+										ariaLabel="Previous page"
 										disabled={page <= 1}
 										onClick={() => commit({ page: Math.max(1, page - 1) })}
-										className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold disabled:opacity-40"
 									>
-										Previous
-									</button>
+										<ArrowLeftIcon
+											className="h-4 w-4"
+										/>
+									</PagerButton>
 									{pageItems(page, pageCount).map((item, index) =>
 										item === 'gap'
 											? (
-												<span key={`gap-${index}`} className="px-1 text-slate-400">
+												<span
+													className="px-1 text-slate-400"
+													key={`gap-${index}`}
+												>
 													…
 												</span>
 											)
 											: (
-												<button
+												<PagerButton
+													active={item === page}
+													ariaCurrent={item === page ? 'page' : undefined}
 													key={item}
-													type="button"
-													aria-current={item === page ? 'page' : undefined}
 													onClick={() => commit({ page: item })}
-													className={`min-w-10 rounded-lg px-3 py-2 text-sm font-semibold ${
-														item === page
-															? 'bg-ink text-white'
-															: 'border border-slate-300 bg-white text-ink'
-													}`}
 												>
 													{item}
-												</button>
+												</PagerButton>
 											))}
-									<button
-										type="button"
+									<PagerButton
+										ariaLabel="Next page"
 										disabled={page >= pageCount}
 										onClick={() => commit({ page: Math.min(pageCount, page + 1) })}
-										className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold disabled:opacity-40"
 									>
-										Next
-									</button>
+										<ArrowRightIcon
+											className="h-4 w-4"
+										/>
+									</PagerButton>
 								</nav>
 							)
 							: null}
@@ -814,6 +738,76 @@ export function CatalogSearchExperience() {
 	);
 }
 
+function PagerButton({
+	active = false,
+	ariaCurrent,
+	ariaLabel,
+	children,
+	disabled = false,
+	onClick,
+}: {
+	active?: boolean;
+	ariaCurrent?: 'page';
+	ariaLabel?: string;
+	children: ReactNode;
+	disabled?: boolean;
+	onClick: () => void;
+}) {
+	return (
+		<button
+			className={
+				active
+					? `
+						inline-flex
+						min-w-10
+						items-center
+						justify-center
+						rounded-full
+						bg-asgreen/15
+						px-3
+						py-2
+						text-sm
+						font-semibold
+						text-asgreen
+						focus-visible:outline
+						focus-visible:outline-2
+						focus-visible:outline-offset-2
+						focus-visible:outline-asgreen
+					`
+					: `
+						inline-flex
+						min-w-10
+						items-center
+						justify-center
+						rounded-full
+						border
+						border-slate-300
+						bg-white
+						px-3
+						py-2
+						text-sm
+						font-semibold
+						text-ink
+						hover:bg-asgreen/15
+						hover:text-asgreen
+						focus-visible:outline
+						focus-visible:outline-2
+						focus-visible:outline-offset-2
+						focus-visible:outline-asgreen
+						disabled:opacity-40
+					`
+			}
+			aria-current={ariaCurrent}
+			aria-label={ariaLabel}
+			disabled={disabled}
+			onClick={onClick}
+			type="button"
+		>
+			{children}
+		</button>
+	);
+}
+
 function Chip({ children, onClick }: { children: ReactNode; onClick: () => void }) {
 	return (
 		<button
@@ -832,31 +826,70 @@ function FacetRow({
 	count,
 	active = false,
 	onClick,
-	icon,
 }: {
 	label: string;
 	count?: number;
 	active?: boolean;
 	onClick: () => void;
-	icon?: ReactNode;
 }) {
 	return (
 		<button
 			type="button"
 			onClick={onClick}
-			className={`flex w-full items-center justify-between rounded-md px-2 py-1.5 text-left text-[13px] ${
-				active ? 'bg-ink text-white' : 'text-slate-700 hover:bg-white'
-			}`}
+			className={
+				active
+					? `
+						flex
+						w-full
+						items-center
+						justify-between
+						rounded-full
+						bg-asgreen/15
+						px-3.5
+						py-1.5
+						text-left
+						text-[13px]
+						text-asgreen
+					`
+					: `
+						flex
+						w-full
+						items-center
+						justify-between
+						rounded-full
+						px-3.5
+						py-1.5
+						text-left
+						text-[13px]
+						text-slate-700
+						hover:bg-white
+					`
+			}
 		>
-			<span className="flex min-w-0 items-center gap-1 truncate">
-				{icon}
-				<span className="truncate">
-					{label}
-				</span>
+			<span className="truncate">
+				{label}
 			</span>
 			{typeof count === 'number'
 				? (
-					<span className={`ml-2 shrink-0 text-[11px] tabular-nums ${active ? 'text-white/70' : 'text-slate-400'}`}>
+					<span
+						className={
+							active
+								? `
+									ml-2
+									shrink-0
+									text-[11px]
+									tabular-nums
+									text-asgreen/70
+								`
+								: `
+									ml-2
+									shrink-0
+									text-[11px]
+									tabular-nums
+									text-slate-400
+								`
+						}
+					>
 						{count.toLocaleString()}
 					</span>
 				)

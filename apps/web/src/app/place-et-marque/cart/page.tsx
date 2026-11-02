@@ -12,7 +12,7 @@ import {
 import { useSession } from '../../../lib/useSession';
 import { RequireAccess } from '../../../components/auth/RequireAccess';
 import { CompoundQtyField } from '../../../components/catalog/CompoundQtyField';
-import { formatQty } from '../../../lib/uom-qty';
+import { formatAvailableQty } from '../../../lib/uom-qty';
 
 function CartContent() {
 	const { user, loading: sessionLoading } = useSession();
@@ -304,7 +304,11 @@ function CartContent() {
 														>
 															{formatMoney(line.unitPriceCents, line.currency)} each
 															{' · '}
-															{formatQty(line.availableQty, line.uom)} available
+															{formatAvailableQty(
+																line.availableQty,
+																line.uom,
+																line.omitFromAvailability,
+															)} available
 														</p>
 													</div>
 													<p

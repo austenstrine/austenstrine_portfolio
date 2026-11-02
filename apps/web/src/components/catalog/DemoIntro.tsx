@@ -1,5 +1,4 @@
 import { GUIDED_DEMO_PRODUCT } from '../../lib/site';
-import { PlaceEtMarqueMark } from '../icons/PlaceEtMarqueMark';
 
 export function DemoIntro() {
 	return (
@@ -15,30 +14,8 @@ export function DemoIntro() {
 				md:py-12
 			"
 		>
-			<PlaceEtMarqueMark
-				className="
-					block
-					h-12
-					w-12
-					rounded-xl
-					shadow-lg
-				"
-			/>
-			<p
-				className="
-					mt-4
-					text-[11px]
-					font-semibold
-					uppercase
-					tracking-[0.2em]
-					text-white/55
-				"
-			>
-				E-commerce
-			</p>
 			<h1
 				className="
-					mt-2
 					max-w-xl
 					text-3xl
 					font-semibold

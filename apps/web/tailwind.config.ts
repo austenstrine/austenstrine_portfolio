@@ -13,7 +13,7 @@ const config: Config = {
         sky: '#1b263b',
         asgreen: '#257257',
         signal: '#e76f51',
-        frost: '#e0e1dd',
+        frost: '#fafaf8',
       },
       spacing: {
         gutter: 'var(--gutter)',

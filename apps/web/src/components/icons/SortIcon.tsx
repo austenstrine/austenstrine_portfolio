@@ -7,26 +7,14 @@ export function SortIcon({ className = 'h-4 w-4' }: { className?: string }) {
 			viewBox="0 0 24 24"
 		>
 			<path
-				d="M8 4v16"
-				stroke="currentColor"
-				strokeLinecap="round"
-				strokeWidth="1.75"
-			/>
-			<path
-				d="m5 7 3-3 3 3"
+				d="M8 9 12 5 16 9"
 				stroke="currentColor"
 				strokeLinecap="round"
 				strokeLinejoin="round"
 				strokeWidth="1.75"
 			/>
 			<path
-				d="M16 20V4"
-				stroke="currentColor"
-				strokeLinecap="round"
-				strokeWidth="1.75"
-			/>
-			<path
-				d="m13 17 3 3 3-3"
+				d="M8 15 12 19 16 15"
 				stroke="currentColor"
 				strokeLinecap="round"
 				strokeLinejoin="round"
