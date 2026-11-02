@@ -14,7 +14,18 @@ Features to implement:
 - Highlighted demo products: homepage, featured, and guided-demo listings must actually use pack vs piece (and other Place et Marque-specific catalog features) rather than generic single-SKU demos. Seed those products with pack/piece offerings, UOMs (EA/PK, including `omitFromAvailability` on availability copy), and pack vs piece pricing so the unique architecture is visible up front.
 - Admin chrome: admin pages are as important as shopper-facing pages, if not more. They need the same care as the shopper UI - sleek, not leftover scaffolding.
 - Seed realism: seeded product data and images must be hyper-accurate to realistic products. The only giveaway that a listing is not real should be the word demo in the title.
-- Live while building: put this version of the site up while work continues, with a pardon-our-dust banner on the live shopper site, then stitch it onto AWS. Split for CPU/RAM headroom and spike survival (nodes must not freeze because too much is stacked on one box), not isolation: (1) app - frontend, backend, Redis; (2) Postgres alone; (3) OpenSearch alone. CDN is CloudFront + S3, not a VM. If only two extra nodes, still do not colocate OpenSearch with Postgres - OpenSearch is the freeze risk (heap), Postgres is the other memory/I/O hog.
+- Live while building: put this version of the site up while work continues, with a pardon-our-dust banner on the live shopper site, then stitch it onto AWS. Keep OpenSearch. Hosting plan is under AWS live below.
+
+AWS live (keep OpenSearch):
+
+- Do not ship the interview stack (ECS Fargate + RDS + ElastiCache + Amazon OpenSearch Service). That is $150-250/mo for empty traffic. Amazon OpenSearch Serverless is worse ($175-700/mo idle). The catalog is ~20MB in Postgres and the search index is ~17MB. Idle CPU on the current stack is under 1%.
+- Buy one Lightsail Linux box: 8GB RAM, 2 vCPU, 160GB SSD, 5TB transfer, ~$44/mo. Run the same Compose services as local: nginx, web, api, Postgres, Redis, OpenSearch. Leave OpenSearch Dashboards off in prod. GitHub `deploy.yml` already SSHs to a single EC2; Lightsail is that shape with a cap and transfer included. t4g.large is ~$49 plus disk and a public IP — same idea, more knobs, skip unless you need them.
+- Why 8GB in one pool: live RSS is OpenSearch ~1.5GB, Next ~630MB, Nest ~580MB, Postgres ~75MB, Redis ~13MB, nginx+CDN ~70MB. Dashboards ~230MB stay off. Shared RAM is the point. OpenSearch heap is the freeze risk; it is safer with unused app RAM on the same box than on a 2GB sibling that swaps.
+- CDN is CloudFront + S3, not a VM and not the Go CDN as the public origin. Pennies. That is the speed visitors feel. The Go resize/WebP path can stay as a builder/origin helper behind CloudFront, not as the edge.
+- Do not split onto multiple smaller nodes for this traffic. Lightsail 2GB / 4GB / 8GB all have 2 vCPU, so a 4+2+2 split buys 6 vCPU you will not use and costs $48-60. OpenSearch on a 2GB node will OOM or swap (RSS already ~1.5GB). Give it 4GB and the split is $24+$24 before Postgres, for a ~0.3ms same-AZ hop that does not matter vs an OpenSearch query. Split later if one service actually eats the box, not in advance. If only two nodes were affordable, still do not put OpenSearch on 2GB; drop the split and keep the 8GB box.
+- 4GB Lightsail ($24) is only viable if OpenSearch is dropped and search stays on the Prisma fallback. We are keeping OpenSearch, so 8GB.
+- Home GPU/RAM (RTX 4060, 62GB): offline only — pre-encode catalog images, docker build, seed, local restore of `pg_dump`. Do not put the laptop on the request path (sleep, NAT, WiFi). This stack does not use the GPU on the hot path.
+- Talk track if asked: this is the budget live topology. At real load, split API/web onto Fargate and search onto Amazon OpenSearch Service. Not before.
 
 
 Features that need testing:
