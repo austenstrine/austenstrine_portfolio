@@ -22,8 +22,7 @@ export class SecurityService {
 	}
 
 	hashOtpCode(code: string): string {
-		const pepper = process.env.OTP_PEPPER ?? '';
-		return createHmac('sha256', pepper).update(code).digest('hex');
+		return createHmac('sha256', this.otpPepper()).update(code).digest('hex');
 	}
 
 	compareOtpHash(code: string, hash: string): boolean {
@@ -42,8 +41,16 @@ export class SecurityService {
 	}
 
 	hashOpaqueToken(token: string): string {
+		return createHmac('sha256', this.otpPepper()).update(token).digest('hex');
+	}
+
+	/** Empty pepper is fine in local; production must set OTP_PEPPER. */
+	private otpPepper(): string {
 		const pepper = process.env.OTP_PEPPER ?? '';
-		return createHmac('sha256', pepper).update(token).digest('hex');
+		if(process.env.NODE_ENV === 'production' && !pepper.trim()) {
+			throw new Error('OTP_PEPPER is required when NODE_ENV=production.');
+		}
+		return pepper;
 	}
 
 	normalizeEmail(email: string): string {

@@ -1,4 +1,6 @@
-# Lightsail / single-box live stack.
+# Single-box live stack (EC2 t3a.large, 8GB, x86_64). Build on the box.
+# ./ops/deploy/live.sh or ./dssh publish — no platform: pins; Docker follows
+# host arch. Do not copy foreign-arch node_modules onto the box.
 # Usage: docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
 # Do not pass --profile dashboards. OpenSearch Dashboards stay off in prod.
 
@@ -20,6 +22,31 @@ services:
       OPENSEARCH_INITIAL_ADMIN_PASSWORD: ${OPENSEARCH_PASSWORD}
     ports: !override []
 
+  # Go CDN on this box (not CloudFront). TLS terminates on nginx —
+  # :8088 stays on the compose network only (no host publish).
+  cdn:
+    build:
+      context: ./ops/cdn
+      dockerfile: Dockerfile
+    image: portfolio-cdn:latest
+    container_name: portfolio-cdn
+    restart: unless-stopped
+    # No full .env — only CDN_* (+ NODE_ENV for token harden).
+    environment:
+      NODE_ENV: production
+      CDN_LISTEN: ${CDN_LISTEN:-:8088}
+      CDN_PUBLIC_URL: ${CDN_PUBLIC_URL:-https://cdn.austenstrine.dev}
+      # Force compose DNS — do not inherit laptop 127.0.0.1 from .env.
+      CDN_PULL_ORIGIN: http://web:3000
+      CDN_ORIGIN_DIR: /data/origin
+      CDN_CACHE_DIR: /data/cache
+      CDN_TOKEN: ${CDN_TOKEN}
+    volumes:
+      - ./ops/cdn/data/origin:/data/origin
+      - ./ops/cdn/data/cache:/data/cache
+    expose:
+      - "8088"
+
   api:
     build:
       context: .
@@ -31,6 +58,7 @@ services:
       - postgres
       - redis
       - opensearch
+      - cdn
     env_file:
       - .env
     environment:
@@ -42,6 +70,10 @@ services:
       OPENSEARCH_USERNAME: ${OPENSEARCH_USERNAME:-admin}
       OPENSEARCH_PASSWORD: ${OPENSEARCH_PASSWORD}
       OPENSEARCH_TLS_REJECT_UNAUTHORIZED: ${OPENSEARCH_TLS_REJECT_UNAUTHORIZED:-false}
+      # Force compose DNS — do not inherit laptop 127.0.0.1 from .env.
+      CDN_INTERNAL_URL: http://cdn:8088
+      CDN_PUBLIC_URL: ${CDN_PUBLIC_URL:-https://cdn.austenstrine.dev}
+      CDN_TOKEN: ${CDN_TOKEN}
     expose:
       - "4000"
 
@@ -77,6 +109,7 @@ services:
     depends_on:
       - web
       - api
+      - cdn
     ports:
       - "80:80"
       - "443:443"

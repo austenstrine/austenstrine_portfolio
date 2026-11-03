@@ -1,5 +1,9 @@
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
+  // native = host (laptop/CI). Alpine api image needs musl engines
+  // (node:20-alpine = OpenSSL 3). linux-musl-openssl-3.0.x = amd64 live
+  // (t3a.large); arm64 musl kept optional for Graviton/local ARM.
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x", "linux-musl-arm64-openssl-3.0.x"]
 }
 
 datasource db {

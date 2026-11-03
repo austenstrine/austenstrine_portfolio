@@ -19,88 +19,94 @@ Usage:
 dssh always uses the directory that contains this script (the project
 root), not your current working directory. It is safe to run from ~.
 
-Global actions:
-  stop      stop dssh app containers and local infra
-  status    show dssh app containers and local infra status
-  logs      follow logs for all dssh app containers
-  logs <t>  follow logs for one target's start container
-  logs rlog follow the resource logger snapshot (latest.txt)
-  rlog      toggle the host resource logger (survives container restarts)
-  rlog on|off|status
-  publish   deploy/update the live stack (compose prod overlay); starts rlog if off
-  gpu-setup install NVIDIA Container Toolkit so dssh can pass --gpus all
-  help      show this help
+Mode (dssh_mode in .dsshrc, or DSSH_MODE):
+  auto   (default) live if portfolio-api/web/proxy is a compose container
+  live   force compose prod overlay (docker-compose.yml + .prod.yml)
+  local  force dssh docker-run / npm-dev workflow
 
-Examples:
-  ./dssh stop
-  ./dssh status
+LIVE (compose prod on the box — portfolio-* containers):
+  publish          rolling deploy via ops/deploy/live.sh; starts rlog if off
+                   (backs up .env first when restic.pass is present)
+  status | ps      compose prod services + rlog
+  health           container up + /api/health (via nginx or api)
+  logs | logs <t>  follow compose service logs (api/web/cdn/nginx/…)
+  logs rlog        follow resource logger snapshot (latest.txt)
+  rlog [on|off|status]
+  migrate          prisma migrate deploy in api (no full rebuild)
+  <t> restart      rebuild+replace ONE service (--no-deps); site stays up
+  <t> start        same as restart on live (rolling replace)
+  <t> stop         stop ONE compose service (brief partial outage)
+  <t> migrate      same as global migrate (backend/api only)
+  stop --hard      DANGER: stop entire live stack (nginx+web+api+cdn+infra)
+  stop             refused on live unless --hard (use <t> stop instead)
+
+REMOTE (from laptop — aliases in .dsshrc):
+  rnano <alias>    ssh -t <host> nano <path>  (IdentityFile from rc)
+                   optional <alias>_repo → soft-run env-backup.sh after edit
+
+LOCAL (dev containers labeled dssh.image):
+  stop             stop dssh app containers + compose infra (+ dashboards)
+  status | ps      dssh app containers + infra + rlog
+  logs | logs <t>  follow dssh start containers
+  <t> start|restart  rebuild image, then replace that container
+  <t> migrate      prisma migrate (dev) + seed via dssh backend image
+  gpu-setup        install NVIDIA Container Toolkit
+  mailtest […]    local SMTP check
+
+Examples (live box):
   ./dssh publish
-  ./dssh logs backend
-  ./dssh backend build
-  ./dssh backend start
-  ./dssh backend start -nobuild
+  ./dssh status
+  ./dssh health
+  ./dssh logs api
   ./dssh backend restart
+  ./dssh frontend restart -nobuild
+  ./dssh migrate
+  ./dssh proxy stop
+  ./dssh cdn restart
+  ./dssh stop --hard
+
+Examples (local / laptop):
+  ./dssh backend start
   ./dssh backend restart -nobuild
-  ./dssh mailtest
+  ./dssh frontend start
+  ./dssh proxy start
+  ./dssh cdn start
+  ./dssh stop
   ./dssh mailtest you@example.com
-  ./dssh mailtest you@example.com "SMTP check" "Hello from local"
-  ./dssh backend mailtest
-  ./dssh backend migrate
-  ./dssh backend
+  ./dssh rnano prod_env
 
-Targets are user-defined shorthand in .dsshrc. dssh does not ship with
-names like backend or frontend; this project maps each name to an app
-directory (and optional host scripts on actions):
+Targets (.dsshrc shorthand → dir / live compose service):
+  backend|api → apps/api → compose service api → portfolio-api
+  frontend|web → apps/web → compose service web → portfolio-web
+  proxy|nginx → ops/nginx → compose service nginx → portfolio-proxy
+  cdn → ops/cdn → compose service cdn → portfolio-cdn
 
-  backend=./apps/api
-  frontend=./apps/web
-  proxy=./ops/nginx
+Remote file aliases (.dsshrc — examples only, use your host/path):
+  prod_env_host=ubuntu@203.0.113.10
+  prod_env_path=/var/www/austenstrine_portfolio/.env
+  prod_env_key=~/.ssh/id_ed25519          # optional; this is the default
+  prod_env_repo=/var/www/austenstrine_portfolio   # optional; post-edit backup
 
-Optional overrides:
-  <target>_dockerfile  custom Dockerfile path relative to the repo root
-  <target>_context     custom build context relative to the repo root
-  <target>_image       custom image name
-  <target>_name        custom container app name
-  <target>_user        container user (default: host uid:gid)
-  <target>_workdir     custom container workdir
-
-Optional actions from .dsshrc:
-  <target>_<action>_local   host command (scripts, compose, TLS setup, ...)
-  <target>_<action>         command to run inside the container
-  Extra CLI args after <action> are appended to those commands.
-
-Example:
-  backend_start_local="docker compose up -d postgres redis opensearch"
-  backend_start="npm run dev -w apps/api"
-  proxy_start_local="./ops/nginx/init-local-tls.sh"
-
-start always rebuilds the target image first. Pass -nobuild (or --nobuild)
-to skip that rebuild when you know the image is current.
-restart is start: rebuild the image while the old container keeps running,
-then replace it. Docker build/stop/run share a lock so two restarts cannot
-unpack an image and force-remove a container at the same time.
+start/restart always rebuild unless -nobuild / --nobuild.
+On live, restart = compose up -d --build --no-deps <service>
+(rebuild while others keep serving, then replace that one container).
+Docker build/stop/run share a lock so two restarts cannot unpack an
+image and force-remove a container at the same time.
 
 Optional global overrides:
-  dssh_stop_local="..."
-  dssh_status_local="..."
-  dssh_logs_local="..."
-  dssh_publish_local="..."
-      default publish runs ops/deploy/live.sh on this host (same path CI
-      runs after SSH to the box). Override for a custom remote SSH command;
-      start rlog on the host that actually runs the stack.
+  dssh_stop_local / dssh_status_local / dssh_logs_local / dssh_publish_local
+  dssh_mode=auto|live|local
+  publish default: ops/deploy/live.sh on this host (same path CI uses).
 
 Resource logger (.dsshrc):
-  dssh_rlog_containers=backend,frontend,proxy
-      comma-separated target aliases whose running containers are sampled.
-      Omit this to log host/system info only.
+  dssh_rlog_containers=backend,frontend,proxy,cdn
   dssh_rlog_interval=1
   dssh_rlog_dir=./ops/diagnostics
-  dssh_rlog_history_max=16777216
-  dssh_rlog_history_keep=3
-  dssh_rlog_archive_max=268435456
-  dssh_gpus=auto
-      auto (default): pass --gpus all when nvidia-smi and Docker GPU work.
-      off: never request a GPU. Missing GPU/toolkit falls back to a normal run.
+  dssh_gpus=auto|off
+
+.env backup (docs/tooling/env-backup.md):
+  ops/tooling/env-backup.sh — restic+rclone to gdrive:env-restic
+  hourly systemd timer units in ops/tooling/; live.sh runs backup before deploy
 EOF
 }
 
@@ -499,6 +505,210 @@ compose() {
   docker compose --project-directory "$script_dir" "$@"
 }
 
+compose_live() {
+  docker compose --project-directory "$script_dir" \
+    -f "$script_dir/docker-compose.yml" \
+    -f "$script_dir/docker-compose.prod.yml" \
+    "$@"
+}
+
+# auto|live|local — live when compose owns portfolio-api/web/proxy.
+dssh_mode_value() {
+  local mode="${DSSH_MODE:-${dssh_mode:-auto}}"
+  printf '%s\n' "$mode" | tr '[:upper:]' '[:lower:]'
+}
+
+container_compose_service() {
+  local name="$1"
+  docker inspect --type container -f '{{index .Config.Labels "com.docker.compose.service"}}' "$name" 2>/dev/null || true
+}
+
+is_live_stack() {
+  case "$(dssh_mode_value)" in
+    live|prod) return 0 ;;
+    local|dev) return 1 ;;
+  esac
+  local c svc
+  for c in portfolio-api portfolio-web portfolio-proxy; do
+    svc="$(container_compose_service "$c")"
+    if [[ -n "$svc" ]]; then
+      return 0
+    fi
+  done
+  return 1
+}
+
+# Target alias or compose-ish name → prod compose service.
+live_compose_service() {
+  local target="$1"
+  case "$target" in
+    backend|api) printf '%s\n' api ;;
+    frontend|web) printf '%s\n' web ;;
+    proxy|nginx) printf '%s\n' nginx ;;
+    cdn) printf '%s\n' cdn ;;
+    postgres|redis|opensearch) printf '%s\n' "$target" ;;
+    *)
+      return 1
+      ;;
+  esac
+}
+
+live_container_name() {
+  local svc
+  svc="$(live_compose_service "$1")" || return 1
+  case "$svc" in
+    api) printf '%s\n' portfolio-api ;;
+    web) printf '%s\n' portfolio-web ;;
+    nginx) printf '%s\n' portfolio-proxy ;;
+    cdn) printf '%s\n' portfolio-cdn ;;
+    postgres) printf '%s\n' portfolio-postgres ;;
+    redis) printf '%s\n' portfolio-redis ;;
+    opensearch) printf '%s\n' portfolio-opensearch ;;
+    *) printf '%s\n' "portfolio-$svc" ;;
+  esac
+}
+
+# Rolling publish order in live.sh: infra → cdn → api → web → nginx.
+live_app_services=(cdn api web nginx)
+live_infra_services=(postgres redis opensearch)
+
+live_migrate() {
+  acquire_docker_lock
+  echo "live migrate: prisma migrate deploy (api, --no-deps)..."
+  compose_live run --rm --no-deps api \
+    npx prisma migrate deploy --schema apps/api/prisma/schema.prisma
+}
+
+# Rebuild (optional) then replace one compose service; others keep running.
+live_restart_service() {
+  local svc="$1"
+  local skip_build="${2:-0}"
+  acquire_docker_lock
+  if [[ "$skip_build" == "1" ]]; then
+    echo "live: replacing $svc (--no-deps, no rebuild)..."
+    compose_live up -d --no-deps --no-build "$svc"
+  else
+    echo "live: rebuilding+replacing $svc (--no-deps; other services stay up)..."
+    compose_live up -d --build --no-deps "$svc"
+  fi
+}
+
+live_stop_service() {
+  local svc="$1"
+  acquire_docker_lock
+  echo "live: stopping compose service $svc (partial outage until restarted)..."
+  compose_live stop "$svc"
+}
+
+live_stop_hard() {
+  acquire_docker_lock
+  echo "DANGER: stopping entire live stack (nginx+web+api+cdn+infra)..." >&2
+  compose_live stop "${live_app_services[@]}" "${live_infra_services[@]}"
+  echo "Live stack stopped. Bring back with: ./dssh publish"
+}
+
+show_live_status() {
+  echo "=== mode: live (compose prod) ==="
+  compose_live ps
+  echo
+  echo "=== resource logger ==="
+  rlog_status
+}
+
+show_local_status() {
+  echo "=== mode: local (dssh containers) ==="
+  echo "=== dssh app containers ==="
+  docker ps --filter "label=dssh.image" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+  echo
+  echo "=== compose infra services ==="
+  compose --profile dashboards ps postgres redis opensearch opensearch-dashboards 2>/dev/null \
+    || compose ps
+  echo
+  echo "=== resource logger ==="
+  rlog_status
+  echo
+  echo "=== gpu ==="
+  detect_docker_gpu
+  if [[ ${#gpu_args[@]} -gt 0 ]]; then
+    echo "dssh docker: --gpus all"
+  elif command -v nvidia-smi >/dev/null 2>&1 && nvidia-smi >/dev/null 2>&1; then
+    echo "dssh docker: cpu-only (host GPU is up; install toolkit with: ./dssh gpu-setup)"
+  else
+    echo "dssh docker: cpu-only"
+  fi
+}
+
+show_status() {
+  if is_live_stack; then
+    show_live_status
+  else
+    show_local_status
+  fi
+}
+
+live_health() {
+  local c svc st code
+  echo "=== live health ==="
+  for c in portfolio-postgres portfolio-redis portfolio-opensearch \
+    portfolio-cdn portfolio-api portfolio-web portfolio-proxy; do
+    if ! docker inspect --type container "$c" >/dev/null 2>&1; then
+      printf '  %-22s %s\n' "$c" "missing"
+      continue
+    fi
+    st="$(docker inspect --type container -f '{{.State.Status}}' "$c" 2>/dev/null || echo unknown)"
+    printf '  %-22s %s\n' "$c" "$st"
+  done
+  echo
+  code=""
+  if command -v curl >/dev/null 2>&1; then
+    code="$(curl -sk -o /dev/null -w '%{http_code}' --connect-timeout 2 --max-time 5 \
+      https://127.0.0.1/api/health 2>/dev/null || true)"
+    if [[ -z "$code" || "$code" == "000" ]]; then
+      code="$(curl -s -o /dev/null -w '%{http_code}' --connect-timeout 2 --max-time 5 \
+        http://127.0.0.1/api/health 2>/dev/null || true)"
+    fi
+  fi
+  if [[ -n "$code" && "$code" != "000" ]]; then
+    echo "GET /api/health → HTTP $code"
+  elif docker inspect --type container portfolio-api >/dev/null 2>&1; then
+    echo -n "GET /api/health (via portfolio-api): "
+    docker exec portfolio-api wget -qO- http://127.0.0.1:4000/api/health 2>/dev/null \
+      || docker exec portfolio-api sh -lc 'command -v curl >/dev/null && curl -s http://127.0.0.1:4000/api/health' \
+      || echo "unreachable"
+    echo
+  else
+    echo "GET /api/health → skipped (no curl / no portfolio-api)"
+  fi
+}
+
+follow_live_logs() {
+  local target="${1-}"
+  local svc
+  if [[ -z "$target" ]]; then
+    compose_live logs -f --tail=200 "${live_app_services[@]}"
+    return 0
+  fi
+  if svc="$(live_compose_service "$target")"; then
+    compose_live logs -f --tail=200 "$svc"
+    return 0
+  fi
+  docker logs -f "$(derive_app_name "$target")"
+}
+
+follow_rlog_logs() {
+  local dir latest
+  dir="$(rlog_dir)"
+  latest="$dir/latest.txt"
+  if [[ ! -f "$latest" ]]; then
+    echo "No rlog snapshot at $latest (start with: dssh rlog on)." >&2
+    return 1
+  fi
+  if command -v watch >/dev/null 2>&1; then
+    exec watch -n "${dssh_rlog_interval:-1}" cat "$latest"
+  fi
+  exec tail -F "$latest"
+}
+
 rlog_dir() {
   local dir="${dssh_rlog_dir-}"
   if [[ -z "$dir" ]]; then
@@ -645,6 +855,81 @@ bash_ident() {
   [[ "$1" =~ ^[a-zA-Z_][a-zA-Z0-9_]*$ ]]
 }
 
+expand_tilde() {
+  local path="$1"
+  if [[ "$path" == "~" ]]; then
+    printf '%s\n' "$HOME"
+  elif [[ "$path" == "~/"* ]]; then
+    printf '%s\n' "$HOME/${path:2}"
+  else
+    printf '%s\n' "$path"
+  fi
+}
+
+# ssh -t user@host nano path — no scp, no local copy, no logging of file body.
+rnano_remote() {
+  local alias_name="${1-}"
+  if [[ -z "$alias_name" ]]; then
+    echo "Usage: dssh rnano <alias>" >&2
+    echo "  Set <alias>_host and <alias>_path in .dsshrc (optional <alias>_key, <alias>_repo)." >&2
+    return 1
+  fi
+  if ! bash_ident "$alias_name"; then
+    echo "rnano: invalid alias '$alias_name'" >&2
+    return 1
+  fi
+
+  local host_var="${alias_name}_host"
+  local path_var="${alias_name}_path"
+  local key_var="${alias_name}_key"
+  local repo_var="${alias_name}_repo"
+  local host="${!host_var-}"
+  local rpath="${!path_var-}"
+  local key="${!key_var-}"
+  local repo="${!repo_var-}"
+
+  if [[ -z "$host" || -z "$rpath" ]]; then
+    echo "rnano: set ${alias_name}_host and ${alias_name}_path in .dsshrc" >&2
+    return 1
+  fi
+
+  if [[ -z "$key" ]]; then
+    key="$HOME/.ssh/id_ed25519"
+  else
+    key="$(expand_tilde "$key")"
+  fi
+  if [[ ! -f "$key" ]]; then
+    echo "rnano: SSH key not found: $key" >&2
+    return 1
+  fi
+
+  local -a ssh_cmd=(
+    ssh
+    -i "$key"
+    -o IdentitiesOnly=yes
+    -t
+    "$host"
+  )
+  local quoted_path
+  printf -v quoted_path '%q' "$rpath"
+
+  # Interactive nano only — never cat/scp the remote file through this helper.
+  "${ssh_cmd[@]}" "nano $quoted_path"
+  local nano_rc=$?
+
+  if [[ -n "$repo" ]]; then
+    local quoted_repo quoted_backup
+    printf -v quoted_repo '%q' "$repo"
+    printf -v quoted_backup '%q' "$repo/ops/tooling/env-backup.sh"
+    # Soft: missing restic setup on the box must not fail the edit session.
+    ssh -i "$key" -o IdentitiesOnly=yes "$host" \
+      "if [[ -f $quoted_backup ]]; then bash $quoted_backup backup; else echo 'rnano: no env-backup.sh under $quoted_repo (skip)'; fi" \
+      || echo "rnano: remote .env backup soft-failed (edit already saved)" >&2
+  fi
+
+  return "$nano_rc"
+}
+
 run_global_action() {
   local action_name="$1"
   local action_var="" override_cmd=""
@@ -663,6 +948,25 @@ run_global_action() {
     fi
     local publish_cmd="${override_cmd:-$script_dir/ops/deploy/live.sh}"
     run_local_shell "$(append_cli_args "$publish_cmd" "$@")"
+    return 0
+  fi
+
+  # Live stop must not use local-dev dssh_stop_local (that only kills dssh.image).
+  if [[ "$action_name" == "stop" ]] && is_live_stack; then
+    shift
+    local hard=0 arg
+    for arg in "$@"; do
+      case "$arg" in
+        --hard|-hard|hard|all|--all) hard=1 ;;
+      esac
+    done
+    if [[ "$hard" != "1" ]]; then
+      echo "LIVE: refusing full stop (would drop nginx+web+api+cdn)." >&2
+      echo "  One service:  ./dssh backend stop   (or frontend|proxy|cdn|api|web|nginx)" >&2
+      echo "  Hard cutover: ./dssh stop --hard" >&2
+      return 1
+    fi
+    live_stop_hard
     return 0
   fi
 
@@ -685,7 +989,8 @@ run_global_action() {
         remove_container "$id"
       done
     fi
-    compose stop postgres redis opensearch
+    compose --profile dashboards stop postgres redis opensearch opensearch-dashboards 2>/dev/null \
+      || compose stop postgres redis opensearch
     echo "Stopped dssh app containers and compose infra services."
     return 0
   fi
@@ -696,47 +1001,51 @@ run_global_action() {
     return 0
   fi
 
+  if [[ "$action_name" == "rnano" ]]; then
+    shift
+    rnano_remote "${1-}"
+    return $?
+  fi
+
   if [[ "$action_name" == "gpu-setup" ]]; then
     gpu_setup
     return $?
   fi
 
-  if [[ "$action_name" == "status" ]]; then
-    echo "=== dssh app containers ==="
-    docker ps --filter "label=dssh.image" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
-    echo
-    echo "=== compose infra services ==="
-    compose ps postgres redis opensearch 2>/dev/null || compose ps
-    echo
-    echo "=== resource logger ==="
-    rlog_status
-    echo
-    echo "=== gpu ==="
-    detect_docker_gpu
-    if [[ ${#gpu_args[@]} -gt 0 ]]; then
-      echo "dssh docker: --gpus all"
-    elif command -v nvidia-smi >/dev/null 2>&1 && nvidia-smi >/dev/null 2>&1; then
-      echo "dssh docker: cpu-only (host GPU is up; install toolkit with: ./dssh gpu-setup)"
+  if [[ "$action_name" == "status" || "$action_name" == "ps" ]]; then
+    show_status
+    return 0
+  fi
+
+  if [[ "$action_name" == "health" ]]; then
+    if is_live_stack; then
+      live_health
     else
-      echo "dssh docker: cpu-only"
+      show_local_status
+      echo
+      echo "(health probes are live-oriented; local shown as status above)"
     fi
     return 0
+  fi
+
+  if [[ "$action_name" == "migrate" ]]; then
+    if is_live_stack; then
+      live_migrate
+      return 0
+    fi
+    shift
+    exec "$script_dir/dssh" backend migrate "$@"
   fi
 
   if [[ "$action_name" == "logs" ]]; then
     local target="${2-}"
     if [[ "$target" == "rlog" ]]; then
-      local dir latest
-      dir="$(rlog_dir)"
-      latest="$dir/latest.txt"
-      if [[ ! -f "$latest" ]]; then
-        echo "No rlog snapshot at $latest (start with: dssh rlog on)." >&2
-        return 1
-      fi
-      if command -v watch >/dev/null 2>&1; then
-        exec watch -n "${dssh_rlog_interval:-1}" cat "$latest"
-      fi
-      exec tail -F "$latest"
+      follow_rlog_logs
+      return $?
+    fi
+    if is_live_stack; then
+      follow_live_logs "$target"
+      return 0
     fi
     if [[ -n "$target" ]]; then
       docker logs -f "$(derive_app_name "$target")"
@@ -767,7 +1076,9 @@ if [[ "$1" == "help" || "$1" == "-h" || "$1" == "--help" ]]; then
 fi
 
 run_as_global=0
-if [[ "$1" == "stop" || "$1" == "status" || "$1" == "logs" || "$1" == "rlog" || "$1" == "publish" || "$1" == "gpu-setup" ]]; then
+if [[ "$1" == "stop" || "$1" == "status" || "$1" == "ps" || "$1" == "health" \
+  || "$1" == "logs" || "$1" == "rlog" || "$1" == "rnano" || "$1" == "publish" \
+  || "$1" == "migrate" || "$1" == "gpu-setup" ]]; then
   run_as_global=1
 elif bash_ident "$1"; then
   global_action_var="dssh_${1}_local"
@@ -780,8 +1091,14 @@ if [[ "$run_as_global" == "1" ]]; then
   exit 0
 fi
 
+# Allow compose-ish aliases on live: api/web/nginx → backend/frontend/proxy.
 target_name="$1"
 shift
+case "$target_name" in
+  api) target_name=backend ;;
+  web) target_name=frontend ;;
+  nginx) target_name=proxy ;;
+esac
 
 target_path_var="$target_name"
 target_path="${!target_path_var-}"
@@ -837,6 +1154,100 @@ fi
 
 mount_node_modules="${!mount_node_modules_var-1}"
 app_name="$(derive_app_name "$target_name")"
+
+# LIVE: manage compose prod services (portfolio-*). Never docker-run npm-dev
+# against the same names — that would fight the live stack.
+if is_live_stack; then
+  live_svc=""
+  if ! live_svc="$(live_compose_service "$target_name")"; then
+    if [[ "${1-}" == "stop" || "${1-}" == "start" || "${1-}" == "restart" || "${1-}" == "build" ]]; then
+      exit 1
+    fi
+  fi
+
+  if [[ $# -eq 0 ]]; then
+    local_cname="$(live_container_name "$target_name" 2>/dev/null || true)"
+    if [[ -z "$local_cname" ]]; then
+      echo "No live container for target '$target_name'." >&2
+      exit 1
+    fi
+    if use_tty; then
+      docker exec -it "$local_cname" sh -lc 'command -v bash >/dev/null && exec bash || exec sh'
+    else
+      docker exec "$local_cname" sh -lc 'command -v bash >/dev/null && exec bash || exec sh'
+    fi
+    exit 0
+  fi
+
+  live_action="$1"
+  shift
+  skip_build=0
+  live_args=()
+  for arg in "$@"; do
+    case "$arg" in
+      -nobuild|--nobuild) skip_build=1 ;;
+      *) live_args+=("$arg") ;;
+    esac
+  done
+  set -- "${live_args[@]+"${live_args[@]}"}"
+
+  case "$live_action" in
+    build)
+      acquire_docker_lock
+      compose_live build "$live_svc" "$@"
+      exit 0
+      ;;
+    start|restart)
+      live_restart_service "$live_svc" "$skip_build"
+      exit 0
+      ;;
+    stop)
+      live_stop_service "$live_svc"
+      exit 0
+      ;;
+    migrate)
+      if [[ "$live_svc" != "api" ]]; then
+        echo "migrate is only for backend/api on live." >&2
+        exit 1
+      fi
+      live_migrate
+      exit 0
+      ;;
+    logs)
+      follow_live_logs "$target_name"
+      exit 0
+      ;;
+    *)
+      live_action_local_var="${target_name}_${live_action}_local"
+      live_action_container_var="${target_name}_${live_action}"
+      live_action_local_cmd="${!live_action_local_var-}"
+      live_action_container_cmd="${!live_action_container_var-}"
+      if [[ -n "$live_action_container_cmd" ]]; then
+        acquire_docker_lock
+        # One-shot via compose run — does not replace the running service.
+        compose_live run --rm --no-deps "$live_svc" \
+          sh -lc "$(append_cli_args "$live_action_container_cmd" "$@")"
+        exit 0
+      fi
+      if [[ -n "$live_action_local_cmd" ]]; then
+        run_local_shell "$(append_cli_args "$live_action_local_cmd" "$@")"
+        exit 0
+      fi
+      # Treat remaining argv as a command inside the running container.
+      local_cname="$(live_container_name "$target_name")"
+      if ! docker inspect --type container "$local_cname" >/dev/null 2>&1; then
+        echo "Live container $local_cname is not running." >&2
+        exit 1
+      fi
+      if use_tty; then
+        docker exec -it "$local_cname" "$live_action" "$@"
+      else
+        docker exec "$local_cname" "$live_action" "$@"
+      fi
+      exit 0
+      ;;
+  esac
+fi
 
 if [[ $# -eq 0 ]]; then
   interactive_mode=1

@@ -12,12 +12,19 @@
 #   <target>_dockerfile=<custom Dockerfile path>
 #   <target>_context=<custom Docker build context>
 #   <target>_image=<custom image name>
-#   <target>_name=<custom container app name>
+#   <target>_name=<custom container app name>  (must match compose on live)
 #   <target>_user=<container user; default is the host uid:gid>
 #   <target>_workdir=<custom container workdir>
 
+# Mode: auto|live|local (or export DSSH_MODE).
+# auto = live when portfolio-api/web/proxy is a compose container.
+# On the production Lightsail box, set live so a compose-down cannot
+# flip dssh back into local npm-dev docker-run against portfolio-* names:
+#   dssh_mode=live
+# dssh_mode=auto
+
 # Optional global actions:
-#   dssh_stop_local=<host command>
+#   dssh_stop_local=<host command>   (LOCAL only; live ignores this)
 #   dssh_status_local=<host command>
 #   dssh_mailtest_local=<host command>
 #   dssh_publish_local=<host command>
@@ -32,12 +39,24 @@
 #   dssh_rlog_history_keep=<uncompressed rotated files to keep; older are xz -9e>
 #   dssh_rlog_archive_max=<max bytes for history.log + rotated/compressed archives>
 #   dssh_gpus=auto|off            (auto: --gpus all when NVIDIA Docker works)
+#
+# Remote file edit (`dssh rnano <alias>`): ssh -t host nano path.
+# Fill real values locally; do not commit live hosts/keys. Examples:
+#   prod_env_host=ubuntu@203.0.113.10
+#   prod_env_path=/var/www/austenstrine_portfolio/.env
+#   prod_env_key=~/.ssh/id_ed25519
+#   prod_env_repo=/var/www/austenstrine_portfolio
+# Default key is ~/.ssh/id_ed25519 when <alias>_key is unset.
+# When <alias>_repo is set, rnano soft-runs ops/tooling/env-backup.sh after nano.
+# .env backup docs: docs/tooling/env-backup.md
 
+# LOCAL stop only. On live, `dssh stop` refuses unless --hard; use
+# `dssh backend stop` for one service.
 dssh_stop_local="ids=\$(docker ps -aq --filter label=dssh.image); if [[ -n \"\$ids\" ]]; then docker rm -f \$ids; fi; docker compose --profile dashboards stop postgres redis opensearch opensearch-dashboards; echo 'Stopped dssh app containers and compose infra services.'"
 dssh_mailtest_local="\"$script_dir/dssh\" backend mailtest"
 dssh_rlog_containers=backend,frontend,proxy,cdn
 
-# Nest API
+# Nest API — container name matches docker-compose.prod.yml (portfolio-api)
 backend=./apps/api
 backend_image=portfolio-api
 backend_name=portfolio-api
@@ -51,14 +70,14 @@ backend_reindex="npx ts-node --transpile-only apps/api/scripts/reindex-catalog.t
 backend_mailtest="npx ts-node --transpile-only apps/api/scripts/send-test-email.ts"
 backend_mailtest_attach=0
 
-# Next.js app
+# Next.js app — portfolio-web
 frontend=./apps/web
 frontend_image=portfolio-web
 frontend_name=portfolio-web
 frontend_start="npm run dev -w apps/web"
 frontend_start_detached=1
 
-# Local TLS + nginx. The directory has the image; init-local-tls.sh runs on the host before nginx starts.
+# Local TLS + nginx. Live compose service is nginx → portfolio-proxy.
 proxy=./ops/nginx
 proxy_image=portfolio-proxy
 proxy_name=portfolio-proxy
@@ -70,7 +89,9 @@ proxy_start_local="./ops/nginx/init-local-tls.sh"
 proxy_start="nginx -c /app/nginx.conf -g 'daemon off;'"
 proxy_start_detached=1
 
-# Local CDN. TLS still terminates on nginx; this process is the cache/origin.
+# Go CDN — local dssh docker-run + live compose service cdn → portfolio-cdn.
+# Live: TLS on nginx (cdn.austenstrine.dev); :8088 stays internal. CloudFront
+# optional later; for now self-host on the Lightsail box.
 cdn=./ops/cdn
 cdn_image=portfolio-cdn
 cdn_name=portfolio-cdn

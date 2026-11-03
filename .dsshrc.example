@@ -1,0 +1,21 @@
+# Example / template for dssh project map + remote aliases.
+# Copy values you need into .dsshrc (or start from the repo .dsshrc).
+# Do not put real production hosts, keys, or secrets in committed files.
+
+# Mode on the Lightsail box:
+# dssh_mode=live
+
+# Remote file aliases for `dssh rnano <alias>`:
+#   <alias>_host=user@host
+#   <alias>_path=/absolute/path/to/file
+#   <alias>_key=~/.ssh/id_ed25519          # optional
+#   <alias>_repo=/absolute/path/to/checkout # optional; post-edit env backup
+
+# prod_env_host=ubuntu@203.0.113.10
+# prod_env_path=/var/www/austenstrine_portfolio/.env
+# prod_env_key=~/.ssh/id_ed25519
+# prod_env_repo=/var/www/austenstrine_portfolio
+
+# Encrypted .env backup (restic → rclone gdrive:env-restic):
+#   docs/tooling/env-backup.md
+#   ./ops/tooling/env-backup.sh backup

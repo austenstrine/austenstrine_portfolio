@@ -1,5 +1,6 @@
-import { Body, Controller, Get, Post } from '@nestjs/common';
+import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { ProjectsService } from './projects.service';
 
@@ -14,6 +15,7 @@ export class ProjectsController {
 	}
 
 	@Post()
+	@UseGuards(JwtAuthGuard)
 	create(@Body() payload: CreateProjectDto) {
 		return this.projectsService.create(payload);
 	}

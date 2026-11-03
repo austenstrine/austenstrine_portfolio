@@ -1,6 +1,31 @@
 # AWS and CI/CD Notes (Nest + Next + Docker)
 
-## Recommended AWS Target
+## Current prod: single-box EC2 `t3a.large` (x86_64)
+
+Deploy-on-box, not ECR/Fargate. Images build on the instance.
+
+- **Instance:** `t3a.large` (2 vCPU / 8GB). OpenSearch heap stays ~1g
+  (`OPENSEARCH_JAVA_OPTS` in `docker-compose.prod.yml`); leave headroom for
+  Next / Nest / Postgres / Redis / nginx / Go CDN.
+- **Arch:** x86_64. No `platform:` / `--platform` pins in compose or Dockerfiles;
+  Docker follows the host. `live.sh` refuses `DOCKER_DEFAULT_PLATFORM` only when
+  it conflicts with `uname -m` (ARM optional, not the live target).
+- **Build on the box.** Clone → `.env` → `./dssh publish` (or `./ops/deploy/live.sh`).
+  Do **not** copy foreign-arch `node_modules` or laptop-built images onto the host.
+  `.dockerignore` already excludes `**/node_modules`.
+- **DNS:** attach an **Elastic IP**; point apex + `cdn` A records at it. Public
+  IP can change on stop/start without EIP.
+- **TLS certs:** host path via `TLS_CERTS_DIR` (default `/etc/nginx/certs`),
+  mounted read-only into nginx.
+- **CI:** `.github/workflows/deploy.yml` SSHs to the box, `git reset`, then
+  runs `live.sh` there (native x86_64 build). No buildx / multi-arch push needed.
+
+Prisma engines for Alpine: `binaryTargets` in `apps/api/prisma/schema.prisma`
+include `linux-musl-openssl-3.0.x` (amd64 live) plus optional
+`linux-musl-arm64-openssl-3.0.x`. `prisma generate` still runs inside the api
+image build.
+
+## Recommended AWS Target (future / interview)
 
 - Frontend: S3 + CloudFront or Amplify Hosting
 - API: ECS Fargate or Lambda (Nest on Lambda via adapter)
@@ -10,10 +35,10 @@
 
 Because you mentioned AWS nodes, ECS Fargate is typically the closest fit for long-running Node services.
 
-## Suggested Deployment Pattern
+## Suggested Deployment Pattern (future ECR/ECS)
 
 1. Build and test in GitHub Actions.
-2. Build Docker images for API and web.
+2. Build Docker images for API and web (amd64 for current t3a; multi-arch or arm64 only if targeting Graviton Fargate later).
 3. Push images to ECR.
 4. Deploy ECS services with updated image tags.
 5. Run Prisma migrations during deployment pipeline.
@@ -38,7 +63,7 @@ Because you mentioned AWS nodes, ECS Fargate is typically the closest fit for lo
 
 ## Interview Talking Points
 
-- Why ECS Fargate instead of EC2 for this stack
+- Why single-box `t3a.large` first (cost + control), then ECS Fargate later
 - How migrations are handled safely in CI/CD
 - How health checks and rolling deploys reduce downtime
 - How Redis and OpenSearch complement PostgreSQL
