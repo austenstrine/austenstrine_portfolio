@@ -3,7 +3,12 @@ module austenstrine.dev/cdn
 go 1.23
 
 require (
-	github.com/HugoSmits86/nativewebp v1.3.0
-	github.com/disintegration/imaging v1.6.2
-	golang.org/x/image v0.24.0
+	github.com/davidbyttow/govips/v2 v2.16.0
+	golang.org/x/sync v0.10.0
+)
+
+require (
+	golang.org/x/image v0.18.0 // indirect
+	golang.org/x/net v0.25.0 // indirect
+	golang.org/x/text v0.16.0 // indirect
 )

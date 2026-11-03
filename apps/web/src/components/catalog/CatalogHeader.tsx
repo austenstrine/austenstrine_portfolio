@@ -264,12 +264,31 @@ export function CatalogHeader() {
 	const { user, loading, signOut } = useSession();
 	const [cartCount, setCartCount] = useState(0);
 	const [headerHeight, setHeaderHeight] = useState(0);
+	const [bannerOffset, setBannerOffset] = useState(0);
 	const [headerHidden, setHeaderHidden] = useState(false);
 	const lastScrollY = useRef(0);
 	const showDepartmentBar =
 		categories.length > 0
 		&& pathname !== '/place-et-marque/search';
 	const headerRef = useRef<HTMLElement>(null);
+
+	useLayoutEffect(() => {
+		const banner = document.querySelector('[data-maintenance-banner]');
+		const syncBanner = () => {
+			setBannerOffset(
+				banner instanceof HTMLElement
+					? banner.offsetHeight
+					: 0,
+			);
+		};
+		syncBanner();
+		if(!(banner instanceof HTMLElement)) {
+			return;
+		}
+		const observer = new ResizeObserver(syncBanner);
+		observer.observe(banner);
+		return () => observer.disconnect();
+	}, []);
 
 	useLayoutEffect(() => {
 		const header = headerRef.current;
@@ -281,7 +300,7 @@ export function CatalogHeader() {
 			setHeaderHeight(height);
 			document.documentElement.style.setProperty(
 				'--catalog-header-h',
-				`${headerHidden ? 0 : height}px`,
+				`${headerHidden ? 0 : height + bannerOffset}px`,
 			);
 		};
 		sync();
@@ -291,7 +310,7 @@ export function CatalogHeader() {
 			observer.disconnect();
 			document.documentElement.style.removeProperty('--catalog-header-h');
 		};
-	}, [headerHidden]);
+	}, [bannerOffset, headerHidden]);
 
 	useEffect(() => {
 		lastScrollY.current = window.scrollY;
@@ -341,7 +360,7 @@ export function CatalogHeader() {
 				}
 				style={
 					headerHeight > 0
-						? { height: headerHeight }
+						? { height: headerHeight + bannerOffset }
 						: undefined
 				}
 			/>
@@ -349,7 +368,6 @@ export function CatalogHeader() {
 				className="
 					fixed
 					inset-x-0
-					top-0
 					z-30
 					border-b
 					border-slate-200
@@ -364,7 +382,10 @@ export function CatalogHeader() {
 				onFocusCapture={() => setHeaderHidden(false)}
 				ref={headerRef}
 				style={{
-					transform: headerHidden ? 'translateY(-100%)' : 'translateY(0)',
+					top: bannerOffset,
+					transform: headerHidden
+						? 'translateY(-100%)'
+						: 'translateY(0)',
 				}}
 			>
 				<div

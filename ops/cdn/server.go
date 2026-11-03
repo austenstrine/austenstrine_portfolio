@@ -10,6 +10,8 @@ import (
 	"strings"
 	"sync/atomic"
 	"time"
+
+	"golang.org/x/sync/singleflight"
 )
 
 type server struct {
@@ -17,9 +19,16 @@ type server struct {
 	cache  *cacheStore
 	origin *originStore
 	log    *slog.Logger
+	flight singleflight.Group
 	hits   atomic.Uint64
 	misses atomic.Uint64
 	stale  atomic.Uint64
+}
+
+type loadOutcome struct {
+	body  []byte
+	meta  cacheMeta
+	found bool
 }
 
 func newServer(cfg config, log *slog.Logger) (*server, error) {
@@ -144,7 +153,7 @@ func (s *server) handleObject(w http.ResponseWriter, r *http.Request, requestPat
 			s.writeObject(w, r, body, meta, "HIT")
 			return
 		}
-		fresh, freshMeta, pulled, pullErr := s.load(requestPath, variant, active, tx, r.Header.Get("Accept"))
+		fresh, freshMeta, pulled, pullErr := s.loadCoalesced(requestPath, variant, active, tx, r.Header.Get("Accept"))
 		if pullErr == nil && pulled {
 			s.stale.Add(1)
 			s.writeObject(w, r, fresh, freshMeta, "REVALIDATED")
@@ -155,7 +164,7 @@ func (s *server) handleObject(w http.ResponseWriter, r *http.Request, requestPat
 		return
 	}
 
-	body, meta, found, err := s.load(requestPath, variant, active, tx, r.Header.Get("Accept"))
+	body, meta, found, err := s.loadCoalesced(requestPath, variant, active, tx, r.Header.Get("Accept"))
 	if err != nil {
 		s.log.Error("origin", "path", requestPath, "err", err)
 		http.Error(w, "origin unavailable", http.StatusBadGateway)
@@ -167,6 +176,22 @@ func (s *server) handleObject(w http.ResponseWriter, r *http.Request, requestPat
 	}
 	s.misses.Add(1)
 	s.writeObject(w, r, body, meta, "MISS")
+}
+
+func (s *server) loadCoalesced(requestPath, variant string, active bool, tx transform, accept string) ([]byte, cacheMeta, bool, error) {
+	key := requestPath + "\n" + variant
+	value, err, _ := s.flight.Do(key, func() (any, error) {
+		body, meta, found, loadErr := s.load(requestPath, variant, active, tx, accept)
+		if loadErr != nil {
+			return nil, loadErr
+		}
+		return loadOutcome{body: body, meta: meta, found: found}, nil
+	})
+	if err != nil {
+		return nil, cacheMeta{}, false, err
+	}
+	out := value.(loadOutcome)
+	return out.body, out.meta, out.found, nil
 }
 
 func (s *server) load(requestPath, variant string, active bool, tx transform, accept string) ([]byte, cacheMeta, bool, error) {

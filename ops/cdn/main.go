@@ -4,7 +4,10 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"runtime"
 	"time"
+
+	"github.com/davidbyttow/govips/v2/vips"
 )
 
 func main() {
@@ -18,6 +21,12 @@ func main() {
 		log.Error("mkdir", "err", err)
 		os.Exit(1)
 	}
+
+	vips.Startup(&vips.Config{
+		ConcurrencyLevel: runtime.NumCPU(),
+	})
+	defer vips.Shutdown()
+
 	srv, err := newServer(cfg, log)
 	if err != nil {
 		log.Error("cdn", "err", err)

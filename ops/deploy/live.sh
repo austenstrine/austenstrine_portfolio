@@ -137,3 +137,9 @@ echo "live.sh: rolling nginx (--no-deps)"
 
 echo "live.sh: stack is up (OpenSearch Dashboards off; Go CDN on-box)"
 "${COMPOSE[@]}" ps
+
+# Warm PeM stock transforms so the first shopper is not a cold encode storm.
+if [[ -d ops/cdn/data/origin/media/catalog/stock ]]; then
+	echo "live.sh: prewarming CDN stock variants"
+	"${COMPOSE[@]}" exec -T cdn prewarm.sh || echo "live.sh: prewarm skipped/failed (non-fatal)"
+fi

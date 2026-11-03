@@ -20,6 +20,10 @@ export async function PardonOurDustBanner() {
 	return (
 		<div
 			className="
+				fixed
+				inset-x-0
+				top-0
+				z-40
 				border-b
 				border-sky/20
 				bg-sky
@@ -30,6 +34,7 @@ export async function PardonOurDustBanner() {
 				font-medium
 				text-white
 			"
+			data-maintenance-banner=""
 			role="status"
 		>
 			{maintenanceBannerMessage()}

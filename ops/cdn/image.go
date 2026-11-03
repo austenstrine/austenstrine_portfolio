@@ -1,21 +1,13 @@
 package main
 
 import (
-	"bytes"
 	"fmt"
-	"image"
-	"image/gif"
-	"image/jpeg"
-	"image/png"
-	"io"
 	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
 
-	"github.com/HugoSmits86/nativewebp"
-	"github.com/disintegration/imaging"
-	_ "golang.org/x/image/webp"
+	"github.com/davidbyttow/govips/v2/vips"
 )
 
 type transform struct {
@@ -70,47 +62,56 @@ func parseTransform(query url.Values, maxDim int) (transform, bool, error) {
 }
 
 func applyTransform(src []byte, srcType string, tx transform, accept string, maxPixels int) ([]byte, string, error) {
-	img, err := decodeImage(src)
+	img, err := vips.NewImageFromBuffer(src)
 	if err != nil {
 		return nil, "", err
 	}
-	bounds := img.Bounds()
-	if bounds.Dx()*bounds.Dy() > maxPixels {
+	defer img.Close()
+
+	if err := img.AutoRotate(); err != nil {
+		return nil, "", err
+	}
+
+	width := img.Width()
+	height := img.Height()
+	if width*height > maxPixels {
 		return nil, "", fmt.Errorf("image too large")
 	}
 
-	width := tx.Width
-	height := tx.Height
-	if width == 0 && height == 0 {
-		width = bounds.Dx()
-		height = bounds.Dy()
+	targetW := tx.Width
+	targetH := tx.Height
+	if targetW == 0 && targetH == 0 {
+		targetW = width
+		targetH = height
 	}
 
-	fit := imaging.Lanczos
-	var out image.Image
 	switch tx.Fit {
 	case "cover":
-		if width == 0 {
-			width = height
+		if targetW == 0 {
+			targetW = targetH
 		}
-		if height == 0 {
-			height = width
+		if targetH == 0 {
+			targetH = targetW
 		}
-		out = imaging.Fill(img, width, height, imaging.Center, fit)
+		if err := img.Thumbnail(targetW, targetH, vips.InterestingCentre); err != nil {
+			return nil, "", err
+		}
 	default:
-		if width == 0 {
-			width = bounds.Dx() * height / bounds.Dy()
-			if width < 1 {
-				width = 1
+		if targetW == 0 {
+			targetW = width * targetH / height
+			if targetW < 1 {
+				targetW = 1
 			}
 		}
-		if height == 0 {
-			height = bounds.Dy() * width / bounds.Dx()
-			if height < 1 {
-				height = 1
+		if targetH == 0 {
+			targetH = height * targetW / width
+			if targetH < 1 {
+				targetH = 1
 			}
 		}
-		out = imaging.Fit(img, width, height, fit)
+		if err := img.Thumbnail(targetW, targetH, vips.InterestingNone); err != nil {
+			return nil, "", err
+		}
 	}
 
 	format := tx.Format
@@ -121,36 +122,25 @@ func applyTransform(src []byte, srcType string, tx transform, accept string, max
 		format = "jpeg"
 	}
 
-	var buf bytes.Buffer
-	contentType, err := encodeImage(&buf, out, format, tx.Quality)
-	if err != nil {
-		return nil, "", err
-	}
-	return buf.Bytes(), contentType, nil
+	return encodeVips(img, format, tx.Quality)
 }
 
-func decodeImage(src []byte) (image.Image, error) {
-	img, err := imaging.Decode(bytes.NewReader(src), imaging.AutoOrientation(true))
-	if err == nil {
-		return img, nil
-	}
-	decoded, _, fallbackErr := image.Decode(bytes.NewReader(src))
-	if fallbackErr != nil {
-		return nil, err
-	}
-	return decoded, nil
-}
-
-func encodeImage(w io.Writer, img image.Image, format string, quality int) (string, error) {
+func encodeVips(img *vips.ImageRef, format string, quality int) ([]byte, string, error) {
 	switch format {
 	case "png":
-		return "image/png", png.Encode(w, img)
-	case "gif":
-		return "image/gif", gif.Encode(w, img, nil)
+		params := vips.NewPngExportParams()
+		buf, _, err := img.ExportPng(params)
+		return buf, "image/png", err
 	case "webp":
-		return "image/webp", nativewebp.Encode(w, img, nil)
+		params := vips.NewWebpExportParams()
+		params.Quality = quality
+		buf, _, err := img.ExportWebp(params)
+		return buf, "image/webp", err
 	default:
-		return "image/jpeg", jpeg.Encode(w, img, &jpeg.Options{Quality: quality})
+		params := vips.NewJpegExportParams()
+		params.Quality = quality
+		buf, _, err := img.ExportJpeg(params)
+		return buf, "image/jpeg", err
 	}
 }
 
