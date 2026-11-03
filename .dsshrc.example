@@ -5,16 +5,18 @@
 # Mode on the production EC2 box:
 # dssh_mode=live
 
-# Remote file aliases for `dssh rnano <alias>`:
+# Remote file aliases for `dssh rnano <alias>` — put real hosts in .dsshrc.local
+# (gitignored), not in committed .dsshrc:
 #   <alias>_host=user@host
 #   <alias>_path=/absolute/path/to/file
-#   <alias>_key=~/.ssh/id_ed25519          # optional
+#   <alias>_key=~/.ssh/id_ed25519          # PRIVATE key; optional (this is default)
 #   <alias>_repo=/absolute/path/to/checkout # optional; post-edit env backup
-
-# prod_env_host=ubuntu@203.0.113.10
-# prod_env_path=/var/www/austenstrine_portfolio/.env
-# prod_env_key=~/.ssh/id_ed25519
-# prod_env_repo=/var/www/austenstrine_portfolio
+#
+# Example (.dsshrc.local):
+#   prod_env_host=ubuntu@ec2-….compute.amazonaws.com
+#   prod_env_path=/var/www/html/.env
+#   prod_env_key=~/.ssh/id_ed25519
+#   prod_env_repo=/var/www/html
 
 # Encrypted .env backup (restic → rclone gdrive:env-restic):
 #   docs/tooling/env-backup.md

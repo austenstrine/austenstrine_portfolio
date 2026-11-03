@@ -41,14 +41,9 @@
 #   dssh_gpus=auto|off            (auto: --gpus all when NVIDIA Docker works)
 #
 # Remote file edit (`dssh rnano <alias>`): ssh -t host nano path.
-# Fill real values locally; do not commit live hosts/keys. Examples:
-#   prod_env_host=ubuntu@203.0.113.10
-#   prod_env_path=/var/www/austenstrine_portfolio/.env
-#   prod_env_key=~/.ssh/id_ed25519
-#   prod_env_repo=/var/www/austenstrine_portfolio
-# Default key is ~/.ssh/id_ed25519 when <alias>_key is unset.
+# Put real hosts/keys in .dsshrc.local (gitignored). See .dsshrc.example.
+# Default key is ~/.ssh/id_ed25519 (private key — not .pub).
 # When <alias>_repo is set, rnano soft-runs ops/tooling/env-backup.sh after nano.
-# .env backup docs: docs/tooling/env-backup.md
 
 # LOCAL stop only. On live, `dssh stop` refuses unless --hard; use
 # `dssh backend stop` for one service.

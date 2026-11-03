@@ -28,3 +28,6 @@ ops/diagnostics/*
 
 # Serializes dssh docker build/stop/run across terminals
 .dssh-docker.lock
+
+# Local dssh overrides (prod SSH hosts/keys) — keep .dsshrc committed
+.dsshrc.local

@@ -10,6 +10,13 @@ if [[ -f "$config_file" ]]; then
   source "$config_file"
 fi
 
+# Local overrides (hosts, keys) — gitignored. Sourced after .dsshrc.
+local_config_file="${DSSH_LOCAL_CONFIG_FILE:-$script_dir/.dsshrc.local}"
+if [[ -f "$local_config_file" ]]; then
+  # shellcheck disable=SC1090
+  source "$local_config_file"
+fi
+
 usage() {
   cat <<'EOF'
 Usage:
