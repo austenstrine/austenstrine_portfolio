@@ -24,6 +24,8 @@ services:
 
   # Go CDN on this box (not CloudFront). TLS terminates on nginx —
   # :8088 stays on the compose network only (no host publish).
+  # Source: github.com/austenstrine/golang-image-cdn via ops/cdn/ensure-source.sh
+  # (populate ops/cdn/src before `compose build cdn`).
   cdn:
     build:
       context: ./ops/cdn
