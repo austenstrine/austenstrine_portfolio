@@ -23,6 +23,7 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # lint/test/build scripts run prepare:api-types (Prisma generate + seed-sync build).
       - name: Lint
         run: npm run lint
 
