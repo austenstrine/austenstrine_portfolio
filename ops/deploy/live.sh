@@ -130,24 +130,22 @@ chmod -R u+rwX ops/cdn/data || true
 echo "live.sh: ensuring golang-image-cdn source"
 bash "$ROOT/ops/cdn/ensure-source.sh"
 
-
-# Encrypted .env backup (restic → rclone gdrive:env-restic).
-# Install tools/timer always; backup runs when restic.pass exists.
-# Secrets: ./ops/deploy/push-env-backup-secrets.sh from a configured laptop.
+# Encrypted .env backup via extracted linux-gdrive-dotenv-backup-recovery
+# (portfolio wrapper: ops/tooling/env-backup.sh). Install tools/timer always;
+# backup runs when restic.pass exists. Secrets:
+#   ./ops/deploy/push-env-backup-secrets.sh from a configured laptop.
+# Tool checkout must be on the box (ENV_BACKUP_HOME / ~/src/… / sibling).
 pass_file="${RESTIC_PASSWORD_FILE:-$HOME/.config/env-backup/restic.pass}"
 backup_sh="$ROOT/ops/tooling/env-backup.sh"
 ensure_backup="$ROOT/ops/deploy/ensure-env-backup.sh"
 if [[ -x "$ensure_backup" || -f "$ensure_backup" ]]; then
 	echo "live.sh: ensuring .env backup tooling"
 	bash "$ensure_backup" || echo "live.sh: ensure-env-backup soft-failed (continuing)"
-elif [[ -f "$pass_file" && -x "$backup_sh" ]]; then
-	echo "live.sh: backing up .env (restic)"
-	"$backup_sh" backup
 elif [[ -f "$pass_file" && -f "$backup_sh" ]]; then
 	echo "live.sh: backing up .env (restic)"
-	bash "$backup_sh" backup
+	bash "$backup_sh" backup || echo "live.sh: env-backup soft-failed (continuing)"
 else
-	echo "live.sh: skip .env backup (no $pass_file — see docs/tooling/env-backup.md + ops/deploy/push-env-backup-secrets.sh)"
+	echo "live.sh: skip .env backup (no $pass_file or tool — see docs/tooling/env-backup.md + ops/deploy/push-env-backup-secrets.sh)"
 fi
 
 # Host nginx (old static portfolio) steals 80/443 from compose proxy.

@@ -35,6 +35,6 @@
 #   prod_env_key=~/.ssh/id_ed25519
 #   prod_env_repo=/var/www/html
 
-# Encrypted .env backup (restic → rclone gdrive:env-restic):
+# Encrypted .env backup (via linux-gdrive-dotenv-backup-recovery):
 #   docs/tooling/env-backup.md
-#   ./ops/tooling/env-backup.sh backup
+#   ./ops/tooling/env-backup.sh backup   # portfolio wrapper → extracted CLI
