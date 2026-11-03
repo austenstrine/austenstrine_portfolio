@@ -1,6 +1,6 @@
 # Encrypted `.env` backup (local + live)
 
-Same pattern on the laptop and the Lightsail box: **restic** encrypts the
+Same pattern on the laptop and the EC2 box: **restic** encrypts the
 portfolio `.env` files, **rclone** ships only ciphertext to Google Drive
 folder `env-restic`. Drive never sees plaintext.
 
@@ -51,7 +51,7 @@ timer keeps working.
 
 ## Live box
 
-1. Install `restic` + `rclone` on the Lightsail host.
+1. Install `restic` + `rclone` on the EC2 host.
 2. Copy rclone config (or `rclone config`) so `gdrive:` works as the same user
    that runs deploy / the timer.
 3. Create `~/.config/env-backup/restic.pass` with the **same** password as the

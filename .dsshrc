@@ -18,7 +18,7 @@
 
 # Mode: auto|live|local (or export DSSH_MODE).
 # auto = live when portfolio-api/web/proxy is a compose container.
-# On the production Lightsail box, set live so a compose-down cannot
+# On the production EC2 box, set live so a compose-down cannot
 # flip dssh back into local npm-dev docker-run against portfolio-* names:
 #   dssh_mode=live
 # dssh_mode=auto
@@ -91,7 +91,7 @@ proxy_start_detached=1
 
 # Go CDN — local dssh docker-run + live compose service cdn → portfolio-cdn.
 # Live: TLS on nginx (cdn.austenstrine.dev); :8088 stays internal. CloudFront
-# optional later; for now self-host on the Lightsail box.
+# optional later; for now self-host on the EC2 box.
 cdn=./ops/cdn
 cdn_image=portfolio-cdn
 cdn_name=portfolio-cdn

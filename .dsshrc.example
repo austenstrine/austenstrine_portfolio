@@ -2,7 +2,7 @@
 # Copy values you need into .dsshrc (or start from the repo .dsshrc).
 # Do not put real production hosts, keys, or secrets in committed files.
 
-# Mode on the Lightsail box:
+# Mode on the production EC2 box:
 # dssh_mode=live
 
 # Remote file aliases for `dssh rnano <alias>`:

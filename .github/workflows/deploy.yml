@@ -1,4 +1,4 @@
-name: Deploy to Lightsail
+name: Deploy to EC2
 on:
   push:
     branches:
@@ -18,7 +18,7 @@ jobs:
           mkdir -p ~/.ssh
           chmod 700 ~/.ssh
           ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts || { echo "ssh-keyscan failed with exit code $?"; exit 1; }
-          echo "Deploying Compose stack to Lightsail/EC2"
+          echo "Deploying Compose stack to EC2"
           ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} "
             set -euo pipefail
             sudo mkdir -p ${{ secrets.TARGET_DIR }}

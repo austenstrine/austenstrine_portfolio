@@ -2,7 +2,7 @@
 # Encrypted .env snapshots to Google Drive via restic+rclone.
 # Drive only ever sees ciphertext.
 #
-# Same behavior on laptop and Lightsail: hashes the listed .env files,
+# Same behavior on laptop and EC2: hashes the listed .env files,
 # skips when unchanged, otherwise restic backup + retention prune.
 #
 # Usage:

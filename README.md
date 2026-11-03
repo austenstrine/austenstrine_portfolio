@@ -1,13 +1,11 @@
 # Austen Strine Portfolio Platform
 
-This repository now contains a full-stack scaffold for your target stack:
+Full-stack portfolio + Place et Marque marketplace demo:
 
 - Backend: NestJS, TypeScript, PostgreSQL (Prisma), Swagger, Redis, OpenSearch
 - Frontend: Next.js (React + TypeScript), Tailwind CSS v3, custom icon components
-- Local infra: Docker Compose
-- CI: GitHub Actions
-
-The original static files are still in the repository root so you can migrate content incrementally.
+- Local infra: Docker Compose (`./dssh`)
+- CI/CD: GitHub Actions → EC2 (`t3a.large`) via `ops/deploy/live.sh`
 
 ## Monorepo Structure
 
@@ -43,13 +41,6 @@ The original static files are still in the repository root so you can migrate co
 
 ## CI/CD
 
-- CI is defined in .github/workflows/ci.yml
-- Existing EC2 deployment workflow is preserved in .github/workflows/deploy.yml
-- AWS deployment migration notes are in docs/aws-cicd-notes.md
-
-## Next Step for Content Migration
-
-1. Hero/About/Skills/Projects/Contact are now split into reusable components in apps/web/src/components/sections.
-2. Projects are seeded from your legacy content in apps/api/prisma/seed.ts and rendered from /api/projects.
-3. Replace placeholder profile circles with real assets by adding images under apps/web/public.
-4. Add authentication/admin features only after core portfolio pages are stable.
+- CI: `.github/workflows/ci.yml` (lint/test/build; runs `prepare:api-types` first)
+- Deploy: `.github/workflows/deploy.yml` SSHs to EC2, `git reset --hard origin/master`, `./ops/deploy/live.sh`
+- Notes: `docs/aws-cicd-notes.md`
