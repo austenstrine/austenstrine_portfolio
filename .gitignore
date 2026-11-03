@@ -21,6 +21,8 @@ ops/cdn/data/cache/**
 !ops/cdn/data/cache/.gitkeep
 ops/cdn/data/origin/**
 !ops/cdn/data/origin/.gitkeep
+# Cloned golang-image-cdn checkout (ops/cdn/ensure-source.sh)
+ops/cdn/src/
 
 # rlog snapshots, history, pid, and stream files (keep the sampler script)
 ops/diagnostics/*

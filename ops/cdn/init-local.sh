@@ -2,6 +2,7 @@
 set -euo pipefail
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+bash "$script_dir/ensure-source.sh"
 mkdir -p "$script_dir/data/origin" "$script_dir/data/cache"
 
 host="cdn.local.austenstrine.dev"

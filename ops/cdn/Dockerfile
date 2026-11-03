@@ -1,3 +1,5 @@
+# Thin PeM wrapper around github.com/austenstrine/golang-image-cdn.
+# Populate ./src first: ./ops/cdn/ensure-source.sh (live.sh / init-local.sh).
 FROM golang:1.23-alpine AS build
 
 WORKDIR /app
@@ -9,12 +11,11 @@ RUN apk add --no-cache \
 	pkgconfig \
 	vips-dev
 
-COPY go.mod ./
-COPY *.go ./
-COPY prewarm.sh ./
+COPY src/go.mod src/go.sum ./
+COPY src/*.go ./
 
 ENV CGO_ENABLED=1
-RUN go mod tidy \
+RUN go mod download \
 	&& go test ./... \
 	&& go build -trimpath -ldflags="-s -w" -o /usr/local/bin/cdn .
 
@@ -31,6 +32,7 @@ RUN apk add --no-cache \
 	vips-tools
 
 COPY --from=build /usr/local/bin/cdn /usr/local/bin/cdn
+# PeM catalog stock prewarm (not part of the generic CDN image).
 COPY prewarm.sh /usr/local/bin/prewarm.sh
 RUN chmod +x /usr/local/bin/prewarm.sh
 
