@@ -1,4 +1,4 @@
-export const SITE_URL = 'https://austenstrine.dev';
+export const SITE_URL = 'https://www.austenstrine.dev';
 export const SITE_NAME = 'Austen Strine';
 export const SITE_EMAIL = 'austen@austenstrine.dev';
 export const SITE_PHONE = '530-966-7034';

@@ -13,8 +13,9 @@ Deploy-on-box, not ECR/Fargate. Images build on the instance.
 - **Build on the box.** Clone → `.env` → `./dssh publish` (or `./ops/deploy/live.sh`).
   Do **not** copy foreign-arch `node_modules` or laptop-built images onto the host.
   `.dockerignore` already excludes `**/node_modules`.
-- **DNS:** attach an **Elastic IP**; point apex + `cdn` A records at it. Public
-  IP can change on stop/start without EIP.
+- **DNS:** attach an **Elastic IP**; point apex + `www` + `cdn` A records at it.
+  Canonical site host is **www**; apex HTTP/HTTPS redirect there. Public IP can
+  change on stop/start without EIP.
 - **TLS certs:** host path via `TLS_CERTS_DIR` (default `/etc/nginx/certs`),
   mounted read-only into nginx.
 - **CI:** `.github/workflows/deploy.yml` SSHs to the box, `git reset`, then
