@@ -4,7 +4,7 @@ Full-stack portfolio + Place et Marque marketplace demo:
 
 - Backend: NestJS, TypeScript, PostgreSQL (Prisma), Swagger, Redis, OpenSearch
 - Frontend: Next.js (React + TypeScript), Tailwind CSS v3, custom icon components
-- Local infra: Docker Compose (`./dssh`)
+- Local infra: Docker Compose via `./dssh` ([developers-sugary-shell-helper](https://github.com/austenstrine/developers-sugary-shell-helper); project map in `.dsshrc`)
 - CI/CD: GitHub Actions → EC2 (`t3a.large`) via `ops/deploy/live.sh`
 
 ## Monorepo Structure
@@ -16,6 +16,9 @@ Full-stack portfolio + Place et Marque marketplace demo:
 
 ## Local Development
 
+0. Install `dssh` (once per machine):
+	- `git clone https://github.com/austenstrine/developers-sugary-shell-helper.git && cd developers-sugary-shell-helper && ./install.sh`
+	- Or set `DSSH_BIN` to that repo’s `bin/dssh`. Portfolio `./dssh` is a thin wrapper; config stays in `.dsshrc`.
 1. Copy environment file:
 	- Windows (PowerShell): Copy-Item .env.example .env
 2. Install dependencies:

@@ -1,9 +1,26 @@
 # Example / template for dssh project map + remote aliases.
 # Copy values you need into .dsshrc (or start from the repo .dsshrc).
 # Do not put real production hosts, keys, or secrets in committed files.
+#
+# Full schema: see developers-sugary-shell-helper examples/dsshrc.example
 
-# Mode on the production EC2 box:
+# Mode on the production box:
 # dssh_mode=live
+
+# Live stack (compose prod) — all names come from here, not the tool:
+# dssh_targets=backend,frontend,proxy,cdn
+# dssh_live_detect_targets=backend,frontend,proxy
+# dssh_live_app_services=cdn,api,web,nginx
+# dssh_live_infra_services=postgres,redis,opensearch
+# dssh_live_container_prefix=portfolio-
+# dssh_live_health_url=https://127.0.0.1/api/health
+# dssh_live_health_url_http=http://127.0.0.1/api/health
+# dssh_live_health_exec_container=portfolio-api
+# dssh_live_health_exec_url=http://127.0.0.1:4000/api/health
+# dssh_live_migrate_service=api
+# dssh_live_migrate_cmd='npx prisma migrate deploy --schema apps/api/prisma/schema.prisma'
+# dssh_publish_local=./ops/deploy/live.sh
+# dssh_env_backup_relpath=ops/tooling/env-backup.sh
 
 # Remote file aliases for `dssh rnano <alias>` — put real hosts in .dsshrc.local
 # (gitignored), not in committed .dsshrc:

@@ -1,4 +1,4 @@
-# Project map for dssh.
+# Project map for dssh (developers-sugary-shell-helper).
 #
 # dssh does not ship with names like backend, frontend, or proxy.
 # This file invents those shorthand names and points each one at something
@@ -13,23 +13,43 @@
 #   <target>_context=<custom Docker build context>
 #   <target>_image=<custom image name>
 #   <target>_name=<custom container app name>  (must match compose on live)
+#   <target>_service=<compose service name on live>
+#   <target>_aliases=<comma-separated alternate names>
 #   <target>_user=<container user; default is the host uid:gid>
 #   <target>_workdir=<custom container workdir>
 
+# Registered targets (order used for alias resolution / discovery).
+dssh_targets=backend,frontend,proxy,cdn
+
 # Mode: auto|live|local (or export DSSH_MODE).
-# auto = live when portfolio-api/web/proxy is a compose container.
+# auto = live when any dssh_live_detect_targets container has a compose label.
 # On the production EC2 box, set live so a compose-down cannot
-# flip dssh back into local npm-dev docker-run against portfolio-* names:
+# flip dssh back into local npm-dev docker-run against live names:
 #   dssh_mode=live
 # dssh_mode=auto
+
+# Live compose overlay (relative to project root unless absolute).
+dssh_live_compose_file=docker-compose.yml
+dssh_live_compose_prod_file=docker-compose.prod.yml
+dssh_live_container_prefix=portfolio-
+dssh_live_detect_targets=backend,frontend,proxy
+dssh_live_app_services=cdn,api,web,nginx
+dssh_live_infra_services=postgres,redis,opensearch
+dssh_live_health_containers=portfolio-postgres,portfolio-redis,portfolio-opensearch,portfolio-cdn,portfolio-api,portfolio-web,portfolio-proxy
+dssh_live_health_url=https://127.0.0.1/api/health
+dssh_live_health_url_http=http://127.0.0.1/api/health
+dssh_live_health_exec_container=portfolio-api
+dssh_live_health_exec_url=http://127.0.0.1:4000/api/health
+dssh_live_migrate_service=api
+dssh_live_migrate_cmd='npx prisma migrate deploy --schema apps/api/prisma/schema.prisma'
+dssh_migrate_target=backend
 
 # Optional global actions:
 #   dssh_stop_local=<host command>   (LOCAL only; live ignores this)
 #   dssh_status_local=<host command>
 #   dssh_mailtest_local=<host command>
 #   dssh_publish_local=<host command>
-#     Default `dssh publish` runs ops/deploy/live.sh on this host and starts
-#     rlog if off. Set this only for a custom remote SSH publish wrapper.
+#     Required for `dssh publish` — rolling deploy on this host.
 #
 # Resource logger (`dssh rlog`):
 #   dssh_rlog_containers=<comma-separated target aliases>
@@ -43,16 +63,21 @@
 # Remote file edit (`dssh rnano <alias>`): ssh -t host nano path.
 # Put real hosts/keys in .dsshrc.local (gitignored). See .dsshrc.example.
 # Default key is ~/.ssh/id_ed25519 (private key — not .pub).
-# When <alias>_repo is set, rnano soft-runs ops/tooling/env-backup.sh after nano.
+# When <alias>_repo is set, rnano soft-runs dssh_env_backup_relpath after nano.
 
 # LOCAL stop only. On live, `dssh stop` refuses unless --hard; use
 # `dssh backend stop` for one service.
 dssh_stop_local="ids=\$(docker ps -aq --filter label=dssh.image); if [[ -n \"\$ids\" ]]; then docker rm -f \$ids; fi; docker compose --profile dashboards stop postgres redis opensearch opensearch-dashboards; echo 'Stopped dssh app containers and compose infra services.'"
 dssh_mailtest_local="\"$script_dir/dssh\" backend mailtest"
+dssh_publish_local="./ops/deploy/live.sh"
+dssh_env_backup_relpath=ops/tooling/env-backup.sh
 dssh_rlog_containers=backend,frontend,proxy,cdn
+dssh_rlog_dir=./ops/diagnostics
 
 # Nest API — container name matches docker-compose.prod.yml (portfolio-api)
 backend=./apps/api
+backend_aliases=api
+backend_service=api
 backend_image=portfolio-api
 backend_name=portfolio-api
 backend_start_local="docker ps -q --filter ancestor=portfolio-api | xargs -r docker rm -f >/dev/null 2>&1 || true; docker compose --profile dashboards up -d postgres redis opensearch opensearch-dashboards"
@@ -67,6 +92,8 @@ backend_mailtest_attach=0
 
 # Next.js app — portfolio-web
 frontend=./apps/web
+frontend_aliases=web
+frontend_service=web
 frontend_image=portfolio-web
 frontend_name=portfolio-web
 frontend_start="npm run dev -w apps/web"
@@ -74,6 +101,8 @@ frontend_start_detached=1
 
 # Local TLS + nginx. Live compose service is nginx → portfolio-proxy.
 proxy=./ops/nginx
+proxy_aliases=nginx
+proxy_service=nginx
 proxy_image=portfolio-proxy
 proxy_name=portfolio-proxy
 proxy_context=./ops/nginx
@@ -88,6 +117,7 @@ proxy_start_detached=1
 # Live: TLS on nginx (cdn.austenstrine.dev); :8088 stays internal. CloudFront
 # optional later; for now self-host on the EC2 box.
 cdn=./ops/cdn
+cdn_service=cdn
 cdn_image=portfolio-cdn
 cdn_name=portfolio-cdn
 cdn_context=./ops/cdn
