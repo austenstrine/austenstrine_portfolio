@@ -1,101 +1,68 @@
 #!/usr/bin/env bash
-# Encrypted .env snapshots to Google Drive via restic+rclone.
-# Drive only ever sees ciphertext.
+# Portfolio thin wrapper → austenstrine/linux-gdrive-dotenv-backup-recovery.
+# Sets ENV_BACKUP_FILES for this monorepo, then execs the extracted CLI.
 #
-# Same behavior on laptop and EC2: hashes the listed .env files,
-# skips when unchanged, otherwise restic backup + retention prune.
+# Install the tool (pick one):
+#   git clone https://github.com/austenstrine/linux-gdrive-dotenv-backup-recovery.git \
+#     ~/src/linux-gdrive-dotenv-backup-recovery
+#   ln -sf ~/src/linux-gdrive-dotenv-backup-recovery/env-backup.sh ~/bin/env-backup.sh
+# Or set ENV_BACKUP_HOME / ENV_BACKUP_SH.
 #
-# Usage:
-#   ops/tooling/env-backup.sh [backup|snapshots|restore [target]]
-#
-# Config (env overrides):
-#   RESTIC_REPOSITORY   default rclone:gdrive:env-restic
-#   RESTIC_PASSWORD_FILE  default ~/.config/env-backup/restic.pass
-#   ENV_BACKUP_FILES    space-separated absolute paths (optional)
-#                       default: <repo>/.env and <repo>/apps/api/.env
+# Full docs: that repo's README.md (and docs/tooling/env-backup.md here).
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
-REPO="${RESTIC_REPOSITORY:-rclone:gdrive:env-restic}"
-PASS="${RESTIC_PASSWORD_FILE:-$HOME/.config/env-backup/restic.pass}"
-STATE_DIR="${ENV_BACKUP_STATE_DIR:-$HOME/.config/env-backup}"
-HASH_FILE="$STATE_DIR/last-hash"
 
-export RESTIC_REPOSITORY="$REPO"
-export RESTIC_PASSWORD_FILE="$PASS"
-export RCLONE_TPSLIMIT="${RCLONE_TPSLIMIT:-8}"
-export RCLONE_RETRIES="${RCLONE_RETRIES:-10}"
-
-if [[ -n "${ENV_BACKUP_FILES-}" ]]; then
-	# shellcheck disable=SC2206
-	FILES=($ENV_BACKUP_FILES)
-else
-	FILES=(
-		"$ROOT/.env"
-		"$ROOT/apps/api/.env"
+resolve_env_backup_sh() {
+	if [[ -n "${ENV_BACKUP_SH-}" && -f "$ENV_BACKUP_SH" ]]; then
+		printf '%s\n' "$ENV_BACKUP_SH"
+		return 0
+	fi
+	local home candidates c
+	home="${ENV_BACKUP_HOME-}"
+	candidates=()
+	if [[ -n "$home" ]]; then
+		candidates+=("$home/env-backup.sh")
+	fi
+	candidates+=(
+		"$HOME/src/linux-gdrive-dotenv-backup-recovery/env-backup.sh"
+		"$HOME/linux-gdrive-dotenv-backup-recovery/env-backup.sh"
+		"$ROOT/../linux-gdrive-dotenv-backup-recovery/env-backup.sh"
+		"/opt/linux-gdrive-dotenv-backup-recovery/env-backup.sh"
+		"$HOME/bin/env-backup.sh"
 	)
-fi
-
-if [[ ! -f "$PASS" ]]; then
-	echo "Missing restic password file: $PASS" >&2
-	echo "See docs/tooling/env-backup.md" >&2
-	exit 1
-fi
-
-files_hash() {
-	local f
-	for f in "${FILES[@]}"; do
-		if [[ -f "$f" ]]; then
-			printf '%s ' "$f"
-			sha256sum -- "$f"
-		else
-			printf '%s MISSING\n' "$f"
+	for c in "${candidates[@]}"; do
+		if [[ -f "$c" ]]; then
+			printf '%s\n' "$c"
+			return 0
 		fi
 	done
+	return 1
 }
 
-cmd="${1:-backup}"
+TOOL_SH="$(resolve_env_backup_sh)" || {
+	echo "env-backup: linux-gdrive-dotenv-backup-recovery not found." >&2
+	echo "  Clone it and set ENV_BACKUP_HOME, or symlink env-backup.sh to ~/bin/." >&2
+	echo "  See docs/tooling/env-backup.md" >&2
+	exit 1
+}
 
-case "$cmd" in
-	backup)
-		mkdir -p "$STATE_DIR"
-		chmod 700 "$STATE_DIR"
-		current="$(files_hash)"
-		if [[ -f "$HASH_FILE" ]] && [[ "$current" == "$(cat "$HASH_FILE")" ]]; then
-			echo "No .env changes since last backup; skipping."
-			exit 0
-		fi
-		existing=()
-		for f in "${FILES[@]}"; do
-			if [[ -f "$f" ]]; then
-				existing+=("$f")
-			else
-				echo "skip missing: $f" >&2
-			fi
-		done
-		if [[ ${#existing[@]} -eq 0 ]]; then
-			echo "No .env files to back up." >&2
-			exit 1
-		fi
-		restic backup -- "${existing[@]}"
-		printf '%s' "$current" > "$HASH_FILE"
-		chmod 600 "$HASH_FILE"
-		if ! restic forget --keep-daily 14 --keep-weekly 8 --keep-monthly 12 --prune; then
-			echo "prune skipped (Drive busy or rate-limited); snapshots are still saved." >&2
-		fi
-		echo "Backup finished."
-		;;
-	snapshots)
-		restic snapshots
-		;;
-	restore)
-		target="${2:-$HOME/recovered-env}"
-		mkdir -p "$target"
-		restic restore latest --target "$target"
-		echo "Restored latest snapshot under $target"
-		;;
-	*)
-		echo "Usage: $0 [backup|snapshots|restore [target]]" >&2
+# Avoid infinite recursion if ~/bin/env-backup.sh points back here.
+if [[ "$(cd "$(dirname "$TOOL_SH")" && pwd)/$(basename "$TOOL_SH")" == \
+	"$(cd "$(dirname "$0")" && pwd)/$(basename "$0")" ]]; then
+	echo "env-backup: ENV_BACKUP_SH resolves to this wrapper; point at the tool checkout." >&2
+	exit 1
+fi
+# If TOOL_SH is a symlink into this wrapper, follow once and re-check.
+if [[ -L "$TOOL_SH" ]]; then
+	real="$(readlink -f "$TOOL_SH" 2>/dev/null || readlink "$TOOL_SH")"
+	if [[ -n "$real" && "$(cd "$(dirname "$real")" && pwd)/$(basename "$real")" == \
+		"$(cd "$(dirname "$0")" && pwd)/$(basename "$0")" ]]; then
+		echo "env-backup: ~/bin (or ENV_BACKUP_SH) symlink loops to portfolio wrapper." >&2
+		echo "  Symlink to the tool repo's env-backup.sh instead." >&2
 		exit 1
-		;;
-esac
+	fi
+fi
+
+export ENV_BACKUP_FILES="${ENV_BACKUP_FILES:-$ROOT/.env $ROOT/apps/api/.env}"
+exec bash "$TOOL_SH" "$@"

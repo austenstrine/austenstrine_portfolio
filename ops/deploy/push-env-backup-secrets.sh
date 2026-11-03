@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 # Copy restic password + rclone config from this machine onto a live host
-# so ops/tooling/env-backup.sh can run there (same shared Drive repo).
+# so the extracted env-backup CLI (via ops/tooling/env-backup.sh wrapper /
+# ensure-env-backup.sh) can run there (same shared Drive repo).
+#
+# The live host still needs linux-gdrive-dotenv-backup-recovery cloned or
+# ENV_BACKUP_HOME set — this script only pushes secrets, not the tool.
 #
 # Usage:
 #   ./ops/deploy/push-env-backup-secrets.sh [user@host]

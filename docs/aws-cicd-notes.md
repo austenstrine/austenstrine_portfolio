@@ -23,7 +23,8 @@ Deploy-on-box, not ECR/Fargate. Images build on the instance.
 - **CDN origin:** `docker-compose.prod.yml` bind-mounts `./ops/cdn/data/origin`
   into both `cdn` and `api` so seed stock downloads land where the CDN serves.
   No `docker cp`. After API seed, `live.sh` prewarms stock variants.
-- **.env backup:** `ensure-env-backup.sh` installs restic/rclone + timer; one-time
+- **.env backup:** CLI from `linux-gdrive-dotenv-backup-recovery` (clone on the
+  box); `ensure-env-backup.sh` installs restic/rclone + timer; one-time
   `push-env-backup-secrets.sh` from the laptop copies pass + rclone config.
 - **CI:** `.github/workflows/deploy.yml` SSHs to the box, `git reset`, then
   runs `live.sh` there (native x86_64 build). No buildx / multi-arch push needed.
