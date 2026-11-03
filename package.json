@@ -4,14 +4,13 @@
   "version": "0.1.0",
   "workspaces": [
     "apps/api",
-    "apps/web",
-    "packages/prisma-seed-migration-sync"
+    "apps/web"
   ],
   "scripts": {
     "dev": "npm run dev -w apps/api & npm run dev -w apps/web",
     "dev:api": "npm run dev -w apps/api",
     "dev:web": "npm run dev -w apps/web",
-    "prepare:api-types": "npm run build -w prisma-seed-migration-sync && npm run prisma:generate -w apps/api",
+    "prepare:api-types": "npm run prisma:generate -w apps/api",
     "build": "npm run prepare:api-types && npm run build -w apps/api && npm run build -w apps/web",
     "lint": "npm run prepare:api-types && npm run lint -w apps/api && npm run lint -w apps/web",
     "test": "npm run prepare:api-types && npm run test -w apps/api"
