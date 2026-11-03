@@ -27,12 +27,14 @@ Global actions:
   logs rlog follow the resource logger snapshot (latest.txt)
   rlog      toggle the host resource logger (survives container restarts)
   rlog on|off|status
+  publish   deploy/update the live stack (compose prod overlay); starts rlog if off
   gpu-setup install NVIDIA Container Toolkit so dssh can pass --gpus all
   help      show this help
 
 Examples:
   ./dssh stop
   ./dssh status
+  ./dssh publish
   ./dssh logs backend
   ./dssh backend build
   ./dssh backend start
@@ -82,6 +84,10 @@ Optional global overrides:
   dssh_stop_local="..."
   dssh_status_local="..."
   dssh_logs_local="..."
+  dssh_publish_local="..."
+      default publish runs ops/deploy/live.sh on this host (same path CI
+      runs after SSH to the box). Override for a custom remote SSH command;
+      start rlog on the host that actually runs the stack.
 
 Resource logger (.dsshrc):
   dssh_rlog_containers=backend,frontend,proxy
@@ -647,6 +653,19 @@ run_global_action() {
     override_cmd="${!action_var-}"
   fi
 
+  # Live publish: always ensure rlog is on, then run live.sh (or override).
+  if [[ "$action_name" == "publish" ]]; then
+    shift
+    if rlog_is_running >/dev/null; then
+      rlog_status
+    else
+      rlog_start
+    fi
+    local publish_cmd="${override_cmd:-$script_dir/ops/deploy/live.sh}"
+    run_local_shell "$(append_cli_args "$publish_cmd" "$@")"
+    return 0
+  fi
+
   if [[ -n "$override_cmd" ]]; then
     shift
     if [[ "$action_name" == "stop" ]]; then
@@ -748,7 +767,7 @@ if [[ "$1" == "help" || "$1" == "-h" || "$1" == "--help" ]]; then
 fi
 
 run_as_global=0
-if [[ "$1" == "stop" || "$1" == "status" || "$1" == "logs" || "$1" == "rlog" || "$1" == "gpu-setup" ]]; then
+if [[ "$1" == "stop" || "$1" == "status" || "$1" == "logs" || "$1" == "rlog" || "$1" == "publish" || "$1" == "gpu-setup" ]]; then
   run_as_global=1
 elif bash_ident "$1"; then
   global_action_var="dssh_${1}_local"

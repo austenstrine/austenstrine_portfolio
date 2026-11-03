@@ -10,5 +10,12 @@ COPY apps/api/package.json ./apps/api/
 COPY packages/prisma-seed-migration-sync/package.json ./packages/prisma-seed-migration-sync/
 RUN npm ci
 COPY . .
+# NEXT_PUBLIC_* is inlined at build time. Pass via compose build.args / --build-arg.
+ARG NEXT_PUBLIC_API_BASE_URL=http://localhost:4000/api
+ARG NEXT_PUBLIC_CDN_URL=https://cdn.local.austenstrine.dev
+ARG NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=
+ENV NEXT_PUBLIC_API_BASE_URL=$NEXT_PUBLIC_API_BASE_URL \
+	NEXT_PUBLIC_CDN_URL=$NEXT_PUBLIC_CDN_URL \
+	NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=$NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
 RUN npm run build -w apps/web
 CMD ["npm", "run", "start", "-w", "apps/web"]

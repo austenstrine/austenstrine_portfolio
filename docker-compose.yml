@@ -37,9 +37,12 @@ services:
     volumes:
       - opensearch_data:/usr/share/opensearch/data
 
+  # Local-only. Prod must not enable this profile (keeps ~230MB off the 8GB box).
   opensearch-dashboards:
     image: opensearchproject/opensearch-dashboards:2.15.0
     container_name: portfolio-opensearch-dashboards
+    profiles:
+      - dashboards
     depends_on:
       - opensearch
     ports:

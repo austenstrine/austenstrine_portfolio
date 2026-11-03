@@ -462,11 +462,11 @@ export function CatalogHeader() {
 										<a
 											className="
 												rounded-full
-												bg-ink
+												bg-asgreen
 												px-3.5
 												py-2
 												text-white
-												hover:bg-sky
+												hover:bg-asgreen/90
 											"
 											href="/auth/login"
 										>

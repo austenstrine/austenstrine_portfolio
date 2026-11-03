@@ -1,0 +1,86 @@
+# Lightsail / single-box live stack.
+# Usage: docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+# Do not pass --profile dashboards. OpenSearch Dashboards stay off in prod.
+
+services:
+  postgres:
+    restart: unless-stopped
+    ports: !override []
+
+  redis:
+    restart: unless-stopped
+    ports: !override []
+
+  opensearch:
+    restart: unless-stopped
+    environment:
+      discovery.type: single-node
+      # ~1g heap; leave headroom on the 8GB box for Next/Nest/Postgres/Redis/nginx.
+      OPENSEARCH_JAVA_OPTS: ${OPENSEARCH_JAVA_OPTS:--Xms1g -Xmx1g}
+      OPENSEARCH_INITIAL_ADMIN_PASSWORD: ${OPENSEARCH_PASSWORD}
+    ports: !override []
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    image: portfolio-api:latest
+    container_name: portfolio-api
+    restart: unless-stopped
+    depends_on:
+      - postgres
+      - redis
+      - opensearch
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+      PORT: 4000
+      DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:postgres@postgres:5432/portfolio}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+      OPENSEARCH_NODE: ${OPENSEARCH_NODE:-https://opensearch:9200}
+      OPENSEARCH_USERNAME: ${OPENSEARCH_USERNAME:-admin}
+      OPENSEARCH_PASSWORD: ${OPENSEARCH_PASSWORD}
+      OPENSEARCH_TLS_REJECT_UNAUTHORIZED: ${OPENSEARCH_TLS_REJECT_UNAUTHORIZED:-false}
+    expose:
+      - "4000"
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      args:
+        NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-https://austenstrine.dev/api}
+        NEXT_PUBLIC_CDN_URL: ${NEXT_PUBLIC_CDN_URL:-https://cdn.austenstrine.dev}
+        NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY:-}
+    image: portfolio-web:latest
+    container_name: portfolio-web
+    restart: unless-stopped
+    depends_on:
+      - api
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+      API_INTERNAL_BASE_URL: ${API_INTERNAL_BASE_URL:-http://api:4000/api}
+      CDN_PUBLIC_URL: ${CDN_PUBLIC_URL:-https://cdn.austenstrine.dev}
+    expose:
+      - "3000"
+
+  nginx:
+    build:
+      context: ./ops/nginx
+      dockerfile: Dockerfile
+    image: portfolio-proxy:latest
+    container_name: portfolio-proxy
+    restart: unless-stopped
+    depends_on:
+      - web
+      - api
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./ops/nginx/nginx.prod.conf:/etc/nginx/nginx.conf:ro
+      - ${TLS_CERTS_DIR:-/etc/nginx/certs}:/etc/nginx/certs:ro
+    command: ["nginx", "-c", "/etc/nginx/nginx.conf", "-g", "daemon off;"]

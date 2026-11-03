@@ -92,7 +92,7 @@ export function CatalogMenuSurface({
 				p-2
 				shadow-lg
 			"
-			ref={panelRef}
+			ref={panelRef as RefObject<HTMLDivElement>}
 			role="menu"
 			style={{
 				left: panelBox.left,

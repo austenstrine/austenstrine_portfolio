@@ -12,6 +12,8 @@ const ALLOWED_TYPES = new Map([
 
 const MAX_BYTES = 8 * 1024 * 1024;
 
+const LOCAL_DEV_CDN_TOKEN = 'local-cdn-dev';
+
 @Injectable()
 export class CdnMediaService {
 	private readonly internalUrl = (process.env.CDN_INTERNAL_URL ?? 'http://127.0.0.1:8088').replace(/\/$/, '');
@@ -29,6 +31,14 @@ export class CdnMediaService {
 		const path = `/media/${folder}/${randomUUID()}.${ext}`;
 		if(!this.token) {
 			throw new ServiceUnavailableException('CDN_TOKEN is not configured.');
+		}
+		if(
+			process.env.NODE_ENV === 'production'
+			&& this.token === LOCAL_DEV_CDN_TOKEN
+		) {
+			throw new ServiceUnavailableException(
+				'CDN_TOKEN must be a strong random value in production.',
+			);
 		}
 
 		let response: Response;

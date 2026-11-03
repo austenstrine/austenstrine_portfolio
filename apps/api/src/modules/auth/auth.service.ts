@@ -20,6 +20,7 @@ import type {
 	PendingLoginTokenPayload,
 } from './interfaces/jwt-payload.interface';
 import { SecurityService } from './security/security.service';
+import { SUPERVENDOR_ADMIN_EMAIL } from '../catalog/ensure-supervendor';
 
 const ACCESS_TOKEN_TTL_SECONDS = 7 * 24 * 60 * 60;
 const PENDING_TOKEN_TTL_SECONDS = 10 * 60;
@@ -62,6 +63,12 @@ export class AuthService {
 
 	async register(dto: RegisterDto): Promise<{ message: string }> {
 		const email = this.security.normalizeEmail(dto.email);
+
+		// Reserved for supervendor bootstrap — never creatable via public signup.
+		if(email === this.security.normalizeEmail(SUPERVENDOR_ADMIN_EMAIL)) {
+			return { message: GENERIC_REGISTER_MESSAGE };
+		}
+
 		const existing = await this.prisma.user.findUnique({ where: { email } });
 
 		if(existing?.emailVerifiedAt) {
@@ -250,6 +257,7 @@ export class AuthService {
 
 	async findOrCreateGoogleUser(googleId: string, rawEmail: string): Promise<User> {
 		const email = this.security.normalizeEmail(rawEmail);
+		const reservedAdmin = this.security.normalizeEmail(SUPERVENDOR_ADMIN_EMAIL);
 		const existingByGoogleId = await this.prisma.user.findUnique({ where: { googleId } });
 
 		if(existingByGoogleId) {
@@ -267,6 +275,11 @@ export class AuthService {
 					emailVerifiedAt: existingByEmail.emailVerifiedAt ?? new Date(),
 				},
 			});
+		}
+
+		// Do not create the reserved supervendor admin via public OAuth signup.
+		if(email === reservedAdmin) {
+			throw new ForbiddenException('This email cannot be used to sign up.');
 		}
 
 		return this.prisma.user.create({

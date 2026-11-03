@@ -20,6 +20,9 @@
 #   dssh_stop_local=<host command>
 #   dssh_status_local=<host command>
 #   dssh_mailtest_local=<host command>
+#   dssh_publish_local=<host command>
+#     Default `dssh publish` runs ops/deploy/live.sh on this host and starts
+#     rlog if off. Set this only for a custom remote SSH publish wrapper.
 #
 # Resource logger (`dssh rlog`):
 #   dssh_rlog_containers=<comma-separated target aliases>
@@ -30,14 +33,15 @@
 #   dssh_rlog_archive_max=<max bytes for history.log + rotated/compressed archives>
 #   dssh_gpus=auto|off            (auto: --gpus all when NVIDIA Docker works)
 
-dssh_stop_local="ids=\$(docker ps -aq --filter label=dssh.image); if [[ -n \"\$ids\" ]]; then docker rm -f \$ids; fi; docker compose stop postgres redis opensearch opensearch-dashboards; echo 'Stopped dssh app containers and compose infra services.'"
+dssh_stop_local="ids=\$(docker ps -aq --filter label=dssh.image); if [[ -n \"\$ids\" ]]; then docker rm -f \$ids; fi; docker compose --profile dashboards stop postgres redis opensearch opensearch-dashboards; echo 'Stopped dssh app containers and compose infra services.'"
 dssh_mailtest_local="\"$script_dir/dssh\" backend mailtest"
 dssh_rlog_containers=backend,frontend,proxy,cdn
 
 # Nest API
 backend=./apps/api
 backend_image=portfolio-api
-backend_start_local="docker ps -q --filter ancestor=portfolio-api | xargs -r docker rm -f >/dev/null 2>&1 || true; docker compose up -d postgres redis opensearch opensearch-dashboards"
+backend_name=portfolio-api
+backend_start_local="docker ps -q --filter ancestor=portfolio-api | xargs -r docker rm -f >/dev/null 2>&1 || true; docker compose --profile dashboards up -d postgres redis opensearch opensearch-dashboards"
 backend_start="npm run build -w prisma-seed-migration-sync && npm run prisma:generate -w apps/api && npm run dev -w apps/api"
 backend_start_detached=1
 backend_migrate_local="docker compose up -d postgres"
@@ -50,12 +54,14 @@ backend_mailtest_attach=0
 # Next.js app
 frontend=./apps/web
 frontend_image=portfolio-web
+frontend_name=portfolio-web
 frontend_start="npm run dev -w apps/web"
 frontend_start_detached=1
 
 # Local TLS + nginx. The directory has the image; init-local-tls.sh runs on the host before nginx starts.
 proxy=./ops/nginx
 proxy_image=portfolio-proxy
+proxy_name=portfolio-proxy
 proxy_context=./ops/nginx
 # nginx binds 80/443, which needs root in this image.
 proxy_user=root

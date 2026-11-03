@@ -4,6 +4,7 @@ import { CatalogHeader } from '../../components/catalog/CatalogHeader';
 import { CatalogSearchProvider } from '../../components/catalog/CatalogSearchContext';
 import { JumpToTop } from '../../components/catalog/JumpToTop';
 import { MarketplaceFooter } from '../../components/catalog/MarketplaceFooter';
+import { PardonOurDustBanner } from '../../components/catalog/PardonOurDustBanner';
 
 export const metadata: Metadata = {
 	title: 'Place et Marque',
@@ -23,6 +24,7 @@ export default function PlaceEtMarqueLayout({ children }: { children: ReactNode 
 			"
 		>
 			<CatalogSearchProvider>
+				<PardonOurDustBanner />
 				<CatalogHeader />
 				<main
 					className="

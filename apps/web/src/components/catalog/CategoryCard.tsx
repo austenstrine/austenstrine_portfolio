@@ -173,6 +173,7 @@ function NestedThumbs({
 					absolute
 					right-3
 					top-1/2
+					isolate
 					flex
 					-translate-y-1/2
 					flex-col
@@ -185,7 +186,7 @@ function NestedThumbs({
 								index === 0
 									? `
 										relative
-										z-30
+										z-[3]
 										h-14
 										w-12
 										overflow-hidden
@@ -198,7 +199,7 @@ function NestedThumbs({
 									: index === 1
 										? `
 											relative
-											z-20
+											z-[2]
 											-mt-4
 											ml-3
 											h-14
@@ -212,7 +213,7 @@ function NestedThumbs({
 										`
 										: `
 											relative
-											z-10
+											z-[1]
 											-mt-4
 											h-14
 											w-12
@@ -252,6 +253,7 @@ function NestedThumbs({
 				absolute
 				bottom-4
 				right-4
+				isolate
 				flex
 				items-end
 			"
@@ -263,7 +265,7 @@ function NestedThumbs({
 							index === 0
 								? `
 									relative
-									z-30
+									z-[3]
 									h-14
 									w-14
 									-rotate-6
@@ -277,7 +279,7 @@ function NestedThumbs({
 								: index === 1
 									? `
 										relative
-										z-20
+										z-[2]
 										-ml-4
 										h-14
 										w-14
@@ -291,7 +293,7 @@ function NestedThumbs({
 									`
 									: `
 										relative
-										z-10
+										z-[1]
 										-ml-4
 										h-14
 										w-14

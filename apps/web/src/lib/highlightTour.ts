@@ -13,6 +13,45 @@ export type HighlightFeature = {
 	notes: string[];
 };
 
+export function resolveHighlightTarget(selector: string): HTMLElement | null {
+	if(typeof document === 'undefined' || !selector) {
+		return null;
+	}
+
+	try {
+		return document.querySelector<HTMLElement>(selector);
+	}
+	catch {
+		return null;
+	}
+}
+
+export function focusHighlightTarget(selector: string): boolean {
+	const target = resolveHighlightTarget(selector);
+	if(!target) {
+		return false;
+	}
+
+	target.scrollIntoView({
+		behavior: 'smooth',
+		block: 'center',
+	});
+	target.classList.remove('tour-target-active');
+	void target.offsetWidth;
+	target.classList.add('tour-target-active');
+	window.setTimeout(() => {
+		target.classList.remove('tour-target-active');
+	}, 1600);
+	return true;
+}
+
+export function focusHighlightFeature(feature: HighlightFeature | undefined): boolean {
+	if(!feature?.targetSelector) {
+		return false;
+	}
+	return focusHighlightTarget(feature.targetSelector);
+}
+
 export const features: HighlightFeature[] = [
 	{
 		id: 'contact-ux',
@@ -90,3 +129,7 @@ export const features: HighlightFeature[] = [
 		],
 	},
 ];
+
+export function findHighlightFeature(featureId: string): HighlightFeature | undefined {
+	return features.find((row) => row.id === featureId);
+}

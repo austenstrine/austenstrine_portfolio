@@ -9,7 +9,11 @@ import (
 
 func main() {
 	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}))
-	cfg := loadConfig()
+	cfg, err := loadConfig()
+	if err != nil {
+		log.Error("config", "err", err)
+		os.Exit(1)
+	}
 	if err := ensureDirs(cfg.OriginDir, cfg.CacheDir); err != nil {
 		log.Error("mkdir", "err", err)
 		os.Exit(1)

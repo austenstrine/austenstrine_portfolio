@@ -1,6 +1,7 @@
 import { join } from 'path';
 import { PrismaClient } from '@prisma/client';
 import { applySeedDataIfNeeded } from 'prisma-seed-migration-sync';
+import '../src/load-env';
 import { alignJsonSeedAttributes } from '../src/modules/catalog/align-json-seed-attributes';
 import { seedGlobalUoms } from '../src/modules/catalog/seed-global-uoms';
 import { cdnOriginDir, ensureStockImages } from './catalog-stock-images';

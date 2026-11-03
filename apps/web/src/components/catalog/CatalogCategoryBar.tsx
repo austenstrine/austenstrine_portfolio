@@ -214,14 +214,7 @@ export function CatalogCategoryBar({
 						{allCategoryLabel(current.name)}
 					</CategoryChip>
 				)
-				: (
-					<CategoryChip
-						active={!category}
-						onClick={() => onChoose('')}
-					>
-						All
-					</CategoryChip>
-				)
+				: null
 			}
 			{rows.map((row) => (
 				<CategoryChip

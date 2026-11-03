@@ -5,6 +5,8 @@ import { useEffect, useMemo, useState } from 'react';
 import type { CurrentHighlightBody } from './CurrentHighlightCard';
 import { CurrentHighlightCard } from './CurrentHighlightCard';
 import {
+	findHighlightFeature,
+	focusHighlightFeature,
 	highlightTourActivateEvent,
 	highlightTourClearEvent,
 } from '../../lib/highlightTour';
@@ -33,14 +35,16 @@ export function HighlightSectionWrapper({
 
 	useEffect(() => {
 		const onActivate = (event: Event) => {
-			const customEvent = event as CustomEvent<{ featureId: string }>;
-			const nextFeatureId = customEvent.detail.featureId;
+			const customEvent = event as CustomEvent<{ featureId?: string }>;
+			const nextFeatureId = customEvent.detail?.featureId;
 
-			setActiveFeatureId(
-				featureIds.includes(nextFeatureId)
-					? nextFeatureId
-					: null,
-			);
+			if(!nextFeatureId || !featureIds.includes(nextFeatureId)) {
+				setActiveFeatureId(null);
+				return;
+			}
+
+			setActiveFeatureId(nextFeatureId);
+			focusHighlightFeature(findHighlightFeature(nextFeatureId));
 		};
 
 		const onClear = () => {

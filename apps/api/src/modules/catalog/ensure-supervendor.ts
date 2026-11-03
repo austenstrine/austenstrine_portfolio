@@ -56,6 +56,8 @@ export async function ensureSupervendor(
 		data: { isSuperVendor: false },
 	});
 
+	const passwordHashFromEnv = readSupervendorPasswordHashFromEnv();
+
 	let user = await prisma.user.findUnique({
 		where: { email: seed.admin.email },
 	});
@@ -65,13 +67,35 @@ export async function ensureSupervendor(
 			data: {
 				email: seed.admin.email,
 				emailVerifiedAt: new Date(),
+				...(passwordHashFromEnv
+					? { passwordHash: passwordHashFromEnv }
+					: {}),
 			},
 		});
 	}
 	else if(!user.emailVerifiedAt) {
+		// Public signup can leave an unverified row with credentials. Never
+		// auto-verify that into OWNER — operator must clear it out of band.
+		if(user.passwordHash || user.googleId) {
+			throw new Error(
+				`Supervendor admin email ${seed.admin.email} is claimed by an `
+					+ 'unverified credentialed user; refusing to auto-verify or grant OWNER.',
+			);
+		}
 		user = await prisma.user.update({
 			where: { id: user.id },
-			data: { emailVerifiedAt: new Date() },
+			data: {
+				emailVerifiedAt: new Date(),
+				...(passwordHashFromEnv
+					? { passwordHash: passwordHashFromEnv }
+					: {}),
+			},
+		});
+	}
+	else if(!user.passwordHash && passwordHashFromEnv) {
+		user = await prisma.user.update({
+			where: { id: user.id },
+			data: { passwordHash: passwordHashFromEnv },
 		});
 	}
 
@@ -91,6 +115,14 @@ export async function ensureSupervendor(
 			role: VendorMemberRole.OWNER,
 		},
 	});
+}
+
+function readSupervendorPasswordHashFromEnv(): string | undefined {
+	const raw = process.env.SUPERVENDOR_PASSWORD_HASH?.trim();
+	if(!raw) {
+		return undefined;
+	}
+	return raw;
 }
 
 function defaultSeedDir(): string {
