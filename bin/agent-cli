@@ -1,0 +1,483 @@
+#!/usr/bin/env bash
+# Agent orientation CLI for austenstrine_portfolio.
+# Prefer this over re-reading package.json / .dsshrc / compose / helper paths.
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$ROOT"
+
+JSON=0
+CMD=""
+
+usage() {
+  cat <<'EOF'
+Usage: ./bin/agent-cli [<command>] [--json] [--help]
+
+Commands (default: orient):
+  orient    High-value map (~one command to start). Alias: default / no args.
+  layout    Monorepo paths that matter.
+  scripts   Root + workspace npm scripts.
+  env       .env locations, examples, backup pointers.
+  docker    Compose services + dssh/.dsshrc pointers (alias: dssh).
+  seed      Prisma schema/seed/seed-sync paths + commands.
+  helpers   Sibling tool-repo consumption status (detected from this tree).
+
+Flags:
+  --json    Machine-readable object (where implemented).
+  -h, --help
+
+Same-VM note: edit via git worktree; do not mutate /agent/repos/* in place.
+Portfolio default branch: master. Sibling remotes: check git ls-remote (often master).
+EOF
+}
+
+die() { echo "agent-cli: $*" >&2; exit 1; }
+
+# --- arg parse ---
+args=()
+for a in "$@"; do
+  case "$a" in
+    --json) JSON=1 ;;
+    -h|--help|help) usage; exit 0 ;;
+    -*) die "unknown flag: $a (try --help)" ;;
+    *) args+=("$a") ;;
+  esac
+done
+if ((${#args[@]} == 0)); then
+  CMD=orient
+else
+  CMD="${args[0]}"
+  if ((${#args[@]} > 1)); then
+    die "unexpected args after command: ${args[*]:1}"
+  fi
+fi
+case "$CMD" in
+  orient|default|"") CMD=orient ;;
+  layout|scripts|env|seed|helpers) ;;
+  docker|dssh) CMD=docker ;;
+  *) die "unknown command: $CMD (try --help)" ;;
+esac
+
+have() { command -v "$1" >/dev/null 2>&1; }
+
+node_json() {
+  # stdin: JS expression using `root` string; prints JSON
+  local expr="$1"
+  node -e '
+const fs = require("fs");
+const path = require("path");
+const root = process.argv[1];
+const expr = process.argv[2];
+const readJson = (p) => JSON.parse(fs.readFileSync(path.join(root, p), "utf8"));
+const exists = (p) => fs.existsSync(path.join(root, p));
+const readText = (p) => fs.readFileSync(path.join(root, p), "utf8");
+const out = (0, eval)(expr);
+process.stdout.write(typeof out === "string" ? out : JSON.stringify(out, null, 2));
+process.stdout.write("\n");
+' "$ROOT" "$expr"
+}
+
+parse_compose_services() {
+  local file="$1"
+  [[ -f "$file" ]] || return 0
+  # Strip CR (compose files may be CRLF) before awk field split.
+  tr -d '\r' <"$file" | awk '
+    $0 ~ /^services:/ { in_s=1; next }
+    in_s && $0 ~ /^[^[:space:]#]/ { exit }
+    in_s && $0 ~ /^  [a-zA-Z0-9_-]+:[[:space:]]*$/ {
+      name=$1; sub(/:$/, "", name); print name
+    }
+  '
+}
+
+dssh_targets() {
+  [[ -f .dsshrc ]] || return 0
+  # Targets are underscore-free keys pointing at an app dir (./path).
+  # Keys with _ are overrides (backend_start, proxy_context, …).
+  awk -F= '
+    /^[[:space:]]*#/ { next }
+    /^[[:space:]]*$/ { next }
+    $1 ~ /^[a-zA-Z][a-zA-Z0-9]*$/ && $2 ~ /^["'\'']?\.\// { print $1 }
+  ' .dsshrc
+}
+
+dssh_mode_line() {
+  if [[ -n "${DSSH_MODE:-}" ]]; then
+    echo "env DSSH_MODE=$DSSH_MODE"
+    return
+  fi
+  if [[ -f .dsshrc ]] && grep -Eq '^[[:space:]]*dssh_mode=' .dsshrc; then
+    grep -E '^[[:space:]]*dssh_mode=' .dsshrc | head -1 | sed 's/^[[:space:]]*//'
+  else
+    echo "dssh_mode unset (tool default: auto)"
+  fi
+}
+
+helper_status_text() {
+  local seed_dep seed_pkg dssh_kind env_kind cdn_kind
+  seed_dep="$(node -e 'const p=require("./apps/api/package.json"); console.log((p.dependencies||{})["prisma-seed-migration-sync"]||"(missing)")' 2>/dev/null || echo "(no apps/api)")"
+  if [[ -d packages/prisma-seed-migration-sync ]]; then
+    seed_pkg="in-tree packages/prisma-seed-migration-sync"
+  else
+    seed_pkg="no in-tree package dir"
+  fi
+  if [[ -f dssh ]]; then
+    local lines
+    lines="$(wc -l < dssh | tr -d ' ')"
+    if grep -q 'developers-sugary-shell-helper\|DSSH_HOME\|exec .*dssh' dssh 2>/dev/null && [[ "$lines" -lt 80 ]]; then
+      dssh_kind="thin wrapper → developers-sugary-shell-helper ($lines lines)"
+    else
+      dssh_kind="vendored at ./dssh ($lines lines)"
+    fi
+  else
+    dssh_kind="missing ./dssh"
+  fi
+  if [[ -f ops/tooling/env-backup.sh ]]; then
+    if grep -q 'ENV_BACKUP_HOME\|linux-gdrive-dotenv-backup-recovery\|ENV_BACKUP_SH' ops/tooling/env-backup.sh 2>/dev/null; then
+      env_kind="portfolio wrapper → linux-gdrive-dotenv-backup-recovery"
+    else
+      env_kind="vendored ops/tooling/env-backup.sh (+ .service/.timer)"
+    fi
+  else
+    env_kind="ops/tooling/env-backup.sh missing"
+  fi
+  if [[ -d ops/cdn ]]; then
+    if [[ -f ops/cdn/ensure-source.sh ]]; then
+      cdn_kind="ops/cdn (clone-in-deploy / ensure-source.sh); golang-image-cdn may be blocked until GitHub repo exists"
+    elif [[ -f ops/cdn/go.mod ]] || [[ -d ops/cdn/cmd ]]; then
+      cdn_kind="ops/cdn (Go sources in-tree)"
+    else
+      cdn_kind="ops/cdn present"
+    fi
+  else
+    cdn_kind="ops/cdn missing"
+  fi
+  cat <<EOF
+prisma-seed-migration-sync:
+  apps/api dep: $seed_dep
+  package: $seed_pkg
+  sibling: https://github.com/austenstrine/prisma-seed-migration-sync (branch master)
+dssh / rlog:
+  $dssh_kind
+  config stays here: .dsshrc .dsshrc.example (.dsshrc.local gitignored)
+  sibling: https://github.com/austenstrine/developers-sugary-shell-helper (branch master)
+env-backup:
+  $env_kind
+  docs: docs/tooling/env-backup.md
+  sibling: https://github.com/austenstrine/linux-gdrive-dotenv-backup-recovery (branch master)
+cdn:
+  $cdn_kind
+  do not recreate golang-image-cdn if blocked on user creating the GitHub repo
+prisma-type-sync-generator:
+  not in this tree; reserved empty sibling https://github.com/austenstrine/prisma-type-sync-generator
+  build there, not under packages/ first
+EOF
+}
+
+cmd_layout() {
+  if [[ "$JSON" -eq 1 ]]; then
+    node_json '({
+      root,
+      apps: ["apps/api (NestJS+Prisma)", "apps/web (Next.js)"],
+      packages: exists("packages") ? fs.readdirSync(path.join(root,"packages")).filter(n=>!n.startsWith(".")) : [],
+      ops: exists("ops") ? fs.readdirSync(path.join(root,"ops")).filter(n=>!n.startsWith(".")) : [],
+      dssh: exists("dssh"),
+      dsshrc: exists(".dsshrc"),
+      compose: ["docker-compose.yml","docker-compose.prod.yml"].filter(exists),
+      docs: exists("docs") ? fs.readdirSync(path.join(root,"docs")).filter(n=>!n.startsWith(".")) : [],
+      agentCli: "bin/agent-cli"
+    })'
+    return
+  fi
+  cat <<EOF
+layout
+  apps/api          NestJS API, Prisma, seed, Swagger
+  apps/web          Next.js frontend
+  packages/*        workspace packages (if present)
+  ops/cdn           Go image CDN (local + live)
+  ops/deploy        live.sh, TLS, env-backup ensure/push
+  ops/docker        ensure-npm etc.
+  ops/nginx         local/live proxy
+  ops/tooling       env-backup.sh (+ systemd units)
+  ops/diagnostics   rlog (if still vendored)
+  dssh + .dsshrc    Docker/npm/live orchestrator + project map
+  docs/             architecture / tooling notes
+  bin/agent-cli     this CLI
+  docker-compose.yml (+ .prod.yml overlay on live)
+EOF
+  if [[ -d packages ]]; then
+    echo "packages/: $(ls -1 packages | tr '\n' ' ')"
+  fi
+}
+
+cmd_scripts() {
+  if [[ "$JSON" -eq 1 ]]; then
+    node_json '({
+      root: readJson("package.json").scripts || {},
+      workspaces: readJson("package.json").workspaces || [],
+      api: exists("apps/api/package.json") ? (readJson("apps/api/package.json").scripts || {}) : {},
+      web: exists("apps/web/package.json") ? (readJson("apps/web/package.json").scripts || {}) : {}
+    })'
+    return
+  fi
+  node -e '
+const fs=require("fs");
+const root=JSON.parse(fs.readFileSync("package.json","utf8"));
+const api=JSON.parse(fs.readFileSync("apps/api/package.json","utf8"));
+const web=JSON.parse(fs.readFileSync("apps/web/package.json","utf8"));
+const dump=(title,scripts)=>{
+  console.log(title);
+  for (const [k,v] of Object.entries(scripts||{})) console.log("  "+k+": "+v);
+};
+console.log("workspaces: "+JSON.stringify(root.workspaces||[]));
+dump("root", root.scripts);
+dump("apps/api", api.scripts);
+dump("apps/web", web.scripts);
+console.log("hints:");
+console.log("  npm ci");
+console.log("  npm run prepare:api-types   # before lint/test/build");
+console.log("  npm run dev:api | dev:web");
+console.log("  npm run prisma:migrate -w apps/api && npm run prisma:seed -w apps/api");
+console.log("  ./dssh status | ./dssh backend start | ./dssh publish  (live box)");
+'
+}
+
+cmd_env() {
+  if [[ "$JSON" -eq 1 ]]; then
+    node_json '({
+      examples: [".env.example","apps/api/.env.example"].filter(exists),
+      present: [".env","apps/api/.env","apps/web/.env"].filter(exists),
+      backup: {
+        script: exists("ops/tooling/env-backup.sh") ? "ops/tooling/env-backup.sh" : null,
+        docs: exists("docs/tooling/env-backup.md") ? "docs/tooling/env-backup.md" : null,
+        ensure: exists("ops/deploy/ensure-env-backup.sh") ? "ops/deploy/ensure-env-backup.sh" : null,
+        pushSecrets: exists("ops/deploy/push-env-backup-secrets.sh") ? "ops/deploy/push-env-backup-secrets.sh" : null
+      },
+      commonKeys: ["DATABASE_URL","REDIS_URL","OPENSEARCH_*","NEXT_PUBLIC_API_BASE_URL","API_INTERNAL_BASE_URL","CERTBOT_EMAIL","CDN_*"]
+    })'
+    return
+  fi
+  cat <<EOF
+env
+  copy: .env.example → .env (root shared); apps/api/.env.example when present
+  common keys: DATABASE_URL REDIS_URL OPENSEARCH_* PORT
+               NEXT_PUBLIC_API_BASE_URL API_INTERNAL_BASE_URL
+               CERTBOT_EMAIL (live TLS)  CDN-related as documented in .env.example
+  do not commit real .env / restic.pass / rclone.conf
+backup
+  ops/tooling/env-backup.sh          restic+rclone → GDrive (or wrapper to sibling tool)
+  docs/tooling/env-backup.md
+  ops/deploy/ensure-env-backup.sh    live host install
+  ops/deploy/push-env-backup-secrets.sh
+  dssh rnano <alias> may soft-run backup when <alias>_repo is set
+EOF
+  echo "present:"
+  for f in .env apps/api/.env apps/web/.env; do
+    if [[ -f "$f" ]]; then echo "  $f (exists, not printed)"; else echo "  $f (missing)"; fi
+  done
+}
+
+cmd_docker() {
+  local local_svcs prod_svcs targets mode
+  local_svcs="$(parse_compose_services docker-compose.yml | tr '\n' ' ')"
+  prod_svcs="$(parse_compose_services docker-compose.prod.yml | tr '\n' ' ')"
+  targets="$(dssh_targets | tr '\n' ' ')"
+  mode="$(dssh_mode_line)"
+  if [[ "$JSON" -eq 1 ]]; then
+    node -e '
+const {execSync}=require("child_process");
+const root=process.argv[1];
+const sh=(c)=>execSync(c,{cwd:root,encoding:"utf8"}).trim();
+const split=s=>s.split(/\s+/).filter(Boolean);
+const out={
+  mode: process.argv[2],
+  dssh: "./dssh",
+  dsshrc: ".dsshrc",
+  targets: split(process.argv[3]),
+  composeLocal: split(process.argv[4]),
+  composeProdOverlayServices: split(process.argv[5]),
+  livePublish: "ops/deploy/live.sh (via dssh publish when configured)",
+  endpoints: {
+    apiHealth: "http://localhost:4000/api/health",
+    swagger: "http://localhost:4000/api/docs",
+    web: "http://localhost:3000"
+  }
+};
+process.stdout.write(JSON.stringify(out,null,2)+"\n");
+' "$ROOT" "$mode" "$targets" "$local_svcs" "$prod_svcs"
+    return
+  fi
+  cat <<EOF
+docker / dssh
+  entry: ./dssh   config: .dsshrc (+ .dsshrc.local gitignored)
+  mode: $mode
+  targets: $targets
+  compose local services: $local_svcs
+  compose prod overlay adds/overrides: $prod_svcs
+  live container names typically portfolio-* (see .dsshrc *_name)
+  common:
+    docker compose up -d
+    ./dssh status | ./dssh backend start | ./dssh frontend start | ./dssh proxy start | ./dssh cdn start
+    ./dssh publish          # live: ops/deploy/live.sh
+    ./dssh migrate          # prisma migrate on api
+    ./dssh logs api|web|cdn|nginx|rlog
+  endpoints:
+    API health  http://localhost:4000/api/health
+    Swagger     http://localhost:4000/api/docs
+    Web         http://localhost:3000
+EOF
+}
+
+cmd_seed() {
+  if [[ "$JSON" -eq 1 ]]; then
+    node_json '({
+      schema: "apps/api/prisma/schema.prisma",
+      seedTs: "apps/api/prisma/seed.ts",
+      seedData: "apps/api/prisma/seed-data/",
+      seedSyncConfig: exists("apps/api/prisma/seed-data/seed-sync.config.json") ? "apps/api/prisma/seed-data/seed-sync.config.json" : null,
+      commands: {
+        generate: "npm run prisma:generate -w apps/api",
+        migrate: "npm run prisma:migrate -w apps/api",
+        seed: "npm run prisma:seed -w apps/api",
+        seedSync: "npm run seed-sync -w apps/api",
+        seedSyncDry: "npm run seed-sync:dry -w apps/api",
+        seedSyncValidate: "npm run seed-sync:validate -w apps/api",
+        prepareApiTypes: "npm run prepare:api-types"
+      },
+      packageDep: exists("apps/api/package.json") ? ((readJson("apps/api/package.json").dependencies||{})["prisma-seed-migration-sync"]||null) : null
+    })'
+    return
+  fi
+  local dep
+  dep="$(node -e 'console.log((require("./apps/api/package.json").dependencies||{})["prisma-seed-migration-sync"]||"(missing)")')"
+  cat <<EOF
+prisma / seed
+  schema     apps/api/prisma/schema.prisma
+  seed       apps/api/prisma/seed.ts
+  seed-data  apps/api/prisma/seed-data/*.json
+  seed-sync config: apps/api/prisma/seed-data/seed-sync.config.json
+  dep prisma-seed-migration-sync: $dep
+commands
+  npm run prepare:api-types
+  npm run prisma:generate -w apps/api
+  npm run prisma:migrate -w apps/api
+  npm run prisma:seed -w apps/api
+  npm run seed-sync -w apps/api
+  npm run seed-sync:dry -w apps/api
+  npm run seed-sync:validate -w apps/api
+  ./dssh migrate   # on live/local via dssh when configured
+EOF
+}
+
+cmd_helpers() {
+  if [[ "$JSON" -eq 1 ]]; then
+    node -e '
+const fs=require("fs"); const path=require("path");
+const root=process.argv[1];
+const exists=p=>fs.existsSync(path.join(root,p));
+const api=exists("apps/api/package.json")?JSON.parse(fs.readFileSync(path.join(root,"apps/api/package.json"),"utf8")):{};
+const dsshPath=path.join(root,"dssh");
+let dssh={present:exists("dssh")};
+if (dssh.present) {
+  const text=fs.readFileSync(dsshPath,"utf8");
+  const lines=text.split(/\n/).length;
+  dssh.lines=lines;
+  dssh.kind=(lines<80 && /developers-sugary-shell-helper|DSSH_HOME|exec .*dssh/.test(text)) ? "wrapper" : "vendored";
+}
+let envBackup={present:exists("ops/tooling/env-backup.sh")};
+if (envBackup.present) {
+  const t=fs.readFileSync(path.join(root,"ops/tooling/env-backup.sh"),"utf8");
+  envBackup.kind=/ENV_BACKUP_HOME|linux-gdrive-dotenv-backup-recovery|ENV_BACKUP_SH/.test(t) ? "wrapper" : "vendored";
+}
+const cdn={
+  present: exists("ops/cdn"),
+  ensureSource: exists("ops/cdn/ensure-source.sh"),
+  goMod: exists("ops/cdn/go.mod")
+};
+const out={
+  prismaSeedMigrationSync: {
+    dep: (api.dependencies||{})["prisma-seed-migration-sync"]||null,
+    inTreePackage: exists("packages/prisma-seed-migration-sync"),
+    sibling: "https://github.com/austenstrine/prisma-seed-migration-sync",
+    defaultBranch: "master"
+  },
+  dssh,
+  dsshSibling: "https://github.com/austenstrine/developers-sugary-shell-helper",
+  envBackup,
+  envBackupSibling: "https://github.com/austenstrine/linux-gdrive-dotenv-backup-recovery",
+  cdn,
+  golangImageCdnNote: "do not recreate; blocked until user creates GitHub repo",
+  prismaTypeSyncGenerator: {
+    inTree: false,
+    sibling: "https://github.com/austenstrine/prisma-type-sync-generator",
+    note: "scaffold in reserved repo, not packages/ first"
+  },
+  portfolioDefaultBranch: "master"
+};
+process.stdout.write(JSON.stringify(out,null,2)+"\n");
+' "$ROOT"
+    return
+  fi
+  helper_status_text
+}
+
+cmd_orient() {
+  if [[ "$JSON" -eq 1 ]]; then
+    # Compose a single object from the other commands.
+    node -e '
+const {execFileSync}=require("child_process");
+const root=process.argv[1];
+const bin=root+"/bin/agent-cli";
+const run=(cmd)=>JSON.parse(execFileSync(bin,[cmd,"--json"],{encoding:"utf8"}));
+const out={
+  project: "austenstrine_portfolio (Place et Marque marketplace demo)",
+  defaultBranch: "master",
+  rule: "Run ./bin/agent-cli orient first; prefer subcommands over re-reading files.",
+  sameVm: "git worktree add before edits; do not edit shared /agent/repos checkouts in place",
+  layout: run("layout"),
+  scripts: run("scripts"),
+  env: run("env"),
+  docker: run("docker"),
+  seed: run("seed"),
+  helpers: run("helpers")
+};
+process.stdout.write(JSON.stringify(out,null,2)+"\n");
+' "$ROOT"
+    return
+  fi
+  cat <<EOF
+orient — austenstrine_portfolio
+  NestJS API + Next.js web + Docker/dssh + Go CDN. Default branch: master.
+  Same-VM: git worktree before edits (do not mutate shared checkouts in place).
+  Prefer: ./bin/agent-cli <cmd> over re-reading files / guessing npm or dssh.
+
+EOF
+  cmd_layout
+  echo
+  cmd_scripts
+  echo
+  cmd_env
+  echo
+  cmd_docker
+  echo
+  cmd_seed
+  echo
+  echo "helpers (detected)"
+  helper_status_text | sed 's/^/  /'
+  cat <<'EOF'
+
+next
+  ./bin/agent-cli layout|scripts|env|docker|seed|helpers [--json]
+  sibling remotes: git ls-remote --symref origin HEAD  (do not trust local branch name alone)
+EOF
+}
+
+case "$CMD" in
+  orient)  cmd_orient ;;
+  layout)  cmd_layout ;;
+  scripts) cmd_scripts ;;
+  env)     cmd_env ;;
+  docker)  cmd_docker ;;
+  seed)    cmd_seed ;;
+  helpers) cmd_helpers ;;
+esac
