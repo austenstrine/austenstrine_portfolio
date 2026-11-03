@@ -125,6 +125,11 @@ fi
 mkdir -p ops/cdn/data/origin ops/cdn/data/cache
 chmod -R u+rwX ops/cdn/data || true
 
+# Go CDN source lives in austenstrine/golang-image-cdn — clone into ops/cdn/src
+# before compose build (clone-in-deploy; see ops/cdn/README.md).
+echo "live.sh: ensuring golang-image-cdn source"
+bash "$ROOT/ops/cdn/ensure-source.sh"
+
 # Encrypted .env backup via extracted linux-gdrive-dotenv-backup-recovery
 # (portfolio wrapper: ops/tooling/env-backup.sh). Install tools/timer always;
 # backup runs when restic.pass exists. Secrets:

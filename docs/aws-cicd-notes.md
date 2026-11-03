@@ -20,9 +20,12 @@ Deploy-on-box, not ECR/Fargate. Images build on the instance.
   `austenstrine.dev` + `www` + `cdn` (needs `CERTBOT_EMAIL`), copies into
   `TLS_CERTS_DIR` (default `/etc/nginx/certs`) via `sync-tls-certs.sh`, and
   installs a certbot renew deploy hook. Nginx mounts that dir read-only.
-- **CDN origin:** `docker-compose.prod.yml` bind-mounts `./ops/cdn/data/origin`
-  into both `cdn` and `api` so seed stock downloads land where the CDN serves.
-  No `docker cp`. After API seed, `live.sh` prewarms stock variants.
+- **CDN:** Go binary from
+  [golang-image-cdn](https://github.com/austenstrine/golang-image-cdn);
+  `live.sh` runs `ops/cdn/ensure-source.sh` (shallow clone → `ops/cdn/src`)
+  before `compose build cdn`. Bind-mounts `./ops/cdn/data/origin` into both
+  `cdn` and `api` so seed stock downloads land where the CDN serves. No
+  `docker cp`. After API seed, `live.sh` prewarms stock variants.
 - **.env backup:** CLI from `linux-gdrive-dotenv-backup-recovery` (clone on the
   box); `ensure-env-backup.sh` installs restic/rclone + timer; one-time
   `push-env-backup-secrets.sh` from the laptop copies pass + rclone config.
