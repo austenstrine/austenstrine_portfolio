@@ -51,16 +51,34 @@ timer keeps working.
 
 ## Live box
 
-1. Install `restic` + `rclone` on the EC2 host.
-2. Copy rclone config (or `rclone config`) so `gdrive:` works as the same user
-   that runs deploy / the timer.
+`live.sh` calls `ops/deploy/ensure-env-backup.sh`, which installs `restic` +
+`rclone`, writes the user systemd timer pointed at this checkout, and smoke-tests
+backup when secrets are present.
+
+One-time secret bootstrap from a laptop that already backs up:
+
+```bash
+./ops/deploy/push-env-backup-secrets.sh
+# uses prod_env_host / prod_env_key from .dsshrc.local (default key ~/.ssh/id_ed25519)
+```
+
+That copies `~/.config/env-backup/restic.pass` and `~/.config/rclone/rclone.conf`
+over SSH (mode 600). Then either re-run `live.sh` or:
+
+```bash
+ssh -i ~/.ssh/id_ed25519 ubuntu@<host> 'cd /var/www/html && ./ops/deploy/ensure-env-backup.sh'
+```
+
+Manual checklist (if you prefer not to use the push helper):
+
+1. Install `restic` + `rclone` (or let `ensure-env-backup.sh` do it).
+2. Copy rclone config so `gdrive:` works as the deploy user.
 3. Create `~/.config/env-backup/restic.pass` with the **same** password as the
    laptop (one shared repo). Mode 600.
-4. Enable the user timer (above), with `ExecStart` → this repo’s
-   `ops/tooling/env-backup.sh backup`.
-5. `./ops/deploy/live.sh` / `./dssh publish` runs a backup first when
-   `restic.pass` exists; if the password file is missing, deploy continues
-   with a skip message.
+4. Timer is installed by `ensure-env-backup.sh` (`ExecStart` → this repo’s
+   `ops/tooling/env-backup.sh backup`).
+5. `live.sh` / `dssh publish` backs up when `restic.pass` exists; if the password
+   file is missing, deploy continues with a skip message.
 
 ## Remote edit + backup
 

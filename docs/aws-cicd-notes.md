@@ -16,8 +16,15 @@ Deploy-on-box, not ECR/Fargate. Images build on the instance.
 - **DNS:** attach an **Elastic IP**; point apex + `www` + `cdn` A records at it.
   Canonical site host is **www**; apex HTTP/HTTPS redirect there. Public IP can
   change on stop/start without EIP.
-- **TLS certs:** host path via `TLS_CERTS_DIR` (default `/etc/nginx/certs`),
-  mounted read-only into nginx.
+- **TLS certs:** `live.sh` → `ops/deploy/ensure-tls.sh` obtains/expands LE for
+  `austenstrine.dev` + `www` + `cdn` (needs `CERTBOT_EMAIL`), copies into
+  `TLS_CERTS_DIR` (default `/etc/nginx/certs`) via `sync-tls-certs.sh`, and
+  installs a certbot renew deploy hook. Nginx mounts that dir read-only.
+- **CDN origin:** `docker-compose.prod.yml` bind-mounts `./ops/cdn/data/origin`
+  into both `cdn` and `api` so seed stock downloads land where the CDN serves.
+  No `docker cp`. After API seed, `live.sh` prewarms stock variants.
+- **.env backup:** `ensure-env-backup.sh` installs restic/rclone + timer; one-time
+  `push-env-backup-secrets.sh` from the laptop copies pass + rclone config.
 - **CI:** `.github/workflows/deploy.yml` SSHs to the box, `git reset`, then
   runs `live.sh` there (native x86_64 build). No buildx / multi-arch push needed.
 

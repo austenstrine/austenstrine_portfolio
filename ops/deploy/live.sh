@@ -7,6 +7,15 @@
 # service being replaced.
 #
 # Build on the box. Do not copy foreign-arch node_modules or prebuilt images here.
+#
+# Idempotent host prep encoded here (wiped EC2 + fresh redeploy):
+#   - Docker install
+#   - stop/disable host nginx
+#   - TLS: LE SAN ensure + copy into TLS_CERTS_DIR + certbot renew hook
+#   - CDN origin/cache dirs + api↔cdn shared origin mount (compose)
+#   - .env backup tools/timer (restic+rclone); secrets via push-env-backup-secrets.sh
+#   - PeM dust banner: leave maintenance_banner_bypass unset/false on live
+#   - CDN health wait + stock wait + prewarm
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
@@ -51,6 +60,23 @@ ensure_docker() {
 	fi
 }
 
+wait_http() {
+	local url="$1"
+	local label="$2"
+	local tries="${3:-60}"
+	local i
+	for ((i = 1; i <= tries; i++)); do
+		if "${DOCKER[@]}" exec -T "$4" wget -qO- "$url" >/dev/null 2>&1 \
+			|| "${DOCKER[@]}" exec -T "$4" curl -fsS "$url" >/dev/null 2>&1; then
+			echo "live.sh: ${label} ready"
+			return 0
+		fi
+		sleep 2
+	done
+	echo "live.sh: ${label} not ready after $((tries * 2))s" >&2
+	return 1
+}
+
 ensure_docker
 COMPOSE=("${DOCKER[@]}" compose -f docker-compose.yml -f docker-compose.prod.yml)
 
@@ -89,19 +115,33 @@ if [[ ! -f "$ROOT/.env" ]]; then
 	exit 1
 fi
 
-# Same encrypted .env backup as the laptop (restic → rclone gdrive:env-restic).
-# Skip quietly when restic.pass is not installed yet; fail deploy if it is
-# installed but backup errors. See docs/tooling/env-backup.md.
+# Dust banner shows on non-local hosts unless maintenance_banner_bypass=true.
+# Live must leave that flag unset/false.
+if grep -Eiq '^[[:space:]]*maintenance_banner_bypass[[:space:]]*=[[:space:]]*true' "$ROOT/.env"; then
+	echo "live.sh: WARN maintenance_banner_bypass=true — PeM dust banner will be hidden on live." >&2
+fi
+
+# Shared CDN origin (api seed downloads + cdn serve). Must exist before compose mounts.
+mkdir -p ops/cdn/data/origin ops/cdn/data/cache
+chmod -R u+rwX ops/cdn/data || true
+
+# Encrypted .env backup (restic → rclone gdrive:env-restic).
+# Install tools/timer always; backup runs when restic.pass exists.
+# Secrets: ./ops/deploy/push-env-backup-secrets.sh from a configured laptop.
 pass_file="${RESTIC_PASSWORD_FILE:-$HOME/.config/env-backup/restic.pass}"
 backup_sh="$ROOT/ops/tooling/env-backup.sh"
-if [[ -f "$pass_file" && -x "$backup_sh" ]]; then
+ensure_backup="$ROOT/ops/deploy/ensure-env-backup.sh"
+if [[ -x "$ensure_backup" || -f "$ensure_backup" ]]; then
+	echo "live.sh: ensuring .env backup tooling"
+	bash "$ensure_backup" || echo "live.sh: ensure-env-backup soft-failed (continuing)"
+elif [[ -f "$pass_file" && -x "$backup_sh" ]]; then
 	echo "live.sh: backing up .env (restic)"
 	"$backup_sh" backup
 elif [[ -f "$pass_file" && -f "$backup_sh" ]]; then
 	echo "live.sh: backing up .env (restic)"
 	bash "$backup_sh" backup
 else
-	echo "live.sh: skip .env backup (no $pass_file — see docs/tooling/env-backup.md)"
+	echo "live.sh: skip .env backup (no $pass_file — see docs/tooling/env-backup.md + ops/deploy/push-env-backup-secrets.sh)"
 fi
 
 # Host nginx (old static portfolio) steals 80/443 from compose proxy.
@@ -110,6 +150,10 @@ if command -v systemctl >/dev/null 2>&1 && systemctl is-active --quiet nginx 2>/
 	sudo systemctl stop nginx
 	sudo systemctl disable nginx || true
 fi
+
+# TLS into the path nginx mounts. Standalone obtain needs :80 free (host nginx stopped).
+echo "live.sh: ensuring TLS certs in ${TLS_CERTS_DIR:-/etc/nginx/certs}"
+bash "$ROOT/ops/deploy/ensure-tls.sh"
 
 echo "live.sh: building api web cdn nginx images (infra stays up)"
 "${COMPOSE[@]}" build api web cdn nginx
@@ -121,6 +165,7 @@ echo "live.sh: ensuring infra (postgres redis opensearch)"
 # compose network). Pull-origin web may still be rolling — fine.
 echo "live.sh: rolling cdn (--no-deps)"
 "${COMPOSE[@]}" up -d --no-deps cdn
+wait_http "http://127.0.0.1:8088/healthz" "cdn" 45 portfolio-cdn || true
 
 echo "live.sh: rolling api (--no-deps)"
 "${COMPOSE[@]}" up -d --no-deps api
@@ -138,8 +183,24 @@ echo "live.sh: rolling nginx (--no-deps)"
 echo "live.sh: stack is up (OpenSearch Dashboards off; Go CDN on-box)"
 "${COMPOSE[@]}" ps
 
-# Warm PeM stock transforms so the first shopper is not a cold encode storm.
-if [[ -d ops/cdn/data/origin/media/catalog/stock ]]; then
+# API OnModuleInit downloads stock into the shared origin volume. Wait briefly
+# so prewarm is not a no-op on a wiped box.
+STOCK_ROOT="ops/cdn/data/origin/media/catalog/stock"
+echo "live.sh: waiting for catalog stock origin (api seed → shared volume)"
+for ((i = 1; i <= 90; i++)); do
+	if [[ -d "$STOCK_ROOT" ]] && find "$STOCK_ROOT" -type f -name 'hero.jpg' 2>/dev/null | grep -q .; then
+		echo "live.sh: stock origin present"
+		break
+	fi
+	sleep 2
+	if [[ "$i" -eq 90 ]]; then
+		echo "live.sh: stock origin still empty after wait (seed may still be running)"
+	fi
+done
+
+if [[ -d "$STOCK_ROOT" ]] && find "$STOCK_ROOT" -type f -name 'hero.jpg' 2>/dev/null | grep -q .; then
 	echo "live.sh: prewarming CDN stock variants"
 	"${COMPOSE[@]}" exec -T cdn prewarm.sh || echo "live.sh: prewarm skipped/failed (non-fatal)"
+else
+	echo "live.sh: skip prewarm (no stock JPEGs yet)"
 fi
