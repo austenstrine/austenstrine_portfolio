@@ -1,0 +1,4 @@
+{
+	"name": "Place et Marque",
+	"install": "npm ci"
+}
