@@ -104,6 +104,13 @@ else
 	echo "live.sh: skip .env backup (no $pass_file — see docs/tooling/env-backup.md)"
 fi
 
+# Host nginx (old static portfolio) steals 80/443 from compose proxy.
+if command -v systemctl >/dev/null 2>&1 && systemctl is-active --quiet nginx 2>/dev/null; then
+	echo "live.sh: stopping host nginx so compose can bind 80/443"
+	sudo systemctl stop nginx
+	sudo systemctl disable nginx || true
+fi
+
 echo "live.sh: building api web cdn nginx images (infra stays up)"
 "${COMPOSE[@]}" build api web cdn nginx
 
