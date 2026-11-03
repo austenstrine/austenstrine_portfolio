@@ -74,6 +74,9 @@ services:
       CDN_INTERNAL_URL: http://cdn:8088
       CDN_PUBLIC_URL: ${CDN_PUBLIC_URL:-https://cdn.austenstrine.dev}
       CDN_TOKEN: ${CDN_TOKEN}
+    volumes:
+      # Seed/stock downloads write here; must be the same origin the CDN serves.
+      - ./ops/cdn/data/origin:/app/ops/cdn/data/origin
     expose:
       - "4000"
 
