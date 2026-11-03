@@ -12,16 +12,47 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 cd "$ROOT"
 
-COMPOSE=(docker compose -f docker-compose.yml -f docker-compose.prod.yml)
+# Install Docker Engine + Compose plugin when missing (Ubuntu / Amazon Linux).
+# After install, this SSH session may lack the docker group — use sudo then.
+ensure_docker() {
+	if ! command -v docker >/dev/null 2>&1; then
+		echo "live.sh: Docker not found — installing Engine + Compose plugin"
+		if ! command -v curl >/dev/null 2>&1; then
+			if command -v apt-get >/dev/null 2>&1; then
+				sudo apt-get update -y
+				sudo apt-get install -y curl ca-certificates
+			elif command -v dnf >/dev/null 2>&1; then
+				sudo dnf install -y curl ca-certificates
+			elif command -v yum >/dev/null 2>&1; then
+				sudo yum install -y curl ca-certificates
+			else
+				echo "live.sh: curl required to install Docker; install curl and retry." >&2
+				exit 1
+			fi
+		fi
+		curl -fsSL https://get.docker.com | sudo sh
+		sudo systemctl enable --now docker
+		sudo usermod -aG docker "$(id -un)" || true
+	fi
 
-if ! command -v docker >/dev/null 2>&1; then
-	echo "live.sh: docker is required on the host." >&2
-	exit 1
-fi
-if ! docker compose version >/dev/null 2>&1; then
-	echo "live.sh: docker compose plugin is required on the host." >&2
-	exit 1
-fi
+	if ! docker compose version >/dev/null 2>&1 && ! sudo docker compose version >/dev/null 2>&1; then
+		echo "live.sh: docker compose plugin missing after install." >&2
+		exit 1
+	fi
+
+	if docker info >/dev/null 2>&1; then
+		DOCKER=(docker)
+	elif sudo docker info >/dev/null 2>&1; then
+		echo "live.sh: using sudo docker (log out/in later so group docker applies)"
+		DOCKER=(sudo docker)
+	else
+		echo "live.sh: docker installed but daemon not reachable." >&2
+		exit 1
+	fi
+}
+
+ensure_docker
+COMPOSE=("${DOCKER[@]}" compose -f docker-compose.yml -f docker-compose.prod.yml)
 
 # Prod target is t3a.large (x86_64). Docker should follow the host.
 # Refuse DOCKER_DEFAULT_PLATFORM only when it conflicts with uname -m.
