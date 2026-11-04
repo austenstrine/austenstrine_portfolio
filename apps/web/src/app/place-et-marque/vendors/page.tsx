@@ -144,6 +144,99 @@ function VendorManageContent() {
 
 			<section
 				className="
+					flex
+					flex-col
+					gap-3
+				"
+			>
+				<h2 className="text-lg font-semibold">
+					Your organizations
+				</h2>
+				{loading
+					? (
+							<p className="text-sm text-slate-500">
+								Loading…
+							</p>
+						)
+					: null
+				}
+				{!loading && vendors.length === 0
+					? (
+							<p className="text-sm text-slate-500">
+								You are not a member of any vendor organization yet. Create one below,
+								or wait for an invite from an existing vendor.
+							</p>
+						)
+					: null
+				}
+				{vendors.map((vendor) => (
+					<a
+						className="
+							rounded-xl
+							border
+							border-slate-200
+							bg-white
+							p-4
+							hover:border-sky
+						"
+						key={vendor.id}
+						href={`/place-et-marque/vendors/${vendor.id}`}
+					>
+						<div
+							className="
+								flex
+								flex-wrap
+								items-center
+								justify-between
+								gap-2
+							"
+						>
+							<div>
+								<p className="font-semibold">
+									{vendor.name}
+								</p>
+								<p className="text-sm text-slate-600">
+									/place-et-marque/{vendor.slug}
+								</p>
+							</div>
+							<span
+								className="
+									rounded-full
+									bg-slate-100
+									px-3
+									py-1
+									text-xs
+									font-semibold
+									uppercase
+									tracking-wide
+									text-slate-700
+								"
+							>
+								{vendor.myRole}
+							</span>
+						</div>
+						<p
+							className="
+								mt-2
+								text-xs
+								text-slate-500
+							"
+						>
+							{vendor.memberCount} member{vendor.memberCount === 1
+								? ''
+								: 's'
+							} ·{' '}
+							{vendor.productCount} product{vendor.productCount === 1
+								? ''
+								: 's'
+							}
+						</p>
+					</a>
+				))}
+			</section>
+
+			<section
+				className="
 					rounded-2xl
 					border
 					border-slate-200
@@ -239,99 +332,6 @@ function VendorManageContent() {
 						}
 					</button>
 				</form>
-			</section>
-
-			<section
-				className="
-					flex
-					flex-col
-					gap-3
-				"
-			>
-				<h2 className="text-lg font-semibold">
-					Your organizations
-				</h2>
-				{loading
-					? (
-							<p className="text-sm text-slate-500">
-								Loading…
-							</p>
-						)
-					: null
-				}
-				{!loading && vendors.length === 0
-					? (
-							<p className="text-sm text-slate-500">
-								You are not a member of any vendor organization yet. Create one above,
-								or wait for an invite from an existing vendor.
-							</p>
-						)
-					: null
-				}
-				{vendors.map((vendor) => (
-					<a
-						className="
-							rounded-xl
-							border
-							border-slate-200
-							bg-white
-							p-4
-							hover:border-sky
-						"
-						key={vendor.id}
-						href={`/place-et-marque/vendors/${vendor.id}`}
-					>
-						<div
-							className="
-								flex
-								flex-wrap
-								items-center
-								justify-between
-								gap-2
-							"
-						>
-							<div>
-								<p className="font-semibold">
-									{vendor.name}
-								</p>
-								<p className="text-sm text-slate-600">
-									/place-et-marque/{vendor.slug}
-								</p>
-							</div>
-							<span
-								className="
-									rounded-full
-									bg-slate-100
-									px-3
-									py-1
-									text-xs
-									font-semibold
-									uppercase
-									tracking-wide
-									text-slate-700
-								"
-							>
-								{vendor.myRole}
-							</span>
-						</div>
-						<p
-							className="
-								mt-2
-								text-xs
-								text-slate-500
-							"
-						>
-							{vendor.memberCount} member{vendor.memberCount === 1
-								? ''
-								: 's'
-							} ·{' '}
-							{vendor.productCount} product{vendor.productCount === 1
-								? ''
-								: 's'
-							}
-						</p>
-					</a>
-				))}
 			</section>
 		</div>
 	);
