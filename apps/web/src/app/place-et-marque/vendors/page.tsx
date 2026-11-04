@@ -262,7 +262,7 @@ function VendorManageContent() {
 									flex
 									w-full
 									items-center
-									justify-start
+									justify-end
 									rounded-xl
 									border
 									border-transparent
