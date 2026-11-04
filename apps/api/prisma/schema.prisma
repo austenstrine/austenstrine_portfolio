@@ -109,6 +109,13 @@ enum VendorMemberRole {
   VIEWER
 }
 
+enum VendorLinkNameRequestStatus {
+  PENDING
+  APPROVED
+  DENIED
+  CANCELLED
+}
+
 enum ProductOfferingRole {
   PACK
   PIECE
@@ -238,9 +245,30 @@ model Vendor {
   placeEtMarqueOrders PlaceEtMarqueOrder[]
   checkoutShipments   CheckoutShipment[]
   payouts             VendorPayout[]
+  linkNameRequests    VendorLinkNameRequest[]
 
   @@index([name])
   @@index([stripeConnectAccountId])
+}
+
+/// Vendor asks to change the public/management name in the link; supervendor reviews.
+model VendorLinkNameRequest {
+  id                 String                       @id @default(uuid())
+  vendorId           String
+  vendor             Vendor                       @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  requestedSlug      String
+  currentSlug        String
+  status             VendorLinkNameRequestStatus  @default(PENDING)
+  requesterNote      String?
+  reviewReason       String?
+  requestedByUserId  String
+  reviewedByUserId   String?
+  createdAt          DateTime                     @default(now())
+  reviewedAt         DateTime?
+
+  @@index([vendorId, status])
+  @@index([status, createdAt])
+  @@index([requestedSlug])
 }
 
 model VendorInvite {

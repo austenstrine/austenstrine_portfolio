@@ -61,7 +61,7 @@ function AcceptInviteContent() {
 		try {
 			const result = await acceptVendorInvite(token);
 			router.push(
-				nextAfter || `/place-et-marque/vendors/${result.vendorId}`,
+				nextAfter || `/place-et-marque/vendors/${result.vendorSlug}`,
 			);
 		}
 		catch(acceptError) {

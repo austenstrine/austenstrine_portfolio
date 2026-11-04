@@ -9,14 +9,14 @@ export class CreateVendorDto {
 	name!: string;
 
 	@ApiProperty({
-		description: 'URL-safe unique slug for the vendor organization',
-		example: 'demo-supply',
+		description: 'Unique name in the vendor / store link (stored as Vendor.slug)',
+		example: 'demo-supply-co',
 	})
 	@IsString()
 	@MinLength(2)
 	@MaxLength(80)
 	@Matches(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, {
-		message: 'Slug must be lowercase letters, numbers, and hyphens only.',
+		message: 'The name in the link can only use lowercase letters, numbers, and hyphens.',
 	})
 	slug!: string;
 }

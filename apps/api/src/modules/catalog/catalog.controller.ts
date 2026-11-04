@@ -41,6 +41,8 @@ import { CreateVendorDto } from './dto/create-vendor.dto';
 import { CreateVendorInviteDto } from './dto/create-vendor-invite.dto';
 import { DeleteCatalogProductsDto } from './dto/delete-catalog-products.dto';
 import { RequestCategoryDto } from './dto/request-category.dto';
+import { RequestVendorLinkNameDto } from './dto/request-vendor-link-name.dto';
+import { ReviewVendorLinkNameDto } from './dto/review-vendor-link-name.dto';
 import { TrimInventoryDto } from './dto/trim-inventory.dto';
 import { UpdateCatalogProductDto } from './dto/update-catalog-product.dto';
 import { UpdateCatalogCategoryDto, UploadCatalogMediaDto } from './dto/upload-catalog-media.dto';
@@ -221,6 +223,47 @@ export class CatalogController {
 	@Get('vendors/mine/:vendorId')
 	getMyVendor(@Req() req: AuthedRequest, @Param('vendorId') vendorId: string) {
 		return this.vendors.getMyVendor(req.user!.id, vendorId);
+	}
+
+	@UseGuards(JwtAuthGuard)
+	@Get('vendors/link-name/check')
+	checkVendorLinkName(
+		@Query('name') name: string | undefined,
+		@Query('excludeVendorId') excludeVendorId?: string,
+	) {
+		if(!name?.trim()) {
+			throw new BadRequestException('Provide a name in the link to check.');
+		}
+		return this.vendors.checkLinkNameAvailable(name, excludeVendorId);
+	}
+
+	@UseGuards(JwtAuthGuard)
+	@Get('vendors/link-name-requests')
+	listVendorLinkNameRequests(
+		@Req() req: AuthedRequest,
+		@Query('status') status?: string,
+	) {
+		return this.vendors.listLinkNameRequests(req.user!.id, status);
+	}
+
+	@UseGuards(JwtAuthGuard)
+	@Post('vendors/link-name-requests/:requestId/review')
+	reviewVendorLinkNameRequest(
+		@Req() req: AuthedRequest,
+		@Param('requestId') requestId: string,
+		@Body() dto: ReviewVendorLinkNameDto,
+	) {
+		return this.vendors.reviewLinkNameRequest(req.user!.id, requestId, dto);
+	}
+
+	@UseGuards(JwtAuthGuard)
+	@Post('vendors/:vendorId/link-name-requests')
+	requestVendorLinkName(
+		@Req() req: AuthedRequest,
+		@Param('vendorId') vendorId: string,
+		@Body() dto: RequestVendorLinkNameDto,
+	) {
+		return this.vendors.requestLinkNameChange(req.user!.id, vendorId, dto);
 	}
 
 	@UseGuards(JwtAuthGuard)

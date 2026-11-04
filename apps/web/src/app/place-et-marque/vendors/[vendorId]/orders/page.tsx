@@ -9,37 +9,47 @@ import {
 	shipVendorOrder,
 	type PlaceEtMarqueOrder,
 } from '../../../../../lib/checkout-api';
+import { getMyVendor, type VendorDetail } from '../../../../../lib/catalog-api';
 import { RequireAccess } from '../../../../../components/auth/RequireAccess';
 import { BackLink } from '../../../../../components/BackLink';
 import { useSession } from '../../../../../lib/useSession';
 
 function VendorOrdersPageContent() {
 	const params = useParams<{ vendorId: string }>();
-	const vendorId = params.vendorId;
+	const vendorRef = params.vendorId;
 	const { user, loading: sessionLoading } = useSession();
+	const [vendor, setVendor] = useState<VendorDetail | null>(null);
 	const [orders, setOrders] = useState<PlaceEtMarqueOrder[]>([]);
 	const [error, setError] = useState<string | null>(null);
 	const [busyId, setBusyId] = useState<string | null>(null);
+	const vendorId = vendor?.id;
+	const vendorSlug = vendor?.slug || vendorRef;
 
-	async function refresh() {
-		if(!vendorId) {
+	async function refresh(resolvedId?: string) {
+		const id = resolvedId || vendorId;
+		if(!id) {
 			return;
 		}
-		setOrders(await listVendorOrders(vendorId));
+		setOrders(await listVendorOrders(id));
 	}
 
 	useEffect(() => {
-		if(!user || !vendorId) {
+		if(!user || !vendorRef) {
 			return;
 		}
-		refresh().catch((loadError) => {
-			setError(
-				loadError instanceof Error
-					? loadError.message
-					: 'Could not load vendor orders.',
-			);
-		});
-	}, [user, vendorId]);
+		getMyVendor(vendorRef)
+			.then(async (detail) => {
+				setVendor(detail);
+				await refresh(detail.id);
+			})
+			.catch((loadError) => {
+				setError(
+					loadError instanceof Error
+						? loadError.message
+						: 'Could not load vendor orders.',
+				);
+			});
+	}, [user, vendorRef]);
 
 	async function onShip(orderId: string) {
 		if(!vendorId) {
@@ -102,7 +112,7 @@ function VendorOrdersPageContent() {
 				gap-6
 			"
 		>
-			<BackLink href={`/place-et-marque/vendors/${vendorId}`}>
+			<BackLink href={`/place-et-marque/vendors/${vendorSlug}`}>
 				Back to vendor
 			</BackLink>
 

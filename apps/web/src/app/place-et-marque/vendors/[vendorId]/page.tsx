@@ -1,13 +1,14 @@
 'use client';
 
-import { useParams, useSearchParams } from 'next/navigation';
-import { Suspense, useEffect, useState } from 'react';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
+import { Suspense, useEffect, useState, type FormEvent } from 'react';
 import {
 	createVendorAppPassword,
 	createVendorInvite,
 	getMyVendor,
 	listVendorAppPasswords,
 	listVendorInvites,
+	requestVendorLinkName,
 	revokeVendorAppPassword,
 	revokeVendorInvite,
 	type CreatedVendorAppPassword,
@@ -27,15 +28,31 @@ import {
 import { useSession } from '../../../../lib/useSession';
 import { RequireAccess } from '../../../../components/auth/RequireAccess';
 import { BackLink } from '../../../../components/BackLink';
+import { UrlSlugField } from '../../../../components/catalog/UrlSlugField';
+
+function slugify(value: string): string {
+	return value
+		.trim()
+		.toLowerCase()
+		.replace(/[^a-z0-9]+/g, '-')
+		.replace(/^-+|-+$/g, '')
+		.slice(0, 80);
+}
 
 function VendorDetailContent() {
 	const params = useParams<{ vendorId: string }>();
 	const searchParams = useSearchParams();
-	const vendorId = params.vendorId;
+	const router = useRouter();
+	const vendorRef = params.vendorId;
 	const { user, loading: sessionLoading } = useSession();
 	const [vendor, setVendor] = useState<VendorDetail | null>(null);
 	const [error, setError] = useState<string | null>(null);
 	const [loading, setLoading] = useState(true);
+	const [linkNameDraft, setLinkNameDraft] = useState('');
+	const [linkNameNote, setLinkNameNote] = useState('');
+	const [linkNameBusy, setLinkNameBusy] = useState(false);
+	const [linkNameError, setLinkNameError] = useState<string | null>(null);
+	const [linkNameMessage, setLinkNameMessage] = useState<string | null>(null);
 	const [passwords, setPasswords] = useState<VendorAppPassword[]>([]);
 	const [passwordName, setPasswordName] = useState('Inventory sync');
 	const [createdToken, setCreatedToken] = useState<CreatedVendorAppPassword | null>(null);
@@ -66,15 +83,26 @@ function VendorDetailContent() {
 	}, [searchParams]);
 
 	useEffect(() => {
-		if(!user || !vendorId) {
+		if(!user || !vendorRef) {
 			setLoading(false);
 			return;
 		}
 
 		setLoading(true);
-		getMyVendor(vendorId)
+		getMyVendor(vendorRef)
 			.then(async (detail) => {
 				setVendor(detail);
+				setLinkNameDraft(detail.slug);
+				if(detail.resolvedFromId && detail.slug !== vendorRef) {
+					const qs = searchParams.toString();
+					router.replace(
+						`/place-et-marque/vendors/${detail.slug}${qs
+							? `?${qs}`
+							: ''
+						}`,
+					);
+				}
+				const vendorId = detail.id;
 				if(detail.myRole === 'OWNER' || detail.myRole === 'EDITOR') {
 					try {
 						setShippingProfiles(await listVendorShippingProfiles(vendorId));
@@ -113,7 +141,39 @@ function VendorDetailContent() {
 				);
 			})
 			.finally(() => setLoading(false));
-	}, [user, vendorId]);
+	}, [user, vendorRef, router, searchParams]);
+
+	const vendorId = vendor?.id;
+
+	async function onRequestLinkName(event: FormEvent) {
+		event.preventDefault();
+		if(!vendorId) {
+			return;
+		}
+		setLinkNameBusy(true);
+		setLinkNameError(null);
+		setLinkNameMessage(null);
+		try {
+			const result = await requestVendorLinkName(vendorId, {
+				linkName: slugify(linkNameDraft),
+				note: linkNameNote.trim() || undefined,
+			});
+			setLinkNameMessage(result.message);
+			const refreshed = await getMyVendor(vendor?.slug || vendorId);
+			setVendor(refreshed);
+			setLinkNameDraft(refreshed.slug);
+		}
+		catch(requestError) {
+			setLinkNameError(
+				requestError instanceof Error
+					? requestError.message
+					: 'Could not send that request.',
+			);
+		}
+		finally {
+			setLinkNameBusy(false);
+		}
+	}
 
 	async function onEnsureFreight() {
 		if(!vendorId) {
@@ -271,9 +331,170 @@ function VendorDetailContent() {
 								{vendor.name}
 							</h1>
 							<p className="mt-1 text-slate-600">
-								/place-et-marque/{vendor.slug}
+								/place-et-marque/vendors/{vendor.slug}
 							</p>
 						</div>
+
+						<section
+							className="
+								rounded-2xl
+								border
+								border-slate-200
+								bg-white
+								p-5
+							"
+						>
+							<h2 className="text-lg font-semibold">
+								Name in the link
+							</h2>
+							<p
+								className="
+									mt-2
+									text-sm
+									text-slate-600
+								"
+							>
+								This short name appears in your organization page and store address.
+								Changing it later needs Place et Marque approval.
+							</p>
+							{vendor.linkNameRequest?.status === 'PENDING'
+								? (
+										<p
+											className="
+												mt-3
+												rounded-xl
+												border
+												border-sky/30
+												bg-sky/5
+												px-4
+												py-3
+												text-sm
+												text-slate-700
+											"
+										>
+											Pending request:
+											{' '}
+											<strong>
+												{vendor.linkNameRequest.requestedSlug}
+											</strong>
+											. We&apos;ll email or show the decision here when reviewed.
+										</p>
+									)
+								: null
+							}
+							{vendor.linkNameRequest?.status === 'DENIED'
+								? (
+										<p
+											className="
+												mt-3
+												rounded-xl
+												border
+												border-red-200
+												bg-red-50
+												px-4
+												py-3
+												text-sm
+												text-red-800
+											"
+										>
+											Last request denied
+											{vendor.linkNameRequest.reviewReason
+												? `: ${vendor.linkNameRequest.reviewReason}`
+												: '.'
+											}
+										</p>
+									)
+								: null
+							}
+							{vendor.myRole === 'OWNER'
+								? (
+										<form
+											className="
+												mt-4
+												flex
+												flex-col
+												gap-3
+											"
+											onSubmit={onRequestLinkName}
+										>
+											<UrlSlugField
+												label="Requested name in the link"
+												value={linkNameDraft}
+												onChange={(next) => setLinkNameDraft(slugify(next))}
+												prefixPath="/place-et-marque/vendors"
+												placeholder={vendor.slug}
+												helpText="Ask for a different name if the current one no longer fits."
+											/>
+											<label className="block text-sm">
+												<span className="font-semibold">
+													Note for reviewers (optional)
+												</span>
+												<textarea
+													className="
+														mt-1
+														w-full
+														rounded-lg
+														border
+														border-slate-300
+														px-3
+														py-2
+													"
+													rows={3}
+													value={linkNameNote}
+													onChange={(event) => setLinkNameNote(event.target.value)}
+													maxLength={500}
+													placeholder="Why this name works better"
+												/>
+											</label>
+											{linkNameError
+												? (
+														<p className="text-sm text-red-700">
+															{linkNameError}
+														</p>
+													)
+												: null
+											}
+											{linkNameMessage
+												? (
+														<p className="text-sm text-asgreen">
+															{linkNameMessage}
+														</p>
+													)
+												: null
+											}
+											<button
+												type="submit"
+												disabled={
+													linkNameBusy
+													|| slugify(linkNameDraft) === vendor.slug
+													|| vendor.linkNameRequest?.status === 'PENDING'
+												}
+												className="
+													self-start
+													rounded-full
+													bg-sky
+													px-4
+													py-2.5
+													text-sm
+													font-semibold
+													text-white
+													disabled:opacity-60
+												"
+											>
+												{linkNameBusy
+													? 'Sending…'
+													: 'Request new name'
+												}
+											</button>
+										</form>
+									)
+								: (
+										<p className="mt-3 text-sm text-slate-500">
+											Only an organization owner can request a different name in the link.
+										</p>
+									)
+							}
+						</section>
 
 						<section
 							className="
@@ -891,7 +1112,7 @@ function VendorDetailContent() {
 										text-sky
 										hover:underline
 									"
-									href={`/place-et-marque/vendors/${vendor.id}/import`}
+									href={`/place-et-marque/vendors/${vendor.slug}/import`}
 								>
 									Bulk CSV import
 								</a>
@@ -902,7 +1123,7 @@ function VendorDetailContent() {
 										text-sky
 										hover:underline
 									"
-									href={`/place-et-marque/vendors/${vendor.id}/orders`}
+									href={`/place-et-marque/vendors/${vendor.slug}/orders`}
 								>
 									Orders to fulfill
 								</a>
