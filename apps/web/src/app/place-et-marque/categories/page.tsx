@@ -233,7 +233,7 @@ export default function CategoryManagePage() {
 									text-slate-600
 								"
 							>
-								Supervendor tools — changes apply across all of Place et Marque.
+								Supervendor tools. Changes apply across all of Place et Marque.
 							</p>
 							<form
 								className="

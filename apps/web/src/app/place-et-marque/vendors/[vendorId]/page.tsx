@@ -58,10 +58,10 @@ function VendorDetailContent() {
 	useEffect(() => {
 		const connectParam = searchParams.get('connect');
 		if(connectParam === 'return') {
-			setConnectBanner('Stripe onboarding returned — refreshing payout status.');
+			setConnectBanner('Stripe onboarding returned. Refreshing payout status.');
 		}
 		else if(connectParam === 'refresh') {
-			setConnectBanner('Stripe link expired — continue setup when ready.');
+			setConnectBanner('Stripe link expired. Continue setup when ready.');
 		}
 	}, [searchParams]);
 

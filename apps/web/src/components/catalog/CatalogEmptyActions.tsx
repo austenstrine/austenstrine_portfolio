@@ -39,7 +39,7 @@ export function CatalogEmptyActions() {
 				"
 			>
 				{showCreateVendor
-					? 'No seed data—create a vendor, add units and categories, then list a product.'
+					? 'No seed data. Create a vendor, add units and categories, then list a product.'
 					: 'Add units and categories if you need them, then list a product.'
 				}
 			</p>

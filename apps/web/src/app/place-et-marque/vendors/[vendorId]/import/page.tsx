@@ -418,8 +418,7 @@ function VendorImportPageContent() {
 												{validation.blockingErrorCount === 1
 													? ''
 													: 's'
-												} —
-												fix these before commit.
+												}. Fix these before commit.
 											</p>
 										)
 									}

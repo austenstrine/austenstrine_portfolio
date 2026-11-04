@@ -613,7 +613,7 @@ export function ProductEditorForm({
 				<p className="text-sm text-slate-600">
 					{isCreating
 						? isAdvancedSurface
-							? 'Full product tools open by default—packs, chains, break fees, attributes, and variants.'
+							? 'Full product tools open by default: packs, chains, break fees, attributes, and variants.'
 							: 'Start with a simple listing. More options appear as questions when they matter.'
 						: 'Update this listing. Extra structure expands in place when you need it.'
 					}
@@ -1363,7 +1363,7 @@ export function ProductEditorForm({
 						Attributes
 					</h2>
 					<p className="text-xs text-slate-500">
-						Facts about this product (color, material, and so on)—not separately priced variants.
+						Facts about this product such as color and material. Use variants for separately priced options.
 						Search to add; only selected values stay on the product.
 					</p>
 					<ProductAttributeField

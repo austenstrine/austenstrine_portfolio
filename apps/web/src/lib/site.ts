@@ -9,7 +9,7 @@ export const SITE_REPO =
 	'https://github.com/austenstrine/austenstrine_portfolio';
 
 export const SITE_TITLE =
-	'Austen Strine — Senior Product, Catalog, and Search Software Engineer';
+	'Austen Strine | Senior Product, Catalog, and Search Software Engineer';
 
 export const SITE_DESCRIPTION =
 	'Senior Product, Catalog, and Search Software Engineer with six and a half years of professional work developing several production e-commerce sites. Based in Parowan, Utah; in Murray Mondays and Tuesdays; relocating to Murray full-time in December 2026.';

@@ -5,7 +5,7 @@ import './cv.css';
 
 export const metadata: Metadata = {
 	title: {
-		absolute: 'Austen Strine — CV',
+		absolute: 'Austen Strine | CV',
 	},
 	alternates: {
 		canonical: '/cv.html',

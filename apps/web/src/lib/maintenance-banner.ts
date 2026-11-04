@@ -1,5 +1,5 @@
 export const MAINTENANCE_BANNER_STOCK_MESSAGE =
-	'Pardon our dust — Place et Marque is live while we keep building. Expect rough edges.';
+	'Pardon our dust. Place et Marque is live while we keep building. Expect rough edges.';
 
 export function isLocalHostname(hostname: string) {
 	const host = hostname.trim().toLowerCase().split(':')[0] ?? '';

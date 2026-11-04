@@ -289,7 +289,7 @@ export default async function PlaceEtMarqueHomePage() {
 								"
 							>
 								{loadFailed
-									? 'The API or search index did not respond. That is a real outage, not an empty store.'
+									? 'The API or search index did not respond. This is an outage.'
 									: 'Seed data may not have been applied, or search has nothing to return.'
 								}
 							</p>
