@@ -1,24 +1,33 @@
 import {
-	ConflictException,
+	BadRequestException,
+	ForbiddenException,
 	Injectable,
 	NotFoundException,
 } from '@nestjs/common';
-import { VendorMemberRole } from '@prisma/client';
+import { VendorLinkNameRequestStatus, VendorMemberRole } from '@prisma/client';
 import { PrismaService } from '../../infra/prisma/prisma.service';
 import { CreateVendorDto } from './dto/create-vendor.dto';
+import { RequestVendorLinkNameDto } from './dto/request-vendor-link-name.dto';
+import { ReviewVendorLinkNameDto } from './dto/review-vendor-link-name.dto';
+import { VendorAccessService } from './vendor-access.service';
+import {
+	assertValidLinkNameFormat,
+	findLinkNameConflict,
+	isUuidLike,
+	throwLinkNameConflict,
+} from './vendor-link-name';
 
 @Injectable()
 export class VendorService {
-	constructor(private readonly prisma: PrismaService) {}
+	constructor(
+		private readonly prisma: PrismaService,
+		private readonly vendorAccess: VendorAccessService,
+	) {}
 
 	async createVendor(userId: string, dto: CreateVendorDto) {
-		const slug = dto.slug.trim().toLowerCase();
+		const slug = assertValidLinkNameFormat(dto.slug);
 		const name = dto.name.trim();
-
-		const existing = await this.prisma.vendor.findUnique({ where: { slug } });
-		if(existing) {
-			throw new ConflictException('A vendor with that slug already exists.');
-		}
+		await this.assertLinkNameAvailable(slug);
 
 		const vendor = await this.prisma.vendor.create({
 			data: {
@@ -43,6 +52,22 @@ export class VendorService {
 		return this.toVendorSummary(vendor);
 	}
 
+	async checkLinkNameAvailable(candidate: string, excludeVendorId?: string) {
+		const slug = assertValidLinkNameFormat(candidate);
+		const conflict = await this.findConflictForSlug(slug, excludeVendorId);
+		if(conflict) {
+			return {
+				available: false as const,
+				kind: conflict,
+				message:
+					conflict === 'taken'
+						? 'That name in the link is already taken. Pick a different one.'
+						: 'That name is too similar to another seller’s name in the link. Try something more distinct.',
+			};
+		}
+		return { available: true as const, kind: null, message: null };
+	}
+
 	async listMyVendors(userId: string) {
 		const memberships = await this.prisma.vendorMember.findMany({
 			where: { userId },
@@ -65,10 +90,18 @@ export class VendorService {
 		}));
 	}
 
-	async getMyVendor(userId: string, vendorId: string) {
+	/**
+	 * Resolve membership vendor by human-readable link name or legacy UUID.
+	 */
+	async getMyVendor(userId: string, vendorRef: string) {
+		const vendor = await this.resolveVendorRecord(vendorRef);
+		if(!vendor) {
+			throw new NotFoundException('Vendor not found, or you are not a member.');
+		}
+
 		const membership = await this.prisma.vendorMember.findUnique({
 			where: {
-				vendorId_userId: { vendorId, userId },
+				vendorId_userId: { vendorId: vendor.id, userId },
 			},
 			include: {
 				vendor: {
@@ -80,6 +113,18 @@ export class VendorService {
 							orderBy: { createdAt: 'asc' },
 						},
 						_count: { select: { products: true, members: true } },
+						linkNameRequests: {
+							where: {
+								status: {
+									in: [
+										VendorLinkNameRequestStatus.PENDING,
+										VendorLinkNameRequestStatus.DENIED,
+									],
+								},
+							},
+							orderBy: { createdAt: 'desc' },
+							take: 1,
+						},
 					},
 				},
 			},
@@ -88,6 +133,8 @@ export class VendorService {
 		if(!membership) {
 			throw new NotFoundException('Vendor not found, or you are not a member.');
 		}
+
+		const latestRequest = membership.vendor.linkNameRequests[0] ?? null;
 
 		return {
 			id: membership.vendor.id,
@@ -104,7 +151,232 @@ export class VendorService {
 				role: member.role,
 				joinedAt: member.createdAt,
 			})),
+			linkNameRequest: latestRequest
+				? {
+					id: latestRequest.id,
+					requestedSlug: latestRequest.requestedSlug,
+					currentSlug: latestRequest.currentSlug,
+					status: latestRequest.status,
+					requesterNote: latestRequest.requesterNote,
+					reviewReason: latestRequest.reviewReason,
+					createdAt: latestRequest.createdAt,
+					reviewedAt: latestRequest.reviewedAt,
+				}
+				: null,
+			resolvedFromId: isUuidLike(vendorRef) && vendorRef !== membership.vendor.slug,
 		};
+	}
+
+	async requestLinkNameChange(
+		userId: string,
+		vendorRef: string,
+		dto: RequestVendorLinkNameDto,
+	) {
+		const vendor = await this.requireVendorMember(
+			userId,
+			vendorRef,
+			[VendorMemberRole.OWNER],
+		);
+		const requestedSlug = assertValidLinkNameFormat(dto.linkName);
+		if(requestedSlug === vendor.slug) {
+			throw new BadRequestException(
+				'That is already this organization’s name in the link.',
+			);
+		}
+		await this.assertLinkNameAvailable(requestedSlug, vendor.id);
+
+		await this.prisma.vendorLinkNameRequest.updateMany({
+			where: {
+				vendorId: vendor.id,
+				status: VendorLinkNameRequestStatus.PENDING,
+			},
+			data: {
+				status: VendorLinkNameRequestStatus.CANCELLED,
+				reviewedAt: new Date(),
+				reviewReason: 'Replaced by a newer request.',
+			},
+		});
+
+		const created = await this.prisma.vendorLinkNameRequest.create({
+			data: {
+				vendorId: vendor.id,
+				requestedSlug,
+				currentSlug: vendor.slug,
+				requestedByUserId: userId,
+				requesterNote: dto.note?.trim() || null,
+			},
+		});
+
+		return {
+			id: created.id,
+			requestedSlug: created.requestedSlug,
+			currentSlug: created.currentSlug,
+			status: created.status,
+			requesterNote: created.requesterNote,
+			createdAt: created.createdAt,
+			message: 'Request sent. Place et Marque will review the new name in the link.',
+		};
+	}
+
+	async listLinkNameRequests(userId: string, status?: string) {
+		await this.vendorAccess.assertIsSuperVendorMember(userId);
+		const allowed = new Set(['PENDING', 'APPROVED', 'DENIED', 'CANCELLED']);
+		const filterStatus =
+			status && allowed.has(status.toUpperCase())
+				? (status.toUpperCase() as VendorLinkNameRequestStatus)
+				: VendorLinkNameRequestStatus.PENDING;
+
+		const rows = await this.prisma.vendorLinkNameRequest.findMany({
+			where: { status: filterStatus },
+			include: {
+				vendor: { select: { id: true, name: true, slug: true } },
+			},
+			orderBy: { createdAt: 'asc' },
+			take: 100,
+		});
+
+		return rows.map((row) => ({
+			id: row.id,
+			vendorId: row.vendorId,
+			vendorName: row.vendor.name,
+			vendorSlug: row.vendor.slug,
+			requestedSlug: row.requestedSlug,
+			currentSlug: row.currentSlug,
+			status: row.status,
+			requesterNote: row.requesterNote,
+			reviewReason: row.reviewReason,
+			createdAt: row.createdAt,
+			reviewedAt: row.reviewedAt,
+		}));
+	}
+
+	async reviewLinkNameRequest(
+		userId: string,
+		requestId: string,
+		dto: ReviewVendorLinkNameDto,
+	) {
+		await this.vendorAccess.assertIsSuperVendorMember(userId);
+
+		const request = await this.prisma.vendorLinkNameRequest.findUnique({
+			where: { id: requestId },
+			include: { vendor: true },
+		});
+		if(!request) {
+			throw new NotFoundException('Link name request not found.');
+		}
+		if(request.status !== VendorLinkNameRequestStatus.PENDING) {
+			throw new BadRequestException('That request was already reviewed.');
+		}
+
+		if(dto.decision === 'deny') {
+			const reason = dto.reason?.trim();
+			if(!reason) {
+				throw new BadRequestException(
+					'Give a plain-language reason when denying a link name request.',
+				);
+			}
+			const denied = await this.prisma.vendorLinkNameRequest.update({
+				where: { id: request.id },
+				data: {
+					status: VendorLinkNameRequestStatus.DENIED,
+					reviewReason: reason,
+					reviewedByUserId: userId,
+					reviewedAt: new Date(),
+				},
+			});
+			return {
+				id: denied.id,
+				status: denied.status,
+				reviewReason: denied.reviewReason,
+				vendorSlug: request.vendor.slug,
+			};
+		}
+
+		await this.assertLinkNameAvailable(request.requestedSlug, request.vendorId);
+
+		const updated = await this.prisma.$transaction(async (tx) => {
+			const vendor = await tx.vendor.update({
+				where: { id: request.vendorId },
+				data: { slug: request.requestedSlug },
+			});
+			const approved = await tx.vendorLinkNameRequest.update({
+				where: { id: request.id },
+				data: {
+					status: VendorLinkNameRequestStatus.APPROVED,
+					reviewReason: dto.note?.trim() || dto.reason?.trim() || null,
+					reviewedByUserId: userId,
+					reviewedAt: new Date(),
+				},
+			});
+			return { vendor, approved };
+		});
+
+		return {
+			id: updated.approved.id,
+			status: updated.approved.status,
+			reviewReason: updated.approved.reviewReason,
+			vendorSlug: updated.vendor.slug,
+		};
+	}
+
+	private async resolveVendorRecord(vendorRef: string) {
+		const ref = vendorRef.trim();
+		if(!ref) {
+			return null;
+		}
+		const bySlug = await this.prisma.vendor.findUnique({ where: { slug: ref } });
+		if(bySlug) {
+			return bySlug;
+		}
+		if(isUuidLike(ref)) {
+			return this.prisma.vendor.findUnique({ where: { id: ref } });
+		}
+		return null;
+	}
+
+	private async requireVendorMember(
+		userId: string,
+		vendorRef: string,
+		roles: VendorMemberRole[],
+	) {
+		const vendor = await this.resolveVendorRecord(vendorRef);
+		if(!vendor) {
+			throw new NotFoundException('Vendor not found, or you are not a member.');
+		}
+		const membership = await this.prisma.vendorMember.findUnique({
+			where: {
+				vendorId_userId: { vendorId: vendor.id, userId },
+			},
+		});
+		if(!membership) {
+			throw new NotFoundException('Vendor not found, or you are not a member.');
+		}
+		if(!roles.includes(membership.role)) {
+			throw new ForbiddenException(
+				'Only an organization owner can change the name in the link.',
+			);
+		}
+		return vendor;
+	}
+
+	private async assertLinkNameAvailable(slug: string, excludeVendorId?: string) {
+		const conflict = await this.findConflictForSlug(slug, excludeVendorId);
+		if(conflict) {
+			throwLinkNameConflict(conflict);
+		}
+	}
+
+	private async findConflictForSlug(slug: string, excludeVendorId?: string) {
+		const vendors = await this.prisma.vendor.findMany({
+			where: excludeVendorId
+				? { id: { not: excludeVendorId } }
+				: undefined,
+			select: { slug: true },
+		});
+		return findLinkNameConflict(
+			slug,
+			vendors.map((row) => row.slug),
+		);
 	}
 
 	private toVendorSummary(vendor: {

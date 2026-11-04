@@ -3,8 +3,12 @@
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useCallback, useEffect, useState, type FormEvent } from 'react';
 import {
+	checkVendorLinkName,
 	createVendor,
 	listMyVendors,
+	listVendorLinkNameRequests,
+	reviewVendorLinkNameRequest,
+	type VendorLinkNameQueueItem,
 	type VendorSummary,
 } from '../../../lib/catalog-api';
 import { safeNextPath } from '../../../lib/accessGate';
@@ -34,14 +38,40 @@ function VendorManageContent() {
 	const [slugTouched, setSlugTouched] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 	const [submitting, setSubmitting] = useState(false);
+	const [linkCheckMessage, setLinkCheckMessage] = useState<string | null>(null);
+	const [linkRequests, setLinkRequests] = useState<VendorLinkNameQueueItem[]>([]);
+	const [reviewBusyId, setReviewBusyId] = useState<string | null>(null);
+	const [reviewError, setReviewError] = useState<string | null>(null);
+
+	const isPlatformReviewer = vendors.some(
+		(vendor) => vendor.isSuperVendor && (vendor.myRole === 'OWNER' || vendor.myRole === 'EDITOR'),
+	);
 
 	const refresh = useCallback(async () => {
 		setLoading(true);
 		try {
-			setVendors(await listMyVendors());
+			const mine = await listMyVendors();
+			setVendors(mine);
+			const canReview = mine.some(
+				(vendor) =>
+					vendor.isSuperVendor
+					&& (vendor.myRole === 'OWNER' || vendor.myRole === 'EDITOR'),
+			);
+			if(canReview) {
+				try {
+					setLinkRequests(await listVendorLinkNameRequests('PENDING'));
+				}
+				catch {
+					setLinkRequests([]);
+				}
+			}
+			else {
+				setLinkRequests([]);
+			}
 		}
 		catch {
 			setVendors([]);
+			setLinkRequests([]);
 		}
 		finally {
 			setLoading(false);
@@ -70,7 +100,28 @@ function VendorManageContent() {
 	const onNameChange = (value: string) => {
 		setName(value);
 		if(!slugTouched) {
-			setSlug(slugify(value));
+			const next = slugify(value);
+			setSlug(next);
+			setLinkCheckMessage(null);
+		}
+	};
+
+	const onLinkNameChange = async (next: string) => {
+		setSlugTouched(true);
+		const normalized = slugify(next);
+		setSlug(normalized);
+		setLinkCheckMessage(null);
+		if(normalized.length < 2) {
+			return;
+		}
+		try {
+			const check = await checkVendorLinkName(normalized);
+			if(!check.available) {
+				setLinkCheckMessage(check.message);
+			}
+		}
+		catch {
+			/* create submit still validates */
 		}
 	};
 
@@ -80,16 +131,23 @@ function VendorManageContent() {
 		setSubmitting(true);
 
 		try {
-			await createVendor({ name: name.trim(), slug: slug.trim() });
+			const check = await checkVendorLinkName(slug.trim());
+			if(!check.available) {
+				setError(check.message ?? 'That name in the link is not available.');
+				setSubmitting(false);
+				return;
+			}
+			const created = await createVendor({ name: name.trim(), slug: slug.trim() });
 			setName('');
 			setSlug('');
 			setSlugTouched(false);
+			setLinkCheckMessage(null);
 			setCreateOpen(false);
 			if(nextPath) {
 				router.push(nextPath);
 				return;
 			}
-			await refresh();
+			router.push(`/place-et-marque/vendors/${created.slug}`);
 		}
 		catch(submitError) {
 			setError(
@@ -109,6 +167,41 @@ function VendorManageContent() {
 		setName('');
 		setSlug('');
 		setSlugTouched(false);
+		setLinkCheckMessage(null);
+	};
+
+	const onReviewRequest = async (
+		requestId: string,
+		decision: 'approve' | 'deny',
+	) => {
+		setReviewError(null);
+		setReviewBusyId(requestId);
+		try {
+			let reason: string | undefined;
+			if(decision === 'deny') {
+				const typed = window.prompt(
+					'Why are you denying this request? (plain language for the seller)',
+					'Too similar to another seller’s name in the link.',
+				);
+				if(!typed || typed.trim().length < 3) {
+					setReviewBusyId(null);
+					return;
+				}
+				reason = typed.trim();
+			}
+			await reviewVendorLinkNameRequest(requestId, { decision, reason });
+			await refresh();
+		}
+		catch(reviewErr) {
+			setReviewError(
+				reviewErr instanceof Error
+					? reviewErr.message
+					: 'Could not review that request.',
+			);
+		}
+		finally {
+			setReviewBusyId(null);
+		}
 	};
 
 	return (
@@ -162,6 +255,119 @@ function VendorManageContent() {
 				}
 			</div>
 
+			{isPlatformReviewer && !loading
+				? (
+						<section
+							className="
+								flex
+								flex-col
+								gap-3
+							"
+						>
+							<h2 className="text-lg font-semibold">
+								Link name requests
+							</h2>
+							<p className="text-sm text-slate-600">
+								Approve or deny sellers who want a different name in their organization link.
+							</p>
+							{reviewError
+								? (
+										<p className="text-sm text-red-700">
+											{reviewError}
+										</p>
+									)
+								: null
+							}
+							{linkRequests.length === 0
+								? (
+										<p className="text-sm text-slate-500">
+											No pending requests.
+										</p>
+									)
+								: null
+							}
+							{linkRequests.map((request) => (
+								<div
+									className="
+										rounded-xl
+										border
+										border-slate-200
+										bg-white
+										p-4
+									"
+									key={request.id}
+								>
+									<p className="font-semibold">
+										{request.vendorName}
+									</p>
+									<p className="mt-1 text-sm text-slate-600">
+										{request.currentSlug}
+										{' → '}
+										{request.requestedSlug}
+									</p>
+									{request.requesterNote
+										? (
+												<p className="mt-2 text-sm text-slate-500">
+													Note: {request.requesterNote}
+												</p>
+											)
+										: null
+									}
+									<div
+										className="
+											mt-3
+											flex
+											flex-wrap
+											gap-2
+										"
+									>
+										<button
+											type="button"
+											className="
+												rounded-full
+												bg-asgreen
+												px-4
+												py-2
+												text-sm
+												font-semibold
+												text-white
+												disabled:opacity-60
+											"
+											disabled={reviewBusyId === request.id}
+											onClick={() => {
+												void onReviewRequest(request.id, 'approve');
+											}}
+										>
+											Approve
+										</button>
+										<button
+											type="button"
+											className="
+												rounded-full
+												border
+												border-slate-300
+												px-4
+												py-2
+												text-sm
+												font-semibold
+												text-slate-700
+												disabled:opacity-60
+											"
+											disabled={reviewBusyId === request.id}
+											onClick={() => {
+												void onReviewRequest(request.id, 'deny');
+											}}
+										>
+											Deny
+										</button>
+									</div>
+								</div>
+							))}
+						</section>
+					)
+				: null
+			}
+
 			<section
 				className="
 					flex
@@ -200,7 +406,7 @@ function VendorManageContent() {
 							hover:border-sky
 						"
 						key={vendor.id}
-						href={`/place-et-marque/vendors/${vendor.id}`}
+						href={`/place-et-marque/vendors/${vendor.slug}`}
 					>
 						<div
 							className="
@@ -369,16 +575,24 @@ function VendorManageContent() {
 									</label>
 
 									<UrlSlugField
-										label="Store URL"
+										label="Name in the link"
 										value={slug}
 										onChange={(next) => {
-											setSlugTouched(true);
-											setSlug(slugify(next));
+											void onLinkNameChange(next);
 										}}
-										prefixPath="/place-et-marque"
-										placeholder="demo-supply"
-										helpText="Choose a short public address for your store. Product pages will look like …/place-et-marque/your-store/product-name."
+										prefixPath="/place-et-marque/vendors"
+										placeholder="demo-supply-co"
+										helpText="This becomes your organization page and store address. Product pages look like …/place-et-marque/your-store/product-name."
 									/>
+
+									{linkCheckMessage
+										? (
+												<p className="text-sm text-red-700">
+													{linkCheckMessage}
+												</p>
+											)
+										: null
+									}
 
 									{error
 										? (

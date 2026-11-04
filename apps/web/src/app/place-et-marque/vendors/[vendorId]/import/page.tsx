@@ -19,7 +19,7 @@ import { useSession } from '../../../../../lib/useSession';
 
 function VendorImportPageContent() {
 	const params = useParams<{ vendorId: string }>();
-	const vendorId = params.vendorId;
+	const vendorRef = params.vendorId;
 	const { user, loading: sessionLoading } = useSession();
 	const [vendor, setVendor] = useState<VendorDetail | null>(null);
 	const [csv, setCsv] = useState('');
@@ -27,13 +27,15 @@ function VendorImportPageContent() {
 	const [job, setJob] = useState<CatalogImportJob | null>(null);
 	const [error, setError] = useState<string | null>(null);
 	const [busy, setBusy] = useState(false);
+	const vendorId = vendor?.id;
+	const vendorSlug = vendor?.slug || vendorRef;
 
 	useEffect(() => {
-		if(!user || !vendorId) {
+		if(!user || !vendorRef) {
 			return;
 		}
 
-		getMyVendor(vendorId)
+		getMyVendor(vendorRef)
 			.then(setVendor)
 			.catch((loadError) => {
 				setError(
@@ -42,7 +44,7 @@ function VendorImportPageContent() {
 						: 'Could not load vendor.',
 				);
 			});
-	}, [user, vendorId]);
+	}, [user, vendorRef]);
 
 	useEffect(() => {
 		if(!job || !vendorId) {
@@ -130,7 +132,7 @@ function VendorImportPageContent() {
 				gap-6
 			"
 		>
-			<BackLink href={`/place-et-marque/vendors/${vendorId}`}>
+			<BackLink href={`/place-et-marque/vendors/${vendorSlug}`}>
 				Back to vendor
 			</BackLink>
 
@@ -242,7 +244,7 @@ function VendorImportPageContent() {
 									text-sky
 									hover:underline
 								"
-								href={`/place-et-marque/vendors/${vendorId}#app-passwords`}
+								href={`/place-et-marque/vendors/${vendorSlug}#app-passwords`}
 							>
 								Manage app passwords
 							</a>

@@ -100,8 +100,9 @@ export class ConnectService {
 			'http://localhost:3000'
 		).replace(/\/$/, '');
 
-		const returnUrl = `${webBase}/place-et-marque/vendors/${vendorId}?connect=return`;
-		const refreshUrl = `${webBase}/place-et-marque/vendors/${vendorId}?connect=refresh`;
+		const vendorPath = vendor.slug || vendorId;
+		const returnUrl = `${webBase}/place-et-marque/vendors/${vendorPath}?connect=return`;
+		const refreshUrl = `${webBase}/place-et-marque/vendors/${vendorPath}?connect=refresh`;
 
 		const link = await this.stripe.createAccountLink({
 			accountId: vendor.stripeConnectAccountId!,
