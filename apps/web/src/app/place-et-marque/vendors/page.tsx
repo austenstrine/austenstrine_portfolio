@@ -259,10 +259,10 @@ function VendorManageContent() {
 								type="button"
 								aria-label="Create vendor organization"
 								className="
-									flex
-									w-full
+									inline-flex
+									self-end
 									items-center
-									justify-end
+									justify-center
 									rounded-xl
 									border
 									border-transparent
