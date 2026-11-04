@@ -101,13 +101,13 @@ export function ProductTagField({ value, onChange, vendorId }: ProductTagFieldPr
 								items-center
 								gap-1
 								rounded-full
-								bg-slate-100
+								bg-asgreen/15
 								px-2.5
 								py-1
 								text-xs
 								font-semibold
-								text-slate-700
-								hover:bg-slate-200
+								text-asgreen
+								hover:bg-asgreen/25
 							"
 							key={tag}
 							type="button"

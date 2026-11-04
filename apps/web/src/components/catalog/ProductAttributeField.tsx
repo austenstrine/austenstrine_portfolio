@@ -183,15 +183,13 @@ export function ProductAttributeField({
 														items-center
 														gap-1
 														rounded-full
-														bg-white
+														bg-asgreen/15
 														px-2.5
 														py-1
 														text-xs
 														font-semibold
-														text-slate-700
-														ring-1
-														ring-slate-200
-														hover:bg-slate-100
+														text-asgreen
+														hover:bg-asgreen/25
 													"
 													onClick={() => removeValue(row.valueId)}
 													title={`Remove ${row.valueLabel}`}
