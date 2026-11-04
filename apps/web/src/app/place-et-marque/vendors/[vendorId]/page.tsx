@@ -1151,9 +1151,9 @@ function VendorDetailContent() {
 											text-slate-600
 										"
 									>
-										Checkout splits the cart by vendor and shipping profile. Mark a
-										profile as ships-separately (e.g. FREIGHT) to force its own
-										shipment group.
+										Checkout groups items by shipping profile. Use Freight for
+										pallet / separate-shipment orders; Standard for everyday ground.
+										Add the defaults below if this vendor has none yet.
 									</p>
 									{shippingError
 										? (
@@ -1188,14 +1188,14 @@ function VendorDetailContent() {
 												key={profile.id}
 											>
 												<p className="font-semibold">
-													{profile.code} · {profile.name}
+													{profile.name}
 													{profile.shipsSeparately
-														? ' · separate ship'
+														? ' · ships separately'
 														: ''
 													}
 													{profile.payoutTrigger === 'ON_SHIPMENT'
-														? ' · payout on ship'
-														: ' · payout on pay'
+														? ' · payout when shipped'
+														: ' · payout when paid'
 													}
 												</p>
 												<p className="text-sm text-slate-600">
@@ -1204,11 +1204,26 @@ function VendorDetailContent() {
 															(rate) =>
 																`${rate.label} (${formatMoney(rate.amountCents)})`,
 														)
-														.join(' · ') || 'No rates'}
+														.join(' · ') || 'No rates yet'}
 												</p>
 											</li>
 										))}
 									</ul>
+									{shippingProfiles.length === 0
+										? (
+											<p
+												className="
+													mt-3
+													text-sm
+													text-slate-500
+												"
+											>
+												No profiles yet. Add Standard and Freight to unlock checkout
+												shipping for this vendor.
+											</p>
+										)
+										: null
+									}
 									<button
 										className="
 											mt-4
@@ -1230,7 +1245,11 @@ function VendorDetailContent() {
 									>
 										{shippingBusy
 											? 'Saving…'
-											: 'Ensure STANDARD + FREIGHT defaults'
+											: (
+												shippingProfiles.length === 0
+													? 'Add Standard and Freight defaults'
+													: 'Refresh Standard and Freight defaults'
+											)
 										}
 									</button>
 								</section>
