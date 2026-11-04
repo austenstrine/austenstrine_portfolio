@@ -39,6 +39,7 @@ resolve_tool_home() {
 		"$HOME/src/linux-gdrive-dotenv-backup-recovery"
 		"$HOME/linux-gdrive-dotenv-backup-recovery"
 		"$ROOT/../linux-gdrive-dotenv-backup-recovery"
+		"/agent/repos/linux-gdrive-dotenv-backup-recovery"
 		"/opt/linux-gdrive-dotenv-backup-recovery"
 	)
 	for c in "${candidates[@]}"; do

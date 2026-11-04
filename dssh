@@ -6,52 +6,69 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 export DSSH_PROJECT_ROOT="$ROOT"
 THIS="$(readlink -f "${BASH_SOURCE[0]}" 2>/dev/null || printf '%s\n' "${BASH_SOURCE[0]}")"
 
-resolve_dssh() {
-  local candidate path_dssh resolved
-  if [[ -n "${DSSH_BIN-}" ]]; then
-    if [[ -x "$DSSH_BIN" ]]; then
-      printf '%s\n' "$DSSH_BIN"
-      return 0
-    fi
-    echo "dssh: DSSH_BIN is set but not executable: $DSSH_BIN" >&2
-    return 1
-  fi
+# Accept a candidate path if it is executable and not this wrapper (avoids recursion
+# when someone puts ./dssh on PATH or symlinks ~/.local/bin/dssh back here).
+accept_dssh() {
+  local candidate="$1" resolved
+  [[ -n "$candidate" && -x "$candidate" ]] || return 1
+  resolved="$(readlink -f "$candidate" 2>/dev/null || printf '%s\n' "$candidate")"
+  [[ "$resolved" != "$THIS" ]] || return 1
+  printf '%s\n' "$candidate"
+  return 0
+}
 
+resolve_dssh() {
+  local candidate path_dssh
+
+  # Order: install.sh default symlink, sibling / Project clones, common clone paths, PATH.
   for candidate in \
+    "${HOME}/.local/bin/dssh" \
     "$ROOT/../developers-sugary-shell-helper/bin/dssh" \
-    "$HOME/.local/share/developers-sugary-shell-helper/bin/dssh" \
-    "$HOME/src/developers-sugary-shell-helper/bin/dssh" \
-    "$HOME/code/developers-sugary-shell-helper/bin/dssh"
+    "/agent/repos/developers-sugary-shell-helper/bin/dssh" \
+    "${HOME}/.local/share/developers-sugary-shell-helper/bin/dssh" \
+    "${HOME}/src/developers-sugary-shell-helper/bin/dssh" \
+    "${HOME}/code/developers-sugary-shell-helper/bin/dssh" \
+    "${HOME}/developers-sugary-shell-helper/bin/dssh"
   do
-    if [[ -x "$candidate" ]]; then
-      resolved="$(readlink -f "$candidate" 2>/dev/null || printf '%s\n' "$candidate")"
-      if [[ "$resolved" != "$THIS" ]]; then
-        printf '%s\n' "$candidate"
-        return 0
-      fi
+    if accept_dssh "$candidate"; then
+      return 0
     fi
   done
 
   path_dssh="$(type -P dssh 2>/dev/null || true)"
-  if [[ -n "$path_dssh" ]]; then
-    resolved="$(readlink -f "$path_dssh" 2>/dev/null || printf '%s\n' "$path_dssh")"
-    if [[ "$resolved" != "$THIS" ]]; then
-      printf '%s\n' "$path_dssh"
-      return 0
-    fi
+  if accept_dssh "$path_dssh"; then
+    return 0
   fi
 
   return 1
 }
 
+# Handle DSSH_BIN in the main shell (not inside $()) so exit codes stick.
+if [[ -n "${DSSH_BIN-}" ]]; then
+  if real="$(accept_dssh "$DSSH_BIN")"; then
+    exec "$real" "$@"
+  fi
+  echo "dssh: DSSH_BIN is set but not executable (or points at this wrapper): $DSSH_BIN" >&2
+  echo "dssh: unset DSSH_BIN or point it at developers-sugary-shell-helper/bin/dssh" >&2
+  exit 127
+fi
+
 if ! real="$(resolve_dssh)"; then
   cat >&2 <<'EOF'
-dssh: developers-sugary-shell-helper not found.
+dssh: developers-sugary-shell-helper CLI not found.
+
+Install once per machine:
 
   git clone https://github.com/austenstrine/developers-sugary-shell-helper.git
   cd developers-sugary-shell-helper && ./install.sh
+  # install.sh symlinks bin/dssh → ~/.local/bin/dssh
+  export PATH="$HOME/.local/bin:$PATH"
 
-  Or set DSSH_BIN to that repo's bin/dssh.
+Or clone as a sibling of this repo (../developers-sugary-shell-helper), or set:
+
+  export DSSH_BIN=/path/to/developers-sugary-shell-helper/bin/dssh
+
+This ./dssh is only a thin wrapper; .dsshrc stays in the portfolio.
 EOF
   exit 127
 fi
