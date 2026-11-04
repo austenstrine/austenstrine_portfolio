@@ -45,7 +45,9 @@ RUN go mod download \
 
 FROM alpine:3.20
 
+# bash: dssh local start wraps <target>_start in `bash -lc` (same as ops/nginx).
 RUN apk add --no-cache \
+	bash \
 	ca-certificates \
 	curl \
 	tini \
