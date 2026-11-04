@@ -262,10 +262,11 @@ function VendorManageContent() {
 									flex
 									w-full
 									items-center
-									justify-center
+									justify-start
 									rounded-xl
 									border
 									border-transparent
+									px-4
 									py-3
 									text-slate-400
 									transition
