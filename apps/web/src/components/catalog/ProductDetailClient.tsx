@@ -550,7 +550,7 @@ export function ProductDetailClient({
 			<div className="grid gap-10 lg:grid-cols-[minmax(0,1.15fr)_minmax(20rem,0.85fr)] lg:items-start">
 				<div className="flex flex-col gap-8">
 					<div className="flex flex-col gap-3">
-						<div className="relative aspect-[4/3] overflow-hidden rounded-2xl bg-[#cfd1cb] sm:aspect-[5/3]">
+						<div className="relative aspect-[4/3] overflow-hidden rounded-2xl bg-canvas sm:aspect-[5/3]">
 							<CatalogCover
 								src={activeSrc}
 								alt={product.title}

@@ -209,12 +209,12 @@ export function ProductTagField({ value, onChange, vendorId }: ProductTagFieldPr
 																	(active
 																		? `
 																			rounded-full
-																			bg-ink
+																			bg-asgreen/15
 																			px-3
 																			py-1
 																			text-xs
 																			font-semibold
-																			text-white
+																			text-asgreen
 																		`
 																		: `
 																			rounded-full
@@ -285,12 +285,12 @@ export function ProductTagField({ value, onChange, vendorId }: ProductTagFieldPr
 																	(active
 																		? `
 																			rounded-full
-																			bg-ink
+																			bg-asgreen/15
 																			px-3
 																			py-1
 																			text-xs
 																			font-semibold
-																			text-white
+																			text-asgreen
 																		`
 																		: `
 																			rounded-full

@@ -869,7 +869,7 @@ export function ProductEditorForm({
 												text-xs
 												font-semibold
 												${focusedClientKey === row.clientKey
-											? 'bg-ink text-white'
+											? 'bg-asgreen/15 text-asgreen'
 											: 'border border-slate-300 text-slate-700'
 										}
 											`}

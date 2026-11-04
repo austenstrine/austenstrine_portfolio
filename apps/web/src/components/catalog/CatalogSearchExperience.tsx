@@ -608,7 +608,7 @@ export function CatalogSearchExperience() {
 									Filters
 									{clearableFilterCount > 0
 										? (
-											<span className="rounded-full bg-ink px-1.5 py-0.5 text-[10px] text-white">
+											<span className="rounded-full bg-asgreen px-1.5 py-0.5 text-[10px] text-white">
 												{clearableFilterCount}
 											</span>
 										)

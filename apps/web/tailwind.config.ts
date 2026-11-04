@@ -14,6 +14,8 @@ const config: Config = {
         asgreen: '#257257',
         signal: '#e76f51',
         frost: '#fafaf8',
+        // Product image void / placeholder plane (catalog cards + detail)
+        canvas: '#d8d9d4',
       },
       spacing: {
         gutter: 'var(--gutter)',
