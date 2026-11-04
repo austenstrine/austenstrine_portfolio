@@ -1,7 +1,18 @@
-FROM node:20-alpine
+FROM node:20-bookworm-slim
 WORKDIR /app
+# Avoid node:20-alpine: musl + npm lifecycle (git-dep prepare/tsc, argon2
+# node-gyp-build, prisma generate) SIGSEGV during image builds.
 # git: temporary until prisma-seed-migration-sync is on npm (TODO: drop git + switch dep to ^0.1.0).
-RUN apk add --no-cache bash openssl python3 make g++ git
+RUN apt-get update \
+	&& apt-get install -y --no-install-recommends \
+		bash \
+		ca-certificates \
+		git \
+		g++ \
+		make \
+		openssl \
+		python3 \
+	&& rm -rf /var/lib/apt/lists/*
 COPY ops/docker/ensure-npm.sh /usr/local/bin/ensure-npm.sh
 RUN chmod +x /usr/local/bin/ensure-npm.sh && ensure-npm.sh
 COPY package*.json ./
