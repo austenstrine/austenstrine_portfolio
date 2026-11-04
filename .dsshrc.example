@@ -21,6 +21,14 @@
 # dssh_live_migrate_cmd='npx prisma migrate deploy --schema apps/api/prisma/schema.prisma'
 # dssh_publish_local=./ops/deploy/live.sh
 # dssh_env_backup_relpath=ops/tooling/env-backup.sh
+#
+# Optional backend start/restart migration preflight (requires dssh with
+# <target>_start_preflight_* support):
+# backend_start_preflight_detect="docker compose up -d postgres >/dev/null && npx prisma migrate status --schema apps/api/prisma/schema.prisma"
+# backend_start_preflight_apply="\"$tool_bin\" backend migrate"
+# backend_start_preflight_prompt='Detected unapplied migrations. Run dssh backend migrate now? (y/N)'
+# backend_start_preflight_timeout=5
+# backend_start_preflight_default=N
 
 # Remote file aliases for `dssh rnano <alias>` — put real hosts in .dsshrc.local
 # (gitignored), not in committed .dsshrc:
