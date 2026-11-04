@@ -54,7 +54,7 @@ export function CatalogWorkspaceSwitcher({
 					text-slate-500
 				"
 			>
-				Need packs, chains, or break fees up front?
+				Need packaging rules or quantity breaks first?
 				{' '}
 				<a
 					className="

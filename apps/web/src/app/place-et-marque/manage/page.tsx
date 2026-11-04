@@ -10,7 +10,8 @@ import {
 import { useSession } from '../../../lib/useSession';
 import { RequireAccess } from '../../../components/auth/RequireAccess';
 
-const PAGE_SIZE = 100;
+/** Match catalog-search hard cap (`Math.min(..., 96)`); 100 never returns a full page. */
+const PAGE_SIZE = 96;
 
 function formatPriceCents(cents: number | null): string {
 	if(cents == null) {
@@ -33,13 +34,20 @@ async function loadSellerProductPage(
 				vendor: vendor.slug,
 				limit: PAGE_SIZE,
 				offset,
-			}).catch(() => ({ items: [] as CatalogProductSummary[] })),
+			}).catch(() => ({ items: [] as CatalogProductSummary[], total: 0 })),
 		),
 	);
 	const byId = new Map<string, CatalogProductSummary>();
 	let mayHaveMore = false;
 	for(const result of results) {
-		if(result.items.length >= PAGE_SIZE) {
+		const count = result.items.length;
+		const total = typeof result.total === 'number'
+			? result.total
+			: null;
+		if(total != null
+			? offset + count < total
+			: count >= PAGE_SIZE
+		) {
 			mayHaveMore = true;
 		}
 		for(const item of result.items) {
