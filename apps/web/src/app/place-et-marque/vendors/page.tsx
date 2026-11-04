@@ -11,6 +11,7 @@ import { safeNextPath } from '../../../lib/accessGate';
 import { RequireAccess } from '../../../components/auth/RequireAccess';
 import { DisclosurePrompt } from '../../../components/catalog/DisclosurePrompt';
 import { UrlSlugField } from '../../../components/catalog/UrlSlugField';
+import { PlusIcon } from '../../../components/icons/PlusIcon';
 
 function slugify(value: string): string {
 	return value
@@ -252,23 +253,42 @@ function VendorManageContent() {
 						</p>
 					</a>
 				))}
+				{!loading && !createOpen
+					? (
+							<button
+								type="button"
+								aria-label="Create vendor organization"
+								className="
+									flex
+									w-full
+									items-center
+									justify-center
+									rounded-xl
+									border
+									border-transparent
+									py-3
+									text-slate-400
+									transition
+									hover:text-sky
+								"
+								onClick={() => setCreateOpen(true)}
+							>
+								<PlusIcon className="h-4 w-4" />
+							</button>
+						)
+					: null
+				}
 			</section>
 
-			<section
-				className="
-					flex
-					flex-col
-					gap-3
-				"
-			>
-				{!createOpen
-					? (
-							<DisclosurePrompt
-								question="Need a new vendor organization?"
-								onExpand={() => setCreateOpen(true)}
-							/>
-						)
-					: (
+			{createOpen
+				? (
+						<section
+							className="
+								flex
+								flex-col
+								gap-3
+							"
+						>
 							<div
 								className="
 									rounded-2xl
@@ -391,9 +411,10 @@ function VendorManageContent() {
 									</button>
 								</form>
 							</div>
-						)
-				}
-			</section>
+						</section>
+					)
+				: null
+			}
 		</div>
 	);
 }
