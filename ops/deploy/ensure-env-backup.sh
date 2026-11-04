@@ -6,6 +6,7 @@
 # Core CLI + units live in:
 #   https://github.com/austenstrine/linux-gdrive-dotenv-backup-recovery
 # Resolve via ENV_BACKUP_HOME / ENV_BACKUP_SH, sibling clone, ~/src/…, or ~/bin.
+# If nothing is found, shallow-clone into ~/src/… (same idea as ops/cdn/ensure-source.sh).
 #
 # Secrets are NOT created here. Copy once from a machine that already backs up:
 #   ./ops/deploy/push-env-backup-secrets.sh ubuntu@host
@@ -20,9 +21,17 @@ PASS="${RESTIC_PASSWORD_FILE:-$HOME/.config/env-backup/restic.pass}"
 STATE_DIR="${ENV_BACKUP_STATE_DIR:-$HOME/.config/env-backup}"
 UNIT_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/systemd/user"
 export ENV_BACKUP_FILES="${ENV_BACKUP_FILES:-$ROOT/.env $ROOT/apps/api/.env}"
+TOOL_REPO="${ENV_BACKUP_REPO:-https://github.com/austenstrine/linux-gdrive-dotenv-backup-recovery.git}"
+TOOL_REF="${ENV_BACKUP_REF:-master}"
+DEFAULT_CLONE="${ENV_BACKUP_HOME:-$HOME/src/linux-gdrive-dotenv-backup-recovery}"
+
+tool_home_ok() {
+	local dir="$1"
+	[[ -n "$dir" && -f "$dir/env-backup.sh" && -f "$dir/systemd/env-backup.timer" ]]
+}
 
 resolve_tool_home() {
-	if [[ -n "${ENV_BACKUP_HOME-}" && -d "$ENV_BACKUP_HOME" ]]; then
+	if [[ -n "${ENV_BACKUP_HOME-}" ]] && tool_home_ok "$ENV_BACKUP_HOME"; then
 		printf '%s\n' "$ENV_BACKUP_HOME"
 		return 0
 	fi
@@ -30,7 +39,7 @@ resolve_tool_home() {
 	if [[ -n "${ENV_BACKUP_SH-}" && -f "$ENV_BACKUP_SH" ]]; then
 		dir="$(cd "$(dirname "$ENV_BACKUP_SH")" && pwd)"
 		# Prefer checkout root when script lives at repo root.
-		if [[ -f "$dir/systemd/env-backup.timer" ]]; then
+		if tool_home_ok "$dir"; then
 			printf '%s\n' "$dir"
 			return 0
 		fi
@@ -43,7 +52,7 @@ resolve_tool_home() {
 		"/opt/linux-gdrive-dotenv-backup-recovery"
 	)
 	for c in "${candidates[@]}"; do
-		if [[ -f "$c/env-backup.sh" && -f "$c/systemd/env-backup.timer" ]]; then
+		if tool_home_ok "$c"; then
 			printf '%s\n' "$c"
 			return 0
 		fi
@@ -53,13 +62,43 @@ resolve_tool_home() {
 		sh="$(readlink -f "$HOME/bin/env-backup.sh" 2>/dev/null || true)"
 		if [[ -n "$sh" && -f "$sh" ]]; then
 			dir="$(cd "$(dirname "$sh")" && pwd)"
-			if [[ -f "$dir/systemd/env-backup.timer" ]]; then
+			if tool_home_ok "$dir"; then
 				printf '%s\n' "$dir"
 				return 0
 			fi
 		fi
 	fi
 	return 1
+}
+
+# Clone-in-deploy when no checkout is present (wiped EC2 / first live.sh).
+ensure_tool_home() {
+	local dest
+	if dest="$(resolve_tool_home)"; then
+		printf '%s\n' "$dest"
+		return 0
+	fi
+	dest="$DEFAULT_CLONE"
+	if ! command -v git >/dev/null 2>&1; then
+		echo "ensure-env-backup: git required to clone ${TOOL_REPO}" >&2
+		return 1
+	fi
+	mkdir -p "$(dirname "$dest")"
+	if [[ ! -d "$dest/.git" ]]; then
+		echo "ensure-env-backup: cloning ${TOOL_REPO}@${TOOL_REF} → ${dest}" >&2
+		rm -rf "$dest"
+		git clone --depth 1 --branch "$TOOL_REF" "$TOOL_REPO" "$dest"
+	else
+		echo "ensure-env-backup: updating ${dest} to origin/${TOOL_REF}" >&2
+		git -C "$dest" remote set-url origin "$TOOL_REPO"
+		git -C "$dest" fetch --depth 1 origin "$TOOL_REF"
+		git -C "$dest" checkout -q --detach "FETCH_HEAD"
+	fi
+	if ! tool_home_ok "$dest"; then
+		echo "ensure-env-backup: ${dest} missing env-backup.sh or systemd/env-backup.timer" >&2
+		return 1
+	fi
+	printf '%s\n' "$dest"
 }
 
 install_pkg() {
@@ -81,11 +120,9 @@ install_pkg() {
 	fi
 }
 
-TOOL_HOME="$(resolve_tool_home)" || {
-	echo "ensure-env-backup: linux-gdrive-dotenv-backup-recovery not found." >&2
-	echo "  git clone https://github.com/austenstrine/linux-gdrive-dotenv-backup-recovery.git \\" >&2
-	echo "    ~/src/linux-gdrive-dotenv-backup-recovery" >&2
-	echo "  Or set ENV_BACKUP_HOME / ENV_BACKUP_SH. See docs/tooling/env-backup.md" >&2
+TOOL_HOME="$(ensure_tool_home)" || {
+	echo "ensure-env-backup: could not resolve or clone linux-gdrive-dotenv-backup-recovery." >&2
+	echo "  Set ENV_BACKUP_HOME / ENV_BACKUP_SH, or clone manually. See docs/tooling/env-backup.md" >&2
 	exit 0
 }
 

@@ -9,6 +9,11 @@ This repo keeps **deploy glue only** and a thin wrapper that sets
 
 ## Install the tool on a host
 
+`ops/deploy/ensure-env-backup.sh` (called from `live.sh`) resolves an existing
+checkout, or shallow-clones into `~/src/linux-gdrive-dotenv-backup-recovery`
+(`ENV_BACKUP_HOME` / `ENV_BACKUP_REPO` / `ENV_BACKUP_REF` override). Manual
+install is optional:
+
 ```bash
 git clone https://github.com/austenstrine/linux-gdrive-dotenv-backup-recovery.git \
   ~/src/linux-gdrive-dotenv-backup-recovery
@@ -42,9 +47,10 @@ Default `ENV_BACKUP_FILES`: `<repo>/.env` and `<repo>/apps/api/.env`.
 
 ## Live box
 
-`live.sh` calls `ops/deploy/ensure-env-backup.sh`, which expects the tool
-checkout on the box, installs packages + timer, and smoke-tests backup when
-secrets are present.
+`live.sh` calls `ops/deploy/ensure-env-backup.sh`, which clones the tool if
+needed, installs restic/rclone + the user timer, and smoke-tests backup when
+secrets are present. GitHub deploy runs `live.sh` directly (no `dssh` on the
+box).
 
 One-time secret bootstrap from a laptop that already backs up:
 

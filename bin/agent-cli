@@ -409,7 +409,7 @@ if (envBackup.present) {
 const cdn={
   present: exists("ops/cdn"),
   ensureSource: exists("ops/cdn/ensure-source.sh"),
-  goMod: exists("ops/cdn/go.mod"),
+  goMod: exists("ops/cdn/src/go.mod") || exists("ops/cdn/go.mod"),
   sourceRepo: "https://github.com/austenstrine/golang-image-cdn"
 };
 const out={
