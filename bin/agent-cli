@@ -115,7 +115,7 @@ dssh_mode_line() {
 }
 
 helper_status_text() {
-  local seed_dep seed_pkg dssh_kind env_kind cdn_kind
+  local seed_dep seed_pkg dssh_kind env_kind cdn_kind coord_kind
   seed_dep="$(node -e 'const p=require("./apps/api/package.json"); console.log((p.dependencies||{})["prisma-seed-migration-sync"]||"(missing)")' 2>/dev/null || echo "(no apps/api)")"
   if [[ -d packages/prisma-seed-migration-sync ]]; then
     seed_pkg="in-tree packages/prisma-seed-migration-sync"
@@ -153,6 +153,17 @@ helper_status_text() {
   else
     cdn_kind="ops/cdn missing"
   fi
+  if [[ -f bin/agent-coord ]]; then
+    local clines
+    clines="$(wc -l < bin/agent-coord | tr -d ' ')"
+    if grep -q 'AGENT_COORD_BIN\|agent-coord' bin/agent-coord 2>/dev/null && [[ "$clines" -lt 80 ]]; then
+      coord_kind="thin wrapper → agent-coord ($clines lines)"
+    else
+      coord_kind="bin/agent-coord present ($clines lines)"
+    fi
+  else
+    coord_kind="missing ./bin/agent-coord"
+  fi
   cat <<EOF
 prisma-seed-migration-sync:
   apps/api dep: $seed_dep
@@ -163,6 +174,11 @@ dssh / rlog:
   install: sibling clone, /agent/repos/…, ~/.local/bin/dssh (install.sh), or DSSH_BIN
   config stays here: .dsshrc .dsshrc.example (.dsshrc.local gitignored)
   sibling: https://github.com/austenstrine/developers-sugary-shell-helper (branch master)
+agent-coord:
+  $coord_kind
+  install: sibling ~/Development/agent-coord ./install.sh → ~/.local/bin/agent-coord, or AGENT_COORD_BIN
+  sock/state: ~/.local/share/agent-coord/ (AGENT_COORD_DIR override)
+  sibling path: ~/Development/agent-coord (local; publish remote when ready)
 env-backup:
   $env_kind
   docs: docs/tooling/env-backup.md
@@ -405,6 +421,22 @@ const out={
   },
   dssh,
   dsshSibling: "https://github.com/austenstrine/developers-sugary-shell-helper",
+  agentCoord: (()=>{
+    const p=path.join(root,"bin/agent-coord");
+    const present=exists("bin/agent-coord");
+    let kind="missing";
+    if (present) {
+      const text=fs.readFileSync(p,"utf8");
+      const lines=text.split(/\n/).length;
+      kind=(lines<80 && /AGENT_COORD_BIN|agent-coord/.test(text)) ? "wrapper" : "present";
+    }
+    return {
+      present,
+      kind,
+      siblingPath: "~/Development/agent-coord",
+      install: "~/.local/bin via sibling install.sh or AGENT_COORD_BIN"
+    };
+  })(),
   envBackup,
   envBackupSibling: "https://github.com/austenstrine/linux-gdrive-dotenv-backup-recovery",
   cdn,
