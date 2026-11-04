@@ -177,13 +177,13 @@ function CartContent() {
 								mt-6
 								inline-flex
 								rounded-full
-								bg-ink
+								bg-sky
 								px-5
 								py-2.5
 								text-sm
 								font-semibold
 								text-white
-								hover:bg-sky
+								hover:bg-sky/90
 							"
 							href="/place-et-marque/search"
 						>
@@ -455,13 +455,13 @@ function CartContent() {
 									items-center
 									justify-center
 									rounded-full
-									bg-ink
+									bg-sky
 									px-4
 									py-3
 									text-sm
 									font-semibold
 									text-white
-									hover:bg-sky
+									hover:bg-sky/90
 								"
 								href="/place-et-marque/checkout"
 							>

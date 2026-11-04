@@ -536,7 +536,7 @@ export function CatalogSearchExperience() {
 												h-full
 												w-1/3
 												animate-pulse
-												bg-ink
+												bg-sky
 											"
 										/>
 									</div>
@@ -639,7 +639,7 @@ export function CatalogSearchExperience() {
 												<button
 													type="button"
 													onClick={clearAll}
-													className="mt-6 rounded-full bg-ink px-5 py-2.5 text-sm font-semibold text-white"
+													className="mt-6 rounded-full bg-sky px-5 py-2.5 text-sm font-semibold text-white"
 												>
 													Reset search
 												</button>
@@ -718,7 +718,7 @@ export function CatalogSearchExperience() {
 					<div className="fixed inset-0 z-40 lg:hidden">
 						<button
 							type="button"
-							className="absolute inset-0 bg-ink/40"
+							className="absolute inset-0 bg-sky/40"
 							aria-label="Close filters"
 							onClick={() => setFiltersOpen(false)}
 						/>

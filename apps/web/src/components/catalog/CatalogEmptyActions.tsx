@@ -57,13 +57,13 @@ export function CatalogEmptyActions() {
 							className="
 								inline-flex
 								rounded-full
-								bg-ink
+								bg-sky
 								px-4
 								py-2
 								text-sm
 								font-semibold
 								text-white
-								hover:bg-sky
+								hover:bg-sky/90
 							"
 							href="/place-et-marque/vendors"
 						>

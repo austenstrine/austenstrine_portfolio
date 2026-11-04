@@ -420,13 +420,13 @@ function UomManagePageContent() {
 									className="
 										self-start
 										rounded-full
-										bg-ink
+										bg-sky
 										px-4
 										py-2.5
 										text-sm
 										font-semibold
 										text-white
-										hover:bg-sky
+										hover:bg-sky/90
 										disabled:opacity-60
 									"
 									type="submit"

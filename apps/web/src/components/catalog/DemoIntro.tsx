@@ -6,7 +6,7 @@ export function DemoIntro() {
 			className="
 				overflow-hidden
 				rounded-3xl
-				bg-ink
+				bg-sky
 				px-6
 				py-8
 				text-white

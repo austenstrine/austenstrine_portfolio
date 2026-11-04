@@ -151,7 +151,7 @@ export function ProductCardImageCarousel({
 								bottom-0
 								h-16
 								bg-gradient-to-t
-								from-black/50
+								from-sky/50
 								to-transparent
 							"
 						/>
@@ -171,7 +171,7 @@ export function ProductCardImageCarousel({
 									flex
 									items-center
 									rounded-full
-									bg-black/30
+									bg-sky/30
 									px-1
 									py-0.5
 								"
@@ -199,7 +199,7 @@ export function ProductCardImageCarousel({
 														h-1.5
 														w-1.5
 														rounded-full
-														bg-ink
+														bg-sky
 														shadow-[0_0_0_1px_rgba(255,255,255,0.7)]
 													`
 													: `

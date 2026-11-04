@@ -707,7 +707,7 @@ export function ExperienceSection() {
 						transition-[background-color,border-color]
 						duration-300
 						${scoped && expanded
-							? 'border-ink bg-ink'
+							? 'border-sky bg-sky'
 							: peeked && expanded
 								? 'border-slate-400 bg-white'
 								: 'border-slate-300 bg-white'}

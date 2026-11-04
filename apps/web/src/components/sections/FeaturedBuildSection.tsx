@@ -172,14 +172,14 @@ export function FeaturedBuildSection() {
 					mt-8
 					inline-flex
 					rounded-full
-					bg-ink
+					bg-sky
 					px-5
 					py-2.5
 					text-sm
 					font-semibold
 					text-white
 					transition
-					hover:bg-sky
+					hover:bg-sky/90
 					focus-visible:outline-none
 					focus-visible:ring-2
 					focus-visible:ring-ink

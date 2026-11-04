@@ -1515,13 +1515,13 @@ export function ProductEditorForm({
 					disabled={submitting}
 					className="
 						rounded-full
-						bg-ink
+						bg-sky
 						px-5
 						py-2.5
 						text-sm
 						font-semibold
 						text-white
-						hover:bg-sky
+						hover:bg-sky/90
 						disabled:opacity-60
 					"
 				>

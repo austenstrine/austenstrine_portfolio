@@ -89,14 +89,14 @@ function VerifyLoginForm() {
 					className="
 						mt-2
 						rounded-full
-						bg-ink
+						bg-sky
 						px-4
 						py-2.5
 						text-sm
 						font-semibold
 						text-white
 						transition
-						hover:bg-sky
+						hover:bg-sky/90
 						disabled:cursor-not-allowed
 						disabled:opacity-60
 					"

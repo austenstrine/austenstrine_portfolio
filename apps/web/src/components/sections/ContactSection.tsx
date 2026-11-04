@@ -105,14 +105,11 @@ export function ContactSection() {
 		<section
 			className="
 				rounded-none
-				bg-ink
+				bg-sky
 				p-8
 				text-white
 				shadow-none
 				sm:rounded-2xl
-				sm:bg-gradient-to-br
-				sm:from-ink
-				sm:to-sky
 				sm:shadow-xl
 			"
 			id="contact"
@@ -169,7 +166,7 @@ export function ContactSection() {
 							-translate-x-1/2
 							whitespace-nowrap
 							rounded-md
-							bg-black/80
+							bg-sky/90
 							px-3
 							py-1.5
 							text-xs
