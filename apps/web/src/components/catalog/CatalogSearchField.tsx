@@ -126,7 +126,7 @@ export function CatalogSearchField({
 								border
 								border-slate-200
 								bg-white
-								px-1.5
+								font-sans
 								text-[10px]
 								font-semibold
 								leading-none
