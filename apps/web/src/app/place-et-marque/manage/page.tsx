@@ -10,24 +10,56 @@ import {
 import { useSession } from '../../../lib/useSession';
 import { RequireAccess } from '../../../components/auth/RequireAccess';
 
+function formatPriceCents(cents: number | null): string {
+	if(cents == null) {
+		return '—';
+	}
+	return `$${(cents / 100).toFixed(2)}`;
+}
+
 function PlaceEtMarqueManageContent() {
 	const { user } = useSession();
 	const [products, setProducts] = useState<CatalogProductSummary[]>([]);
 	const [vendors, setVendors] = useState<VendorSummary[]>([]);
-
-	useEffect(() => {
-		searchCatalogProducts({})
-			.then((result) => setProducts(result.items))
-			.catch(() => setProducts([]));
-	}, []);
+	const [loadingProducts, setLoadingProducts] = useState(false);
 
 	useEffect(() => {
 		if(!user) {
 			setVendors([]);
+			setProducts([]);
 			return;
 		}
 
-		listMyVendors().then(setVendors).catch(() => setVendors([]));
+		setLoadingProducts(true);
+		listMyVendors()
+			.then(async (vendorRows) => {
+				setVendors(vendorRows);
+				if(vendorRows.length === 0) {
+					setProducts([]);
+					return;
+				}
+
+				const results = await Promise.all(
+					vendorRows.map((vendor) =>
+						searchCatalogProducts({
+							vendor: vendor.slug,
+							limit: 100,
+						}).catch(() => ({ items: [] as CatalogProductSummary[] })),
+					),
+				);
+				const byId = new Map<string, CatalogProductSummary>();
+				for(const result of results) {
+					for(const item of result.items) {
+						byId.set(item.id, item);
+					}
+				}
+				setProducts([...byId.values()]);
+			})
+			.catch(() => {
+				setVendors([]);
+				setProducts([]);
+			})
+			.finally(() => setLoadingProducts(false));
 	}, [user]);
 
 	return (
@@ -48,8 +80,7 @@ function PlaceEtMarqueManageContent() {
 				Product management
 			</h1>
 			<p className="max-w-2xl text-slate-600">
-				Quick edit appears on product pages when your account has owner or editor access for that
-				vendor. Create a vendor organization first if you do not have one yet.
+				Inventory for vendors you can edit. Open a product to change price, qty, or full listing details.
 			</p>
 
 			{user
@@ -129,45 +160,119 @@ function PlaceEtMarqueManageContent() {
 					gap-3
 				"
 			>
-				<h2 className="text-lg font-semibold">
-					Catalog products
-				</h2>
-				{products.length === 0
+				<div
+					className="
+						flex
+						flex-wrap
+						items-center
+						justify-between
+						gap-3
+					"
+				>
+					<h2 className="text-lg font-semibold">
+						Your products
+					</h2>
+					{vendors[0]
+						? (
+							<a
+								className="
+									text-sm
+									font-semibold
+									text-sky
+									hover:underline
+								"
+								href={`/place-et-marque/products/new?vendorId=${encodeURIComponent(vendors[0].id)}`}
+							>
+								New product
+							</a>
+						)
+						: null
+					}
+				</div>
+				{loadingProducts
 					? (
 						<p className="text-sm text-slate-500">
-							No products in the catalog yet.
+							Loading your inventory…
+						</p>
+					)
+					: null
+				}
+				{!loadingProducts && products.length === 0
+					? (
+						<p className="text-sm text-slate-500">
+							{vendors.length === 0
+								? 'Create a vendor organization to start listing products.'
+								: 'No products yet for your vendors.'
+							}
 						</p>
 					)
 					: null
 				}
 				{products.map((product) => (
-					<a
+					<div
 						className="
+							flex
+							flex-col
+							gap-2
 							rounded-xl
 							border
 							border-slate-200
 							bg-white
 							p-4
-							hover:border-sky
+							sm:flex-row
+							sm:items-center
+							sm:justify-between
 						"
 						key={product.id}
-						href={`/place-et-marque/${product.vendor.slug}/${product.slug}`}
 					>
-						<p
+						<div className="min-w-0">
+							<p
+								className="
+									text-xs
+									font-semibold
+									uppercase
+									tracking-wide
+									text-slate-500
+								"
+							>
+								{product.vendor.name}
+							</p>
+							<p className="mt-1 font-semibold">
+								{product.title}
+							</p>
+							<p className="mt-1 text-sm text-slate-600">
+								{formatPriceCents(product.primaryPriceCents)}
+								{product.primaryUom
+									? ` / ${product.primaryUom}`
+									: ''
+								}
+								{' · '}
+								{product.availableQty} available
+							</p>
+						</div>
+						<div
 							className="
-								text-xs
+								flex
+								flex-wrap
+								gap-3
+								text-sm
 								font-semibold
-								uppercase
-								tracking-wide
-								text-slate-500
 							"
 						>
-							{product.vendor.name}
-						</p>
-						<p className="mt-1 font-semibold">
-							{product.title}
-						</p>
-					</a>
+							<a
+								className="text-sky hover:underline"
+								href={`/place-et-marque/${product.vendor.slug}/${product.slug}`}
+							>
+								View
+							</a>
+							<a
+								className="text-sky hover:underline"
+								href={`/place-et-marque/products/${product.id}/edit`}
+							>
+								Edit
+							</a>
+						</div>
+					</div>
 				))}
 			</section>
 		</div>

@@ -305,6 +305,7 @@ export function updateCatalogProduct(
 	productId: string,
 	payload: ProductMeasuresPayload & {
 		title?: string;
+		slug?: string;
 		description?: string;
 		imageUrls?: string[];
 		tags?: string[];
@@ -320,14 +321,26 @@ export function updateCatalogProduct(
 			booleanValue?: boolean | null;
 		}>;
 		offerings?: Array<{
-			id: string;
+			id?: string;
+			clientKey?: string;
+			offeringKey?: string;
 			sku?: string;
+			uomId?: string;
+			role?: 'PACK' | 'PIECE';
 			priceCents?: number;
 			qtyOnHand?: string;
 			tracksOwnQty?: boolean;
 			minUnbrokenQty?: string;
 			breakPoolAboveQty?: string;
 			inheritQtyToChildren?: boolean;
+		}>;
+		containments?: Array<{
+			parentOfferingKey?: string;
+			childOfferingKey?: string;
+			parentOfferingId?: string;
+			childOfferingId?: string;
+			childQtyPerParent: string;
+			breakFeeCents?: number;
 		}>;
 	},
 ): Promise<CatalogProductDetail> {
