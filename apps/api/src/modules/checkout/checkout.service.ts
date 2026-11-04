@@ -104,9 +104,15 @@ export class CheckoutService implements OnModuleInit, OnModuleDestroy {
 			shipments: ShipmentRatePick[];
 		},
 	) {
-		if(!this.stripe.enabled) {
+		const unpaidDevBypass = process.env.CHECKOUT_DEV_BYPASS === '1';
+		if(!this.stripe.enabled && !unpaidDevBypass) {
 			throw new BadRequestException(
 				'Stripe is not configured on the server (STRIPE_SECRET_KEY).',
+			);
+		}
+		if(unpaidDevBypass && !this.stripe.enabled) {
+			this.logger.warn(
+				'CHECKOUT_DEV_BYPASS=1: completing checkout without Stripe payment.',
 			);
 		}
 
@@ -271,6 +277,27 @@ export class CheckoutService implements OnModuleInit, OnModuleDestroy {
 					},
 				});
 			}
+		}
+
+		if(unpaidDevBypass && !this.stripe.enabled) {
+			await this.prisma.checkout.update({
+				where: { id: checkout.id },
+				data: {
+					status: CheckoutStatus.AWAITING_PAYMENT,
+					merchandiseCents,
+					shippingCents,
+					totalCents,
+				},
+			});
+			await this.finalizePaidCheckout(checkout.id);
+			return {
+				checkoutId: checkout.id,
+				clientSecret: null,
+				publishableKey: null,
+				totalCents,
+				currency: checkout.currency,
+				expiresAt: checkout.expiresAt,
+			};
 		}
 
 		const paymentIntent = await this.stripe.createPaymentIntent({
