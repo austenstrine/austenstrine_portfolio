@@ -117,17 +117,21 @@ export function CatalogSearchField({
 								right-2
 								top-1/2
 								hidden
+								h-5
+								min-w-5
 								-translate-y-1/2
+								items-center
+								justify-center
 								rounded
 								border
 								border-slate-200
 								bg-white
 								px-1.5
-								py-0.5
 								text-[10px]
 								font-semibold
+								leading-none
 								text-slate-500
-								sm:inline
+								sm:inline-flex
 							"
 						>
 							/
