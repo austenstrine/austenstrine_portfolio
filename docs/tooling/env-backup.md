@@ -18,7 +18,8 @@ ln -sf ~/src/linux-gdrive-dotenv-backup-recovery/env-backup.sh ~/bin/env-backup.
 ```
 
 Or set `ENV_BACKUP_HOME` / `ENV_BACKUP_SH`. Resolution also checks a sibling
-clone (`../linux-gdrive-dotenv-backup-recovery`) and `/opt/…`.
+clone (`../linux-gdrive-dotenv-backup-recovery`), `/agent/repos/…` (Cloud Agent
+Project layout), and `/opt/…`.
 
 ## Portfolio files
 
