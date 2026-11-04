@@ -129,7 +129,7 @@ export function ProductCardImageCarousel({
 												className="
 													h-full
 													w-full
-													bg-[#d8d9d4]
+													bg-canvas
 												"
 											/>
 										)
@@ -199,14 +199,14 @@ export function ProductCardImageCarousel({
 														h-1.5
 														w-1.5
 														rounded-full
-														bg-[#2f2f2f]
+														bg-ink
 														shadow-[0_0_0_1px_rgba(255,255,255,0.7)]
 													`
 													: `
 														h-1.5
 														w-1.5
 														rounded-full
-														bg-[#e4e4e4]
+														bg-frost
 														shadow-[0_0_0_1px_rgba(255,255,255,0.45)]
 													`
 											}

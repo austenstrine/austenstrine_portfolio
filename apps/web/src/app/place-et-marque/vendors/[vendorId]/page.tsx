@@ -1229,11 +1229,11 @@ function VendorDetailContent() {
 											mt-4
 											overflow-x-auto
 											rounded-xl
-											bg-slate-950
+											bg-sky
 											p-4
 											font-mono
 											text-xs
-											text-slate-100
+											text-frost
 										"
 									>
 {`curl -X POST \\

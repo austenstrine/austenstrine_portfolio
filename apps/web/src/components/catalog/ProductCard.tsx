@@ -55,7 +55,7 @@ export function ProductCard({ product }: { product: CatalogProductSummary }) {
 					relative
 					aspect-square
 					overflow-hidden
-					bg-[#d8d9d4]
+					bg-canvas
 				"
 			>
 				<ProductCardImageCarousel
