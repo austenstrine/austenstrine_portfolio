@@ -1,5 +1,16 @@
 {
 	"editor.tabSize": 2,
 	"editor.insertSpaces": false,
-	"editor.selectionClipboard": false
+	"editor.selectionClipboard": false,
+	"remote.autoForwardPorts": true,
+	"remote.portsAttributes": {
+		"5432": {
+			"label": "postgres",
+			"onAutoForward": "ignore"
+		},
+		"6379": {
+			"label": "redis",
+			"onAutoForward": "ignore"
+		}
+	}
 }

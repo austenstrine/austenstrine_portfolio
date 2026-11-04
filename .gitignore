@@ -33,3 +33,10 @@ ops/diagnostics/*
 
 # Local dssh overrides (prod SSH hosts/keys) — keep .dsshrc committed
 .dsshrc.local
+
+# Auto-loaded compose overrides (e.g. crash-recovery host port remaps)
+docker-compose.override.yml
+
+# Local env backups from port-recovery / tooling
+.env.bak-*
+apps/api/.env.bak-*
