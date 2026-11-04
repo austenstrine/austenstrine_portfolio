@@ -19,14 +19,17 @@ Live and local Compose both `build: context: ./ops/cdn`. A **git submodule**
 would require every clone/`git pull` on the EC2 box to remember
 `--recurse-submodules`, which has bitten this stack before. Instead
 `ensure-source.sh` fetches a shallow clone into `ops/cdn/src` right before
-image build:
+image build when possible:
 
 - `ops/deploy/live.sh` calls it before `compose build … cdn`
 - `ops/cdn/init-local.sh` (dssh `cdn_start_local`) calls it for laptop runs
+  (note: dssh builds the image *before* `cdn_start_local`, so the first local
+  build often has an empty `src/`)
 
-Pin a ref with `CDN_SOURCE_REF` (default `master`) or override the URL with
-`CDN_SOURCE_REPO`. Offline boxes need one successful clone (or a mirrored
-`src/`) before build.
+The PeM `Dockerfile` prefers `src/` when present; otherwise it shallow-clones
+during the image build (`CDN_SOURCE_REPO` / `CDN_SOURCE_REF` build-args,
+defaulting to `master`). Offline boxes need one successful clone (or a
+mirrored `src/`) before build — the in-Dockerfile clone needs network.
 
 ## Quick local
 
