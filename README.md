@@ -66,5 +66,6 @@ Helpers are not vendored. Install/clone them, then use the thin portfolio wrappe
 ## CI/CD
 
 - CI: `.github/workflows/ci.yml` (lint/test/build; runs `prepare:api-types` first)
-- Deploy: `.github/workflows/deploy.yml` SSHs to EC2, `git reset --hard origin/master`, `./ops/deploy/live.sh`
+- Deploy: `.github/workflows/deploy.yml` SSHs to EC2, `git reset --hard origin/master`, `./ops/deploy/live.sh` (no `dssh` on the box for CI). Merge `development` → `master` before expecting live to pick up integration work.
+- Live third-party: CDN + env-backup tools are clone-in-deploy (`ensure-source.sh` / `ensure-env-backup.sh`). Seed-sync is the API image git dep.
 - Notes: `docs/aws-cicd-notes.md`
