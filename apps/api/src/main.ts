@@ -15,6 +15,19 @@ async function bootstrap() {
 
 	const app = await NestFactory.create(AppModule, { rawBody: true });
 
+	// Nest sits behind nginx locally and on live. Without this, req.ip is the
+	// proxy hop for every client, so ThrottlerGuard shares one bucket site-wide
+	// and seller rapid-nav / Load more can starve /auth/me into a fake sign-out.
+	const trustProxy = process.env.TRUST_PROXY?.trim();
+	app.getHttpAdapter().getInstance().set(
+		'trust proxy',
+		trustProxy === undefined || trustProxy === ''
+			? 1
+			: trustProxy === 'true'
+				? true
+				: Number(trustProxy) || 1,
+	);
+
 	app.setGlobalPrefix('api');
 	app.enableCors({
 		origin: webUrl ?? 'http://localhost:3000',
