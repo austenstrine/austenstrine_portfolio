@@ -373,10 +373,32 @@ export function ProductEditorForm({
 				].some((value) => Boolean(value && String(value).trim()))
 					|| (loadedMeasures.condition != null && loadedMeasures.condition !== 'NA');
 
+				const loadedBreakFeeMode =
+					(product.breakFeeMode as BreakFeeMode | undefined) ?? 'OFF';
+				const hasBreakFees =
+					loadedBreakFeeMode !== 'OFF'
+					|| (product.breakFeeCents ?? 0) > 0
+					|| links.some((link) => {
+						const cents = Number(link.breakFeeCents ?? 0);
+						return Number.isFinite(cents) && cents > 0;
+					});
+				const hasPackBreakRules = drafts.some(
+					(row) =>
+						row.role === 'PACK'
+						&& (
+							row.breakable
+							|| row.minUnbrokenQty !== '0'
+							|| row.breakPoolAboveQty !== '0'
+							|| row.inheritQtyToChildren
+						),
+				);
+
 				setAdvancedFeatureToggles((prev) => ({
 					...prev,
 					packsAndPieces: drafts.some((row) => row.role === 'PACK') || links.length > 0,
 					measurements: hasMeasureValues,
+					breakFees: hasBreakFees,
+					packBreakRules: hasPackBreakRules,
 				}));
 			})
 			.catch((loadError) => {
@@ -621,14 +643,34 @@ export function ProductEditorForm({
 		? (isAdvancedSurface ? 'Advanced new product' : 'Create product')
 		: (isAdvancedSurface ? 'Advanced edit product' : 'Edit product');
 
+	const formIsDirty =
+		title !== ''
+		|| description !== ''
+		|| slugTouched
+		|| imageUrls.length > 0
+		|| tags.length > 0
+		|| selectedAttributeValueIds.length > 0
+		|| packOrPieceRows.some((row) => row.price !== '' || row.sku !== '');
+
+	const saveButtonClassName = `
+		rounded-full
+		bg-sky
+		px-5
+		py-2.5
+		text-sm
+		font-semibold
+		text-white
+		hover:bg-sky/90
+		disabled:opacity-60
+	`;
+	const saveButtonLabel = submitting
+		? 'Saving…'
+		: isCreating
+			? 'Create product'
+			: 'Save changes';
+
 	return (
 		<div className="mx-auto max-w-3xl space-y-6 px-4 py-10">
-			<CatalogWorkspaceSwitcher
-				active={productEditorSurface}
-				productId={existingProductId}
-				intent={productEditorIntent}
-			/>
-
 			<header className="space-y-2">
 				<h1 className="text-3xl font-semibold text-ink">
 					{pageTitle}
@@ -647,6 +689,41 @@ export function ProductEditorForm({
 				className="space-y-8"
 				onSubmit={onSubmit}
 			>
+				<p className="flex flex-wrap gap-3 text-sm">
+					<a
+						className="
+							rounded
+							font-semibold
+							text-sky
+							underline
+							underline-offset-2
+							focus:outline
+							focus:outline-2
+							focus:outline-offset-2
+							focus:outline-sky
+						"
+						href="#product-price"
+					>
+						Skip to price
+					</a>
+					<a
+						className="
+							rounded
+							font-semibold
+							text-sky
+							underline
+							underline-offset-2
+							focus:outline
+							focus:outline-2
+							focus:outline-offset-2
+							focus:outline-sky
+						"
+						href="#product-save"
+					>
+						Skip to save
+					</a>
+				</p>
+
 				<section className="space-y-4">
 					{vendors.length > 1 ? (
 						<label className="block text-sm">
@@ -771,22 +848,6 @@ export function ProductEditorForm({
 							onChange={(event) => setDescription(event.target.value)}
 						/>
 					</label>
-
-					<CatalogImageField
-						kind="product"
-						value={imageUrls}
-						onChange={setImageUrls}
-						vendorId={vendorId || undefined}
-						productId={existingProductId}
-						disabled={!vendorId}
-						disabledReason="Choose a vendor before uploading photos."
-					/>
-
-					<ProductTagField
-						vendorId={vendorId}
-						value={tags}
-						onChange={setTags}
-					/>
 				</section>
 
 				<section
@@ -915,6 +976,38 @@ export function ProductEditorForm({
 					{focusedRow
 						? (
 								<div className="grid gap-3 sm:grid-cols-2">
+									<label className="block text-sm">
+										<span className="font-semibold">
+											{pricePerLabel(focusedUom)}
+										</span>
+										<input
+											id="product-price"
+											className="
+												mt-1
+												w-full
+												rounded-lg
+												border
+												border-slate-300
+												px-3
+												py-2
+											"
+											value={focusedRow.price}
+											required
+											onChange={(event) =>
+												updateFocusedRow({ price: event.target.value })
+											}
+										/>
+									</label>
+									<div>
+										<CompoundQtyField
+											uomCode={focusedUom?.code}
+											label="Qty on hand"
+											value={focusedRow.qtyOnHand}
+											onChange={(value) =>
+												updateFocusedRow({ qtyOnHand: value })
+											}
+										/>
+									</div>
 									<label className="block text-sm sm:col-span-2">
 										<span className="font-semibold">
 											SKU
@@ -935,7 +1028,7 @@ export function ProductEditorForm({
 											}
 										/>
 									</label>
-									<label className="block text-sm">
+									<label className="block text-sm sm:col-span-2">
 										<span className="font-semibold">
 											UOM
 										</span>
@@ -970,37 +1063,6 @@ export function ProductEditorForm({
 											))}
 										</select>
 									</label>
-									<label className="block text-sm">
-										<span className="font-semibold">
-											{pricePerLabel(focusedUom)}
-										</span>
-										<input
-											className="
-												mt-1
-												w-full
-												rounded-lg
-												border
-												border-slate-300
-												px-3
-												py-2
-											"
-											value={focusedRow.price}
-											required
-											onChange={(event) =>
-												updateFocusedRow({ price: event.target.value })
-											}
-										/>
-									</label>
-									<div className="sm:col-span-2">
-										<CompoundQtyField
-											uomCode={focusedUom?.code}
-											label="Qty on hand"
-											value={focusedRow.qtyOnHand}
-											onChange={(value) =>
-												updateFocusedRow({ qtyOnHand: value })
-											}
-										/>
-									</div>
 
 									{focusedRow.role === 'PACK'
 										? (
@@ -1046,8 +1108,16 @@ export function ProductEditorForm({
 																		? (
 																				<div className="grid gap-3 sm:grid-cols-2">
 																					<label className="block text-sm">
-																						<span className="font-semibold">
-																							Min unbroken qty
+																						<span
+																							className="
+																								inline-flex
+																								items-center
+																								gap-2
+																								font-semibold
+																							"
+																						>
+																							Keep at least this many whole
+																							<TermHint termId="broken-pack" />
 																						</span>
 																						<input
 																							className="
@@ -1068,8 +1138,16 @@ export function ProductEditorForm({
 																						/>
 																					</label>
 																					<label className="block text-sm">
-																						<span className="font-semibold">
-																							Break pool above qty
+																						<span
+																							className="
+																								inline-flex
+																								items-center
+																								gap-2
+																								font-semibold
+																							"
+																						>
+																							Open packs above this stock
+																							<TermHint termId="broken-pack" />
 																						</span>
 																						<input
 																							className="
@@ -1375,6 +1453,46 @@ export function ProductEditorForm({
 							)
 						: null
 					}
+					<div
+						className="
+							flex
+							flex-wrap
+							items-center
+							gap-3
+							border-t
+							border-slate-100
+							pt-4
+						"
+					>
+						<button
+							type="submit"
+							disabled={submitting}
+							className={saveButtonClassName}
+						>
+							{saveButtonLabel}
+						</button>
+						<span className="text-xs text-slate-500">
+							Photos, tags, and attributes follow if you need them.
+						</span>
+					</div>
+				</section>
+
+				<section className="space-y-4">
+					<CatalogImageField
+						kind="product"
+						value={imageUrls}
+						onChange={setImageUrls}
+						vendorId={vendorId || undefined}
+						productId={existingProductId}
+						disabled={!vendorId}
+						disabledReason="Choose a vendor before uploading photos."
+					/>
+
+					<ProductTagField
+						vendorId={vendorId}
+						value={tags}
+						onChange={setTags}
+					/>
 				</section>
 
 				<section
@@ -1521,28 +1639,22 @@ export function ProductEditorForm({
 				}
 
 				<button
+					id="product-save"
 					type="submit"
 					disabled={submitting}
-					className="
-						rounded-full
-						bg-sky
-						px-5
-						py-2.5
-						text-sm
-						font-semibold
-						text-white
-						hover:bg-sky/90
-						disabled:opacity-60
-					"
+					className={saveButtonClassName}
 				>
-					{submitting
-						? 'Saving…'
-						: isCreating
-							? 'Create product'
-							: 'Save changes'
-					}
+					{saveButtonLabel}
 				</button>
 			</form>
+
+			<CatalogWorkspaceSwitcher
+				active={productEditorSurface}
+				productId={existingProductId}
+				intent={productEditorIntent}
+				quiet={!isAdvancedSurface}
+				confirmLeave={formIsDirty}
+			/>
 		</div>
 	);
 }

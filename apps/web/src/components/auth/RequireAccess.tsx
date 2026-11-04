@@ -29,9 +29,11 @@ export function RequireAccess({
 	const router = useRouter();
 	const pathname = usePathname();
 	const searchParams = useSearchParams();
-	const { user, loading: sessionLoading } = useSession();
+	const { user, loading: sessionLoading, sessionUnavailable, refresh } = useSession();
 	const [vendorLoading, setVendorLoading] = useState(vendorRequired);
 	const [allowed, setAllowed] = useState(false);
+	const [vendorCheckFailed, setVendorCheckFailed] = useState<string | null>(null);
+	const [retryKey, setRetryKey] = useState(0);
 
 	const message =
 		reason
@@ -48,6 +50,12 @@ export function RequireAccess({
 		const search = searchParams.toString();
 		const next = search ? `${pathname}?${search}` : pathname;
 
+		if(sessionUnavailable && !user) {
+			setVendorLoading(false);
+			setAllowed(false);
+			return;
+		}
+
 		if(!user) {
 			router.replace(
 				buildLoginUrl({
@@ -60,12 +68,14 @@ export function RequireAccess({
 
 		if(!vendorRequired) {
 			setVendorLoading(false);
+			setVendorCheckFailed(null);
 			setAllowed(true);
 			return;
 		}
 
 		let cancelled = false;
 		setVendorLoading(true);
+		setVendorCheckFailed(null);
 		listMyVendors()
 			.then((vendors) => {
 				if(cancelled) {
@@ -77,10 +87,16 @@ export function RequireAccess({
 				}
 				setAllowed(true);
 			})
-			.catch(() => {
-				if(!cancelled) {
-					router.replace(buildVendorGateUrl(next));
+			.catch((error) => {
+				if(cancelled) {
+					return;
 				}
+				setAllowed(false);
+				setVendorCheckFailed(
+					error instanceof Error
+						? error.message
+						: 'Could not verify vendor access. Try again.',
+				);
 			})
 			.finally(() => {
 				if(!cancelled) {
@@ -94,12 +110,74 @@ export function RequireAccess({
 	}, [
 		sessionLoading,
 		user,
+		sessionUnavailable,
 		vendorRequired,
 		pathname,
 		searchParams,
 		router,
 		message,
+		retryKey,
 	]);
+
+	if(sessionUnavailable && !user) {
+		return (
+			<div className="space-y-3 text-sm text-slate-600">
+				<p>
+					Sign-in service is temporarily unavailable.
+					{' '}
+					{sessionUnavailable}
+				</p>
+				<button
+					type="button"
+					className="
+						rounded-full
+						border
+						border-slate-300
+						px-4
+						py-2
+						text-sm
+						font-semibold
+						text-slate-700
+						hover:border-sky
+						hover:text-sky
+					"
+					onClick={() => void refresh()}
+				>
+					Retry
+				</button>
+			</div>
+		);
+	}
+
+	if(vendorCheckFailed) {
+		return (
+			<div className="space-y-3 text-sm text-slate-600">
+				<p>
+					Could not reach vendor memberships right now.
+					{' '}
+					{vendorCheckFailed}
+				</p>
+				<button
+					type="button"
+					className="
+						rounded-full
+						border
+						border-slate-300
+						px-4
+						py-2
+						text-sm
+						font-semibold
+						text-slate-700
+						hover:border-sky
+						hover:text-sky
+					"
+					onClick={() => setRetryKey((value) => value + 1)}
+				>
+					Retry
+				</button>
+			</div>
+		);
+	}
 
 	if(sessionLoading || vendorLoading || !allowed) {
 		return (

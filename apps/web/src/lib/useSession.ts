@@ -1,16 +1,32 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { type AuthUser, getCurrentUser, logoutUser } from './auth-api';
+import {
+	type AuthUser,
+	logoutUser,
+	probeCurrentUser,
+} from './auth-api';
 
 export function useSession() {
 	const [user, setUser] = useState<AuthUser | null>(null);
 	const [loading, setLoading] = useState(true);
+	const [sessionUnavailable, setSessionUnavailable] = useState<string | null>(null);
 
 	const refresh = useCallback(async () => {
 		setLoading(true);
-		const currentUser = await getCurrentUser();
-		setUser(currentUser);
+		const probe = await probeCurrentUser();
+		if(probe.status === 'ok') {
+			setUser(probe.user);
+			setSessionUnavailable(null);
+		}
+		else if(probe.status === 'unauthenticated') {
+			setUser(null);
+			setSessionUnavailable(null);
+		}
+		else {
+			// Keep the last known user on a blip so seller pages do not bounce to Sign in.
+			setSessionUnavailable(probe.message);
+		}
 		setLoading(false);
 	}, []);
 
@@ -21,7 +37,8 @@ export function useSession() {
 	const signOut = useCallback(async () => {
 		await logoutUser().catch(() => undefined);
 		setUser(null);
+		setSessionUnavailable(null);
 	}, []);
 
-	return { user, loading, refresh, signOut };
+	return { user, loading, refresh, signOut, sessionUnavailable };
 }
