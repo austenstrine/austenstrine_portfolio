@@ -15,8 +15,11 @@ const vendorToolLinks = [
 	{ href: '/place-et-marque/vendors', label: 'Vendors' },
 	{ href: '/place-et-marque/manage', label: 'Manage listings' },
 	{ href: '/place-et-marque/products/new', label: 'New product' },
-	{ href: '/place-et-marque/products/configure', label: 'Advanced product' },
 	{ href: '/place-et-marque/orders', label: 'Orders' },
+];
+
+const vendorSetupLinks = [
+	{ href: '/place-et-marque/products/configure', label: 'Advanced product' },
 	{ href: '/place-et-marque/uoms', label: 'UOMs' },
 	{ href: '/place-et-marque/attributes', label: 'Attributes' },
 	{ href: '/place-et-marque/categories', label: 'Categories' },
@@ -176,6 +179,53 @@ function AccountMenu({
 									</a>
 								</li>
 							))}
+							<li
+								className="
+									mt-1
+									border-t
+									border-slate-100
+									pt-2
+								"
+							>
+								<details>
+									<summary
+										className="
+											cursor-pointer
+											text-[11px]
+											font-semibold
+											uppercase
+											tracking-[0.16em]
+											text-slate-500
+										"
+									>
+										Catalog setup
+									</summary>
+									<ul
+										className="
+											mt-2
+											flex
+											flex-col
+											gap-2
+										"
+									>
+										{vendorSetupLinks.map((link) => (
+											<li key={link.href}>
+												<a
+													className="
+														text-ink
+														hover:underline
+													"
+													href={link.href}
+													onClick={() => setOpen(false)}
+													role="menuitem"
+												>
+													{link.label}
+												</a>
+											</li>
+										))}
+									</ul>
+								</details>
+							</li>
 							<li
 								className="
 									mt-1

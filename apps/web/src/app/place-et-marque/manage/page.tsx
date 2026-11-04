@@ -10,6 +10,8 @@ import {
 import { useSession } from '../../../lib/useSession';
 import { RequireAccess } from '../../../components/auth/RequireAccess';
 
+const PAGE_SIZE = 100;
+
 function formatPriceCents(cents: number | null): string {
 	if(cents == null) {
 		return '—';
@@ -17,28 +19,37 @@ function formatPriceCents(cents: number | null): string {
 	return `$${(cents / 100).toFixed(2)}`;
 }
 
-async function loadSellerProducts(
+async function loadSellerProductPage(
 	vendorRows: VendorSummary[],
-): Promise<CatalogProductSummary[]> {
+	offset: number,
+): Promise<{ items: CatalogProductSummary[]; mayHaveMore: boolean }> {
 	if(vendorRows.length === 0) {
-		return [];
+		return { items: [], mayHaveMore: false };
 	}
 
 	const results = await Promise.all(
 		vendorRows.map((vendor) =>
 			searchCatalogProducts({
 				vendor: vendor.slug,
-				limit: 100,
+				limit: PAGE_SIZE,
+				offset,
 			}).catch(() => ({ items: [] as CatalogProductSummary[] })),
 		),
 	);
 	const byId = new Map<string, CatalogProductSummary>();
+	let mayHaveMore = false;
 	for(const result of results) {
+		if(result.items.length >= PAGE_SIZE) {
+			mayHaveMore = true;
+		}
 		for(const item of result.items) {
 			byId.set(item.id, item);
 		}
 	}
-	return [...byId.values()];
+	return {
+		items: [...byId.values()],
+		mayHaveMore,
+	};
 }
 
 function PlaceEtMarqueManageContent() {
@@ -48,9 +59,13 @@ function PlaceEtMarqueManageContent() {
 	const [selectedVendorId, setSelectedVendorId] = useState('');
 	const [vendorsReady, setVendorsReady] = useState(false);
 	const [loadingProducts, setLoadingProducts] = useState(false);
+	const [loadingMore, setLoadingMore] = useState(false);
+	const [nextOffset, setNextOffset] = useState(0);
+	const [mayHaveMore, setMayHaveMore] = useState(false);
 
 	const selectedVendor = vendors.find((vendor) => vendor.id === selectedVendorId) ?? null;
 	const newProductVendorId = selectedVendor?.id ?? vendors[0]?.id ?? null;
+	const newProductVendorName = selectedVendor?.name ?? vendors[0]?.name ?? null;
 
 	useEffect(() => {
 		if(!user) {
@@ -58,6 +73,8 @@ function PlaceEtMarqueManageContent() {
 			setSelectedVendorId('');
 			setProducts([]);
 			setVendorsReady(false);
+			setNextOffset(0);
+			setMayHaveMore(false);
 			return;
 		}
 
@@ -99,20 +116,26 @@ function PlaceEtMarqueManageContent() {
 
 		let cancelled = false;
 		setLoadingProducts(true);
+		setProducts([]);
+		setNextOffset(0);
+		setMayHaveMore(false);
 
 		const scope = selectedVendor
 			? [selectedVendor]
 			: vendors;
 
-		loadSellerProducts(scope)
-			.then((items) => {
+		loadSellerProductPage(scope, 0)
+			.then((page) => {
 				if(!cancelled) {
-					setProducts(items);
+					setProducts(page.items);
+					setNextOffset(PAGE_SIZE);
+					setMayHaveMore(page.mayHaveMore);
 				}
 			})
 			.catch(() => {
 				if(!cancelled) {
 					setProducts([]);
+					setMayHaveMore(false);
 				}
 			})
 			.finally(() => {
@@ -125,6 +148,109 @@ function PlaceEtMarqueManageContent() {
 			cancelled = true;
 		};
 	}, [user, vendorsReady, vendors, selectedVendor]);
+
+	const onLoadMore = async () => {
+		if(loadingMore || loadingProducts || !mayHaveMore) {
+			return;
+		}
+		setLoadingMore(true);
+		const scope = selectedVendor
+			? [selectedVendor]
+			: vendors;
+		try {
+			const page = await loadSellerProductPage(scope, nextOffset);
+			setProducts((prev) => {
+				const byId = new Map(prev.map((item) => [item.id, item]));
+				for(const item of page.items) {
+					byId.set(item.id, item);
+				}
+				return [...byId.values()];
+			});
+			setNextOffset((current) => current + PAGE_SIZE);
+			setMayHaveMore(page.mayHaveMore);
+		}
+		catch {
+			setMayHaveMore(false);
+		}
+		finally {
+			setLoadingMore(false);
+		}
+	};
+
+	const vendorFilterControls = (
+		<>
+			<label
+				className="
+					mt-4
+					block
+					text-sm
+					max-lg:mt-0
+					max-lg:flex-1
+				"
+			>
+				<span className="sr-only">
+					Change vendor
+				</span>
+				<select
+					className="
+						w-full
+						rounded-lg
+						border
+						border-slate-300
+						bg-white
+						px-3
+						py-2
+						text-sm
+					"
+					value={selectedVendorId}
+					onChange={(event) => setSelectedVendorId(event.target.value)}
+				>
+					<option value="">
+						All vendors
+					</option>
+					{vendors.map((vendor) => (
+						<option
+							key={vendor.id}
+							value={vendor.id}
+						>
+							{vendor.name}
+						</option>
+					))}
+				</select>
+			</label>
+
+			{vendors.length === 0
+				? (
+					<p
+						className="
+							mt-3
+							text-xs
+							text-slate-500
+						"
+					>
+						No vendor memberships yet.
+					</p>
+				)
+				: null
+			}
+
+			<a
+				className="
+					mt-4
+					inline-flex
+					text-sm
+					font-semibold
+					text-sky
+					hover:underline
+					max-lg:mt-0
+					max-lg:self-center
+				"
+				href="/place-et-marque/vendors"
+			>
+				Manage vendors
+			</a>
+		</>
+	);
 
 	return (
 		<div
@@ -179,143 +305,132 @@ function PlaceEtMarqueManageContent() {
 			>
 				<aside
 					className="
-						rounded-2xl
-						border
-						border-slate-200
-						bg-white
-						p-4
+						order-2
+						lg:order-1
 						lg:sticky
 						lg:top-24
 					"
 				>
-					<p
+					<div
 						className="
-							text-xs
-							font-semibold
-							uppercase
-							tracking-wide
-							text-slate-500
+							hidden
+							rounded-2xl
+							border
+							border-slate-200
+							bg-white
+							p-4
+							lg:block
 						"
 					>
-						Vendor
-					</p>
-					<p
-						className="
-							mt-2
-							text-sm
-							font-semibold
-							text-ink
-						"
-					>
-						{selectedVendor
-							? selectedVendor.name
-							: 'All vendors'
-						}
-					</p>
-					{selectedVendor
-						? (
-							<p
-								className="
-									mt-0.5
-									truncate
-									text-xs
-									text-slate-500
-								"
-							>
-								/place-et-marque/{selectedVendor.slug}
-								{selectedVendor.myRole
-									? ` · ${selectedVendor.myRole}`
-									: ''
-								}
-							</p>
-						)
-						: (
-							<p
-								className="
-									mt-0.5
-									text-xs
-									text-slate-500
-								"
-							>
-								Showing inventory across your vendors
-							</p>
-						)
-					}
-
-					<label
-						className="
-							mt-4
-							block
-							text-sm
-						"
-					>
-						<span className="sr-only">
-							Change vendor
-						</span>
-						<select
+						<p
 							className="
-								w-full
-								rounded-lg
-								border
-								border-slate-300
-								bg-white
-								px-3
-								py-2
-								text-sm
+								text-xs
+								font-semibold
+								uppercase
+								tracking-wide
+								text-slate-500
 							"
-							value={selectedVendorId}
-							onChange={(event) => setSelectedVendorId(event.target.value)}
 						>
-							<option value="">
-								All vendors
-							</option>
-							{vendors.map((vendor) => (
-								<option
-									key={vendor.id}
-									value={vendor.id}
+							Vendor
+						</p>
+						<p
+							className="
+								mt-2
+								text-sm
+								font-semibold
+								text-ink
+							"
+						>
+							{selectedVendor
+								? selectedVendor.name
+								: 'All vendors'
+							}
+						</p>
+						{selectedVendor
+							? (
+								<p
+									className="
+										mt-0.5
+										truncate
+										text-xs
+										text-slate-500
+									"
 								>
-									{vendor.name}
-								</option>
-							))}
-						</select>
-					</label>
+									/place-et-marque/{selectedVendor.slug}
+									{selectedVendor.myRole
+										? ` · ${selectedVendor.myRole}`
+										: ''
+									}
+								</p>
+							)
+							: (
+								<p
+									className="
+										mt-0.5
+										text-xs
+										text-slate-500
+									"
+								>
+									Showing inventory across your vendors
+								</p>
+							)
+						}
+						{vendorFilterControls}
+					</div>
 
-					{vendors.length === 0
-						? (
-							<p
+					<details
+						className="
+							rounded-2xl
+							border
+							border-slate-200
+							bg-white
+							p-3
+							lg:hidden
+						"
+					>
+						<summary
+							className="
+								cursor-pointer
+								text-sm
+								font-semibold
+								text-ink
+							"
+						>
+							Vendor filter
+							<span
 								className="
-									mt-3
-									text-xs
+									ml-2
+									font-normal
 									text-slate-500
 								"
 							>
-								No vendor memberships yet.
-							</p>
-						)
-						: null
-					}
-
-					<a
-						className="
-							mt-4
-							inline-flex
-							text-sm
-							font-semibold
-							text-sky
-							hover:underline
-						"
-						href="/place-et-marque/vendors"
-					>
-						Manage vendors
-					</a>
+								{selectedVendor
+									? selectedVendor.name
+									: 'All vendors'
+								}
+							</span>
+						</summary>
+						<div
+							className="
+								mt-3
+								flex
+								flex-col
+								gap-3
+							"
+						>
+							{vendorFilterControls}
+						</div>
+					</details>
 				</aside>
 
 				<section
 					className="
+						order-1
 						flex
 						min-w-0
 						flex-col
 						gap-3
+						lg:order-2
 					"
 				>
 					<div
@@ -340,8 +455,17 @@ function PlaceEtMarqueManageContent() {
 										hover:underline
 									"
 									href={`/place-et-marque/products/new?vendorId=${encodeURIComponent(newProductVendorId)}`}
+									title={
+										selectedVendor
+											? undefined
+											: `Creates under ${newProductVendorName}`
+									}
 								>
 									New product
+									{!selectedVendor && newProductVendorName
+										? ` · ${newProductVendorName}`
+										: ''
+									}
 								</a>
 							)
 							: null
@@ -435,6 +559,35 @@ function PlaceEtMarqueManageContent() {
 								</div>
 							</div>
 						))
+						: null
+					}
+					{vendorsReady && !loadingProducts && mayHaveMore
+						? (
+							<button
+								type="button"
+								className="
+									self-start
+									rounded-full
+									border
+									border-slate-300
+									px-4
+									py-2
+									text-sm
+									font-semibold
+									text-slate-700
+									hover:border-sky
+									hover:text-sky
+									disabled:opacity-60
+								"
+								disabled={loadingMore}
+								onClick={() => void onLoadMore()}
+							>
+								{loadingMore
+									? 'Loading…'
+									: 'Load more products'
+								}
+							</button>
+						)
 						: null
 					}
 				</section>

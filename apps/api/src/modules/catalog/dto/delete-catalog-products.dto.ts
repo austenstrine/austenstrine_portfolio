@@ -3,7 +3,7 @@ import { IsArray, IsOptional, IsString, IsUUID } from 'class-validator';
 export class DeleteCatalogProductsDto {
 	@IsOptional()
 	@IsArray()
-	@IsUUID('4', { each: true })
+	@IsUUID('all', { each: true })
 	productIds?: string[];
 
 	@IsOptional()

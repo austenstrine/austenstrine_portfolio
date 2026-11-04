@@ -191,17 +191,37 @@ export function logoutUser(): Promise<{ message: string }> {
 	return request<{ message: string }>('/auth/logout', { method: 'POST' }, false);
 }
 
-export async function getCurrentUser(): Promise<AuthUser | null> {
+export type SessionProbe =
+	| { status: 'ok'; user: AuthUser }
+	| { status: 'unauthenticated' }
+	| { status: 'unavailable'; message: string };
+
+export async function probeCurrentUser(): Promise<SessionProbe> {
 	try {
 		const result = await request<{ user: AuthUser }>('/auth/me');
 		return {
-			...result.user,
-			hasPassword: Boolean(result.user.hasPassword),
+			status: 'ok',
+			user: {
+				...result.user,
+				hasPassword: Boolean(result.user.hasPassword),
+			},
 		};
 	}
-	catch {
-		return null;
+	catch(error) {
+		if(error instanceof AuthApiError && (error.status === 401 || error.status === 403)) {
+			return { status: 'unauthenticated' };
+		}
+		const message =
+			error instanceof Error
+				? error.message
+				: 'Could not reach the sign-in service.';
+		return { status: 'unavailable', message };
 	}
+}
+
+export async function getCurrentUser(): Promise<AuthUser | null> {
+	const probe = await probeCurrentUser();
+	return probe.status === 'ok' ? probe.user : null;
 }
 
 export function setPassword(

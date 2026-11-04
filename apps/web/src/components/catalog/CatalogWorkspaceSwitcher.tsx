@@ -1,3 +1,4 @@
+import type { MouseEvent } from 'react';
 import {
 	CATALOG_WORKSPACE_LABELS,
 	type ProductEditorIntent,
@@ -8,12 +9,18 @@ type CatalogWorkspaceSwitcherProps = {
 	active: ProductEditorSurface;
 	intent?: ProductEditorIntent;
 	productId?: string;
+	/** Softer chrome for standard edit/create so it does not compete with the form. */
+	quiet?: boolean;
+	/** When true, confirm before navigating away. */
+	confirmLeave?: boolean;
 };
 
 export function CatalogWorkspaceSwitcher({
 	active,
 	intent = 'create',
 	productId,
+	quiet = false,
+	confirmLeave = false,
 }: CatalogWorkspaceSwitcherProps) {
 	const other: ProductEditorSurface = active === 'standard' ? 'advanced' : 'standard';
 
@@ -25,6 +32,45 @@ export function CatalogWorkspaceSwitcher({
 		href = other === 'standard'
 			? `/place-et-marque/products/${productId}/edit`
 			: `/place-et-marque/products/${productId}/configure`;
+	}
+
+	const onNavigate = (event: MouseEvent<HTMLAnchorElement>) => {
+		if(!confirmLeave) {
+			return;
+		}
+		const ok = window.confirm(
+			`Leave this form for ${CATALOG_WORKSPACE_LABELS[other].short}? Unsaved changes will be lost.`,
+		);
+		if(!ok) {
+			event.preventDefault();
+		}
+	};
+
+	if(quiet) {
+		return (
+			<p
+				className="
+					text-sm
+					text-slate-500
+				"
+			>
+				Need packs, chains, or break fees up front?
+				{' '}
+				<a
+					className="
+						font-semibold
+						text-sky
+						hover:underline
+					"
+					href={href}
+					onClick={onNavigate}
+				>
+					Open
+					{' '}
+					{CATALOG_WORKSPACE_LABELS[other].short}
+				</a>
+			</p>
+		);
 	}
 
 	return (
@@ -81,6 +127,7 @@ export function CatalogWorkspaceSwitcher({
 					hover:text-sky
 				"
 				href={href}
+				onClick={onNavigate}
 			>
 				Switch to
 				{' '}

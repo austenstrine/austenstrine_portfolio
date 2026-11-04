@@ -160,7 +160,7 @@ export class UpdateCatalogProductDto extends ProductMeasureFieldsDto {
 
 	@IsOptional()
 	@IsArray()
-	@IsUUID('4', { each: true })
+	@IsUUID('all', { each: true })
 	attributeValueIds?: string[];
 
 	@IsOptional()
