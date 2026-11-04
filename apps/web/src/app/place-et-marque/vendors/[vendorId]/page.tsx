@@ -857,6 +857,22 @@ function VendorDetailContent() {
 									gap-4
 								"
 							>
+								{(vendor.myRole === 'OWNER' || vendor.myRole === 'EDITOR')
+									? (
+										<a
+											className="
+												text-sm
+												font-semibold
+												text-sky
+												hover:underline
+											"
+											href={`/place-et-marque/products/new?vendorId=${encodeURIComponent(vendor.id)}`}
+										>
+											New product
+										</a>
+									)
+									: null
+								}
 								<a
 									className="
 										text-sm

@@ -487,16 +487,43 @@ export class CatalogService {
 
 		const existing = await this.prisma.catalogProduct.findUnique({
 			where: { id: productId },
-			select: { categoryId: true },
+			select: { categoryId: true, vendorId: true, slug: true },
 		});
+		if(!existing) {
+			throw new NotFoundException('Product not found.');
+		}
+
 		const categoryId = dto.categoryId === undefined
-			? existing?.categoryId ?? null
+			? existing.categoryId ?? null
 			: dto.categoryId;
+
+		let nextSlug: string | undefined;
+		if(dto.slug !== undefined) {
+			nextSlug = dto.slug.trim().toLowerCase();
+			if(!nextSlug) {
+				throw new BadRequestException('Product URL (slug) cannot be empty.');
+			}
+			if(nextSlug !== existing.slug) {
+				const conflict = await this.prisma.catalogProduct.findUnique({
+					where: {
+						vendorId_slug: {
+							vendorId: existing.vendorId,
+							slug: nextSlug,
+						},
+					},
+					select: { id: true },
+				});
+				if(conflict && conflict.id !== productId) {
+					throw new ConflictException('A product with that URL already exists for this vendor.');
+				}
+			}
+		}
 
 		await this.prisma.catalogProduct.update({
 			where: { id: productId },
 			data: {
 				title: dto.title,
+				...(nextSlug !== undefined ? { slug: nextSlug } : {}),
 				description: dto.description,
 				...(dto.imageUrls !== undefined ? { imageUrls: this.normalizeImageUrls(dto.imageUrls) } : {}),
 				active: dto.active,
@@ -530,22 +557,103 @@ export class CatalogService {
 			await this.attributes.replaceScalarValues(productId, dto.scalarValues);
 		}
 
+		const keyToOfferingId = new Map<string, string>();
 		if(dto.offerings) {
-			for(const offering of dto.offerings) {
-				const existing = await this.prisma.productOffering.findUnique({
+			const creates = dto.offerings.filter((row) => !row.id);
+			const patches = dto.offerings.filter((row) => row.id);
+
+			if(creates.length > 0) {
+				for(const row of creates) {
+					if(!row.uomId || !row.role || row.priceCents === undefined) {
+						throw new BadRequestException(
+							'New offerings require uomId, role, and priceCents.',
+						);
+					}
+				}
+				const createIdentities = creates.map((row, index) => ({
+					sku: (row.sku || `${existing.slug}-new-${index + 1}`).trim(),
+					offeringKey:
+						(row.offeringKey || row.clientKey || `new-${index + 1}`).trim() ||
+						`new-${index + 1}`,
+				}));
+				await this.assertOfferingIdentitiesUniqueForVendor(
+					existing.vendorId,
+					createIdentities,
+				);
+				const uomById = await this.uomsById(creates.map((row) => row.uomId!));
+
+				for(let index = 0; index < creates.length; index += 1) {
+					const offering = creates[index]!;
+					const identity = createIdentities[index]!;
+					const created = await this.prisma.productOffering.create({
+						data: {
+							productId,
+							vendorId: existing.vendorId,
+							sku: identity.sku,
+							offeringKey: identity.offeringKey,
+							uomId: offering.uomId!,
+							role: offering.role!,
+							priceCents: offering.priceCents!,
+							currency: offering.currency ?? 'USD',
+							qtyOnHand: this.parseQty(
+								uomById.get(offering.uomId!)?.code ?? '',
+								offering.qtyOnHand,
+								offering.qtyCompound,
+							),
+							tracksOwnQty: offering.tracksOwnQty ?? true,
+							minUnbrokenQty:
+								offering.minUnbrokenQty !== undefined
+									? new Decimal(offering.minUnbrokenQty)
+									: -1,
+							breakPoolAboveQty:
+								offering.breakPoolAboveQty !== undefined
+									? new Decimal(offering.breakPoolAboveQty)
+									: 0,
+							inheritQtyToChildren: offering.inheritQtyToChildren ?? false,
+						},
+					});
+					keyToOfferingId.set(created.id, created.id);
+					keyToOfferingId.set(created.offeringKey, created.id);
+					keyToOfferingId.set(created.sku, created.id);
+					if(offering.clientKey) {
+						keyToOfferingId.set(offering.clientKey, created.id);
+					}
+					if(offering.offeringKey) {
+						keyToOfferingId.set(offering.offeringKey, created.id);
+					}
+				}
+			}
+
+			for(const offering of patches) {
+				const current = await this.prisma.productOffering.findUnique({
 					where: { id: offering.id },
 					include: { uom: true },
 				});
+				if(!current || current.productId !== productId) {
+					throw new BadRequestException('Offering does not belong to this product.');
+				}
+
+				let uomCode = current.uom.code;
+				if(offering.uomId && offering.uomId !== current.uomId) {
+					const uomById = await this.uomsById([offering.uomId]);
+					const nextUom = uomById.get(offering.uomId);
+					if(!nextUom) {
+						throw new BadRequestException('Unknown UOM for offering.');
+					}
+					uomCode = nextUom.code;
+				}
+
 				await this.prisma.productOffering.update({
 					where: { id: offering.id },
 					data: {
 						sku: offering.sku,
 						offeringKey: offering.offeringKey,
+						...(offering.uomId !== undefined ? { uomId: offering.uomId } : {}),
 						priceCents: offering.priceCents,
 						qtyOnHand:
 							offering.qtyOnHand !== undefined || offering.qtyCompound
 								? this.parseQty(
-										existing?.uom.code ?? '',
+										uomCode,
 										offering.qtyOnHand,
 										offering.qtyCompound,
 									)
@@ -562,7 +670,48 @@ export class CatalogService {
 						inheritQtyToChildren: offering.inheritQtyToChildren,
 					},
 				});
+				keyToOfferingId.set(current.id, current.id);
+				keyToOfferingId.set(current.offeringKey, current.id);
+				keyToOfferingId.set(current.sku, current.id);
+				if(offering.clientKey) {
+					keyToOfferingId.set(offering.clientKey, current.id);
+				}
+				if(offering.offeringKey) {
+					keyToOfferingId.set(offering.offeringKey, current.id);
+				}
 			}
+		}
+
+		if(dto.containments !== undefined) {
+			const product = await this.prisma.catalogProduct.findUnique({
+				where: { id: productId },
+				include: productInclude,
+			});
+			if(!product) {
+				throw new NotFoundException('Product not found.');
+			}
+
+			for(const offering of product.offerings) {
+				keyToOfferingId.set(offering.id, offering.id);
+				keyToOfferingId.set(offering.offeringKey, offering.id);
+				keyToOfferingId.set(offering.sku, offering.id);
+			}
+
+			const offeringIds = product.offerings.map((row) => row.id);
+			await this.prisma.offeringContainment.deleteMany({
+				where: {
+					OR: [
+						{ parentOfferingId: { in: offeringIds } },
+						{ childOfferingId: { in: offeringIds } },
+					],
+				},
+			});
+
+			await this.createContainments(
+				product,
+				{ containments: dto.containments } as CreateCatalogProductDto,
+				keyToOfferingId,
+			);
 		}
 
 		await this.inventory.refreshProductAvailability(productId);

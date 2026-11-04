@@ -45,21 +45,21 @@ export type AdvancedFeatureKey =
 	| 'packsAndPieces'
 	| 'breakFees'
 	| 'packBreakRules'
-	| 'variants';
+	| 'measurements';
 
 /** Button / prompt copy shown where a collapsed section would appear. */
 export const ADVANCED_FEATURE_PROMPTS: Record<AdvancedFeatureKey, string> = {
 	packsAndPieces: 'Does this product break down into another SKU?',
 	breakFees: 'Charge a fee when a pack is opened?',
 	packBreakRules: 'Set rules for how this pack breaks?',
-	variants: 'Does this have separately priced variants?',
+	measurements: 'Add shipping measurements or product identifiers?',
 };
 
 export const DEFAULT_ADVANCED_FEATURE_TOGGLES: Record<AdvancedFeatureKey, boolean> = {
 	packsAndPieces: false,
 	breakFees: false,
 	packBreakRules: false,
-	variants: false,
+	measurements: false,
 };
 
 export type CatalogWorkspace = ProductEditorSurface;

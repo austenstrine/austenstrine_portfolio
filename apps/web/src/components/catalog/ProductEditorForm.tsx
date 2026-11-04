@@ -268,7 +268,7 @@ export function ProductEditorForm({
 				);
 				setBreakFeeDollars(centsToDollars(product.breakFeeCents ?? 0));
 				setSelectedAttributeValueIds(product.attributes.map((row) => row.id));
-				setMeasures({
+				const loadedMeasures = {
 					...emptyProductMeasures(),
 					lengthNumeric: product.lengthNumeric ?? '',
 					widthNumeric: product.widthNumeric ?? '',
@@ -291,7 +291,8 @@ export function ProductEditorForm({
 					mpn: product.mpn ?? '',
 					countryOfOrigin: product.countryOfOrigin ?? '',
 					condition: product.condition ?? 'NA',
-				});
+				};
+				setMeasures(loadedMeasures);
 				const nextScalars: Record<string, string> = {};
 				for(const row of product.scalarValues ?? []) {
 					nextScalars[row.attributeId] =
@@ -355,12 +356,28 @@ export function ProductEditorForm({
 				}
 				setContainments(links);
 
-				if(drafts.some((row) => row.role === 'PACK') || links.length > 0) {
-					setAdvancedFeatureToggles((prev) => ({
-						...prev,
-						packsAndPieces: true,
-					}));
-				}
+				const hasMeasureValues = [
+					loadedMeasures.lengthNumeric,
+					loadedMeasures.widthNumeric,
+					loadedMeasures.heightNumeric,
+					loadedMeasures.weightNumeric,
+					loadedMeasures.packageLengthNumeric,
+					loadedMeasures.packageWidthNumeric,
+					loadedMeasures.packageHeightNumeric,
+					loadedMeasures.packageWeightNumeric,
+					loadedMeasures.voltageNumeric,
+					loadedMeasures.wattageNumeric,
+					loadedMeasures.amperageNumeric,
+					loadedMeasures.gtin,
+					loadedMeasures.mpn,
+				].some((value) => Boolean(value && String(value).trim()))
+					|| (loadedMeasures.condition != null && loadedMeasures.condition !== 'NA');
+
+				setAdvancedFeatureToggles((prev) => ({
+					...prev,
+					packsAndPieces: drafts.some((row) => row.role === 'PACK') || links.length > 0,
+					measurements: hasMeasureValues,
+				}));
 			})
 			.catch((loadError) => {
 				setError(
@@ -539,27 +556,30 @@ export function ProductEditorForm({
 			}
 
 			const payload = buildCreatePayload();
-			const offeringPatches = packOrPieceRows
-				.filter((row) => row.id)
-				.map((row) => ({
-					id: row.id!,
-					sku: row.sku.trim() || undefined,
-					priceCents: dollarsToCents(row.price),
-					qtyOnHand: row.qtyOnHand || '0',
-					tracksOwnQty: !(
-						row.role === 'PIECE'
-						&& containments.some((link) => link.childClientKey === row.clientKey)
-					),
-					minUnbrokenQty:
-						row.role === 'PACK' && row.breakable
-							? row.minUnbrokenQty || '0'
-							: '-1',
-					breakPoolAboveQty: row.breakPoolAboveQty || '0',
-					inheritQtyToChildren: Boolean(row.role === 'PACK' && row.breakable),
-				}));
+			const offeringUpserts = packOrPieceRows.map((row) => ({
+				...(row.id ? { id: row.id } : {}),
+				clientKey: row.clientKey,
+				offeringKey: row.clientKey,
+				sku: row.sku.trim() || `${payload.slug.trim()}-${row.role.toLowerCase()}`,
+				uomId: row.uomId,
+				role: row.role,
+				priceCents: dollarsToCents(row.price),
+				qtyOnHand: row.qtyOnHand || '0',
+				tracksOwnQty: !(
+					row.role === 'PIECE'
+					&& containments.some((link) => link.childClientKey === row.clientKey)
+				),
+				minUnbrokenQty:
+					row.role === 'PACK' && row.breakable
+						? row.minUnbrokenQty || '0'
+						: '-1',
+				breakPoolAboveQty: row.breakPoolAboveQty || '0',
+				inheritQtyToChildren: Boolean(row.role === 'PACK' && row.breakable),
+			}));
 
 			const product = await updateCatalogProduct(existingProductId, {
 				title: payload.title,
+				slug: payload.slug,
 				description: payload.description,
 				imageUrls: payload.imageUrls,
 				tags: payload.tags,
@@ -568,7 +588,10 @@ export function ProductEditorForm({
 				breakFeeMode: payload.breakFeeMode,
 				breakFeeCents: payload.breakFeeCents,
 				attributeValueIds: payload.attributeValueIds,
-				offerings: offeringPatches,
+				scalarValues: payload.scalarValues,
+				...measures,
+				offerings: offeringUpserts,
+				containments: payload.containments,
 			});
 			router.push(
 				`/place-et-marque/${product.vendor.slug}/${product.slug}`,
@@ -613,7 +636,7 @@ export function ProductEditorForm({
 				<p className="text-sm text-slate-600">
 					{isCreating
 						? isAdvancedSurface
-							? 'Full product tools open by default: packs, chains, break fees, attributes, and variants.'
+							? 'Full product tools open by default: packs, chains, break fees, attributes, and measurements.'
 							: 'Start with a simple listing. More options appear as questions when they matter.'
 						: 'Update this listing. Extra structure expands in place when you need it.'
 					}
@@ -788,20 +811,25 @@ export function ProductEditorForm({
 										gap-2
 									"
 								>
-									<h2
-										className="
-											flex
-											items-center
-											gap-2
-											text-lg
-											font-semibold
-											text-ink
-										"
-									>
-										Packs and pieces
-										<TermHint termId="pack" />
-										<TermHint termId="piece" />
-									</h2>
+									<div className="space-y-1">
+										<h2
+											className="
+												flex
+												items-center
+												gap-2
+												text-lg
+												font-semibold
+												text-ink
+											"
+										>
+											Packs and pieces
+											<TermHint termId="pack" />
+											<TermHint termId="piece" />
+										</h2>
+										<p className="text-xs text-slate-500">
+											Each pack or piece row is a separately priced sellable option.
+										</p>
+									</div>
 									<div className="flex flex-wrap items-center gap-2">
 										{!isAdvancedSurface
 											? (
@@ -1363,7 +1391,7 @@ export function ProductEditorForm({
 						Attributes
 					</h2>
 					<p className="text-xs text-slate-500">
-						Facts about this product such as color and material. Use variants for separately priced options.
+						Facts about this product such as color and material. Separately priced options use pack and piece rows above.
 						Search to add; only selected values stay on the product.
 					</p>
 					<ProductAttributeField
@@ -1432,26 +1460,7 @@ export function ProductEditorForm({
 					}
 				</section>
 
-				<section
-					className="
-						space-y-3
-						rounded-2xl
-						border
-						border-slate-200
-						bg-white
-						p-4
-					"
-				>
-					<h2 className="text-lg font-semibold text-ink">
-						Measurements
-					</h2>
-					<ProductMeasuresField
-						value={measures}
-						onChange={setMeasures}
-					/>
-				</section>
-
-				{advancedFeatureEnabled('variants')
+				{advancedFeatureEnabled('measurements')
 					? (
 							<section
 								className="
@@ -1473,7 +1482,7 @@ export function ProductEditorForm({
 									"
 								>
 									<h2 className="text-lg font-semibold text-ink">
-										Variants
+										Measurements
 									</h2>
 									{!isAdvancedSurface
 										? (
@@ -1481,22 +1490,23 @@ export function ProductEditorForm({
 													question=""
 													onExpand={() => undefined}
 													expanded
-													onCollapse={() => setAdvancedFeature('variants', false)}
-													collapseLabel="No separately priced variants"
+													onCollapse={() => setAdvancedFeature('measurements', false)}
+													collapseLabel="Hide measurements"
 												/>
 											)
 										: null
 									}
 								</div>
-								<p className="text-xs text-slate-500">
-									Sellable options that can carry their own price (and later, stock). Tools for that land here next.
-								</p>
+								<ProductMeasuresField
+									value={measures}
+									onChange={setMeasures}
+								/>
 							</section>
 						)
 					: (
 							<DisclosurePrompt
-								question={ADVANCED_FEATURE_PROMPTS.variants}
-								onExpand={() => setAdvancedFeature('variants', true)}
+								question={ADVANCED_FEATURE_PROMPTS.measurements}
+								onExpand={() => setAdvancedFeature('measurements', true)}
 							/>
 						)
 				}
