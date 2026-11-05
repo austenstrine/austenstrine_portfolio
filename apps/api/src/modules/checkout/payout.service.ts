@@ -480,6 +480,28 @@ export class PayoutService implements OnModuleInit, OnModuleDestroy {
 					lastError: true,
 					transferredAt: true,
 					createdAt: true,
+					order: {
+						select: {
+							orderRef: true,
+							createdAt: true,
+							shippedAt: true,
+							shipName: true,
+							buyer: {
+								select: { email: true },
+							},
+							lines: {
+								select: {
+									titleSnapshot: true,
+									quantity: true,
+								},
+								take: 3,
+								orderBy: { lineTotalCents: 'desc' },
+							},
+							_count: {
+								select: { lines: true },
+							},
+						},
+					},
 				},
 			}),
 		]);
@@ -488,7 +510,41 @@ export class PayoutService implements OnModuleInit, OnModuleDestroy {
 			pendingCount: pending,
 			lastError: failed?.lastError ?? null,
 			lastErrorAt: failed?.updatedAt ?? null,
-			recent,
+			recent: recent.map((row) => {
+				const lineTitles = row.order.lines.map((line) => line.titleSnapshot);
+				const extraLines = Math.max(
+					0,
+					row.order._count.lines - lineTitles.length,
+				);
+				const productHint = [
+					...lineTitles,
+					extraLines > 0
+						? `+${extraLines} more`
+						: null,
+				]
+					.filter(Boolean)
+					.join(' · ');
+				return {
+					id: row.id,
+					orderId: row.orderId,
+					orderRef: row.order.orderRef,
+					status: row.status,
+					vendorNetCents: row.vendorNetCents,
+					feeCents: row.feeCents,
+					trigger: row.trigger,
+					lastError: row.lastError,
+					transferredAt: row.transferredAt,
+					createdAt: row.createdAt,
+					orderCreatedAt: row.order.createdAt,
+					shippedAt: row.order.shippedAt,
+					customerHint:
+						row.order.shipName
+						|| row.order.buyer?.email
+						|| null,
+					productHint: productHint || null,
+					lineCount: row.order._count.lines,
+				};
+			}),
 		};
 	}
 }
