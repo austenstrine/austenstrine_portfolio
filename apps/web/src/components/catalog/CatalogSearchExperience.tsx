@@ -588,18 +588,25 @@ export function CatalogSearchExperience() {
 							/>
 							<SearchExtrasPortal>
 								<button
+									aria-label={
+										clearableFilterCount > 0
+											? `Filters, ${clearableFilterCount} applied`
+											: 'Filters'
+									}
 									className="
 										inline-flex
+										h-10
+										shrink-0
 										items-center
-										gap-2
-										rounded-xl
+										gap-1.5
+										rounded-full
 										border
 										border-slate-300
 										bg-white
-										px-4
-										py-3
+										px-3
 										text-sm
 										font-semibold
+										text-ink
 										lg:hidden
 									"
 									onClick={() => setFiltersOpen(true)}
@@ -608,7 +615,22 @@ export function CatalogSearchExperience() {
 									Filters
 									{clearableFilterCount > 0
 										? (
-											<span className="rounded-full bg-asgreen px-1.5 py-0.5 text-[10px] text-white">
+											<span
+												className="
+													inline-flex
+													min-w-4
+													items-center
+													justify-center
+													rounded-full
+													bg-asgreen
+													px-1.5
+													text-center
+													text-[10px]
+													font-semibold
+													leading-4
+													text-white
+												"
+											>
 												{clearableFilterCount}
 											</span>
 										)
