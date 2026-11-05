@@ -19,7 +19,7 @@ const config: Config = {
       },
       spacing: {
         gutter: 'var(--gutter)',
-        // viewport-element scale (CSS vars; +1 step vs flex-sheet defaults)
+        // flex-sheet viewport-element scale
         ve: 'var(--viewport-element)',
         've-lg': 'var(--viewport-element--large)',
         've-sm': 'var(--viewport-element--small)',
