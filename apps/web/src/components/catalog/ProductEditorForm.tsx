@@ -27,6 +27,7 @@ import { useRouter } from 'next/navigation';
 import {
 	useEffect,
 	useMemo,
+	useRef,
 	useState,
 	type FormEvent,
 } from 'react';
@@ -101,6 +102,8 @@ export function ProductEditorForm({
 	const { user } = useSession();
 	const isCreating = productEditorIntent === 'create';
 	const isAdvancedSurface = productEditorSurface === 'advanced';
+	/** One-shot create default: only membership / ?vendorId, never re-fill after clear. */
+	const vendorBootstrapDone = useRef(false);
 
 	const [vendors, setVendors] = useState<VendorSummary[]>([]);
 	const [categories, setCategories] = useState<Array<{
@@ -228,10 +231,34 @@ export function ProductEditorForm({
 			.then(async ([vendorRows, categoryRows]) => {
 				setVendors(vendorRows);
 				setCategories(categoryRows);
-				const selected = vendorId || vendorRows[0]?.id || '';
-				if(!vendorId && selected) {
-					setVendorId(selected);
+
+				let selected = vendorId;
+				if(
+					isCreating
+					&& !vendorBootstrapDone.current
+					&& !selected
+				) {
+					vendorBootstrapDone.current = true;
+					const fromQuery = initialVendorId
+						&& vendorRows.some((row) => row.id === initialVendorId)
+						? initialVendorId
+						: '';
+					if(fromQuery) {
+						selected = fromQuery;
+						setVendorId(fromQuery);
+					}
+					else if(vendorRows.length === 1) {
+						selected = vendorRows[0]?.id || '';
+						if(selected) {
+							setVendorId(selected);
+						}
+					}
+					// Multi-vendor create: leave empty until the seller picks.
 				}
+				else if(isCreating && !vendorBootstrapDone.current) {
+					vendorBootstrapDone.current = true;
+				}
+
 				const uomRows = await listUoms(selected || undefined).catch(() => []);
 				setUoms(uomRows);
 				const attrs = await listCatalogAttributes(selected || undefined).catch(() => []);
@@ -246,7 +273,7 @@ export function ProductEditorForm({
 				}
 			})
 			.catch(() => undefined);
-	}, [user, vendorId, isCreating]);
+	}, [user, vendorId, isCreating, initialVendorId]);
 
 	useEffect(() => {
 		if(productEditorIntent !== 'edit' || !existingProductId || !user) {
