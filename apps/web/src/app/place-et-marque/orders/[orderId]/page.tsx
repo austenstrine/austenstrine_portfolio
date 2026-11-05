@@ -10,6 +10,7 @@ import {
 } from '../../../../lib/checkout-api';
 import { useSession } from '../../../../lib/useSession';
 import { BackLink } from '../../../../components/BackLink';
+import { OrderSupportCode } from '../../../../components/orders/OrderSupportCode';
 
 export default function OrderDetailPage() {
 	const params = useParams<{ orderId: string }>();
@@ -119,8 +120,18 @@ export default function OrderDetailPage() {
 								font-semibold
 							"
 						>
-							{order.vendor?.name ?? 'Order'} · {order.orderRef}
+							{order.vendor?.name ?? 'Order'}
 						</h1>
+						<p
+							className="
+								mt-1
+								text-base
+								font-medium
+								text-slate-800
+							"
+						>
+							{order.orderRef}
+						</p>
 						<p
 							className="
 								mt-2
@@ -134,6 +145,7 @@ export default function OrderDetailPage() {
 								: ''
 							}
 						</p>
+						<OrderSupportCode orderId={order.id} />
 						{order.refundedAt
 							? (
 								<p

@@ -13,6 +13,7 @@ import {
 import { getMyVendor, type VendorDetail } from '../../../../../lib/catalog-api';
 import { RequireAccess } from '../../../../../components/auth/RequireAccess';
 import { BackLink } from '../../../../../components/BackLink';
+import { OrderSupportCode } from '../../../../../components/orders/OrderSupportCode';
 import { useSession } from '../../../../../lib/useSession';
 
 function formatShipTo(shipTo: PlaceEtMarqueOrder['shipTo']): string {
@@ -229,6 +230,7 @@ function VendorOrdersPageContent() {
 												<p className="text-sm text-slate-500">
 													Ship to {formatShipTo(order.shipTo)}
 												</p>
+												<OrderSupportCode orderId={order.id} />
 											</div>
 											<div
 												className="

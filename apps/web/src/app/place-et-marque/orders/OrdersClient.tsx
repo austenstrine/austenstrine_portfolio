@@ -61,7 +61,8 @@ function OrdersContent() {
 								text-asgreen
 							"
 						>
-							Payment received. Orders appear below once Stripe confirms.
+							Payment received. Your orders are listed below by name
+							(who, item count, place, and time).
 						</p>
 					)
 					: null
@@ -124,7 +125,10 @@ function OrdersContent() {
 										>
 											<div>
 												<p className="font-semibold">
-													{order.vendor?.name ?? 'Vendor'} · {order.orderRef}
+													{order.vendor?.name ?? 'Vendor'}
+												</p>
+												<p className="text-sm text-slate-700">
+													{order.orderRef}
 												</p>
 												<p className="text-sm text-slate-600">
 													{order.status} ·{' '}

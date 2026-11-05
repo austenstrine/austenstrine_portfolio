@@ -1409,7 +1409,9 @@ function VendorDetailContent() {
 																	: row.shippedAt
 																		? `Ordered ${new Date(orderedAt).toLocaleString()} · shipped ${new Date(row.shippedAt).toLocaleString()}`
 																		: `Ordered ${new Date(orderedAt).toLocaleString()}`;
-																const orderLabel = row.orderRef || row.orderId;
+																const orderLabel = row.orderRef?.trim()
+																	? row.orderRef
+																	: 'Order';
 																return (
 																	<li
 																		className="
