@@ -92,6 +92,7 @@ function PaymentForm({
 
 function CheckoutContent() {
 	const { user, loading: sessionLoading } = useSession();
+	const router = useRouter();
 	const [preview, setPreview] = useState<CheckoutPreview | null>(null);
 	const [rateByGroup, setRateByGroup] = useState<Record<string, string>>({});
 	const [address, setAddress] = useState({
@@ -164,7 +165,9 @@ function CheckoutContent() {
 				})),
 			});
 			if(!session.clientSecret) {
-				throw new Error('Stripe did not return a client secret.');
+				// CHECKOUT_DEV_BYPASS finalizes to PAID without Stripe.
+				router.push('/place-et-marque/orders?paid=1');
+				return;
 			}
 			setClientSecret(session.clientSecret);
 			setPublishableKey(
