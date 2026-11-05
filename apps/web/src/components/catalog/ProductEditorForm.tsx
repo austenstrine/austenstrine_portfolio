@@ -61,6 +61,7 @@ import {
 import { sortCategoryTree } from '../../lib/category-tree';
 import { useSession } from '../../lib/useSession';
 import { CatalogImageField } from './CatalogImageField';
+import { SellerTopContextPortal } from './CatalogSearchContext';
 import { CatalogWorkspaceSwitcher } from './CatalogWorkspaceSwitcher';
 import { CompoundQtyField } from './CompoundQtyField';
 import { DisclosurePrompt } from './DisclosurePrompt';
@@ -671,6 +672,79 @@ export function ProductEditorForm({
 
 	return (
 		<div className="mx-auto max-w-3xl space-y-6 px-4 py-10">
+			<SellerTopContextPortal>
+				{vendors.length > 1
+					? (
+						<label
+							className="
+								flex
+								min-w-[12rem]
+								max-w-full
+								flex-1
+								flex-col
+								gap-1
+								text-sm
+								sm:max-w-sm
+								sm:flex-none
+							"
+						>
+							<span
+								className="
+									font-medium
+									text-ink
+								"
+							>
+								Vendor
+							</span>
+							<select
+								aria-required={isCreating}
+								className="
+									w-full
+									rounded-full
+									border
+									border-slate-300
+									bg-white
+									px-3
+									py-1.5
+									text-sm
+									disabled:bg-slate-50
+									disabled:text-slate-600
+								"
+								value={vendorId}
+								disabled={!isCreating}
+								onChange={(event) => setVendorId(event.target.value)}
+							>
+								<option value="">
+									Select vendor
+								</option>
+								{vendors.map((vendor) => (
+									<option
+										key={vendor.id}
+										value={vendor.id}
+									>
+										{vendor.name}
+									</option>
+								))}
+							</select>
+						</label>
+					)
+					: null
+				}
+				{vendors.length === 0
+					? (
+						<p
+							className="
+								text-xs
+								text-slate-500
+							"
+						>
+							No vendor memberships yet.
+						</p>
+					)
+					: null
+				}
+			</SellerTopContextPortal>
+
 			<header className="space-y-2">
 				<h1 className="text-3xl font-semibold text-ink">
 					{pageTitle}
@@ -725,41 +799,6 @@ export function ProductEditorForm({
 				</p>
 
 				<section className="space-y-4">
-					{vendors.length > 1 ? (
-						<label className="block text-sm">
-							<span className="font-semibold">
-								Vendor
-							</span>
-							<select
-								className="
-									mt-1
-									w-full
-									rounded-lg
-									border
-									border-slate-300
-									px-3
-									py-2
-								"
-								value={vendorId}
-								required
-								disabled={!isCreating}
-								onChange={(event) => setVendorId(event.target.value)}
-							>
-								<option value="">
-									Select vendor
-								</option>
-								{vendors.map((vendor) => (
-									<option
-										key={vendor.id}
-										value={vendor.id}
-									>
-										{vendor.name}
-									</option>
-								))}
-							</select>
-						</label>
-					) : null}
-
 					<label className="block text-sm">
 						<span className="font-semibold">
 							Category
@@ -1638,14 +1677,37 @@ export function ProductEditorForm({
 					: null
 				}
 
-				<button
-					id="product-save"
-					type="submit"
-					disabled={submitting}
-					className={saveButtonClassName}
+				<div
+					className="
+						flex
+						flex-wrap
+						items-center
+						gap-x-3
+						gap-y-1
+					"
 				>
-					{saveButtonLabel}
-				</button>
+					<button
+						id="product-save"
+						type="submit"
+						disabled={submitting}
+						className={saveButtonClassName}
+					>
+						{saveButtonLabel}
+					</button>
+					{selectedVendor
+						? (
+							<span
+								className="
+									text-xs
+									text-slate-500
+								"
+							>
+								{selectedVendor.name}
+							</span>
+						)
+						: null
+					}
+				</div>
 			</form>
 
 			<CatalogWorkspaceSwitcher
