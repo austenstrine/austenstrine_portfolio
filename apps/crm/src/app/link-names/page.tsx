@@ -162,7 +162,8 @@ export default function LinkNamesPage() {
 									text-mist/60
 								"
 							>
-								No pending requests.
+								No pending requests. When a seller asks to change the name in their
+								organization link, Approve and Deny show up here.
 							</p>
 						)
 					: null

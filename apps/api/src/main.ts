@@ -38,15 +38,12 @@ async function bootstrap() {
 	app.enableCors({
 		origin: (origin, callback) => {
 			// Non-browser / same-origin proxy clients may omit Origin.
-			if(!origin) {
+			if(!origin || allowedOrigins.includes(origin)) {
 				callback(null, true);
 				return;
 			}
-			if(allowedOrigins.includes(origin)) {
-				callback(null, true);
-				return;
-			}
-			callback(new Error(`Origin ${origin} is not allowed by CORS`), false);
+			// Reject without throwing — a thrown Error becomes HTTP 500.
+			callback(null, false);
 		},
 		credentials: true,
 	});

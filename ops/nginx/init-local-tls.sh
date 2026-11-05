@@ -34,9 +34,13 @@ if ! cert_covers; then
 	fi
 fi
 
-for host in "$crm" "$cdn"; do
+missing_hosts=()
+for host in "$site" "$crm" "$cdn"; do
 	if ! getent hosts "$host" >/dev/null 2>&1 && ! grep -Eq "^[^#]*[[:space:]]$host([[:space:]]|$)" /etc/hosts 2>/dev/null; then
-		echo "Add this line to /etc/hosts so the local hostname resolves:" >&2
-		echo "  127.0.0.1  $host" >&2
+		missing_hosts+=("$host")
 	fi
 done
+if ((${#missing_hosts[@]} > 0)); then
+	echo "Add these names to /etc/hosts (required for local TLS hostnames):" >&2
+	echo "  127.0.0.1  ${missing_hosts[*]}" >&2
+fi

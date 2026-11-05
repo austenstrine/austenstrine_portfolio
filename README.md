@@ -59,7 +59,10 @@ Helpers are not vendored. Install/clone them, then use the thin portfolio wrappe
 	- npm run dev:web
 8. Start admin CRM (optional):
 	- npm run dev:crm
-	- With local TLS/nginx: add `127.0.0.1 local.crm.austenstrine.dev` to `/etc/hosts`, set `CRM_URL` + `COOKIE_DOMAIN=.austenstrine.dev`, then `./dssh proxy start` / `./dssh crm start`
+	- `/etc/hosts`: `127.0.0.1 local.austenstrine.dev local.crm.austenstrine.dev cdn.local.austenstrine.dev`
+	- Env: `CRM_URL=https://local.crm.austenstrine.dev`, `WEB_URL=https://local.austenstrine.dev`, `COOKIE_DOMAIN=.austenstrine.dev`
+	- `./dssh proxy start` (or restart after nginx/TLS changes so workers pick up the CRM vhost) then `./dssh crm start`
+	- Admin link-name list/review is CRM-origin-gated in the API (`CrmOriginGuard`); CORS still allows both web and CRM for shared auth.
 
 ## Useful Endpoints
 
