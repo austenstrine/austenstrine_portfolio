@@ -3,8 +3,10 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState, type ReactNode } from 'react';
+import { CategoryIcon } from '../icons/CategoryIcon';
 import { HomeIcon } from '../icons/HomeIcon';
 import { LinkNameIcon } from '../icons/LinkNameIcon';
+import { UomIcon } from '../icons/UomIcon';
 import {
 	logoutUser,
 	probeCurrentUser,
@@ -14,6 +16,9 @@ import {
 const NAV = [
 	{ href: '/', label: 'Home', Icon: HomeIcon },
 	{ href: '/link-names', label: 'Link names', Icon: LinkNameIcon },
+	{ href: '/categories', label: 'Categories', Icon: CategoryIcon },
+	{ href: '/uoms', label: 'Units', Icon: UomIcon },
+	{ href: '/uom-merges', label: 'UOM approvals', Icon: UomIcon },
 ] as const;
 
 type Props = {
