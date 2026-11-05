@@ -79,7 +79,7 @@ export function pathUsesSellerChrome(path: string): boolean {
 	) {
 		return true;
 	}
-	return /^\/place-et-marque\/products\/[^/]+\/edit$/.test(pathname);
+	return /^\/place-et-marque\/products\/[^/]+\/(edit|configure)$/.test(pathname);
 }
 
 export function buildLoginUrl(options: {
