@@ -72,6 +72,8 @@ export function ContactMethodRow({
 		<div
 			className="
 				flex
+				min-w-0
+				w-full
 				items-stretch
 				gap-3
 			"
@@ -81,11 +83,15 @@ export function ContactMethodRow({
 				className="
 					relative
 					w-[4.625rem]
+					max-w-[4.625rem]
 					shrink-0
 					self-stretch
+					overflow-hidden
 					md:w-auto
+					md:max-w-none
 					md:min-w-0
 					md:flex-1
+					md:overflow-visible
 				"
 			>
 				<button
