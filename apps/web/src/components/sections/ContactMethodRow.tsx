@@ -115,6 +115,7 @@ export function ContactMethodRow({
 						transition
 						hover:bg-white/20
 						hover:text-white
+						max-[399px]:px-1.5
 						md:h-auto
 						md:w-auto
 						md:min-w-0
@@ -215,6 +216,7 @@ export function ContactMethodRow({
 					transition
 					hover:-translate-y-0.5
 					hover:bg-white/20
+					max-[399px]:px-2.5
 				"
 				href={href}
 				target={linkTarget}
@@ -235,6 +237,7 @@ export function ContactMethodRow({
 							rounded-md
 							bg-white/15
 							p-2
+							max-[399px]:p-1.5
 						"
 					>
 						{icon}

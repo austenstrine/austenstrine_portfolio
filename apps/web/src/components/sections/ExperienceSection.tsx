@@ -108,7 +108,7 @@ function ExperienceRoleCard({
 				border
 				border-slate-100
 				bg-frost/60
-				p-5
+				p-inset
 				md:p-6
 				${className}
 			`}
@@ -180,6 +180,7 @@ function ExperienceRoleCard({
 					text-sm
 					leading-relaxed
 					text-slate-700
+					max-[399px]:pl-4
 				"
 			>
 				{role.bullets.map((bullet) => (
@@ -933,7 +934,7 @@ export function ExperienceSection() {
 							border
 							border-slate-100
 							bg-frost/60
-							p-5
+							p-inset
 							md:p-6
 						"
 						key={`${entry.school}-${entry.dates}`}

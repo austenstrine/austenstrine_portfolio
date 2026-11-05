@@ -101,7 +101,7 @@ export function FeaturedBuildSection() {
 								border
 								border-slate-200
 								bg-frost/60
-								p-5
+								p-inset
 								transition
 								hover:border-ink
 								hover:bg-white
@@ -182,6 +182,7 @@ export function FeaturedBuildSection() {
 						text-white
 						transition
 						hover:bg-sky/90
+						max-[399px]:px-3
 						focus-visible:outline-none
 						focus-visible:ring-2
 						focus-visible:ring-ink

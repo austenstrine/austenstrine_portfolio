@@ -98,7 +98,7 @@ function FeaturedRecommendation({
 				border
 				border-slate-100
 				bg-frost/60
-				p-5
+				p-inset
 				md:col-span-2
 				md:p-6
 			"
@@ -165,7 +165,7 @@ function SupportingRecommendation({
 				border
 				border-slate-100
 				bg-frost/60
-				p-5
+				p-inset
 				md:p-6
 			"
 		>

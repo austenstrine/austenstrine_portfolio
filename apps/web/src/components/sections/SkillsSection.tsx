@@ -67,7 +67,7 @@ export function SkillsSection() {
 							border
 							border-slate-200
 							bg-slate-50
-							p-5
+							p-inset
 						"
 						key={skill.title}
 					>

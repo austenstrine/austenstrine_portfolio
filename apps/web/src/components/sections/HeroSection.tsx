@@ -117,6 +117,7 @@ export function HeroSection() {
 								transition
 								hover:-translate-y-0.5
 								hover:bg-frost
+								max-[399px]:px-4
 							"
 							href="/cv.html"
 						>
@@ -136,6 +137,7 @@ export function HeroSection() {
 								transition
 								hover:-translate-y-0.5
 								hover:bg-white/10
+								max-[399px]:px-4
 							"
 							href={JOIN_DEMO_HREF}
 						>
@@ -155,6 +157,7 @@ export function HeroSection() {
 								transition
 								hover:-translate-y-0.5
 								hover:bg-white/10
+								max-[399px]:px-4
 							"
 							href="#contact"
 						>
