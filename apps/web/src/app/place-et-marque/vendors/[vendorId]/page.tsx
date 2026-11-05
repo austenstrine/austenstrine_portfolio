@@ -30,7 +30,10 @@ import { RequireAccess } from '../../../../components/auth/RequireAccess';
 import { BackLink } from '../../../../components/BackLink';
 import { UrlSlugField } from '../../../../components/catalog/UrlSlugField';
 import { ArrowRightIcon } from '../../../../components/icons/ArrowRightIcon';
+import { CartIcon } from '../../../../components/icons/CartIcon';
 import { CloseIcon } from '../../../../components/icons/CloseIcon';
+import { DocumentIcon } from '../../../../components/icons/DocumentIcon';
+import { EyeIcon } from '../../../../components/icons/EyeIcon';
 import { PlusIcon } from '../../../../components/icons/PlusIcon';
 
 function slugify(value: string): string {
@@ -78,6 +81,7 @@ function VendorDetailContent() {
 	const [createdToken, setCreatedToken] = useState<CreatedVendorAppPassword | null>(null);
 	const [passwordBusy, setPasswordBusy] = useState(false);
 	const [passwordError, setPasswordError] = useState<string | null>(null);
+	const [appPasswordsOpen, setAppPasswordsOpen] = useState(false);
 	const [invites, setInvites] = useState<VendorInviteSummary[]>([]);
 	const [inviteEmail, setInviteEmail] = useState('');
 	const [inviteRole, setInviteRole] = useState<'EDITOR' | 'VIEWER'>('EDITOR');
@@ -395,31 +399,32 @@ function VendorDetailContent() {
 												>
 													/place-et-marque/vendors/{vendor.slug}
 												</p>
-												{!linkNameOpen
-													? (
-															<div
-																className="
-																	flex
-																	shrink-0
-																	items-center
-																	gap-2
-																"
-															>
-																{vendor.linkNameRequest?.status === 'PENDING'
-																	? (
-																			<span
-																				className="
-																					hidden
-																					text-sm
-																					text-slate-500
-																					sm:inline
-																				"
-																			>
-																				Pending review
-																			</span>
-																		)
-																	: null
-																}
+												<div
+													className="
+														flex
+														shrink-0
+														items-center
+														gap-2
+													"
+												>
+													{!linkNameOpen
+														&& vendor.linkNameRequest?.status === 'PENDING'
+														? (
+																<span
+																	className="
+																		hidden
+																		text-sm
+																		text-slate-500
+																		sm:inline
+																	"
+																>
+																	Pending review
+																</span>
+															)
+														: null
+													}
+													{!linkNameOpen
+														? (
 																<button
 																	type="button"
 																	onClick={() => setLinkNameOpen(true)}
@@ -464,10 +469,55 @@ function VendorDetailContent() {
 																		"
 																	/>
 																</button>
-															</div>
-														)
-													: null
-												}
+															)
+														: (
+																<button
+																	type="button"
+																	onClick={() => setLinkNameOpen(false)}
+																	aria-expanded={true}
+																	aria-label="Close link name form"
+																	className="
+																		inline-flex
+																		h-8
+																		w-8
+																		items-center
+																		justify-center
+																		gap-1.5
+																		rounded-full
+																		border
+																		border-slate-200
+																		bg-white
+																		text-xs
+																		font-semibold
+																		text-slate-600
+																		transition
+																		hover:border-sky
+																		hover:text-sky
+																		sm:h-auto
+																		sm:w-auto
+																		sm:px-3
+																		sm:py-1
+																	"
+																>
+																	<CloseIcon
+																		className="
+																			h-3
+																			w-3
+																			shrink-0
+																		"
+																	/>
+																	<span
+																		className="
+																			hidden
+																			sm:inline
+																		"
+																	>
+																		Close
+																	</span>
+																</button>
+															)
+													}
+												</div>
 											</div>
 											{!linkNameOpen
 												&& vendor.linkNameRequest?.status === 'PENDING'
@@ -514,63 +564,9 @@ function VendorDetailContent() {
 															}
 														`}
 													>
-														<div
-															className="
-																flex
-																items-center
-																justify-between
-																gap-2
-															"
-														>
-															<h2 className="text-lg font-semibold">
-																Name in the link
-															</h2>
-															<button
-																type="button"
-																onClick={() => setLinkNameOpen(false)}
-																aria-expanded={true}
-																aria-label="Close link name form"
-																className="
-																	inline-flex
-																	h-8
-																	w-8
-																	shrink-0
-																	items-center
-																	justify-center
-																	gap-1.5
-																	rounded-full
-																	border
-																	border-slate-200
-																	bg-white
-																	text-xs
-																	font-semibold
-																	text-slate-600
-																	transition
-																	hover:border-sky
-																	hover:text-sky
-																	sm:h-auto
-																	sm:w-auto
-																	sm:px-3
-																	sm:py-1
-																"
-															>
-																<CloseIcon
-																	className="
-																		h-3
-																		w-3
-																		shrink-0
-																	"
-																/>
-																<span
-																	className="
-																		hidden
-																		sm:inline
-																	"
-																>
-																	Close
-																</span>
-															</button>
-														</div>
+														<h2 className="text-lg font-semibold">
+															Name in the link
+														</h2>
 														<p
 															className="
 																mt-2
@@ -693,7 +689,7 @@ function VendorDetailContent() {
 																	|| vendor.linkNameRequest?.status === 'PENDING'
 																}
 																className="
-																	self-start
+																	self-end
 																	rounded-full
 																	bg-sky
 																	px-4
@@ -1388,64 +1384,157 @@ function VendorDetailContent() {
 									: 's'
 								} in this organization.
 							</p>
-							<div
+							<nav
+								aria-label="Catalog pages"
 								className="
 									mt-3
 									flex
-									flex-wrap
-									gap-4
+									flex-col
+									gap-1
 								"
 							>
 								{(vendor.myRole === 'OWNER' || vendor.myRole === 'EDITOR')
 									? (
 										<a
 											className="
+												inline-flex
+												items-center
+												gap-2
+												rounded-full
+												px-3
+												py-2
 												text-sm
 												font-semibold
 												text-sky
-												hover:underline
+												transition
+												hover:bg-sky/5
 											"
 											href={`/place-et-marque/products/new?vendorId=${encodeURIComponent(vendor.id)}`}
 										>
-											New product
+											<PlusIcon
+												className="
+													h-4
+													w-4
+													shrink-0
+												"
+											/>
+											<span className="min-w-0 flex-1 text-left">
+												New product
+											</span>
+											<ArrowRightIcon
+												className="
+													h-3.5
+													w-3.5
+													shrink-0
+												"
+											/>
 										</a>
 									)
 									: null
 								}
 								<a
 									className="
+										inline-flex
+										items-center
+										gap-2
+										rounded-full
+										px-3
+										py-2
 										text-sm
 										font-semibold
 										text-sky
-										hover:underline
+										transition
+										hover:bg-sky/5
 									"
 									href={`/place-et-marque/search?vendor=${encodeURIComponent(vendor.slug)}`}
 								>
-									View products
+									<EyeIcon
+										className="
+											h-4
+											w-4
+											shrink-0
+										"
+									/>
+									<span className="min-w-0 flex-1 text-left">
+										View products
+									</span>
+									<ArrowRightIcon
+										className="
+											h-3.5
+											w-3.5
+											shrink-0
+										"
+									/>
 								</a>
 								<a
 									className="
+										inline-flex
+										items-center
+										gap-2
+										rounded-full
+										px-3
+										py-2
 										text-sm
 										font-semibold
 										text-sky
-										hover:underline
+										transition
+										hover:bg-sky/5
 									"
 									href={`/place-et-marque/vendors/${vendor.slug}/import`}
 								>
-									Bulk CSV import
+									<DocumentIcon
+										className="
+											h-4
+											w-4
+											shrink-0
+										"
+									/>
+									<span className="min-w-0 flex-1 text-left">
+										Bulk CSV import
+									</span>
+									<ArrowRightIcon
+										className="
+											h-3.5
+											w-3.5
+											shrink-0
+										"
+									/>
 								</a>
 								<a
 									className="
+										inline-flex
+										items-center
+										gap-2
+										rounded-full
+										px-3
+										py-2
 										text-sm
 										font-semibold
 										text-sky
-										hover:underline
+										transition
+										hover:bg-sky/5
 									"
 									href={`/place-et-marque/vendors/${vendor.slug}/orders`}
 								>
-									Orders to fulfill
+									<CartIcon
+										className="
+											h-4
+											w-4
+											shrink-0
+										"
+									/>
+									<span className="min-w-0 flex-1 text-left">
+										Orders to fulfill
+									</span>
+									<ArrowRightIcon
+										className="
+											h-3.5
+											w-3.5
+											shrink-0
+										"
+									/>
 								</a>
-							</div>
+							</nav>
 						</section>
 
 						{vendor.myRole === 'OWNER' || vendor.myRole === 'EDITOR'
@@ -1542,34 +1631,41 @@ function VendorDetailContent() {
 										)
 										: null
 									}
-									<button
+									<div
 										className="
 											mt-4
-											rounded-full
-											border
-											border-slate-300
-											px-4
-											py-2
-											text-sm
-											font-semibold
-											text-slate-700
-											hover:border-sky
-											hover:text-sky
-											disabled:opacity-60
+											flex
+											justify-end
 										"
-										type="button"
-										disabled={shippingBusy}
-										onClick={() => void onEnsureFreight()}
 									>
-										{shippingBusy
-											? 'Saving…'
-											: (
-												shippingProfiles.length === 0
-													? 'Add Standard and Freight defaults'
-													: 'Refresh Standard and Freight defaults'
-											)
-										}
-									</button>
+										<button
+											className="
+												rounded-full
+												border
+												border-slate-300
+												px-4
+												py-2
+												text-sm
+												font-semibold
+												text-slate-700
+												hover:border-sky
+												hover:text-sky
+												disabled:opacity-60
+											"
+											type="button"
+											disabled={shippingBusy}
+											onClick={() => void onEnsureFreight()}
+										>
+											{shippingBusy
+												? 'Saving…'
+												: (
+													shippingProfiles.length === 0
+														? 'Add Standard and Freight defaults'
+														: 'Refresh Standard and Freight defaults'
+												)
+											}
+										</button>
+									</div>
 								</section>
 							)
 							: null
@@ -1587,235 +1683,362 @@ function VendorDetailContent() {
 									"
 									id="app-passwords"
 								>
-									<h2 className="text-lg font-semibold">
-										App passwords
-									</h2>
-									<p
-										className="
-											mt-2
-											text-sm
-											text-slate-600
-										"
-									>
-										Create a vendor-scoped token for your developers or servers.
-										They can validate and commit CSV imports against the API
-										without signing in as a person. Copy the token once when it is
-										created, then hand it off securely.
-									</p>
-
-									{passwordError
-										? (
-											<p
-												className="
-													mt-3
-													text-sm
-													text-red-700
-												"
-											>
-												{passwordError}
-											</p>
-										)
-										: null
-									}
-
-									{createdToken
-										? (
-											<div
-												className="
-													mt-4
-													rounded-xl
-													border
-													border-amber-200
-													bg-amber-50
-													p-4
-												"
-											>
-												<p
-													className="
-														text-sm
-														font-semibold
-														text-amber-900
-													"
-												>
-													{createdToken.warning}
-												</p>
-												<code
-													className="
-														mt-2
-														block
-														break-all
-														rounded-lg
-														bg-white
-														px-3
-														py-2
-														font-mono
-														text-xs
-														text-ink
-													"
-												>
-													{createdToken.token}
-												</code>
-												<button
-													className="
-														mt-3
-														text-sm
-														font-semibold
-														text-sky
-														hover:underline
-													"
-													type="button"
-													onClick={() =>
-														void navigator.clipboard.writeText(
-														createdToken.token,
-														)
-														}
-												>
-													Copy token
-												</button>
-											</div>
-										)
-										: null
-									}
-
 									<div
 										className="
-											mt-4
 											flex
-											flex-wrap
-											items-end
-											gap-3
+											items-center
+											justify-between
+											gap-2
 										"
 									>
-										<label className="text-sm">
-											<span className="font-semibold">
-												Name
-											</span>
-											<input
-												className="
-													mt-1
-													block
-													rounded-lg
-													border
-													border-slate-300
-													px-3
-													py-2
-												"
-												value={passwordName}
-												onChange={(event) =>
-													setPasswordName(event.target.value)
-												}
-											/>
-										</label>
-										<button
-											className="
-												rounded-full
-												bg-sky
-												px-4
-												py-2.5
-												text-sm
-												font-semibold
-												text-white
-												hover:bg-sky/90
-												disabled:opacity-60
-											"
-											type="button"
-											disabled={passwordBusy || !passwordName.trim()}
-											onClick={() => void onCreatePassword()}
-										>
-											Create app password
-										</button>
-									</div>
-
-									<ul
-										className="
-											mt-4
-											flex
-											flex-col
-											gap-3
-										"
-									>
-										{passwords.length === 0
+										<h2 className="text-lg font-semibold">
+											App passwords
+										</h2>
+										{appPasswordsOpen
 											? (
-												<li className="text-sm text-slate-500">
-													No app passwords yet.
-												</li>
-											)
-											: null
+													<button
+														type="button"
+														aria-expanded={true}
+														aria-controls="app-passwords-panel"
+														aria-label="Close app passwords"
+														className="
+															inline-flex
+															h-8
+															w-8
+															shrink-0
+															items-center
+															justify-center
+															gap-1.5
+															rounded-full
+															border
+															border-slate-200
+															bg-white
+															text-xs
+															font-semibold
+															text-slate-600
+															transition
+															hover:border-sky
+															hover:text-sky
+															sm:h-auto
+															sm:w-auto
+															sm:px-3
+															sm:py-1
+														"
+														onClick={() => setAppPasswordsOpen(false)}
+													>
+														<CloseIcon
+															className="
+																h-3
+																w-3
+																shrink-0
+															"
+														/>
+														<span
+															className="
+																hidden
+																sm:inline
+															"
+														>
+															Close
+														</span>
+													</button>
+												)
+											: (
+													<button
+														type="button"
+														aria-expanded={false}
+														aria-controls="app-passwords-panel"
+														aria-label="Manage app passwords"
+														className="
+															inline-flex
+															h-8
+															w-8
+															items-center
+															justify-center
+															gap-1.5
+															rounded-full
+															border
+															border-slate-200
+															bg-white
+															text-xs
+															font-semibold
+															text-slate-600
+															transition
+															hover:border-sky
+															hover:text-sky
+															sm:h-auto
+															sm:w-auto
+															sm:px-3
+															sm:py-1
+														"
+														onClick={() => setAppPasswordsOpen(true)}
+													>
+														<span
+															className="
+																hidden
+																sm:inline
+															"
+														>
+															Manage app passwords
+														</span>
+														<ArrowRightIcon
+															className="
+																h-3
+																w-3
+																shrink-0
+															"
+														/>
+													</button>
+												)
 										}
-										{passwords.map((row) => (
-											<li
+									</div>
+									<div
+										className={`
+											grid
+											transition-[grid-template-rows]
+											duration-300
+											ease-out
+											${appPasswordsOpen
+												? 'grid-rows-[1fr] opacity-100'
+												: 'grid-rows-[0fr] opacity-0'
+											}
+										`}
+										id="app-passwords-panel"
+										aria-hidden={!appPasswordsOpen}
+										{...(!appPasswordsOpen
+											? { inert: true }
+											: {})
+										}
+									>
+										<div className="overflow-hidden">
+											<p
 												className="
-													flex
-													flex-wrap
-													items-center
-													justify-between
-													gap-2
-													rounded-xl
-													border
-													border-slate-100
-													p-3
+													mt-2
+													text-sm
+													text-slate-600
 												"
-												key={row.id}
 											>
-												<div>
-													<p className="font-semibold">
-														{row.name}
+												Create a vendor-scoped token for your developers or servers.
+												They can validate and commit CSV imports against the API
+												without signing in as a person. Copy the token once when it is
+												created, then hand it off securely.
+											</p>
+
+											{passwordError
+												? (
+													<p
+														className="
+															mt-3
+															text-sm
+															text-red-700
+														"
+													>
+														{passwordError}
 													</p>
-													<p className="text-xs text-slate-500">
-														{row.hint}
-														{row.active
-															? ''
-															: ' · revoked'
-														}
-														{row.lastUsedAt
-															? ` · last used ${new Date(row.lastUsedAt).toLocaleString()}`
-															: ''
-														}
-													</p>
-												</div>
-												{row.active
-													? (
-														<button
+												)
+												: null
+											}
+
+											{createdToken
+												? (
+													<div
+														className="
+															mt-4
+															rounded-xl
+															border
+															border-amber-200
+															bg-amber-50
+															p-4
+														"
+													>
+														<p
 															className="
 																text-sm
 																font-semibold
-																text-red-700
+																text-amber-900
+															"
+														>
+															{createdToken.warning}
+														</p>
+														<code
+															className="
+																mt-2
+																block
+																break-all
+																rounded-lg
+																bg-white
+																px-3
+																py-2
+																font-mono
+																text-xs
+																text-ink
+															"
+														>
+															{createdToken.token}
+														</code>
+														<button
+															className="
+																mt-3
+																text-sm
+																font-semibold
+																text-sky
 																hover:underline
-																disabled:opacity-60
 															"
 															type="button"
-															disabled={passwordBusy}
 															onClick={() =>
-																void onRevokePassword(row.id)
+																void navigator.clipboard.writeText(
+																createdToken.token,
+																)
 																}
 														>
-															Revoke
+															Copy token
 														</button>
+													</div>
+												)
+												: null
+											}
+
+											<div
+												className="
+													mt-4
+													flex
+													flex-wrap
+													items-end
+													gap-3
+												"
+											>
+												<label className="text-sm">
+													<span className="font-semibold">
+														Name
+													</span>
+													<input
+														className="
+															mt-1
+															block
+															rounded-lg
+															border
+															border-slate-300
+															px-3
+															py-2
+														"
+														value={passwordName}
+														onChange={(event) =>
+															setPasswordName(event.target.value)
+														}
+													/>
+												</label>
+												<button
+													className="
+														rounded-full
+														bg-sky
+														px-4
+														py-2.5
+														text-sm
+														font-semibold
+														text-white
+														hover:bg-sky/90
+														disabled:opacity-60
+													"
+													type="button"
+													disabled={passwordBusy || !passwordName.trim()}
+													onClick={() => void onCreatePassword()}
+												>
+													Create app password
+												</button>
+											</div>
+
+											<ul
+												className="
+													mt-4
+													flex
+													flex-col
+													gap-3
+												"
+											>
+												{passwords.length === 0
+													? (
+														<li className="text-sm text-slate-500">
+															No app passwords yet.
+														</li>
 													)
 													: null
 												}
-											</li>
-										))}
-									</ul>
+												{passwords.map((row) => (
+													<li
+														className="
+															flex
+															flex-wrap
+															items-center
+															justify-between
+															gap-2
+															rounded-xl
+															border
+															border-slate-100
+															p-3
+														"
+														key={row.id}
+													>
+														<div>
+															<p className="font-semibold">
+																{row.name}
+															</p>
+															<p className="text-xs text-slate-500">
+																{row.hint}
+																{row.active
+																	? ''
+																	: ' · revoked'
+																}
+																{row.lastUsedAt
+																	? ` · last used ${new Date(row.lastUsedAt).toLocaleString()}`
+																	: ''
+																}
+															</p>
+														</div>
+														{row.active
+															? (
+																<button
+																	className="
+																		text-sm
+																		font-semibold
+																		text-red-700
+																		hover:underline
+																		disabled:opacity-60
+																	"
+																	type="button"
+																	disabled={passwordBusy}
+																	onClick={() =>
+																		void onRevokePassword(row.id)
+																		}
+																>
+																	Revoke
+																</button>
+															)
+															: null
+														}
+													</li>
+												))}
+											</ul>
 
-									<pre
-										className="
-											mt-4
-											overflow-x-auto
-											rounded-xl
-											bg-sky
-											p-4
-											font-mono
-											text-xs
-											text-frost
-										"
-									>
+											<pre
+												className="
+													mt-4
+													overflow-x-auto
+													rounded-xl
+													bg-sky
+													p-4
+													font-mono
+													text-xs
+													text-frost
+												"
+											>
 {`curl -X POST \\
   "$API/catalog/vendors/${vendor.id}/imports/validate" \\
   -H "Authorization: Bearer vas_…" \\
   -H "Content-Type: application/json" \\
   -d '{"csv":"…","source":"API"}'`}
-									</pre>
+											</pre>
+										</div>
+									</div>
 								</section>
 							)
 							: null
