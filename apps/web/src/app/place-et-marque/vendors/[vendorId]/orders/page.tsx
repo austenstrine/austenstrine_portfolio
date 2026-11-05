@@ -4,6 +4,7 @@ import { useParams } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';
 import {
 	formatMoney,
+	formatOrderStatus,
 	listVendorOrders,
 	refundVendorOrder,
 	shipVendorOrder,
@@ -13,6 +14,26 @@ import { getMyVendor, type VendorDetail } from '../../../../../lib/catalog-api';
 import { RequireAccess } from '../../../../../components/auth/RequireAccess';
 import { BackLink } from '../../../../../components/BackLink';
 import { useSession } from '../../../../../lib/useSession';
+
+function formatShipTo(shipTo: PlaceEtMarqueOrder['shipTo']): string {
+	const cityLine = [
+		shipTo.city,
+		[shipTo.region, shipTo.postal].filter(Boolean).join(' '),
+	]
+		.filter(Boolean)
+		.join(', ');
+	return [
+		shipTo.name,
+		shipTo.line1,
+		shipTo.line2,
+		cityLine,
+		shipTo.country && shipTo.country !== 'US'
+			? shipTo.country
+			: null,
+	]
+		.filter(Boolean)
+		.join(', ');
+}
 
 function VendorOrdersPageContent() {
 	const params = useParams<{ vendorId: string }>();
@@ -123,7 +144,10 @@ function VendorOrdersPageContent() {
 					tracking-tight
 				"
 			>
-				Vendor orders
+				{vendor
+					? `${vendor.name} orders`
+					: 'Vendor orders'
+				}
 			</h1>
 
 			{sessionLoading
@@ -182,15 +206,26 @@ function VendorOrdersPageContent() {
 										>
 											<div>
 												<p className="font-semibold">
-													{order.orderRef} · {order.status}
+													{order.orderRef} ·{' '}
+													{formatOrderStatus(order.status)}
 												</p>
 												<p className="text-sm text-slate-600">
 													{order.buyerEmail ?? 'Buyer'} ·{' '}
 													{formatMoney(order.totalCents, order.currency)}
+													{typeof order.vendorNetCents === 'number'
+														? ` · Your net ${formatMoney(order.vendorNetCents, order.currency)}`
+														: ''
+													}
 												</p>
 												<p className="text-sm text-slate-500">
-													{order.shipTo.name}, {order.shipTo.line1},{' '}
-													{order.shipTo.city}
+													{new Date(order.createdAt).toLocaleString()}
+													{order.shippedAt
+														? ` · Shipped ${new Date(order.shippedAt).toLocaleString()}`
+														: ''
+													}
+												</p>
+												<p className="text-sm text-slate-500">
+													Ship to {formatShipTo(order.shipTo)}
 												</p>
 											</div>
 											<div
@@ -268,8 +303,24 @@ function VendorOrdersPageContent() {
 											"
 										>
 											{order.lines.map((line) => (
-												<li key={line.id}>
-													{line.title} × {line.quantity}
+												<li
+													className="
+														flex
+														flex-wrap
+														justify-between
+														gap-x-3
+														gap-y-0.5
+													"
+													key={line.id}
+												>
+													<span>
+														{line.title} × {line.quantity}
+													</span>
+													<span>
+														{formatMoney(line.unitPriceCents, order.currency)}
+														{' each · '}
+														{formatMoney(line.lineTotalCents, order.currency)}
+													</span>
 												</li>
 											))}
 										</ul>

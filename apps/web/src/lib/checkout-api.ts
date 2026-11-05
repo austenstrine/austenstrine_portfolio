@@ -326,6 +326,19 @@ export function formatMoney(cents: number, currency = 'USD'): string {
 	}).format(cents / 100);
 }
 
+const ORDER_STATUS_LABELS: Record<string, string> = {
+	HOLD: 'On hold',
+	PAID: 'Paid',
+	FULFILLING: 'Fulfilling',
+	SHIPPED: 'Shipped',
+	REFUNDED: 'Refunded',
+	CANCELLED: 'Cancelled',
+};
+
+export function formatOrderStatus(status: string): string {
+	return ORDER_STATUS_LABELS[status] ?? status;
+}
+
 /** Public helper for docs / webhook URL */
 export function stripeWebhookUrl(): string {
 	return `${PUBLIC_API_BASE_URL}/checkout/webhooks/stripe`;
