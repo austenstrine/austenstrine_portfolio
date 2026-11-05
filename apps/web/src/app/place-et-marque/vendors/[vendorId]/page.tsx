@@ -202,25 +202,46 @@ function VendorDetailContent() {
 
 	async function onRequestLinkName(event: FormEvent) {
 		event.preventDefault();
-		if(!vendorId) {
+		setLinkNameMessage(null);
+		if(!vendorId || !vendor) {
+			setLinkNameError('Organization is still loading. Try again in a moment.');
 			return;
 		}
 		const linkName = slugify(linkNameDraft);
-		if(linkName.length < 2) {
-			setLinkNameError('Use at least two letters or numbers in the name.');
+		const incomplete: string[] = [];
+		if(!linkNameDraft.trim() || linkName.length < 2) {
+			incomplete.push(
+				'Requested name in the link — enter at least two letters or numbers',
+			);
+		}
+		else if(linkName === vendor.slug) {
+			incomplete.push(
+				'Requested name in the link — choose a name that differs from the current one',
+			);
+		}
+		if(vendor.linkNameRequest?.status === 'PENDING') {
+			incomplete.push(
+				'A request is already pending review — wait for that decision before sending another',
+			);
+		}
+		if(incomplete.length > 0) {
+			setLinkNameError(
+				incomplete.length === 1
+					? incomplete[0]
+					: `Still needed:\n• ${incomplete.join('\n• ')}`,
+			);
 			return;
 		}
 		setLinkNameDraft(linkName);
 		setLinkNameBusy(true);
 		setLinkNameError(null);
-		setLinkNameMessage(null);
 		try {
 			const result = await requestVendorLinkName(vendorId, {
 				linkName,
 				note: linkNameNote.trim() || undefined,
 			});
 			setLinkNameMessage(result.message);
-			const refreshed = await getMyVendor(vendor?.slug || vendorId);
+			const refreshed = await getMyVendor(vendor.slug || vendorId);
 			setVendor(refreshed);
 			setLinkNameDraft(refreshed.slug);
 		}
@@ -700,7 +721,12 @@ function VendorDetailContent() {
 															<UrlSlugField
 																label="Requested name in the link"
 																value={linkNameDraft}
-																onChange={(next) => setLinkNameDraft(slugifyTyping(next))}
+																onChange={(next) => {
+																	setLinkNameDraft(slugifyTyping(next));
+																	if(linkNameError) {
+																		setLinkNameError(null);
+																	}
+																}}
 																prefixPath="/place-et-marque/vendors"
 																placeholder={vendor.slug}
 																helpText="Ask for a different name if the current one no longer fits."
@@ -728,7 +754,14 @@ function VendorDetailContent() {
 															</label>
 															{linkNameError
 																? (
-																		<p className="text-sm text-red-700">
+																		<p
+																			className="
+																				whitespace-pre-line
+																				text-sm
+																				text-red-700
+																			"
+																			role="alert"
+																		>
 																			{linkNameError}
 																		</p>
 																	)
@@ -744,11 +777,7 @@ function VendorDetailContent() {
 															}
 															<button
 																type="submit"
-																disabled={
-																	linkNameBusy
-																	|| slugify(linkNameDraft) === vendor.slug
-																	|| vendor.linkNameRequest?.status === 'PENDING'
-																}
+																disabled={linkNameBusy}
 																className="
 																	self-end
 																	rounded-full
@@ -763,7 +792,7 @@ function VendorDetailContent() {
 															>
 																{linkNameBusy
 																	? 'Sending…'
-																	: 'Request new name'
+																	: 'Submit request'
 																}
 															</button>
 														</form>
