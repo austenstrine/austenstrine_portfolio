@@ -239,7 +239,13 @@ export function ContactMethodRow({
 					>
 						{icon}
 					</span>
-					<div className="min-w-0 text-left">
+					<div
+						className="
+							min-w-0
+							overflow-visible
+							text-left
+						"
+					>
 						<p
 							className="
 								truncate
@@ -251,8 +257,7 @@ export function ContactMethodRow({
 						</p>
 						<p
 							className="
-								overflow-hidden
-								truncate
+								overflow-visible
 								whitespace-nowrap
 								text-sm
 								text-slate-200
