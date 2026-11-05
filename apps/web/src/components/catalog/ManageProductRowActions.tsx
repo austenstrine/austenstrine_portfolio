@@ -19,6 +19,41 @@ import {
 	useCatalogFloatingMenu,
 } from './CatalogMenu';
 
+const desktopShellClassName = `
+	inline-flex
+	h-9
+	w-full
+	overflow-hidden
+	rounded-full
+	border
+	border-slate-300
+	bg-white
+	text-sm
+	font-semibold
+	text-ink
+	divide-x
+`;
+
+const desktopPrimaryClassName = `
+	inline-flex
+	min-w-0
+	flex-1
+	items-center
+	justify-between
+	gap-1.5
+	px-3
+	hover:bg-frost
+	hover:text-sky
+`;
+
+const desktopCaretSlotClassName = `
+	inline-flex
+	w-8
+	shrink-0
+	items-center
+	justify-center
+`;
+
 export function ManageProductRowActions({
 	onDeleted,
 	product,
@@ -35,6 +70,8 @@ export function ManageProductRowActions({
 	} = useCatalogFloatingMenu({
 		align: 'end',
 		closeKey: product.id,
+		minWidth: 160,
+		preferredWidth: 220,
 	});
 	const [deleteBusy, setDeleteBusy] = useState(false);
 	const [deleteError, setDeleteError] = useState<string | null>(null);
@@ -76,6 +113,110 @@ export function ManageProductRowActions({
 				gap-2
 			"
 		>
+			{/* Desktop: equal-width View / Edit stack; caret column reserved on View for icon alignment. */}
+			<div
+				className="
+					hidden
+					sm:inline-flex
+					sm:flex-col
+					sm:gap-2
+				"
+			>
+				<a
+					aria-label={`View ${product.title}`}
+					className={`
+						${desktopShellClassName}
+						divide-transparent
+						hover:border-sky
+						hover:text-sky
+					`}
+					href={productViewHref({
+						vendorSlug: product.vendor.slug,
+						productSlug: product.slug,
+					})}
+				>
+					<span
+						className={desktopPrimaryClassName}
+					>
+						<span>
+							View
+						</span>
+						<EyeIcon
+							className="h-3.5 w-3.5 shrink-0"
+						/>
+					</span>
+					<span
+						aria-hidden
+						className={desktopCaretSlotClassName}
+					/>
+				</a>
+				<div
+					className={`
+						${desktopShellClassName}
+						divide-slate-300
+					`}
+				>
+					<a
+						aria-disabled={deleteBusy || undefined}
+						className={`
+							${desktopPrimaryClassName}
+							aria-disabled:pointer-events-none
+							aria-disabled:opacity-60
+						`}
+						href={productEditHref({
+							vendorSlug: product.vendor.slug,
+							productSlug: product.slug,
+						})}
+						tabIndex={deleteBusy ? -1 : undefined}
+					>
+						<span>
+							Edit
+						</span>
+						<PencilIcon
+							className="h-3.5 w-3.5 shrink-0"
+						/>
+					</a>
+					<button
+						aria-expanded={open}
+						aria-haspopup="menu"
+						aria-label={`More actions for ${product.title}`}
+						className={`
+							${desktopCaretSlotClassName}
+							hover:bg-frost
+							hover:text-sky
+							disabled:opacity-60
+						`}
+						disabled={deleteBusy}
+						onClick={
+							() => setOpen((wasOpen) => !wasOpen)
+						}
+						ref={triggerRef}
+						type="button"
+					>
+						<CaretDownIcon
+							className={
+								open
+									? `
+										h-3
+										w-3
+										shrink-0
+										rotate-180
+										text-slate-500
+										transition
+									`
+									: `
+										h-3
+										w-3
+										shrink-0
+										text-slate-500
+										transition
+									`
+							}
+						/>
+					</button>
+				</div>
+			</div>
+			{/* Mobile: circular View / Edit / Delete. */}
 			<a
 				aria-label={`View ${product.title}`}
 				className="
@@ -84,125 +225,24 @@ export function ManageProductRowActions({
 					w-9
 					items-center
 					justify-center
-					gap-1.5
 					rounded-full
 					border
 					border-slate-300
 					bg-white
-					text-sm
-					font-semibold
 					text-ink
 					hover:border-sky
 					hover:text-sky
-					sm:w-auto
-					sm:justify-start
-					sm:px-3
+					sm:hidden
 				"
 				href={productViewHref({
 					vendorSlug: product.vendor.slug,
 					productSlug: product.slug,
 				})}
 			>
-				<span
-					className="
-						hidden
-						sm:inline
-					"
-				>
-					View
-				</span>
 				<EyeIcon
 					className="h-3.5 w-3.5 shrink-0"
 				/>
 			</a>
-			{/* Desktop: Edit split [label+pencil | caret→Delete]. Mobile: circular Edit + Delete. */}
-			<div
-				className="
-					hidden
-					overflow-hidden
-					rounded-full
-					border
-					border-slate-300
-					bg-white
-					text-sm
-					font-semibold
-					text-ink
-					divide-x
-					divide-slate-300
-					sm:inline-flex
-					sm:h-9
-					sm:items-center
-				"
-			>
-				<a
-					aria-disabled={deleteBusy || undefined}
-					className="
-						inline-flex
-						h-full
-						items-center
-						gap-1.5
-						px-3
-						hover:bg-frost
-						hover:text-sky
-						aria-disabled:pointer-events-none
-						aria-disabled:opacity-60
-					"
-					href={productEditHref({
-						vendorSlug: product.vendor.slug,
-						productSlug: product.slug,
-					})}
-					tabIndex={deleteBusy ? -1 : undefined}
-				>
-					<span>
-						Edit
-					</span>
-					<PencilIcon
-						className="h-3.5 w-3.5 shrink-0"
-					/>
-				</a>
-				<button
-					aria-expanded={open}
-					aria-haspopup="menu"
-					aria-label={`More actions for ${product.title}`}
-					className="
-						inline-flex
-						h-full
-						items-center
-						justify-center
-						px-2
-						hover:bg-frost
-						hover:text-sky
-						disabled:opacity-60
-					"
-					disabled={deleteBusy}
-					onClick={
-						() => setOpen((wasOpen) => !wasOpen)
-					}
-					ref={triggerRef}
-					type="button"
-				>
-					<CaretDownIcon
-						className={
-							open
-								? `
-									h-3
-									w-3
-									shrink-0
-									rotate-180
-									text-slate-500
-									transition
-								`
-								: `
-									h-3
-									w-3
-									shrink-0
-									text-slate-500
-									transition
-								`
-						}
-					/>
-				</button>
-			</div>
 			<a
 				aria-disabled={deleteBusy || undefined}
 				aria-label={`Edit ${product.title}`}

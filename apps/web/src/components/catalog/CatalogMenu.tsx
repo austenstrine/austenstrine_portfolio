@@ -170,6 +170,7 @@ export function useCatalogFloatingMenu({
 			return;
 		}
 
+		const gap = 6;
 		const place = () => {
 			const rect = triggerRef.current?.getBoundingClientRect();
 			if(!rect) {
@@ -189,10 +190,18 @@ export function useCatalogFloatingMenu({
 				? rect.right - width
 				: rect.left;
 			const left = Math.min(maxLeft, Math.max(minLeft, preferredLeft));
-			let top = rect.bottom + 6;
-			const maxHeight = 320;
-			if(top + maxHeight > window.innerHeight - gutter) {
-				top = Math.max(gutter, rect.top - maxHeight - 6);
+			// Prefer below the trigger. Flip only after the panel is measurable —
+			// a speculative 320px budget was parking short menus near the header.
+			const panelHeight = panelRef.current?.getBoundingClientRect().height ?? 0;
+			const spaceBelow = window.innerHeight - gutter - (rect.bottom + gap);
+			const spaceAbove = rect.top - gutter - gap;
+			let top = rect.bottom + gap;
+			if(
+				panelHeight > 0
+				&& panelHeight > spaceBelow
+				&& spaceAbove > spaceBelow
+			) {
+				top = Math.max(gutter, rect.top - panelHeight - gap);
 			}
 			setPanelBox({
 				left,
@@ -219,6 +228,7 @@ export function useCatalogFloatingMenu({
 
 		let focusAttempts = 0;
 		let focusFrame = 0;
+		let measureFrame = 0;
 		const focusFirstItem = () => {
 			const first = menuItems()[0];
 			if(first) {
@@ -230,7 +240,11 @@ export function useCatalogFloatingMenu({
 				focusFrame = requestAnimationFrame(focusFirstItem);
 			}
 		};
-		focusFrame = requestAnimationFrame(focusFirstItem);
+		// Re-place once the portal has laid out so flip uses real height.
+		measureFrame = requestAnimationFrame(() => {
+			place();
+			focusFrame = requestAnimationFrame(focusFirstItem);
+		});
 
 		const onPointerDown = (event: PointerEvent) => {
 			const target = event.target as Node;
@@ -312,6 +326,7 @@ export function useCatalogFloatingMenu({
 		document.addEventListener('pointerdown', onPointerDown);
 		window.addEventListener('keydown', onKeyDown);
 		return () => {
+			cancelAnimationFrame(measureFrame);
 			cancelAnimationFrame(focusFrame);
 			window.removeEventListener('resize', place);
 			window.removeEventListener('scroll', place, true);

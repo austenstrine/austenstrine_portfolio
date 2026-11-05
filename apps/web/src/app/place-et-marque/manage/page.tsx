@@ -10,7 +10,10 @@ import {
 import { useSession } from '../../../lib/useSession';
 import { productCreateHref } from '../../../lib/vendor-ref';
 import { RequireAccess } from '../../../components/auth/RequireAccess';
-import { SellerTopContextPortal } from '../../../components/catalog/CatalogSearchContext';
+import {
+	PageBottomPanePortal,
+	SellerTopContextPortal,
+} from '../../../components/catalog/CatalogSearchContext';
 import { ManageProductRowActions } from '../../../components/catalog/ManageProductRowActions';
 import { ArrowLeftIcon } from '../../../components/icons/ArrowLeftIcon';
 import { ArrowRightIcon } from '../../../components/icons/ArrowRightIcon';
@@ -270,16 +273,17 @@ function PlaceEtMarqueManageContent() {
 								max-w-full
 								flex-1
 								flex-col
-								gap-1
-								text-sm
+								gap-0.5
 								sm:max-w-sm
 								sm:flex-none
 							"
 						>
 							<span
 								className="
+									text-[11px]
 									font-medium
-									text-ink
+									leading-tight
+									text-slate-500
 								"
 							>
 								Show products for vendor:
@@ -327,12 +331,14 @@ function PlaceEtMarqueManageContent() {
 					)
 					: null
 				}
+			</SellerTopContextPortal>
+
+			<PageBottomPanePortal>
 				{newProductVendor
 					? (
 						<a
 							aria-label="New product"
 							className="
-								ml-auto
 								inline-flex
 								h-10
 								w-10
@@ -340,7 +346,6 @@ function PlaceEtMarqueManageContent() {
 								items-center
 								justify-center
 								gap-1.5
-								self-end
 								rounded-full
 								bg-asgreen
 								text-sm
@@ -379,7 +384,7 @@ function PlaceEtMarqueManageContent() {
 					)
 					: null
 				}
-			</SellerTopContextPortal>
+			</PageBottomPanePortal>
 
 			<div>
 				<h1

@@ -343,10 +343,7 @@ export function SearchExtrasPortal({ children }: { children: ReactNode }) {
 	return createPortal(content, target);
 }
 
-/**
- * Page-specific actions for the header row that replaces the category bar on seller pages
- * (vendor filter, New product, etc.). Site-wide seller nav stays in the account menu.
- */
+/** Seller context for the top bar (e.g. vendor picker). Not page actions. */
 export function SellerTopContextPortal({ children }: { children: ReactNode }) {
 	const { sellerTopContextHostEl } = useCatalogSearch();
 	if(!sellerTopContextHostEl) {
@@ -354,7 +351,7 @@ export function SellerTopContextPortal({ children }: { children: ReactNode }) {
 	}
 	return createPortal(
 		<div
-			aria-label="Page actions"
+			aria-label="Seller context"
 			className="
 				mx-auto
 				flex
@@ -374,7 +371,7 @@ export function SellerTopContextPortal({ children }: { children: ReactNode }) {
 	);
 }
 
-/** Optional floating host — not the header page-action slot (vendor / New product). */
+/** Page-specific actions for the frosted bottom-right pane (e.g. New product on manage). */
 export function PageBottomPanePortal({ children }: { children: ReactNode }) {
 	const { pageBottomPaneHostEl } = useCatalogSearch();
 	if(!pageBottomPaneHostEl || children == null || children === false) {
@@ -382,7 +379,7 @@ export function PageBottomPanePortal({ children }: { children: ReactNode }) {
 	}
 	return createPortal(
 		<div
-			aria-label="Floating seller controls"
+			aria-label="Page actions"
 			className="
 				flex
 				flex-wrap
