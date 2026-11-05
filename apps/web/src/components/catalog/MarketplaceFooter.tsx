@@ -1,6 +1,13 @@
+'use client';
+
+import { usePathname } from 'next/navigation';
+import { pathUsesSellerChrome } from '../../lib/accessGate';
 import { MarketplaceBrandLink } from './MarketplaceBrandLink';
 
 export function MarketplaceFooter() {
+	const pathname = usePathname();
+	const sellerChrome = pathUsesSellerChrome(pathname);
+
 	return (
 		<footer
 			className="
@@ -56,9 +63,14 @@ export function MarketplaceFooter() {
 					<a className="hover:text-ink" href="/place-et-marque/search">
 						Shop
 					</a>
-					<a className="hover:text-ink" href="/place-et-marque/cart">
-						Cart
-					</a>
+					{sellerChrome
+						? null
+						: (
+							<a className="hover:text-ink" href="/place-et-marque/cart">
+								Cart
+							</a>
+						)
+					}
 					<a className="hover:text-ink" href="/place-et-marque/guide">
 						Guide
 					</a>
