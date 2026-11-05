@@ -19,7 +19,7 @@
 #   <target>_workdir=<custom container workdir>
 
 # Registered targets (order used for alias resolution / discovery).
-dssh_targets=backend,frontend,proxy,cdn
+dssh_targets=backend,frontend,crm,proxy,cdn
 
 # Mode: auto|live|local (or export DSSH_MODE).
 # auto = live when any dssh_live_detect_targets container has a compose label.
@@ -33,9 +33,9 @@ dssh_live_compose_file=docker-compose.yml
 dssh_live_compose_prod_file=docker-compose.prod.yml
 dssh_live_container_prefix=portfolio-
 dssh_live_detect_targets=backend,frontend,proxy
-dssh_live_app_services=cdn,api,web,nginx
+dssh_live_app_services=cdn,api,web,crm,nginx
 dssh_live_infra_services=postgres,redis,opensearch
-dssh_live_health_containers=portfolio-postgres,portfolio-redis,portfolio-opensearch,portfolio-cdn,portfolio-api,portfolio-web,portfolio-proxy
+dssh_live_health_containers=portfolio-postgres,portfolio-redis,portfolio-opensearch,portfolio-cdn,portfolio-api,portfolio-web,portfolio-crm,portfolio-proxy
 dssh_live_health_url=https://127.0.0.1/api/health
 dssh_live_health_url_http=http://127.0.0.1/api/health
 dssh_live_health_exec_container=portfolio-api
@@ -71,7 +71,7 @@ dssh_stop_local="ids=\$(docker ps -aq --filter label=dssh.image); if [[ -n \"\$i
 dssh_mailtest_local="\"$script_dir/dssh\" backend mailtest"
 dssh_publish_local="./ops/deploy/live.sh"
 dssh_env_backup_relpath=ops/tooling/env-backup.sh
-dssh_rlog_containers=backend,frontend,proxy,cdn
+dssh_rlog_containers=backend,frontend,crm,proxy,cdn
 dssh_rlog_dir=./ops/diagnostics
 
 # Nest API — container name matches docker-compose.prod.yml (portfolio-api)
@@ -104,6 +104,14 @@ frontend_image=portfolio-web
 frontend_name=portfolio-web
 frontend_start="npm run dev -w apps/web"
 frontend_start_detached=1
+
+# Admin CRM Next.js app — portfolio-crm (dark side-nav; separate UX)
+crm=./apps/crm
+crm_service=crm
+crm_image=portfolio-crm
+crm_name=portfolio-crm
+crm_start="npm run dev -w apps/crm"
+crm_start_detached=1
 
 # Local TLS + nginx. Live compose service is nginx → portfolio-proxy.
 proxy=./ops/nginx

@@ -6,9 +6,6 @@ import {
 	checkVendorLinkName,
 	createVendor,
 	listMyVendors,
-	listVendorLinkNameRequests,
-	reviewVendorLinkNameRequest,
-	type VendorLinkNameQueueItem,
 	type VendorSummary,
 } from '../../../lib/catalog-api';
 import { safeNextPath } from '../../../lib/accessGate';
@@ -39,39 +36,14 @@ function VendorManageContent() {
 	const [error, setError] = useState<string | null>(null);
 	const [submitting, setSubmitting] = useState(false);
 	const [linkCheckMessage, setLinkCheckMessage] = useState<string | null>(null);
-	const [linkRequests, setLinkRequests] = useState<VendorLinkNameQueueItem[]>([]);
-	const [reviewBusyId, setReviewBusyId] = useState<string | null>(null);
-	const [reviewError, setReviewError] = useState<string | null>(null);
-
-	const isPlatformReviewer = vendors.some(
-		(vendor) => vendor.isSuperVendor && (vendor.myRole === 'OWNER' || vendor.myRole === 'EDITOR'),
-	);
 
 	const refresh = useCallback(async () => {
 		setLoading(true);
 		try {
-			const mine = await listMyVendors();
-			setVendors(mine);
-			const canReview = mine.some(
-				(vendor) =>
-					vendor.isSuperVendor
-					&& (vendor.myRole === 'OWNER' || vendor.myRole === 'EDITOR'),
-			);
-			if(canReview) {
-				try {
-					setLinkRequests(await listVendorLinkNameRequests('PENDING'));
-				}
-				catch {
-					setLinkRequests([]);
-				}
-			}
-			else {
-				setLinkRequests([]);
-			}
+			setVendors(await listMyVendors());
 		}
 		catch {
 			setVendors([]);
-			setLinkRequests([]);
 		}
 		finally {
 			setLoading(false);
@@ -170,40 +142,6 @@ function VendorManageContent() {
 		setLinkCheckMessage(null);
 	};
 
-	const onReviewRequest = async (
-		requestId: string,
-		decision: 'approve' | 'deny',
-	) => {
-		setReviewError(null);
-		setReviewBusyId(requestId);
-		try {
-			let reason: string | undefined;
-			if(decision === 'deny') {
-				const typed = window.prompt(
-					'Why are you denying this request? (plain language for the seller)',
-					'Too similar to another seller’s name in the link.',
-				);
-				if(!typed || typed.trim().length < 3) {
-					setReviewBusyId(null);
-					return;
-				}
-				reason = typed.trim();
-			}
-			await reviewVendorLinkNameRequest(requestId, { decision, reason });
-			await refresh();
-		}
-		catch(reviewErr) {
-			setReviewError(
-				reviewErr instanceof Error
-					? reviewErr.message
-					: 'Could not review that request.',
-			);
-		}
-		finally {
-			setReviewBusyId(null);
-		}
-	};
-
 	return (
 		<div
 			className="
@@ -254,119 +192,6 @@ function VendorManageContent() {
 					: null
 				}
 			</div>
-
-			{isPlatformReviewer && !loading
-				? (
-						<section
-							className="
-								flex
-								flex-col
-								gap-3
-							"
-						>
-							<h2 className="text-lg font-semibold">
-								Link name requests
-							</h2>
-							<p className="text-sm text-slate-600">
-								Approve or deny sellers who want a different name in their organization link.
-							</p>
-							{reviewError
-								? (
-										<p className="text-sm text-red-700">
-											{reviewError}
-										</p>
-									)
-								: null
-							}
-							{linkRequests.length === 0
-								? (
-										<p className="text-sm text-slate-500">
-											No pending requests.
-										</p>
-									)
-								: null
-							}
-							{linkRequests.map((request) => (
-								<div
-									className="
-										rounded-xl
-										border
-										border-slate-200
-										bg-white
-										p-4
-									"
-									key={request.id}
-								>
-									<p className="font-semibold">
-										{request.vendorName}
-									</p>
-									<p className="mt-1 text-sm text-slate-600">
-										{request.currentSlug}
-										{' → '}
-										{request.requestedSlug}
-									</p>
-									{request.requesterNote
-										? (
-												<p className="mt-2 text-sm text-slate-500">
-													Note: {request.requesterNote}
-												</p>
-											)
-										: null
-									}
-									<div
-										className="
-											mt-3
-											flex
-											flex-wrap
-											gap-2
-										"
-									>
-										<button
-											type="button"
-											className="
-												rounded-full
-												bg-asgreen
-												px-4
-												py-2
-												text-sm
-												font-semibold
-												text-white
-												disabled:opacity-60
-											"
-											disabled={reviewBusyId === request.id}
-											onClick={() => {
-												void onReviewRequest(request.id, 'approve');
-											}}
-										>
-											Approve
-										</button>
-										<button
-											type="button"
-											className="
-												rounded-full
-												border
-												border-slate-300
-												px-4
-												py-2
-												text-sm
-												font-semibold
-												text-slate-700
-												disabled:opacity-60
-											"
-											disabled={reviewBusyId === request.id}
-											onClick={() => {
-												void onReviewRequest(request.id, 'deny');
-											}}
-										>
-											Deny
-										</button>
-									</div>
-								</div>
-							))}
-						</section>
-					)
-				: null
-			}
 
 			<section
 				className="

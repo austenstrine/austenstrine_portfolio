@@ -48,6 +48,7 @@ import { UpdateCatalogProductDto } from './dto/update-catalog-product.dto';
 import { UpdateCatalogCategoryDto, UploadCatalogMediaDto } from './dto/upload-catalog-media.dto';
 import type { CatalogAuthedRequest } from './guards/catalog-auth.guard';
 import { CatalogAuthGuard } from './guards/catalog-auth.guard';
+import { CrmOriginGuard } from './guards/crm-origin.guard';
 import { CatalogImportService } from './import/catalog-import.service';
 import { InventoryService } from './inventory/inventory.service';
 import { VendorAppPasswordService } from './vendor-app-password.service';
@@ -237,7 +238,7 @@ export class CatalogController {
 		return this.vendors.checkLinkNameAvailable(name, excludeVendorId);
 	}
 
-	@UseGuards(JwtAuthGuard)
+	@UseGuards(JwtAuthGuard, CrmOriginGuard)
 	@Get('vendors/link-name-requests')
 	listVendorLinkNameRequests(
 		@Req() req: AuthedRequest,
@@ -246,7 +247,7 @@ export class CatalogController {
 		return this.vendors.listLinkNameRequests(req.user!.id, status);
 	}
 
-	@UseGuards(JwtAuthGuard)
+	@UseGuards(JwtAuthGuard, CrmOriginGuard)
 	@Post('vendors/link-name-requests/:requestId/review')
 	reviewVendorLinkNameRequest(
 		@Req() req: AuthedRequest,

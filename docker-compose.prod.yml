@@ -107,6 +107,25 @@ services:
     expose:
       - "3000"
 
+  crm:
+    build:
+      context: .
+      dockerfile: apps/crm/Dockerfile
+      args:
+        NEXT_PUBLIC_API_BASE_URL: ${CRM_NEXT_PUBLIC_API_BASE_URL:-https://crm.austenstrine.dev/api}
+    image: portfolio-crm:latest
+    container_name: portfolio-crm
+    restart: unless-stopped
+    depends_on:
+      - api
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+      API_INTERNAL_BASE_URL: http://api:4000/api
+    expose:
+      - "3001"
+
   nginx:
     build:
       context: ./ops/nginx
@@ -116,6 +135,7 @@ services:
     restart: unless-stopped
     depends_on:
       - web
+      - crm
       - api
       - cdn
     ports:

@@ -4,13 +4,19 @@ import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import cookieParser from 'cookie-parser';
 import { AppModule } from './app.module';
+import { corsAllowedOrigins, normalizeOrigin } from './common/app-origins';
 
 async function bootstrap() {
 	const isProduction = process.env.NODE_ENV === 'production';
-	const webUrl = process.env.WEB_URL?.trim();
+	const webUrl = normalizeOrigin(process.env.WEB_URL);
+	const crmUrl = normalizeOrigin(process.env.CRM_URL);
+	const allowedOrigins = corsAllowedOrigins();
 
 	if(isProduction && !webUrl) {
 		throw new Error('WEB_URL is required when NODE_ENV=production (CORS fail-closed).');
+	}
+	if(isProduction && !crmUrl) {
+		throw new Error('CRM_URL is required when NODE_ENV=production (admin CRM CORS).');
 	}
 
 	const app = await NestFactory.create(AppModule, { rawBody: true });
@@ -30,7 +36,18 @@ async function bootstrap() {
 
 	app.setGlobalPrefix('api');
 	app.enableCors({
-		origin: webUrl ?? 'http://localhost:3000',
+		origin: (origin, callback) => {
+			// Non-browser / same-origin proxy clients may omit Origin.
+			if(!origin) {
+				callback(null, true);
+				return;
+			}
+			if(allowedOrigins.includes(origin)) {
+				callback(null, true);
+				return;
+			}
+			callback(new Error(`Origin ${origin} is not allowed by CORS`), false);
+		},
 		credentials: true,
 	});
 	app.use(cookieParser());
