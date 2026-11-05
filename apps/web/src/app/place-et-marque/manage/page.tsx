@@ -340,6 +340,7 @@ function PlaceEtMarqueManageContent() {
 								inline-flex
 								h-10
 								w-10
+								shrink-0
 								items-center
 								justify-center
 								gap-1.5
@@ -371,6 +372,7 @@ function PlaceEtMarqueManageContent() {
 							<span
 								className="
 									hidden
+									whitespace-nowrap
 									sm:inline
 								"
 							>

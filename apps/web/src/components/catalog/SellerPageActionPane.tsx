@@ -16,6 +16,10 @@ const PANE_SHOW_TOP = 16;
  * vendor picker stays in the top bar. Blocks click-through; frost stays faint.
  * Hides on scroll-down / shows on scroll-up like the top bar.
  * Publishes --seller-bottom-pane-stack so JumpToTop can sit above this pane.
+ *
+ * Stack height uses layout metrics (offsetHeight + CSS bottom), not
+ * getBoundingClientRect, so CSS hide/show transforms do not collapse the
+ * offset mid-animation.
  */
 export function SellerPageActionPane() {
 	const pathname = usePathname();
@@ -70,13 +74,17 @@ export function SellerPageActionPane() {
 				document.documentElement.style.removeProperty(STACK_VAR);
 				return;
 			}
-			const rect = host.getBoundingClientRect();
-			if(rect.height < 1) {
+			// Transform-safe: offsetHeight ignores translateY used for hide/show.
+			const height = host.offsetHeight;
+			if(height < 1) {
 				document.documentElement.style.removeProperty(STACK_VAR);
 				return;
 			}
-			const bottomInset = window.innerHeight - rect.bottom;
-			const stack = Math.ceil(rect.height + bottomInset + STACK_GAP_PX);
+			const bottomInset = Number.parseFloat(style.bottom) || 0;
+			const stack = Math.max(
+				0,
+				Math.ceil(height + bottomInset + STACK_GAP_PX),
+			);
 			document.documentElement.style.setProperty(STACK_VAR, `${stack}px`);
 		};
 
@@ -86,10 +94,12 @@ export function SellerPageActionPane() {
 		const mutationObserver = new MutationObserver(sync);
 		mutationObserver.observe(host, { childList: true, subtree: true });
 		window.addEventListener('resize', sync);
+		host.addEventListener('transitionend', sync);
 		return () => {
 			resizeObserver.disconnect();
 			mutationObserver.disconnect();
 			window.removeEventListener('resize', sync);
+			host.removeEventListener('transitionend', sync);
 			document.documentElement.style.removeProperty(STACK_VAR);
 		};
 	}, [paneHidden, sellerChrome]);

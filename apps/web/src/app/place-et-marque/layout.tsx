@@ -27,6 +27,9 @@ export default function PlaceEtMarqueLayout({ children }: { children: ReactNode 
 			<CatalogSearchProvider>
 				<PardonOurDustBanner />
 				<CatalogHeader />
+				{/* Fixed chrome early in DOM so page actions are reachable by Tab before the product grid. */}
+				<SellerPageActionPane />
+				<JumpToTop />
 				<main
 					className="
 						mx-auto
@@ -41,8 +44,6 @@ export default function PlaceEtMarqueLayout({ children }: { children: ReactNode 
 					{children}
 				</main>
 				<MarketplaceFooter />
-				<SellerPageActionPane />
-				<JumpToTop />
 			</CatalogSearchProvider>
 		</div>
 	);
