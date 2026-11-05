@@ -7,6 +7,18 @@ import {
 
 export const PLACE_ET_MARQUE_NAME = 'Place et Marque';
 
+/** Absolute document title so dynamic layouts keep the brand suffix. */
+export function absolutePageTitle(segment: string): string {
+	const trimmed = segment.trim();
+	if(!trimmed || trimmed === PLACE_ET_MARQUE_NAME) {
+		return PLACE_ET_MARQUE_NAME;
+	}
+	if(trimmed.endsWith(` · ${PLACE_ET_MARQUE_NAME}`)) {
+		return trimmed;
+	}
+	return `${trimmed} · ${PLACE_ET_MARQUE_NAME}`;
+}
+
 const UUID_RE =
 	/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 

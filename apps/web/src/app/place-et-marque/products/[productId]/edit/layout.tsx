@@ -1,6 +1,9 @@
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
-import { resolveProductEditTitle } from '../../../../../lib/place-et-marque-meta';
+import {
+	absolutePageTitle,
+	resolveProductEditTitle,
+} from '../../../../../lib/place-et-marque-meta';
 
 type EditLayoutProps = {
 	children: ReactNode;
@@ -10,7 +13,9 @@ type EditLayoutProps = {
 export async function generateMetadata({ params }: EditLayoutProps): Promise<Metadata> {
 	const { productId } = await params;
 	return {
-		title: await resolveProductEditTitle(productId),
+		title: {
+			absolute: absolutePageTitle(await resolveProductEditTitle(productId)),
+		},
 	};
 }
 

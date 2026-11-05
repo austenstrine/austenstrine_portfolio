@@ -1,6 +1,9 @@
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
-import { resolveVendorDisplayName } from '../../../../lib/place-et-marque-meta';
+import {
+	absolutePageTitle,
+	resolveVendorDisplayName,
+} from '../../../../lib/place-et-marque-meta';
 
 type VendorLayoutProps = {
 	children: ReactNode;
@@ -9,8 +12,11 @@ type VendorLayoutProps = {
 
 export async function generateMetadata({ params }: VendorLayoutProps): Promise<Metadata> {
 	const { vendorId } = await params;
+	const name = await resolveVendorDisplayName(vendorId);
 	return {
-		title: await resolveVendorDisplayName(vendorId),
+		title: {
+			absolute: absolutePageTitle(name),
+		},
 	};
 }
 
