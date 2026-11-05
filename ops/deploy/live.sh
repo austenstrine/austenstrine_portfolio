@@ -3,7 +3,7 @@
 # Dashboards stay off (no --profile dashboards).
 #
 # Rolling by design: build first, then replace one service at a time so
-# nginx+web+api are never all stopped together. Brief blip only on the
+# nginx+web+crm+api are never all stopped together. Brief blip only on the
 # service being replaced.
 #
 # Build on the box. Do not copy foreign-arch node_modules or prebuilt images here.
@@ -159,8 +159,8 @@ fi
 echo "live.sh: ensuring TLS certs in ${TLS_CERTS_DIR:-/etc/nginx/certs}"
 bash "$ROOT/ops/deploy/ensure-tls.sh"
 
-echo "live.sh: building api web cdn nginx images (infra stays up)"
-"${COMPOSE[@]}" build api web cdn nginx
+echo "live.sh: building api web crm cdn nginx images (infra stays up)"
+"${COMPOSE[@]}" build api web crm cdn nginx
 
 echo "live.sh: ensuring infra (postgres redis opensearch)"
 "${COMPOSE[@]}" up -d postgres redis opensearch
@@ -181,10 +181,14 @@ echo "live.sh: applying Prisma migrations (deploy, not migrate dev)"
 echo "live.sh: rolling web (--no-deps)"
 "${COMPOSE[@]}" up -d --no-deps web
 
+# Admin CRM before nginx so the crm.austenstrine.dev upstream is present.
+echo "live.sh: rolling crm (--no-deps)"
+"${COMPOSE[@]}" up -d --no-deps crm
+
 echo "live.sh: rolling nginx (--no-deps)"
 "${COMPOSE[@]}" up -d --no-deps nginx
 
-echo "live.sh: stack is up (OpenSearch Dashboards off; Go CDN on-box)"
+echo "live.sh: stack is up (OpenSearch Dashboards off; Go CDN + CRM on-box)"
 "${COMPOSE[@]}" ps
 
 # API OnModuleInit downloads stock into the shared origin volume. Wait briefly

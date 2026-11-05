@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Ensure Let's Encrypt cert covers apex+www+cdn, sync into TLS_CERTS_DIR,
+# Ensure Let's Encrypt cert covers apex+www+cdn+crm, sync into TLS_CERTS_DIR,
 # and install a certbot deploy hook so renewals re-copy automatically.
 #
 # Idempotent. Safe under live.sh. Needs: certbot, sudo, open :80 for
@@ -12,7 +12,7 @@ LE_LIVE="${TLS_LE_LIVE:-/etc/letsencrypt/live/${CERT_NAME}}"
 DEST="${TLS_CERTS_DIR:-/etc/nginx/certs}"
 SYNC="$ROOT/ops/deploy/sync-tls-certs.sh"
 HOOK_DST="/etc/letsencrypt/renewal-hooks/deploy/00-sync-portfolio-certs.sh"
-DOMAINS=(austenstrine.dev www.austenstrine.dev cdn.austenstrine.dev)
+DOMAINS=(austenstrine.dev www.austenstrine.dev cdn.austenstrine.dev crm.austenstrine.dev)
 
 # Exit 0 when obtain/expand is required; 1 when the live cert already has every SAN.
 need_certbot_domains() {
