@@ -167,8 +167,7 @@ function VendorManageContent() {
 						text-slate-600
 					"
 				>
-					Open a vendor you belong to to manage its catalog. Membership as owner or editor
-					unlocks product management for that vendor.
+					Seller organizations on your account.
 				</p>
 				{nextPath
 					? (

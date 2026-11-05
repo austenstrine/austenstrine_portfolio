@@ -1747,9 +1747,7 @@ function VendorDetailContent() {
 											text-slate-600
 										"
 									>
-										Checkout groups items by shipping profile. Use Freight for
-										pallet / separate-shipment orders; Standard for everyday ground.
-										Add the defaults below if this vendor has none yet.
+										Standard is everyday ground. Freight is pallet or separate-shipment.
 									</p>
 									{shippingError
 										? (
@@ -1814,8 +1812,7 @@ function VendorDetailContent() {
 													text-slate-500
 												"
 											>
-												No profiles yet. Add Standard and Freight to unlock checkout
-												shipping for this vendor.
+												No Standard or Freight profiles yet.
 											</p>
 										)
 										: null
