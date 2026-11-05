@@ -72,31 +72,35 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
 
 export default async function ProductPage({ params }: ProductPageProps) {
 	const { vendorSlug, productSlug } = await params;
+	let product: CatalogProductDetail;
 	try {
-		const product = await loadProduct(vendorSlug, productSlug);
-		const canonical = {
-			vendorSlug: product.vendor.slug,
-			productSlug: product.slug,
-		};
-		if(
-			productPathNeedsCanonicalRedirect(
-				{ vendorSlug, productSlug },
-				canonical,
-			)
-		) {
-			redirect(productViewHref(canonical));
-		}
-		const related = await relatedProducts(product);
-		return (
-			<ProductDetailClient
-				initialProduct={product}
-				relatedProducts={related}
-			/>
-		);
+		product = await loadProduct(vendorSlug, productSlug);
 	}
 	catch {
 		return (
 			<ApiUnavailable detail="This product page loaded, but the catalog API could not be reached." />
 		);
 	}
+
+	const canonical = {
+		vendorSlug: product.vendor.slug,
+		productSlug: product.slug,
+	};
+	// Must stay outside the load try/catch — Next.js redirect() throws.
+	if(
+		productPathNeedsCanonicalRedirect(
+			{ vendorSlug, productSlug },
+			canonical,
+		)
+	) {
+		redirect(productViewHref(canonical));
+	}
+
+	const related = await relatedProducts(product);
+	return (
+		<ProductDetailClient
+			initialProduct={product}
+			relatedProducts={related}
+		/>
+	);
 }

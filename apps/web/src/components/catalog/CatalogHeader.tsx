@@ -331,6 +331,7 @@ function AccountMenu({
 									onClick={() =>
 										setNotificationsOpen((current) => !current)
 									}
+									role="menuitem"
 									type="button"
 								>
 									<BellIcon
@@ -349,6 +350,21 @@ function AccountMenu({
 										className={sectionCaretClass(notificationsOpen)}
 									/>
 								</button>
+								<a
+									className="
+										mt-2
+										inline-block
+										text-xs
+										font-semibold
+										text-sky
+										hover:underline
+									"
+									href={NOTIFICATIONS_INBOX_PATH}
+									onClick={closeMenu}
+									role="menuitem"
+								>
+									Open inbox
+								</a>
 								{notificationsOpen
 									? (
 										<div
@@ -374,6 +390,7 @@ function AccountMenu({
 														onClick={() => {
 															void onMarkAllRead();
 														}}
+														role="menuitem"
 														type="button"
 													>
 														Mark all read
@@ -456,20 +473,6 @@ function AccountMenu({
 														</ul>
 													)
 											}
-											<a
-												className="
-													self-start
-													text-xs
-													font-semibold
-													text-sky
-													hover:underline
-												"
-												href={NOTIFICATIONS_INBOX_PATH}
-												onClick={closeMenu}
-												role="menuitem"
-											>
-												Open inbox
-											</a>
 										</div>
 									)
 									: null
@@ -531,6 +534,7 @@ function AccountMenu({
 									onClick={() =>
 										setCatalogSetupOpen((current) => !current)
 									}
+									role="menuitem"
 									type="button"
 								>
 									<span className="flex-1">
