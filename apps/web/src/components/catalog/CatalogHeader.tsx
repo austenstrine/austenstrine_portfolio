@@ -311,7 +311,7 @@ export function CatalogHeader() {
 		headerMobileRef,
 		setHeaderDesktopExtras,
 		setHeaderMobileExtras,
-		setSellerTopContextHost,
+		setPageTopBarHost,
 	} = useCatalogSearch();
 	const { user, loading, signOut } = useSession();
 	const [cartCount, setCartCount] = useState(0);
@@ -568,7 +568,7 @@ export function CatalogHeader() {
 								bg-white
 								empty:hidden
 							"
-							ref={setSellerTopContextHost}
+							ref={setPageTopBarHost}
 						/>
 					)
 					: showDepartmentBar

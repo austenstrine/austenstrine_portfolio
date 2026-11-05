@@ -9,10 +9,7 @@ import {
 } from '../../../lib/catalog-api';
 import { useSession } from '../../../lib/useSession';
 import { RequireAccess } from '../../../components/auth/RequireAccess';
-import {
-	PageBottomPanePortal,
-	SellerTopContextPortal,
-} from '../../../components/catalog/CatalogSearchContext';
+import { PageTopBarPortal } from '../../../components/catalog/CatalogSearchContext';
 import { ArrowLeftIcon } from '../../../components/icons/ArrowLeftIcon';
 import { ArrowRightIcon } from '../../../components/icons/ArrowRightIcon';
 
@@ -260,7 +257,7 @@ function PlaceEtMarqueManageContent() {
 				gap-6
 			"
 		>
-			<SellerTopContextPortal>
+			<PageTopBarPortal>
 				{vendorsReady && vendors.length > 0
 					? (
 						<label
@@ -327,15 +324,14 @@ function PlaceEtMarqueManageContent() {
 					)
 					: null
 				}
-			</SellerTopContextPortal>
-
-			<PageBottomPanePortal>
 				{newProductVendorId
 					? (
 						<a
 							className="
+								ml-auto
 								inline-flex
 								items-center
+								self-end
 								rounded-full
 								bg-asgreen
 								px-3.5
@@ -357,7 +353,7 @@ function PlaceEtMarqueManageContent() {
 					)
 					: null
 				}
-			</PageBottomPanePortal>
+			</PageTopBarPortal>
 
 			<div>
 				<h1
