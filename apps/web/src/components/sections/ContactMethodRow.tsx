@@ -81,22 +81,38 @@ export function ContactMethodRow({
 		>
 			<div
 				className="
+					group
 					relative
-					w-[4.625rem]
-					max-w-[4.625rem]
+					w-[3.5rem]
 					shrink-0
 					self-stretch
-					overflow-hidden
 					md:w-auto
-					md:max-w-none
 					md:min-w-0
 					md:flex-1
-					md:overflow-visible
 				"
 			>
+				{/*
+					Mobile chrome sits behind the content so padding/border/bg
+					do not inflate the chip past the LinkedIn content width.
+				*/}
+				<span
+					className="
+						pointer-events-none
+						absolute
+						inset-0
+						rounded-xl
+						border
+						border-white/20
+						bg-white/10
+						transition
+						group-hover:bg-white/20
+						md:hidden
+					"
+					aria-hidden="true"
+				/>
 				<button
 					className="
-						group
+						relative
 						inline-flex
 						h-full
 						w-full
@@ -104,18 +120,10 @@ export function ContactMethodRow({
 						items-center
 						justify-center
 						gap-1.5
-						rounded-xl
-						border
-						border-white/20
-						bg-white/10
-						px-2.5
-						py-2
 						text-center
 						text-slate-100
 						transition
-						hover:bg-white/20
 						hover:text-white
-						max-[399px]:px-1.5
 						md:h-auto
 						md:w-auto
 						md:min-w-0
@@ -123,13 +131,9 @@ export function ContactMethodRow({
 						md:items-start
 						md:justify-start
 						md:gap-0
-						md:rounded-none
-						md:border-0
-						md:bg-transparent
 						md:px-1
 						md:py-2
 						md:text-left
-						md:hover:bg-transparent
 						md:hover:opacity-90
 					"
 					type="button"
