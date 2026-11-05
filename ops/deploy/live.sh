@@ -65,9 +65,10 @@ wait_http() {
 	local label="$2"
 	local tries="${3:-60}"
 	local i
+	# docker exec has no -T (that flag is compose-exec only). Omit -t so no TTY.
 	for ((i = 1; i <= tries; i++)); do
-		if "${DOCKER[@]}" exec -T "$4" wget -qO- "$url" >/dev/null 2>&1 \
-			|| "${DOCKER[@]}" exec -T "$4" curl -fsS "$url" >/dev/null 2>&1; then
+		if "${DOCKER[@]}" exec "$4" wget -qO- "$url" >/dev/null 2>&1 \
+			|| "${DOCKER[@]}" exec "$4" curl -fsS "$url" >/dev/null 2>&1; then
 			echo "live.sh: ${label} ready"
 			return 0
 		fi
@@ -231,8 +232,10 @@ echo "live.sh: ensuring infra (postgres redis opensearch)"
 "${COMPOSE[@]}" up -d postgres redis opensearch
 
 echo "live.sh: waiting for postgres"
+# docker exec has no -T (compose-exec only). A bogus -T exits 125 every try while
+# postgres is already accepting connections — do not treat that as "not ready".
 for ((i = 1; i <= 45; i++)); do
-	if "${DOCKER[@]}" exec -T portfolio-postgres pg_isready -U postgres >/dev/null 2>&1; then
+	if "${DOCKER[@]}" exec portfolio-postgres pg_isready -U postgres >/dev/null 2>&1; then
 		echo "live.sh: postgres ready"
 		break
 	fi
@@ -249,7 +252,7 @@ os_pass="$(grep -E '^[[:space:]]*OPENSEARCH_PASSWORD=' "$ROOT/.env" | head -1 | 
 os_user="${os_user:-admin}"
 echo "live.sh: waiting for opensearch"
 for ((i = 1; i <= 60; i++)); do
-	if "${DOCKER[@]}" exec -T portfolio-opensearch curl -sk -u "${os_user}:${os_pass}" \
+	if "${DOCKER[@]}" exec portfolio-opensearch curl -sk -u "${os_user}:${os_pass}" \
 		'https://127.0.0.1:9200/_cluster/health' >/dev/null 2>&1; then
 		echo "live.sh: opensearch ready"
 		break
