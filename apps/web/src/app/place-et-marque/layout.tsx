@@ -7,9 +7,13 @@ import { MarketplaceFooter } from '../../components/catalog/MarketplaceFooter';
 import { PardonOurDustBanner } from '../../components/catalog/PardonOurDustBanner';
 import { SellerPageActionPane } from '../../components/catalog/SellerPageActionPane';
 import { WidgetPrefsProvider } from '../../components/catalog/WidgetPrefsProvider';
+import { PLACE_ET_MARQUE_NAME } from '../../lib/place-et-marque-meta';
 
 export const metadata: Metadata = {
-	title: 'Place et Marque',
+	title: {
+		absolute: PLACE_ET_MARQUE_NAME,
+		template: `%s · ${PLACE_ET_MARQUE_NAME}`,
+	},
 	description:
 		'A live multi-vendor catalog by Austen Strine. Browse and search without an account. Sign in to use cart and checkout.',
 };

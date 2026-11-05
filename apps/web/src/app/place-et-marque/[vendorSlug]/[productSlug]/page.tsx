@@ -54,13 +54,13 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
 		const { vendorSlug, productSlug } = await params;
 		const product = await loadProduct(vendorSlug, productSlug);
 		return {
-			title: `${product.title} · Place et Marque`,
+			title: product.title,
 			description: product.description ?? `${product.title} from ${product.vendor.name}.`,
 		};
 	}
 	catch {
 		return {
-			title: 'Product · Place et Marque',
+			title: 'Product',
 		};
 	}
 }
