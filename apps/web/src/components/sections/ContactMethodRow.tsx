@@ -18,20 +18,24 @@ type ContactMethodRowProps = {
 function mobileActionValue(href: string, copyValue: string): string {
 	if(href.startsWith('http://') || href.startsWith('https://')) {
 		try {
-			const path = new URL(href).pathname.replace(/\/$/, '');
-			if(path) {
-				return path;
+			const url = new URL(href);
+			const path = url.pathname.replace(/\/$/, '');
+			const host = url.hostname.replace(/^www\./, '');
+			// LinkedIn alone uses the /in/... path form.
+			if(host === 'linkedin.com' || host.endsWith('.linkedin.com')) {
+				return path || copyValue;
 			}
+			if(path) {
+				return `${host}${path}`;
+			}
+			return host || copyValue;
 		}
 		catch {
 			return copyValue;
 		}
 	}
 
-	if(href.startsWith('/') && !href.startsWith('//')) {
-		return href;
-	}
-
+	// Relative hrefs (e.g. CV): show hostname form from copyValue.
 	return copyValue;
 }
 
@@ -76,8 +80,10 @@ export function ContactMethodRow({
 			<div
 				className="
 					relative
+					w-[4.625rem]
 					shrink-0
 					self-stretch
+					md:w-auto
 					md:min-w-0
 					md:flex-1
 				"
@@ -87,7 +93,7 @@ export function ContactMethodRow({
 						group
 						inline-flex
 						h-full
-						min-w-14
+						w-full
 						flex-col
 						items-center
 						justify-center
@@ -125,6 +131,7 @@ export function ContactMethodRow({
 				>
 					<p
 						className="
+							whitespace-nowrap
 							text-[11px]
 							font-semibold
 							uppercase
@@ -158,7 +165,9 @@ export function ContactMethodRow({
 						<p
 							className="
 								min-w-0
+								overflow-hidden
 								truncate
+								whitespace-nowrap
 								text-sm
 								text-slate-100
 							"
@@ -225,12 +234,20 @@ export function ContactMethodRow({
 						{icon}
 					</span>
 					<div className="min-w-0 text-left">
-						<p className="font-semibold truncate">
+						<p
+							className="
+								truncate
+								whitespace-nowrap
+								font-semibold
+							"
+						>
 							{linkTitle}
 						</p>
 						<p
 							className="
+								overflow-hidden
 								truncate
+								whitespace-nowrap
 								text-sm
 								text-slate-200
 								md:hidden
@@ -241,6 +258,9 @@ export function ContactMethodRow({
 						<p
 							className="
 								hidden
+								overflow-hidden
+								truncate
+								whitespace-nowrap
 								text-sm
 								text-slate-200
 								md:block
