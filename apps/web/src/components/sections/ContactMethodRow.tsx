@@ -87,22 +87,29 @@ export function ContactMethodRow({
 						group
 						inline-flex
 						h-full
-						w-12
+						min-w-14
+						flex-col
 						items-center
 						justify-center
+						gap-1.5
 						rounded-xl
 						border
 						border-white/20
 						bg-white/10
+						px-2.5
+						py-2
+						text-center
 						text-slate-100
 						transition
 						hover:bg-white/20
 						hover:text-white
 						md:h-auto
 						md:w-auto
+						md:min-w-0
 						md:max-w-full
+						md:items-start
 						md:justify-start
-						md:gap-3
+						md:gap-0
 						md:rounded-none
 						md:border-0
 						md:bg-transparent
@@ -116,6 +123,18 @@ export function ContactMethodRow({
 					onClick={onCopy}
 					aria-label={`Copy ${copyLabel} to clipboard`}
 				>
+					<p
+						className="
+							text-[11px]
+							font-semibold
+							uppercase
+							tracking-wide
+							leading-none
+							text-slate-300
+						"
+					>
+						{copyLabel}
+					</p>
 					<span
 						className="
 							shrink-0
@@ -130,54 +149,36 @@ export function ContactMethodRow({
 						className="
 							hidden
 							min-w-0
-							md:block
+							items-center
+							justify-between
+							gap-2
+							md:flex
 						"
 					>
 						<p
 							className="
-								text-[11px]
-								font-semibold
-								uppercase
-								tracking-wide
-								leading-none
-								text-slate-300
+								min-w-0
+								truncate
+								text-sm
+								text-slate-100
 							"
 						>
-							{copyLabel}
+							{copyValue}
 						</p>
-						<div
+						<span
 							className="
-								flex
-								items-center
-								justify-between
-								gap-2
+								shrink-0
+								text-slate-200
+								opacity-0
+								transition
+								group-hover:opacity-100
+								group-hover:text-white
+								group-focus-visible:opacity-100
 							"
+							aria-hidden="true"
 						>
-							<p
-								className="
-									min-w-0
-									truncate
-									text-sm
-									text-slate-100
-								"
-							>
-								{copyValue}
-							</p>
-							<span
-								className="
-									shrink-0
-									text-slate-200
-									opacity-0
-									transition
-									group-hover:opacity-100
-									group-hover:text-white
-									group-focus-visible:opacity-100
-								"
-								aria-hidden="true"
-							>
-								<CopyIcon />
-							</span>
-						</div>
+							<CopyIcon />
+						</span>
 					</div>
 				</button>
 			</div>
