@@ -1,71 +1,37 @@
-'use client';
-
-import { Suspense, useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
-import { RequireAccess } from '../../../../../components/auth/RequireAccess';
+import { redirect } from 'next/navigation';
+import { ApiUnavailable } from '../../../../../components/ApiUnavailable';
 import { getCatalogProductById } from '../../../../../lib/catalog-api';
 import { productEditHref } from '../../../../../lib/vendor-ref';
 
-function LegacyConfigureProductRedirectInner() {
-	const params = useParams<{ productId: string }>();
-	const router = useRouter();
-	const [error, setError] = useState<string | null>(null);
+type LegacyConfigureRedirectProps = {
+	params: Promise<{ productId: string }>;
+};
 
-	useEffect(() => {
-		const productId = params.productId;
-		if(!productId) {
-			return;
-		}
-		let cancelled = false;
-		getCatalogProductById(productId)
-			.then((product) => {
-				if(cancelled) {
-					return;
-				}
-				router.replace(
-					productEditHref(
-						{
-							vendorSlug: product.vendor.slug,
-							productSlug: product.slug,
-						},
-						'advanced',
-					),
-				);
-			})
-			.catch(() => {
-				if(!cancelled) {
-					setError('Could not open that product.');
-				}
-			});
-		return () => {
-			cancelled = true;
-		};
-	}, [params.productId, router]);
-
-	if(error) {
+export default async function LegacyConfigureProductRedirectPage({
+	params,
+}: LegacyConfigureRedirectProps) {
+	const { productId } = await params;
+	let vendorSlug: string;
+	let productSlug: string;
+	try {
+		const product = await getCatalogProductById(productId);
+		vendorSlug = product.vendor.slug;
+		productSlug = product.slug;
+	}
+	catch {
 		return (
-			<p className="px-4 py-10 text-sm text-rose-700">
-				{error}
-			</p>
+			<ApiUnavailable detail="This configure link loaded, but the product could not be found or the catalog API could not be reached." />
 		);
 	}
 
-	return (
-		<p className="px-4 py-10 text-sm text-slate-500">
-			Opening product…
-		</p>
-	);
-}
-
-export default function LegacyConfigureProductRedirectPage() {
-	return (
-		<RequireAccess
-			vendorRequired
-			reasonKey="products"
-		>
-			<Suspense fallback={null}>
-				<LegacyConfigureProductRedirectInner />
-			</Suspense>
-		</RequireAccess>
+	// Must stay outside the load try/catch — Next.js redirect() throws.
+	redirect(
+		productEditHref(
+			{
+				vendorSlug,
+				productSlug,
+			},
+			'advanced',
+		),
 	);
 }

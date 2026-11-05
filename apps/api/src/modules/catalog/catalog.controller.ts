@@ -114,13 +114,14 @@ export class CatalogController {
 		return this.attributeService.healthReportForUser(req.user!.id);
 	}
 
-	@UseGuards(JwtAuthGuard)
+	/** Public by UUID so legacy /products/<uuid>/edit|configure can canonical-redirect. */
+	@UseGuards(OptionalJwtAuthGuard)
 	@Get('products/by-id/:productId')
 	getProductById(
 		@Param('productId') productId: string,
 		@Req() req: AuthedRequest,
 	) {
-		return this.catalog.getProductByProductId(productId, req.user!.id);
+		return this.catalog.getProductByProductId(productId, req.user?.id);
 	}
 
 	@UseGuards(JwtAuthGuard)
