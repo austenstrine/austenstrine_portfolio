@@ -119,6 +119,8 @@ function VendorDetailContent() {
 	const [inviteError, setInviteError] = useState<string | null>(null);
 	const [inviteMessage, setInviteMessage] = useState<string | null>(null);
 	const [inviteOpen, setInviteOpen] = useState(false);
+	const [membersOpen, setMembersOpen] = useState(false);
+	const [payoutsOpen, setPayoutsOpen] = useState(false);
 	const [shippingProfiles, setShippingProfiles] = useState<ShippingProfile[]>([]);
 	const [shippingBusy, setShippingBusy] = useState(false);
 	const [shippingError, setShippingError] = useState<string | null>(null);
@@ -822,10 +824,141 @@ function VendorDetailContent() {
 								bg-white
 								p-5
 							"
+							id="members"
 						>
-							<h2 className="text-lg font-semibold">
-								Members
-							</h2>
+							<div
+								className="
+									flex
+									items-center
+									justify-between
+									gap-2
+								"
+							>
+								<h2 className="text-lg font-semibold">
+									Members
+								</h2>
+								{membersOpen
+									? (
+											<button
+												type="button"
+												aria-expanded={true}
+												aria-controls="members-panel"
+												aria-label="Close members"
+												className="
+													inline-flex
+													h-8
+													w-8
+													shrink-0
+													items-center
+													justify-center
+													gap-1.5
+													rounded-full
+													border
+													border-slate-200
+													bg-white
+													text-xs
+													font-semibold
+													text-slate-600
+													transition
+													hover:border-sky
+													hover:text-sky
+													sm:h-auto
+													sm:w-auto
+													sm:px-3
+													sm:py-1
+												"
+												onClick={() => {
+													setMembersOpen(false);
+													setInviteOpen(false);
+													setInviteError(null);
+													setInviteMessage(null);
+												}}
+											>
+												<CloseIcon
+													className="
+														h-3
+														w-3
+														shrink-0
+													"
+												/>
+												<span
+													className="
+														hidden
+														sm:inline
+													"
+												>
+													Close
+												</span>
+											</button>
+										)
+									: (
+											<button
+												type="button"
+												aria-expanded={false}
+												aria-controls="members-panel"
+												aria-label="Manage members"
+												className="
+													inline-flex
+													h-8
+													w-8
+													items-center
+													justify-center
+													gap-1.5
+													rounded-full
+													border
+													border-slate-200
+													bg-white
+													text-xs
+													font-semibold
+													text-slate-600
+													transition
+													hover:border-sky
+													hover:text-sky
+													sm:h-auto
+													sm:w-auto
+													sm:px-3
+													sm:py-1
+												"
+												onClick={() => setMembersOpen(true)}
+											>
+												<span
+													className="
+														hidden
+														sm:inline
+													"
+												>
+													Manage members
+												</span>
+												<ArrowRightIcon
+													className="
+														h-3
+														w-3
+														shrink-0
+													"
+												/>
+											</button>
+										)
+								}
+							</div>
+							<div
+								className={`
+									grid
+									transition-[grid-template-rows]
+									duration-300
+									ease-out
+									${membersOpen
+										? 'grid-rows-[1fr] opacity-100'
+										: 'grid-rows-[0fr] opacity-0'
+									}
+								`}
+								id="members-panel"
+								aria-hidden={!membersOpen}
+								{...(!membersOpen
+									? { inert: true }
+									: {})
+								}
+							>
+								<div className="overflow-hidden">
 							<ul
 								className="
 									mt-4
@@ -976,20 +1109,26 @@ function VendorDetailContent() {
 																		aria-label="Close invite form"
 																		className="
 																			inline-flex
+																			h-8
+																			w-8
+																			shrink-0
 																			items-center
+																			justify-center
 																			gap-1.5
 																			rounded-full
 																			border
 																			border-slate-200
 																			bg-white
-																			px-3
-																			py-1
 																			text-xs
 																			font-semibold
 																			text-slate-600
 																			transition
 																			hover:border-sky
 																			hover:text-sky
+																			sm:h-auto
+																			sm:w-auto
+																			sm:px-3
+																			sm:py-1
 																		"
 																		onClick={() => {
 																			setInviteOpen(false);
@@ -1001,9 +1140,17 @@ function VendorDetailContent() {
 																			className="
 																				h-3
 																				w-3
+																				shrink-0
 																			"
 																		/>
-																		Cancel
+																		<span
+																			className="
+																				hidden
+																				sm:inline
+																			"
+																		>
+																			Cancel
+																		</span>
 																	</button>
 																</div>
 																<p
@@ -1165,6 +1312,8 @@ function VendorDetailContent() {
 																aria-expanded={false}
 																className="
 																	inline-flex
+																	h-8
+																	w-8
 																	items-center
 																	justify-center
 																	gap-1.5
@@ -1172,14 +1321,16 @@ function VendorDetailContent() {
 																	border
 																	border-slate-200
 																	bg-white
-																	px-3
-																	py-1.5
 																	text-xs
 																	font-semibold
 																	text-slate-600
 																	transition
 																	hover:border-sky
 																	hover:text-sky
+																	sm:h-auto
+																	sm:w-auto
+																	sm:px-3
+																	sm:py-1.5
 																"
 																onClick={() => setInviteOpen(true)}
 															>
@@ -1187,9 +1338,17 @@ function VendorDetailContent() {
 																	className="
 																		h-3.5
 																		w-3.5
+																		shrink-0
 																	"
 																/>
-																Invite
+																<span
+																	className="
+																		hidden
+																		sm:inline
+																	"
+																>
+																	Invite
+																</span>
 															</button>
 														)
 												}
@@ -1198,6 +1357,8 @@ function VendorDetailContent() {
 									: null
 								}
 							</ul>
+								</div>
+							</div>
 						</section>
 
 						{vendor.myRole === 'OWNER'
@@ -1210,10 +1371,136 @@ function VendorDetailContent() {
 										bg-white
 										p-5
 									"
+									id="payouts"
 								>
-									<h2 className="text-lg font-semibold">
-										Payouts
-									</h2>
+									<div
+										className="
+											flex
+											items-center
+											justify-between
+											gap-2
+										"
+									>
+										<h2 className="text-lg font-semibold">
+											Payouts
+										</h2>
+										{payoutsOpen
+											? (
+													<button
+														type="button"
+														aria-expanded={true}
+														aria-controls="payouts-panel"
+														aria-label="Close payouts"
+														className="
+															inline-flex
+															h-8
+															w-8
+															shrink-0
+															items-center
+															justify-center
+															gap-1.5
+															rounded-full
+															border
+															border-slate-200
+															bg-white
+															text-xs
+															font-semibold
+															text-slate-600
+															transition
+															hover:border-sky
+															hover:text-sky
+															sm:h-auto
+															sm:w-auto
+															sm:px-3
+															sm:py-1
+														"
+														onClick={() => setPayoutsOpen(false)}
+													>
+														<CloseIcon
+															className="
+																h-3
+																w-3
+																shrink-0
+															"
+														/>
+														<span
+															className="
+																hidden
+																sm:inline
+															"
+														>
+															Close
+														</span>
+													</button>
+												)
+											: (
+													<button
+														type="button"
+														aria-expanded={false}
+														aria-controls="payouts-panel"
+														aria-label="Manage payouts"
+														className="
+															inline-flex
+															h-8
+															w-8
+															items-center
+															justify-center
+															gap-1.5
+															rounded-full
+															border
+															border-slate-200
+															bg-white
+															text-xs
+															font-semibold
+															text-slate-600
+															transition
+															hover:border-sky
+															hover:text-sky
+															sm:h-auto
+															sm:w-auto
+															sm:px-3
+															sm:py-1
+														"
+														onClick={() => setPayoutsOpen(true)}
+													>
+														<span
+															className="
+																hidden
+																sm:inline
+															"
+														>
+															Manage payouts
+														</span>
+														<ArrowRightIcon
+															className="
+																h-3
+																w-3
+																shrink-0
+															"
+														/>
+													</button>
+												)
+										}
+									</div>
+									<div
+										className={`
+											grid
+											transition-[grid-template-rows]
+											duration-300
+											ease-out
+											${payoutsOpen
+												? 'grid-rows-[1fr] opacity-100'
+												: 'grid-rows-[0fr] opacity-0'
+											}
+										`}
+										id="payouts-panel"
+										aria-hidden={!payoutsOpen}
+										{...(!payoutsOpen
+											? { inert: true }
+											: {})
+										}
+									>
+										<div className="overflow-hidden">
 									<p
 										className="
 											mt-2
@@ -1507,6 +1794,8 @@ function VendorDetailContent() {
 											</p>
 										)
 									}
+										</div>
+									</div>
 								</section>
 							)
 							: null
