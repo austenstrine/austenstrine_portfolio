@@ -30,18 +30,17 @@ function splitRoleDates(dates: string) {
 }
 
 function DateConnector({
-	'aria-expanded': ariaExpanded,
-	'aria-label': ariaLabel,
-	onClick,
 	range,
 }: {
-	'aria-expanded'?: boolean;
-	'aria-label'?: string;
-	onClick?: () => void;
 	range: string;
 }) {
-	const body = (
-		<>
+	return (
+		<div
+			className="
+				relative
+				mt-1.5
+			"
+		>
 			<div
 				className="
 					grid
@@ -51,17 +50,18 @@ function DateConnector({
 					md:grid-cols-[auto_minmax(0,1fr)_1px_calc(1.5rem+1px)]
 				"
 			>
-				<span
+				<p
 					className="
 						col-start-1
 						pl-2
 						pr-2
 						text-sm
 						leading-none
+						text-slate-500
 					"
 				>
 					{range}
-				</span>
+				</p>
 				<span
 					aria-hidden="true"
 					className="
@@ -84,48 +84,126 @@ function DateConnector({
 					md:right-[calc(1.5rem+1px)]
 				"
 			/>
-			<span
+			<div
 				aria-hidden="true"
-				className="
-					block
-					h-4
-				"
+				className="h-4"
 			/>
-		</>
+		</div>
 	);
+}
 
-	if(onClick) {
-		return (
-			<button
-				aria-expanded={ariaExpanded}
-				aria-label={ariaLabel}
-				className="
-					relative
-					mt-1.5
-					block
-					w-full
-					text-left
-					text-slate-500
-					hover:text-slate-600
-				"
-				onClick={onClick}
-				type="button"
-			>
-				{body}
-			</button>
-		);
-	}
-
+/** Stem + spacer under the peek toggle; lives inside the fold so height animates. */
+function DateConnectorTail() {
 	return (
 		<div
-			className="
-				relative
-				mt-1.5
-				text-slate-500
-			"
+			aria-hidden="true"
+			className="relative"
 		>
-			{body}
+			<span
+				className="
+					absolute
+					bottom-0
+					right-[calc(1.25rem+1px)]
+					top-0
+					w-px
+					bg-slate-200
+					md:right-[calc(1.5rem+1px)]
+				"
+			/>
+			<div className="h-4" />
 		</div>
+	);
+}
+
+function PeekToggle({
+	expanded,
+	onClick,
+	range,
+	title,
+}: {
+	expanded: boolean;
+	onClick: () => void;
+	range: string;
+	title: string;
+}) {
+	return (
+		<button
+			aria-expanded={expanded}
+			aria-label={
+				expanded
+					? `Hide ${title}`
+					: `Peek ${title}`
+			}
+			className={
+				expanded
+					? `
+						mt-1.5
+						grid
+						h-4
+						w-full
+						grid-cols-[auto_minmax(0,1fr)_1px_calc(1.25rem+1px)]
+						items-center
+						text-left
+						text-sm
+						leading-none
+						text-slate-500
+						hover:text-slate-600
+						md:grid-cols-[auto_minmax(0,1fr)_1px_calc(1.5rem+1px)]
+					`
+					: `
+						mt-1.5
+						flex
+						h-4
+						w-full
+						items-center
+						justify-start
+						gap-1.5
+						text-sm
+						leading-none
+						text-slate-400
+						hover:text-slate-600
+					`
+			}
+			onClick={onClick}
+			type="button"
+		>
+			{expanded
+				? (
+					<>
+						<span
+							className="
+								col-start-1
+								pl-2
+								pr-2
+							"
+						>
+							{range}
+						</span>
+						<span
+							aria-hidden="true"
+							className="
+								col-start-2
+								col-end-4
+								h-px
+								bg-slate-200
+							"
+						/>
+					</>
+				)
+				: (
+					<>
+						<span className="font-medium">
+							{title}
+						</span>
+						<span aria-hidden="true">
+							·
+						</span>
+						<span>
+							{range}
+						</span>
+					</>
+				)}
+		</button>
 	);
 }
 
@@ -889,46 +967,12 @@ export function ExperienceSection() {
 							<div className="min-w-0 flex-1">
 								{!scoped
 									? (
-										expanded
-											? (
-												<DateConnector
-													aria-expanded={true}
-													aria-label={`Hide ${role.title}`}
-													onClick={() => togglePeek(role.id)}
-													range={splitRoleDates(role.dates).range}
-												/>
-											)
-											: (
-												<button
-													aria-expanded={false}
-													aria-label={`Peek ${role.title}`}
-													className="
-														mt-1.5
-														flex
-														h-4
-														w-full
-														items-center
-														justify-start
-														gap-1.5
-														text-sm
-														leading-none
-														text-slate-400
-														hover:text-slate-600
-													"
-													onClick={() => togglePeek(role.id)}
-													type="button"
-												>
-													<span className="font-medium">
-														{role.title}
-													</span>
-													<span aria-hidden="true">
-														·
-													</span>
-													<span>
-														{splitRoleDates(role.dates).range}
-													</span>
-												</button>
-											)
+										<PeekToggle
+											expanded={expanded}
+											onClick={() => togglePeek(role.id)}
+											range={splitRoleDates(role.dates).range}
+											title={role.title}
+										/>
 									)
 									: null}
 								<div
@@ -946,7 +990,9 @@ export function ExperienceSection() {
 													range={splitRoleDates(role.dates).range}
 												/>
 											)
-											: null}
+											: (
+												<DateConnectorTail />
+											)}
 										<ExperienceRoleCard role={role} />
 									</div>
 								</div>
