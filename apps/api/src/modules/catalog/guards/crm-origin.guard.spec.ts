@@ -31,17 +31,17 @@ describe('CrmOriginGuard', () => {
 
 	it('allows CRM Origin', () => {
 		process.env.WEB_URL = 'https://local.austenstrine.dev';
-		process.env.CRM_URL = 'https://local.crm.austenstrine.dev';
+		process.env.CRM_URL = 'https://crm.local.austenstrine.dev';
 		expect(
 			guard.canActivate(
-				mockContext({ origin: 'https://local.crm.austenstrine.dev' }),
+				mockContext({ origin: 'https://crm.local.austenstrine.dev' }),
 			),
 		).toBe(true);
 	});
 
 	it('rejects Place et Marque / WEB origin', () => {
 		process.env.WEB_URL = 'https://local.austenstrine.dev';
-		process.env.CRM_URL = 'https://local.crm.austenstrine.dev';
+		process.env.CRM_URL = 'https://crm.local.austenstrine.dev';
 		expect(() =>
 			guard.canActivate(
 				mockContext({ origin: 'https://local.austenstrine.dev' }),
@@ -54,7 +54,7 @@ describe('CrmOriginGuard', () => {
 		delete process.env.CRM_URL;
 		expect(() =>
 			guard.canActivate(
-				mockContext({ origin: 'https://local.crm.austenstrine.dev' }),
+				mockContext({ origin: 'https://crm.local.austenstrine.dev' }),
 			),
 		).toThrow(ServiceUnavailableException);
 	});

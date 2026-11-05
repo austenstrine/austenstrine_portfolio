@@ -4,7 +4,7 @@ Full-stack portfolio + Place et Marque marketplace demo:
 
 - Backend: NestJS, TypeScript, PostgreSQL (Prisma), Swagger, Redis, OpenSearch
 - Frontend: Next.js (React + TypeScript), Tailwind CSS v3, custom icon components
-- Admin CRM: separate Next.js app (`apps/crm`) at `crm.austenstrine.dev` / `local.crm.austenstrine.dev`
+- Admin CRM: separate Next.js app (`apps/crm`) at `crm.austenstrine.dev` / `crm.local.austenstrine.dev`
 - Local infra: Docker Compose via `./dssh` ([developers-sugary-shell-helper](https://github.com/austenstrine/developers-sugary-shell-helper); project map in `.dsshrc`)
 - CI/CD: GitHub Actions → EC2 (`t3a.large`) via `ops/deploy/live.sh`
 
@@ -59,8 +59,8 @@ Helpers are not vendored. Install/clone them, then use the thin portfolio wrappe
 	- npm run dev:web
 8. Start admin CRM (optional):
 	- npm run dev:crm
-	- `/etc/hosts`: `127.0.0.1 local.austenstrine.dev local.crm.austenstrine.dev cdn.local.austenstrine.dev`
-	- Env: `CRM_URL=https://local.crm.austenstrine.dev`, `WEB_URL=https://local.austenstrine.dev`, `COOKIE_DOMAIN=.austenstrine.dev`
+	- `/etc/hosts`: `127.0.0.1 local.austenstrine.dev crm.local.austenstrine.dev cdn.local.austenstrine.dev`
+	- Env: `CRM_URL=https://crm.local.austenstrine.dev`, `WEB_URL=https://local.austenstrine.dev`, `COOKIE_DOMAIN=.austenstrine.dev`
 	- `./dssh proxy start` (or restart after nginx/TLS changes so workers pick up the CRM vhost) then `./dssh crm start`
 	- Admin link-name list/review is CRM-origin-gated in the API (`CrmOriginGuard`); CORS still allows both web and CRM for shared auth.
 
@@ -70,7 +70,7 @@ Helpers are not vendored. Install/clone them, then use the thin portfolio wrappe
 - API projects: http://localhost:4000/api/projects
 - Swagger docs: http://localhost:4000/api/docs
 - Web app: http://localhost:3000
-- Admin CRM: http://localhost:3001 (or https://local.crm.austenstrine.dev via nginx)
+- Admin CRM: http://localhost:3001 (or https://crm.local.austenstrine.dev via nginx)
 
 ## CI/CD
 

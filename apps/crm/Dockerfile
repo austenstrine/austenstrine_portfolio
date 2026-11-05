@@ -18,7 +18,7 @@ COPY apps/api/package.json ./apps/api/
 COPY apps/crm/package.json ./apps/crm/
 RUN npm ci
 COPY . .
-ARG NEXT_PUBLIC_API_BASE_URL=https://local.crm.austenstrine.dev/api
+ARG NEXT_PUBLIC_API_BASE_URL=https://crm.local.austenstrine.dev/api
 ENV NEXT_PUBLIC_API_BASE_URL=$NEXT_PUBLIC_API_BASE_URL
 RUN npm run build -w apps/crm
 CMD ["npm", "run", "start", "-w", "apps/crm"]

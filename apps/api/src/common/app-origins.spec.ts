@@ -45,17 +45,17 @@ describe('app-origins', () => {
 
 	it('detects CRM vs web origins from Origin and Referer', () => {
 		process.env.WEB_URL = 'https://local.austenstrine.dev';
-		process.env.CRM_URL = 'https://local.crm.austenstrine.dev';
+		process.env.CRM_URL = 'https://crm.local.austenstrine.dev';
 
 		expect(
-			isCrmBrowserOrigin({ origin: 'https://local.crm.austenstrine.dev' }),
+			isCrmBrowserOrigin({ origin: 'https://crm.local.austenstrine.dev' }),
 		).toBe(true);
 		expect(
 			isWebBrowserOrigin({ origin: 'https://local.austenstrine.dev' }),
 		).toBe(true);
 		expect(
 			isCrmBrowserOrigin({
-				referer: 'https://local.crm.austenstrine.dev/link-names',
+				referer: 'https://crm.local.austenstrine.dev/link-names',
 			}),
 		).toBe(true);
 		expect(
@@ -63,8 +63,8 @@ describe('app-origins', () => {
 		).toBe(false);
 		expect(
 			requestBrowserOrigin({
-				referer: 'https://local.crm.austenstrine.dev/link-names?x=1',
+				referer: 'https://crm.local.austenstrine.dev/link-names?x=1',
 			}),
-		).toBe('https://local.crm.austenstrine.dev');
+		).toBe('https://crm.local.austenstrine.dev');
 	});
 });

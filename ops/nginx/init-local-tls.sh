@@ -4,7 +4,7 @@ set -euo pipefail
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cert_dir="$script_dir/certs"
 site="local.austenstrine.dev"
-crm="local.crm.austenstrine.dev"
+crm="crm.local.austenstrine.dev"
 cdn="cdn.local.austenstrine.dev"
 crt_path="$cert_dir/$site.crt"
 key_path="$cert_dir/$site.key"

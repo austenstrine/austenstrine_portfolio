@@ -13,7 +13,7 @@ function isLocalHostname(hostname: string) {
 		|| hostname === '127.0.0.1'
 		|| hostname === '[::1]'
 		|| hostname.startsWith('local.')
-		|| hostname.startsWith('local.crm.');
+		|| hostname.includes('.local.');
 }
 
 function internalApiBaseUrl() {
