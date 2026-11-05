@@ -39,7 +39,7 @@ const desktopPrimaryClassName = `
 	min-w-0
 	flex-1
 	items-center
-	justify-between
+	justify-start
 	gap-1.5
 	px-3
 	hover:bg-frost
@@ -138,12 +138,12 @@ export function ManageProductRowActions({
 					<span
 						className={desktopPrimaryClassName}
 					>
-						<span>
-							View
-						</span>
 						<EyeIcon
 							className="h-3.5 w-3.5 shrink-0"
 						/>
+						<span>
+							View
+						</span>
 					</span>
 					<span
 						aria-hidden
@@ -169,12 +169,12 @@ export function ManageProductRowActions({
 						})}
 						tabIndex={deleteBusy ? -1 : undefined}
 					>
-						<span>
-							Edit
-						</span>
 						<PencilIcon
 							className="h-3.5 w-3.5 shrink-0"
 						/>
+						<span>
+							Edit
+						</span>
 					</a>
 					<button
 						aria-expanded={open}
