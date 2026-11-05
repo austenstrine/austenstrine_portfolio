@@ -379,13 +379,14 @@ function VendorDetailContent() {
 												aria-expanded={linkNameOpen}
 												aria-label={
 													linkNameOpen
-														? 'Close name-in-the-link form'
-														: 'Change name in the link'
+														? 'Close link name form'
+														: 'Change link name'
 												}
 												className="
 													inline-flex
 													items-center
 													gap-1.5
+													whitespace-nowrap
 													rounded-full
 													border
 													border-slate-200
@@ -414,7 +415,7 @@ function VendorDetailContent() {
 														)
 													: (
 															<>
-																Change
+																Change link name
 																<ArrowRightIcon
 																	className="
 																		h-3
