@@ -59,6 +59,29 @@ export function pathRequiresVendor(path: string): boolean {
 	);
 }
 
+/** Seller chrome (actions bar instead of category bar) on manage and related pages. */
+export function pathUsesSellerChrome(path: string): boolean {
+	const pathname = path.split('?')[0] ?? path;
+	if(
+		pathname === '/place-et-marque/manage'
+		|| pathname === '/place-et-marque/vendors'
+		|| pathname.startsWith('/place-et-marque/vendors/')
+		|| pathname === '/place-et-marque/uoms'
+		|| pathname.startsWith('/place-et-marque/uoms/')
+		|| pathname === '/place-et-marque/attributes'
+		|| pathname.startsWith('/place-et-marque/attributes/')
+		|| pathname === '/place-et-marque/categories'
+		|| pathname.startsWith('/place-et-marque/categories/')
+		|| pathname === '/place-et-marque/orders'
+		|| pathname.startsWith('/place-et-marque/orders/')
+		|| pathname === '/place-et-marque/products/new'
+		|| pathname === '/place-et-marque/products/configure'
+	) {
+		return true;
+	}
+	return /^\/place-et-marque\/products\/[^/]+\/edit$/.test(pathname);
+}
+
 export function buildLoginUrl(options: {
 	next?: string;
 	reason?: string;

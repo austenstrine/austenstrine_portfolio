@@ -2,6 +2,7 @@
 
 import { useEffect, useLayoutEffect, useRef, useState, type RefObject } from 'react';
 import { usePathname } from 'next/navigation';
+import { pathUsesSellerChrome } from '../../lib/accessGate';
 import { getCart } from '../../lib/checkout-api';
 import { useSession } from '../../lib/useSession';
 import { CaretDownIcon } from '../icons/CaretDownIcon';
@@ -17,6 +18,90 @@ const vendorToolLinks = [
 	{ href: '/place-et-marque/products/new', label: 'New product' },
 	{ href: '/place-et-marque/orders', label: 'Orders' },
 ];
+
+function sellerLinkActive(pathname: string, href: string) {
+	if(href === '/place-et-marque/vendors') {
+		return pathname === href || pathname.startsWith(`${href}/`);
+	}
+	if(href === '/place-et-marque/orders') {
+		return pathname === href || pathname.startsWith(`${href}/`);
+	}
+	if(href === '/place-et-marque/products/new') {
+		return pathname === href;
+	}
+	return pathname === href || pathname.startsWith(`${href}/`);
+}
+
+function CatalogSellerBar({ pathname }: { pathname: string }) {
+	return (
+		<nav
+			aria-label="Seller tools"
+			className="
+				border-t
+				border-slate-100
+				bg-white
+			"
+		>
+			<div
+				className="
+					mx-auto
+					flex
+					max-w-7xl
+					items-center
+					gap-1
+					overflow-x-auto
+					px-gutter
+					py-2
+					text-sm
+					font-semibold
+					[scrollbar-width:none]
+					[&::-webkit-scrollbar]:hidden
+				"
+			>
+				{vendorToolLinks.map((link) => {
+					const active = sellerLinkActive(pathname, link.href);
+					return (
+						<a
+							aria-current={active ? 'page' : undefined}
+							className={
+								active
+									? `
+										inline-flex
+										h-8
+										shrink-0
+										items-center
+										whitespace-nowrap
+										rounded-full
+										bg-asgreen/15
+										px-3
+										leading-none
+										text-asgreen
+									`
+									: `
+										inline-flex
+										h-8
+										shrink-0
+										items-center
+										whitespace-nowrap
+										rounded-full
+										px-3
+										leading-none
+										text-slate-600
+										hover:bg-frost
+										hover:text-ink
+									`
+							}
+							href={link.href}
+							key={link.href}
+						>
+							{link.label}
+						</a>
+					);
+				})}
+			</div>
+		</nav>
+	);
+}
 
 const vendorSetupLinks = [
 	{ href: '/place-et-marque/products/configure', label: 'Advanced product' },
@@ -317,8 +402,10 @@ export function CatalogHeader() {
 	const [bannerOffset, setBannerOffset] = useState(0);
 	const [headerHidden, setHeaderHidden] = useState(false);
 	const lastScrollY = useRef(0);
+	const sellerChrome = pathUsesSellerChrome(pathname);
 	const showDepartmentBar =
-		categories.length > 0
+		!sellerChrome
+		&& categories.length > 0
 		&& pathname !== '/place-et-marque/search';
 	const headerRef = useRef<HTMLElement>(null);
 
@@ -555,15 +642,21 @@ export function CatalogHeader() {
 						/>
 					</div>
 				</div>
-				{showDepartmentBar
+				{sellerChrome
 					? (
-						<CatalogCategoryBar
-							categories={categories}
-							category={category}
-							onChoose={applyCategory}
+						<CatalogSellerBar
+							pathname={pathname}
 						/>
 					)
-					: null
+					: showDepartmentBar
+						? (
+							<CatalogCategoryBar
+								categories={categories}
+								category={category}
+								onChoose={applyCategory}
+							/>
+						)
+						: null
 				}
 			</header>
 		</>
