@@ -30,6 +30,7 @@ import { RequireAccess } from '../../../../components/auth/RequireAccess';
 import { BackLink } from '../../../../components/BackLink';
 import { UrlSlugField } from '../../../../components/catalog/UrlSlugField';
 import { ArrowRightIcon } from '../../../../components/icons/ArrowRightIcon';
+import { CloseIcon } from '../../../../components/icons/CloseIcon';
 import { PlusIcon } from '../../../../components/icons/PlusIcon';
 
 function slugify(value: string): string {
@@ -354,27 +355,53 @@ function VendorDetailContent() {
 												type="button"
 												onClick={() => setLinkNameOpen((open) => !open)}
 												aria-expanded={linkNameOpen}
+												aria-label={
+													linkNameOpen
+														? 'Close name-in-the-link form'
+														: 'Change name in the link'
+												}
 												className="
 													inline-flex
 													items-center
-													gap-1
-													text-sm
-													text-slate-500
+													gap-1.5
+													rounded-full
+													border
+													border-slate-200
+													bg-white
+													px-3
+													py-1
+													text-xs
+													font-semibold
+													text-slate-600
+													transition
+													hover:border-sky
 													hover:text-sky
 												"
 											>
-												(
 												{linkNameOpen
-													? 'close'
-													: 'change'
+													? (
+															<>
+																<CloseIcon
+																	className="
+																		h-3
+																		w-3
+																	"
+																/>
+																Close
+															</>
+														)
+													: (
+															<>
+																Change
+																<ArrowRightIcon
+																	className="
+																		h-3
+																		w-3
+																	"
+																/>
+															</>
+														)
 												}
-												<ArrowRightIcon
-													className="
-														h-3
-														w-3
-													"
-												/>
-												)
 											</button>
 										)
 									: null
@@ -707,9 +734,22 @@ function VendorDetailContent() {
 																	<button
 																		type="button"
 																		aria-expanded={true}
+																		aria-label="Close invite form"
 																		className="
-																			text-sm
-																			text-slate-500
+																			inline-flex
+																			items-center
+																			gap-1.5
+																			rounded-full
+																			border
+																			border-slate-200
+																			bg-white
+																			px-3
+																			py-1
+																			text-xs
+																			font-semibold
+																			text-slate-600
+																			transition
+																			hover:border-sky
 																			hover:text-sky
 																		"
 																		onClick={() => {
@@ -718,6 +758,12 @@ function VendorDetailContent() {
 																			setInviteMessage(null);
 																		}}
 																	>
+																		<CloseIcon
+																			className="
+																				h-3
+																				w-3
+																			"
+																		/>
 																		Cancel
 																	</button>
 																</div>
@@ -883,22 +929,28 @@ function VendorDetailContent() {
 																	items-center
 																	justify-center
 																	gap-1.5
-																	rounded-xl
+																	rounded-full
 																	border
-																	border-transparent
+																	border-slate-200
+																	bg-white
 																	px-3
-																	py-2
-																	text-sm
-																	text-slate-400
+																	py-1.5
+																	text-xs
+																	font-semibold
+																	text-slate-600
 																	transition
+																	hover:border-sky
 																	hover:text-sky
 																"
 																onClick={() => setInviteOpen(true)}
 															>
-																<PlusIcon className="h-4 w-4" />
-																<span>
-																	Invite
-																</span>
+																<PlusIcon
+																	className="
+																		h-3.5
+																		w-3.5
+																	"
+																/>
+																Invite
 															</button>
 														)
 												}
