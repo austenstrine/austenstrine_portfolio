@@ -33,6 +33,15 @@ function sellerLinkActive(pathname: string, href: string) {
 }
 
 function CatalogSellerBar({ pathname }: { pathname: string }) {
+	const onManage = pathname === '/place-et-marque/manage'
+		|| pathname.startsWith('/place-et-marque/manage/');
+	const links = vendorToolLinks.filter((link) =>
+		!(
+			onManage
+			&& link.href === '/place-et-marque/products/new'
+		),
+	);
+
 	return (
 		<nav
 			aria-label="Seller tools"
@@ -47,18 +56,17 @@ function CatalogSellerBar({ pathname }: { pathname: string }) {
 					mx-auto
 					flex
 					max-w-7xl
+					flex-wrap
 					items-center
-					gap-1
-					overflow-x-auto
+					gap-x-1
+					gap-y-1
 					px-gutter
 					py-2
 					text-sm
 					font-semibold
-					[scrollbar-width:none]
-					[&::-webkit-scrollbar]:hidden
 				"
 			>
-				{vendorToolLinks.map((link) => {
+				{links.map((link) => {
 					const active = sellerLinkActive(pathname, link.href);
 					return (
 						<a
@@ -68,9 +76,7 @@ function CatalogSellerBar({ pathname }: { pathname: string }) {
 									? `
 										inline-flex
 										h-8
-										shrink-0
 										items-center
-										whitespace-nowrap
 										rounded-full
 										bg-asgreen/15
 										px-3
@@ -80,9 +86,7 @@ function CatalogSellerBar({ pathname }: { pathname: string }) {
 									: `
 										inline-flex
 										h-8
-										shrink-0
 										items-center
-										whitespace-nowrap
 										rounded-full
 										px-3
 										leading-none
