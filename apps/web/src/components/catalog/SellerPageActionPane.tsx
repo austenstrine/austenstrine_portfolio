@@ -9,7 +9,8 @@ const STACK_VAR = '--seller-bottom-pane-stack';
 const STACK_GAP_PX = 8;
 
 /**
- * Right-aligned lightly frosted bottom pane for page-specific seller actions.
+ * Right-aligned lightly frosted bottom pane for page-specific seller actions
+ * (e.g. New product). Site-wide context such as the vendor picker stays in the top bar.
  * Blocks click-through; frost stays light enough to read text beneath.
  * Publishes --seller-bottom-pane-stack so JumpToTop can sit above this pane.
  */
