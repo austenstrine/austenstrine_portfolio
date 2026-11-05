@@ -12,8 +12,9 @@ const PANE_SHOW_TOP = 16;
 
 /**
  * Compact right-aligned lightly frosted bottom pane for page-specific seller
- * actions (e.g. New product). Not full-width. Site-wide context such as the
- * vendor picker stays in the top bar. Blocks click-through; frost stays faint.
+ * actions. Docked bottom-right (bottom:0, right:0); only the top-left corner
+ * is rounded. Not full-width. Site-wide context such as the vendor picker
+ * stays in the top bar. Blocks click-through; frost stays faint.
  * Hides on scroll-down / shows on scroll-up like the top bar.
  * Publishes --seller-bottom-pane-stack so JumpToTop can sit above this pane.
  *
@@ -119,12 +120,14 @@ export function SellerPageActionPane() {
 			className="
 				pointer-events-auto
 				fixed
-				bottom-[max(0.75rem,env(safe-area-inset-bottom))]
-				right-[max(12px,calc(var(--gutter)-12px))]
+				bottom-0
+				right-0
 				z-30
-				max-w-[min(calc(100%-24px),28rem)]
-				rounded-2xl
+				max-w-[min(100%,28rem)]
+				rounded-tl-2xl
 				border
+				border-b-0
+				border-r-0
 				border-slate-200/40
 				bg-white/25
 				shadow-[0_4px_24px_rgba(13,27,42,0.06)]
