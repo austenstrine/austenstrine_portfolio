@@ -8,6 +8,7 @@ import {
 	type VendorSummary,
 } from '../../../lib/catalog-api';
 import { useSession } from '../../../lib/useSession';
+import { productCreateHref } from '../../../lib/vendor-ref';
 import { RequireAccess } from '../../../components/auth/RequireAccess';
 import { SellerTopContextPortal } from '../../../components/catalog/CatalogSearchContext';
 import { ManageProductRowActions } from '../../../components/catalog/ManageProductRowActions';
@@ -163,8 +164,8 @@ function PlaceEtMarqueManageContent() {
 	const [total, setTotal] = useState(0);
 
 	const selectedVendor = vendors.find((vendor) => vendor.id === selectedVendorId) ?? null;
-	const newProductVendorId = selectedVendor?.id ?? vendors[0]?.id ?? null;
-	const newProductVendorName = selectedVendor?.name ?? vendors[0]?.name ?? null;
+	const newProductVendor = selectedVendor ?? vendors[0] ?? null;
+	const newProductVendorName = newProductVendor?.name ?? null;
 
 	useEffect(() => {
 		if(!user) {
@@ -326,7 +327,7 @@ function PlaceEtMarqueManageContent() {
 					)
 					: null
 				}
-				{newProductVendorId
+				{newProductVendor
 					? (
 						<a
 							aria-label="New product"
@@ -351,7 +352,7 @@ function PlaceEtMarqueManageContent() {
 								sm:px-3.5
 								sm:py-1.5
 							"
-							href={`/place-et-marque/products/new?vendorId=${encodeURIComponent(newProductVendorId)}`}
+							href={productCreateHref({ vendor: newProductVendor })}
 							title={
 								selectedVendor
 									? 'New product'

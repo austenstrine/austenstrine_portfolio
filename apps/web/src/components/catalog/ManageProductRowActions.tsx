@@ -5,6 +5,10 @@ import {
 	deleteCatalogProduct,
 	type CatalogProductSummary,
 } from '../../lib/catalog-api';
+import {
+	productEditHref,
+	productViewHref,
+} from '../../lib/vendor-ref';
 import { CaretDownIcon } from '../icons/CaretDownIcon';
 import { EyeIcon } from '../icons/EyeIcon';
 import { PencilIcon } from '../icons/PencilIcon';
@@ -94,7 +98,10 @@ export function ManageProductRowActions({
 					sm:justify-start
 					sm:px-3
 				"
-				href={`/place-et-marque/${product.vendor.slug}/${product.slug}`}
+				href={productViewHref({
+					vendorSlug: product.vendor.slug,
+					productSlug: product.slug,
+				})}
 			>
 				<span
 					className="
@@ -140,7 +147,10 @@ export function ManageProductRowActions({
 						aria-disabled:pointer-events-none
 						aria-disabled:opacity-60
 					"
-					href={`/place-et-marque/products/${product.id}/edit`}
+					href={productEditHref({
+						vendorSlug: product.vendor.slug,
+						productSlug: product.slug,
+					})}
 					tabIndex={deleteBusy ? -1 : undefined}
 				>
 					<span>
@@ -213,7 +223,10 @@ export function ManageProductRowActions({
 					aria-disabled:opacity-60
 					sm:hidden
 				"
-				href={`/place-et-marque/products/${product.id}/edit`}
+				href={productEditHref({
+					vendorSlug: product.vendor.slug,
+					productSlug: product.slug,
+				})}
 				tabIndex={deleteBusy ? -1 : undefined}
 			>
 				<PencilIcon

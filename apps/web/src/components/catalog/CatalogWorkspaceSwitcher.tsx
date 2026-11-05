@@ -4,12 +4,21 @@ import {
 	type ProductEditorIntent,
 	type ProductEditorSurface,
 } from '../../lib/catalog-product-form';
+import {
+	productCreateHref,
+	productEditHref,
+} from '../../lib/vendor-ref';
 import { ArrowRightIcon } from '../icons/ArrowRightIcon';
 
 type CatalogWorkspaceSwitcherProps = {
 	active: ProductEditorSurface;
 	intent?: ProductEditorIntent;
-	productId?: string;
+	/** Create: preserve ?vendorId= (slug preferred). */
+	vendorRef?: string | null;
+	categoryId?: string | null;
+	/** Edit: human path /<vendorSlug>/<productSlug>/(edit|configure). */
+	vendorSlug?: string | null;
+	productSlug?: string | null;
 	/** Softer chrome for standard edit/create so it does not compete with the form. */
 	quiet?: boolean;
 	/** When true, confirm before navigating away. */
@@ -19,20 +28,33 @@ type CatalogWorkspaceSwitcherProps = {
 export function CatalogWorkspaceSwitcher({
 	active,
 	intent = 'create',
-	productId,
+	vendorRef = null,
+	categoryId = null,
+	vendorSlug = null,
+	productSlug = null,
 	quiet = false,
 	confirmLeave = false,
 }: CatalogWorkspaceSwitcherProps) {
 	const other: ProductEditorSurface = active === 'standard' ? 'advanced' : 'standard';
 
-	let href = other === 'standard'
-		? '/place-et-marque/products/new'
-		: '/place-et-marque/products/configure';
+	let href = productCreateHref({
+		surface: other,
+		vendorRef,
+		categoryId,
+	});
 
-	if(intent === 'edit' && productId) {
-		href = other === 'standard'
-			? `/place-et-marque/products/${productId}/edit`
-			: `/place-et-marque/products/${productId}/configure`;
+	if(
+		intent === 'edit'
+		&& vendorSlug?.trim()
+		&& productSlug?.trim()
+	) {
+		href = productEditHref(
+			{
+				vendorSlug: vendorSlug.trim(),
+				productSlug: productSlug.trim(),
+			},
+			other,
+		);
 	}
 
 	const onNavigate = (event: MouseEvent<HTMLAnchorElement>) => {

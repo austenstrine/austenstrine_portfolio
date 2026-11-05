@@ -404,8 +404,27 @@ export class CatalogService {
 	async createProduct(userId: string, dto: CreateCatalogProductDto) {
 		await this.vendorAccess.assertCanEditVendor(userId, dto.vendorId);
 
+		const productSlug = dto.slug.trim().toLowerCase();
+		if(!productSlug) {
+			throw new BadRequestException('Product URL cannot be empty.');
+		}
+		const slugConflict = await this.prisma.catalogProduct.findUnique({
+			where: {
+				vendorId_slug: {
+					vendorId: dto.vendorId,
+					slug: productSlug,
+				},
+			},
+			select: { id: true },
+		});
+		if(slugConflict) {
+			throw new ConflictException(
+				'A product with that URL already exists for this vendor.',
+			);
+		}
+
 		const offeringIdentities = dto.offerings.map((row, index) => ({
-			sku: (row.sku || dto.sku || `${dto.slug}-${index + 1}`).trim(),
+			sku: (row.sku || dto.sku || `${productSlug}-${index + 1}`).trim(),
 			offeringKey: (row.offeringKey || row.clientKey || 'default').trim() || 'default',
 		}));
 		await this.assertOfferingIdentitiesUniqueForVendor(dto.vendorId, offeringIdentities);
@@ -421,7 +440,7 @@ export class CatalogService {
 			data: {
 				vendorId: dto.vendorId,
 				categoryId: dto.categoryId,
-				slug: dto.slug,
+				slug: productSlug,
 				title: dto.title,
 				description: dto.description,
 				imageUrls: this.normalizeImageUrls(dto.imageUrls),
@@ -439,7 +458,7 @@ export class CatalogService {
 				offerings: {
 					create: dto.offerings.map((offering, index) => ({
 						vendorId: dto.vendorId,
-						sku: offering.sku || dto.sku || `${dto.slug}-${index + 1}`,
+						sku: offering.sku || dto.sku || `${productSlug}-${index + 1}`,
 						offeringKey:
 							(offering.offeringKey || offering.clientKey || 'default').trim() ||
 							'default',
