@@ -13,24 +13,58 @@ export type NotificationDto = {
 	createdAt: string;
 };
 
+type ListOptions = {
+	limit?: number;
+	/** Account menu: unread rows only. Inbox omits this. */
+	unreadOnly?: boolean;
+};
+
 @Injectable()
 export class NotificationsService {
 	constructor(private readonly prisma: PrismaService) {}
 
-	async listForUser(userId: string, options?: { limit?: number }) {
+	async listForUser(userId: string, options?: ListOptions) {
 		const take = Math.min(Math.max(options?.limit ?? 30, 1), 100);
-		const rows = await this.prisma.notification.findMany({
-			where: {
-				userId,
-				dismissedAt: null,
-			},
-			orderBy: [
-				{ readAt: 'asc' },
-				{ createdAt: 'desc' },
-			],
-			take,
-		});
-		return rows.map((row) => this.toDto(row));
+		const unreadOnly = Boolean(options?.unreadOnly);
+
+		if(unreadOnly) {
+			const rows = await this.prisma.notification.findMany({
+				where: {
+					userId,
+					dismissedAt: null,
+					readAt: null,
+				},
+				orderBy: { createdAt: 'desc' },
+				take,
+			});
+			return rows.map((row) => this.toDto(row));
+		}
+
+		// Inbox: unread first, then read — both groups by createdAt (not updatedAt).
+		const [unread, read] = await Promise.all([
+			this.prisma.notification.findMany({
+				where: {
+					userId,
+					dismissedAt: null,
+					readAt: null,
+				},
+				orderBy: { createdAt: 'desc' },
+				take,
+			}),
+			this.prisma.notification.findMany({
+				where: {
+					userId,
+					dismissedAt: null,
+					readAt: { not: null },
+				},
+				orderBy: { createdAt: 'desc' },
+				take,
+			}),
+		]);
+
+		return [...unread, ...read]
+			.slice(0, take)
+			.map((row) => this.toDto(row));
 	}
 
 	async unreadCount(userId: string) {

@@ -68,12 +68,30 @@ export function CatalogMenuRow({
 }
 
 export function CatalogMenuSurface({
+	bodyClassName = `
+		max-h-80
+		space-y-0.5
+		overflow-y-auto
+		scrollbar-thin-quiet
+	`,
 	children,
 	panelBox,
+	panelClassName = `
+		fixed
+		z-50
+		rounded-2xl
+		border
+		border-slate-200
+		bg-white
+		p-2
+		shadow-lg
+	`,
 	panelRef,
 }: {
+	bodyClassName?: string;
 	children: ReactNode;
 	panelBox: CatalogMenuBox;
+	panelClassName?: string;
 	panelRef: RefObject<HTMLDivElement | null>;
 }) {
 	if(typeof document === 'undefined') {
@@ -82,16 +100,7 @@ export function CatalogMenuSurface({
 
 	return createPortal(
 		<div
-			className="
-				fixed
-				z-50
-				rounded-2xl
-				border
-				border-slate-200
-				bg-white
-				p-2
-				shadow-lg
-			"
+			className={panelClassName}
 			ref={panelRef as RefObject<HTMLDivElement>}
 			role="menu"
 			style={{
@@ -100,14 +109,7 @@ export function CatalogMenuSurface({
 				width: panelBox.width,
 			}}
 		>
-			<div
-				className="
-					max-h-80
-					space-y-0.5
-					overflow-y-auto
-					scrollbar-thin-quiet
-				"
-			>
+			<div className={bodyClassName}>
 				{children}
 			</div>
 		</div>,
@@ -141,10 +143,16 @@ export function useCatalogFloatingMenu({
 	align = 'start',
 	closeKey,
 	onEscape,
+	minWidth = 220,
+	preferredWidth = 288,
 }: {
 	align?: 'start' | 'end';
 	closeKey?: unknown;
 	onEscape?: () => boolean;
+	/** Floor for panel width before viewport clamping. */
+	minWidth?: number;
+	/** Cap for panel width (still clamped to the viewport gutters). */
+	preferredWidth?: number;
 } = {}) {
 	const triggerRef = useRef<HTMLButtonElement>(null);
 	const panelRef = useRef<HTMLDivElement>(null);
@@ -170,7 +178,11 @@ export function useCatalogFloatingMenu({
 			const gutter = readCatalogGutterPx();
 			const viewport = document.documentElement.clientWidth;
 			const maxWidth = Math.max(gutter, viewport - gutter * 2);
-			const width = Math.min(maxWidth, 288, Math.max(rect.width + 48, 220));
+			const width = Math.min(
+				maxWidth,
+				preferredWidth,
+				Math.max(rect.width + 48, minWidth),
+			);
 			const minLeft = gutter;
 			const maxLeft = viewport - width - gutter;
 			const preferredLeft = align === 'end'
@@ -306,7 +318,7 @@ export function useCatalogFloatingMenu({
 			document.removeEventListener('pointerdown', onPointerDown);
 			window.removeEventListener('keydown', onKeyDown);
 		};
-	}, [align, open]);
+	}, [align, minWidth, open, preferredWidth]);
 
 	return {
 		open,
