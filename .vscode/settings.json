@@ -11,6 +11,10 @@
 		"6379": {
 			"label": "redis",
 			"onAutoForward": "ignore"
+		},
+		"3001": {
+			"label": "crm",
+			"onAutoForward": "ignore"
 		}
 	}
 }
