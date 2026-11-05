@@ -19,7 +19,12 @@ function RegisterForm() {
 	const searchParams = useSearchParams();
 	const nextPath = safeNextPath(searchParams.get('next'));
 	const reason = searchParams.get('reason');
-	const [email, setEmail] = useState('');
+	const [email, setEmail] = useState(() => {
+		const raw = searchParams.get('email')?.trim() ?? '';
+		return raw.includes('@')
+			? raw
+			: '';
+	});
 	const [password, setPassword] = useState('');
 	const [confirmPassword, setConfirmPassword] = useState('');
 	const [error, setError] = useState<string | null>(null);

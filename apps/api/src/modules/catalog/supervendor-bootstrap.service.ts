@@ -5,6 +5,7 @@ import {
 	SUPERVENDOR_ADMIN_EMAIL,
 	ensureSupervendor,
 } from './ensure-supervendor';
+import { seedDemoVendorOrg } from './seed-demo-vendor-org';
 
 @Injectable()
 export class SupervendorBootstrapService implements OnModuleInit {
@@ -21,6 +22,15 @@ export class SupervendorBootstrapService implements OnModuleInit {
 	private async ensure(): Promise<void> {
 		await ensureSupervendor(this.prisma);
 		await seedDemoNotifications(this.prisma);
+		try {
+			await seedDemoVendorOrg(this.prisma);
+			this.logger.log('Ensured Demo Supply seller seed (members/orders)');
+		}
+		catch(error) {
+			this.logger.warn(
+				`Demo Supply seller seed skipped: ${(error as Error).message}`,
+			);
+		}
 		this.logger.log(
 			`Ensured supervendor membership for ${SUPERVENDOR_ADMIN_EMAIL}`,
 		);

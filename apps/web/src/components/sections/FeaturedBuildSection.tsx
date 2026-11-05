@@ -1,21 +1,31 @@
-import { GUIDED_DEMO_PRODUCT, SITE_REPO } from '../../lib/site';
+import {
+	JOIN_DEMO_HREF,
+	PLACE_ET_MARQUE_BLURB,
+	SITE_REPO,
+} from '../../lib/site';
 import { ArrowRightIcon } from '../icons/ArrowRightIcon';
 
-const steps = [
+const entries = [
 	{
-		title: 'Search',
-		href: '/place-et-marque/search',
-		summary: 'Catalog search with category, vendor, and attribute filters.',
+		title: 'What it is',
+		href: JOIN_DEMO_HREF,
+		summary:
+			'A working multi-vendor marketplace: catalog search, pack/piece inventory, cart, and Stripe checkout — built as a public demo of Place et Marque.',
+		cta: 'Read the intro',
 	},
 	{
-		title: GUIDED_DEMO_PRODUCT.title,
-		href: GUIDED_DEMO_PRODUCT.href,
-		summary: GUIDED_DEMO_PRODUCT.summary,
+		title: 'Join demo',
+		href: JOIN_DEMO_HREF,
+		summary:
+			'Get invited into Demo Supply Co. the same way a real org invites a teammate: register with your email, accept membership, then explore seller tools on seeded products and orders.',
+		cta: 'Join as a seller',
 	},
 	{
-		title: 'Cart',
-		href: '/place-et-marque/cart',
-		summary: 'Sign in to add items, then check out with Stripe.',
+		title: 'Sign in',
+		href: `/auth/login?next=${encodeURIComponent('/place-et-marque/vendors/demo-supply')}`,
+		summary:
+			'Already joined Demo Supply Co.? Sign in and open the seller workspace — products, orders, members, and payouts.',
+		cta: 'Sign in',
 	},
 ];
 
@@ -62,8 +72,9 @@ export function FeaturedBuildSection() {
 					text-slate-700
 				"
 			>
-				A live multi-vendor catalog: packs, pieces, units of measure, search, and
-				checkout. Source is public on
+				{PLACE_ET_MARQUE_BLURB}
+				{' '}
+				Source is public on
 				{' '}
 				<a
 					className="font-semibold text-sky hover:underline"
@@ -83,8 +94,8 @@ export function FeaturedBuildSection() {
 					md:grid-cols-3
 				"
 			>
-				{steps.map((step, index) => (
-					<li key={step.href}>
+				{entries.map((entry, index) => (
+					<li key={`${entry.title}-${entry.href}`}>
 						<a
 							className="
 								group
@@ -104,7 +115,7 @@ export function FeaturedBuildSection() {
 								focus-visible:ring-ink
 								focus-visible:ring-offset-2
 							"
-							href={step.href}
+							href={entry.href}
 						>
 							<span
 								className="
@@ -125,7 +136,7 @@ export function FeaturedBuildSection() {
 									text-ink
 								"
 							>
-								{step.title}
+								{entry.title}
 							</p>
 							<p
 								className="
@@ -136,7 +147,7 @@ export function FeaturedBuildSection() {
 									text-slate-600
 								"
 							>
-								{step.summary}
+								{entry.summary}
 							</p>
 							<span
 								className="
@@ -149,7 +160,7 @@ export function FeaturedBuildSection() {
 									text-ink
 								"
 							>
-								Open
+								{entry.cta}
 								<span
 									aria-hidden="true"
 									className="
@@ -185,9 +196,9 @@ export function FeaturedBuildSection() {
 					focus-visible:ring-ink
 					focus-visible:ring-offset-2
 				"
-				href="/place-et-marque"
+				href={JOIN_DEMO_HREF}
 			>
-				Enter Place et Marque
+				Join the Place et Marque demo
 			</a>
 		</section>
 	);

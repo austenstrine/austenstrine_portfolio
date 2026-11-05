@@ -23,6 +23,8 @@ export const ACCESS_REASONS = {
 	attributes: 'Sign in to manage product attributes.',
 	categories: 'Sign in to work with categories.',
 	invite: 'Sign in or create an account to accept this vendor invite.',
+	joinDemo:
+		'Create an account with the email you used for the demo invite, then accept membership in Demo Supply Co.',
 	account: 'Sign in to manage your account.',
 } as const;
 

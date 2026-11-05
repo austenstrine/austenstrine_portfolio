@@ -1,6 +1,6 @@
 import { AccountMenu } from '../AccountMenu';
 import { CdnImg } from '../CdnImg';
-import { SITE_HEADLINE } from '../../lib/site';
+import { JOIN_DEMO_HREF, SITE_HEADLINE } from '../../lib/site';
 
 export function HeroSection() {
 	return (
@@ -140,9 +140,9 @@ export function HeroSection() {
 								hover:-translate-y-0.5
 								hover:bg-white/10
 							"
-							href="/place-et-marque"
+							href={JOIN_DEMO_HREF}
 						>
-							Open Place et Marque
+							Join Place et Marque demo
 						</a>
 						<a
 							className="

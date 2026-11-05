@@ -9,6 +9,7 @@ import { Decimal } from '@prisma/client/runtime/library';
 import { ensureSupervendor } from '../src/modules/catalog/ensure-supervendor';
 import { seedGlobalUoms } from '../src/modules/catalog/seed-global-uoms';
 import { seedDemoNotifications } from '../src/modules/notifications/seed-demo-notifications';
+import { seedDemoVendorOrg } from '../src/modules/catalog/seed-demo-vendor-org';
 
 function demoVendorFromSeed(): {
 	id: string;
@@ -222,4 +223,5 @@ export async function seedCatalog(prisma: PrismaClient): Promise<void> {
 	});
 
 	await seedDemoNotifications(prisma);
+	await seedDemoVendorOrg(prisma, join(__dirname, 'seed-data'));
 }
