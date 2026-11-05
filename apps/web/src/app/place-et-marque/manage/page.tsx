@@ -13,6 +13,7 @@ import {
 	PageBottomPanePortal,
 	SellerTopContextPortal,
 } from '../../../components/catalog/CatalogSearchContext';
+import { ManageProductRowActions } from '../../../components/catalog/ManageProductRowActions';
 import { ArrowLeftIcon } from '../../../components/icons/ArrowLeftIcon';
 import { ArrowRightIcon } from '../../../components/icons/ArrowRightIcon';
 import { PlusIcon } from '../../../components/icons/PlusIcon';
@@ -502,28 +503,17 @@ function PlaceEtMarqueManageContent() {
 									{product.availableQty} available
 								</p>
 							</div>
-							<div
-								className="
-									flex
-									flex-wrap
-									gap-3
-									text-sm
-									font-semibold
-								"
-							>
-								<a
-									className="text-sky hover:underline"
-									href={`/place-et-marque/${product.vendor.slug}/${product.slug}`}
-								>
-									View
-								</a>
-								<a
-									className="text-sky hover:underline"
-									href={`/place-et-marque/products/${product.id}/edit`}
-								>
-									Edit
-								</a>
-							</div>
+							<ManageProductRowActions
+								onDeleted={
+									(productId) => {
+										setProducts((current) =>
+											current.filter((row) => row.id !== productId),
+										);
+										setTotal((current) => Math.max(0, current - 1));
+									}
+								}
+								product={product}
+							/>
 						</div>
 					))
 					: null
