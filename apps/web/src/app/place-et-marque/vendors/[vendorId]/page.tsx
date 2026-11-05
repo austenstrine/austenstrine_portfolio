@@ -30,6 +30,7 @@ import { RequireAccess } from '../../../../components/auth/RequireAccess';
 import { BackLink } from '../../../../components/BackLink';
 import { UrlSlugField } from '../../../../components/catalog/UrlSlugField';
 import { ArrowRightIcon } from '../../../../components/icons/ArrowRightIcon';
+import { PlusIcon } from '../../../../components/icons/PlusIcon';
 
 function slugify(value: string): string {
 	return value
@@ -66,6 +67,7 @@ function VendorDetailContent() {
 	const [inviteBusy, setInviteBusy] = useState(false);
 	const [inviteError, setInviteError] = useState<string | null>(null);
 	const [inviteMessage, setInviteMessage] = useState<string | null>(null);
+	const [inviteOpen, setInviteOpen] = useState(false);
 	const [shippingProfiles, setShippingProfiles] = useState<ShippingProfile[]>([]);
 	const [shippingBusy, setShippingBusy] = useState(false);
 	const [shippingError, setShippingError] = useState<string | null>(null);
@@ -606,245 +608,306 @@ function VendorDetailContent() {
 										</span>
 									</li>
 								))}
-							</ul>
-						</section>
-
-						{vendor.myRole === 'OWNER' || vendor.myRole === 'EDITOR'
-							? (
-								<section
-									className="
-										rounded-2xl
-										border
-										border-slate-200
-										bg-white
-										p-5
-									"
-								>
-									<h2 className="text-lg font-semibold">
-										Invite members
-									</h2>
-									<p
-										className="
-											mt-2
-											text-sm
-											text-slate-600
-										"
-									>
-										Send an email invite so teammates can join this organization.
-									</p>
-									<form
-										className="
-											mt-4
-											flex
-											flex-col
-											gap-3
-											md:flex-row
-											md:items-end
-										"
-										onSubmit={(event) => {
-											event.preventDefault();
-											if(!vendorId) {
-												return;
-											}
-											setInviteBusy(true);
-											setInviteError(null);
-											setInviteMessage(null);
-											createVendorInvite(vendorId, {
-												email: inviteEmail.trim(),
-												role: inviteRole,
-											})
-												.then(async () => {
-													setInviteEmail('');
-													setInviteMessage('Invite sent.');
-													setInvites(await listVendorInvites(vendorId));
-												})
-												.catch((inviteErr) => {
-													setInviteError(
-														inviteErr instanceof Error
-															? inviteErr.message
-															: 'Could not send invite.',
-													);
-												})
-												.finally(() => setInviteBusy(false));
-										}}
-									>
-										<label
+								{(vendor.myRole === 'OWNER' || vendor.myRole === 'EDITOR')
+									&& invites.map((invite) => (
+										<li
 											className="
-												block
-												flex-1
+												flex
+												flex-wrap
+												items-center
+												justify-between
+												gap-2
+												rounded-xl
+												border
+												border-dashed
+												border-slate-200
+												p-3
 												text-sm
 											"
+											key={invite.id}
 										>
-											<span className="font-semibold">
-												Email
-											</span>
-											<input
+											<div>
+												<p className="font-semibold">
+													{invite.email}
+												</p>
+												<p className="text-xs text-slate-500">
+													Invite pending · {invite.role} · expires{' '}
+													{new Date(invite.expiresAt).toLocaleDateString()}
+												</p>
+											</div>
+											<button
 												className="
-													mt-1
-													w-full
-													rounded-lg
-													border
-													border-slate-300
-													px-3
-													py-2
+													text-xs
+													font-semibold
+													uppercase
+													tracking-wide
+													text-red-700
+													hover:underline
 												"
-												type="email"
-												required
-												value={inviteEmail}
-												onChange={(event) => setInviteEmail(event.target.value)}
-												placeholder="teammate@example.com"
-											/>
-										</label>
-										<label
-											className="
-												block
-												text-sm
-												md:w-40
-											"
-										>
-											<span className="font-semibold">
-												Role
-											</span>
-											<select
-												className="
-													mt-1
-													w-full
-													rounded-lg
-													border
-													border-slate-300
-													px-3
-													py-2
-												"
-												value={inviteRole}
-												onChange={(event) =>
-													setInviteRole(event.target.value as 'EDITOR' | 'VIEWER')
+												type="button"
+												onClick={() => {
+													if(!vendorId) {
+														return;
+													}
+													revokeVendorInvite(vendorId, invite.id)
+														.then(async () => {
+															setInvites(await listVendorInvites(vendorId));
+														})
+														.catch(() => undefined);
+												}}
+											>
+												Revoke
+											</button>
+										</li>
+									))
+								}
+								{vendor.myRole === 'OWNER' || vendor.myRole === 'EDITOR'
+									? (
+											<li
+												className={
+													inviteOpen
+														? `
+															rounded-xl
+															border
+															border-slate-100
+															p-3
+														`
+														: `
+															flex
+															justify-end
+														`
 												}
 											>
-												<option value="EDITOR">
-													Editor
-												</option>
-												<option value="VIEWER">
-													Viewer
-												</option>
-											</select>
-										</label>
-										<button
-											className="
-												rounded-full
-												bg-sky
-												px-4
-												py-2.5
-												text-sm
-												font-semibold
-												text-white
-												hover:bg-sky/90
-												disabled:opacity-60
-											"
-											type="submit"
-											disabled={inviteBusy}
-										>
-											{inviteBusy
-												? 'Sending…'
-												: 'Send invite'
-											}
-										</button>
-									</form>
-									{inviteError
-										? (
-												<p
-													className="
-														mt-3
-														text-sm
-														text-red-700
-													"
-												>
-													{inviteError}
-												</p>
-											)
-										: null
-									}
-									{inviteMessage
-										? (
-												<p
-													className="
-														mt-3
-														text-sm
-														text-emerald-700
-													"
-												>
-													{inviteMessage}
-												</p>
-											)
-										: null
-									}
-									{invites.length > 0
-										? (
-												<ul
-													className="
-														mt-4
-														flex
-														flex-col
-														gap-2
-													"
-												>
-													{invites.map((invite) => (
-														<li
-															className="
-																flex
-																flex-wrap
-																items-center
-																justify-between
-																gap-2
-																rounded-xl
-																border
-																border-slate-100
-																p-3
-																text-sm
-															"
-															key={invite.id}
-														>
-															<div>
-																<p className="font-semibold">
-																	{invite.email}
-																</p>
-																<p className="text-xs text-slate-500">
-																	{invite.role} · expires{' '}
-																	{new Date(invite.expiresAt).toLocaleDateString()}
-																</p>
-															</div>
-															<button
+												{inviteOpen
+													? (
+															<div
 																className="
-																	text-xs
-																	font-semibold
-																	uppercase
-																	tracking-wide
-																	text-red-700
-																	hover:underline
+																	flex
+																	w-full
+																	flex-col
+																	gap-3
 																"
-																type="button"
-																onClick={() => {
-																	if(!vendorId) {
-																		return;
-																	}
-																	revokeVendorInvite(vendorId, invite.id)
-																		.then(async () => {
-																			setInvites(await listVendorInvites(vendorId));
-																		})
-																		.catch(() => undefined);
-																}}
 															>
-																Revoke
+																<div
+																	className="
+																		flex
+																		items-center
+																		justify-between
+																		gap-2
+																	"
+																>
+																	<p
+																		className="
+																			text-sm
+																			font-semibold
+																		"
+																	>
+																		Invite a teammate
+																	</p>
+																	<button
+																		type="button"
+																		aria-expanded={true}
+																		className="
+																			text-sm
+																			text-slate-500
+																			hover:text-sky
+																		"
+																		onClick={() => {
+																			setInviteOpen(false);
+																			setInviteError(null);
+																			setInviteMessage(null);
+																		}}
+																	>
+																		Cancel
+																	</button>
+																</div>
+																<p
+																	className="
+																		text-sm
+																		text-slate-600
+																	"
+																>
+																	Send an email invite so teammates can join this organization.
+																</p>
+																<form
+																	className="
+																		flex
+																		flex-col
+																		gap-3
+																		md:flex-row
+																		md:items-end
+																	"
+																	onSubmit={(event) => {
+																		event.preventDefault();
+																		if(!vendorId) {
+																			return;
+																		}
+																		setInviteBusy(true);
+																		setInviteError(null);
+																		setInviteMessage(null);
+																		createVendorInvite(vendorId, {
+																			email: inviteEmail.trim(),
+																			role: inviteRole,
+																		})
+																			.then(async () => {
+																				setInviteEmail('');
+																				setInviteMessage('Invite sent.');
+																				setInvites(await listVendorInvites(vendorId));
+																			})
+																			.catch((inviteErr) => {
+																				setInviteError(
+																					inviteErr instanceof Error
+																						? inviteErr.message
+																						: 'Could not send invite.',
+																				);
+																			})
+																			.finally(() => setInviteBusy(false));
+																	}}
+																>
+																	<label
+																		className="
+																			block
+																			flex-1
+																			text-sm
+																		"
+																	>
+																		<span className="font-semibold">
+																			Email
+																		</span>
+																		<input
+																			className="
+																				mt-1
+																				w-full
+																				rounded-lg
+																				border
+																				border-slate-300
+																				px-3
+																				py-2
+																			"
+																			type="email"
+																			required
+																			value={inviteEmail}
+																			onChange={(event) => setInviteEmail(event.target.value)}
+																			placeholder="teammate@example.com"
+																		/>
+																	</label>
+																	<label
+																		className="
+																			block
+																			text-sm
+																			md:w-40
+																		"
+																	>
+																		<span className="font-semibold">
+																			Role
+																		</span>
+																		<select
+																			className="
+																				mt-1
+																				w-full
+																				rounded-lg
+																				border
+																				border-slate-300
+																				px-3
+																				py-2
+																			"
+																			value={inviteRole}
+																			onChange={(event) =>
+																				setInviteRole(event.target.value as 'EDITOR' | 'VIEWER')
+																			}
+																		>
+																			<option value="EDITOR">
+																				Editor
+																			</option>
+																			<option value="VIEWER">
+																				Viewer
+																			</option>
+																		</select>
+																	</label>
+																	<button
+																		className="
+																			rounded-full
+																			bg-sky
+																			px-4
+																			py-2.5
+																			text-sm
+																			font-semibold
+																			text-white
+																			hover:bg-sky/90
+																			disabled:opacity-60
+																		"
+																		type="submit"
+																		disabled={inviteBusy}
+																	>
+																		{inviteBusy
+																			? 'Sending…'
+																			: 'Send invite'
+																		}
+																	</button>
+																</form>
+																{inviteError
+																	? (
+																			<p
+																				className="
+																					text-sm
+																					text-red-700
+																				"
+																			>
+																				{inviteError}
+																			</p>
+																		)
+																	: null
+																}
+																{inviteMessage
+																	? (
+																			<p
+																				className="
+																					text-sm
+																					text-emerald-700
+																				"
+																			>
+																				{inviteMessage}
+																			</p>
+																		)
+																	: null
+																}
+															</div>
+														)
+													: (
+															<button
+																type="button"
+																aria-label="Invite members"
+																aria-expanded={false}
+																className="
+																	inline-flex
+																	items-center
+																	justify-center
+																	gap-1.5
+																	rounded-xl
+																	border
+																	border-transparent
+																	px-3
+																	py-2
+																	text-sm
+																	text-slate-400
+																	transition
+																	hover:text-sky
+																"
+																onClick={() => setInviteOpen(true)}
+															>
+																<PlusIcon className="h-4 w-4" />
+																<span>
+																	Invite
+																</span>
 															</button>
-														</li>
-													))}
-												</ul>
-											)
-										: null
-									}
-								</section>
-							)
-							: null
-						}
+														)
+												}
+											</li>
+										)
+									: null
+								}
+							</ul>
+						</section>
 
 						{vendor.myRole === 'OWNER'
 							? (
