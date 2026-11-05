@@ -6,6 +6,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { HealthModule } from './modules/health/health.module';
 import { CatalogModule } from './modules/catalog/catalog.module';
 import { CheckoutModule } from './modules/checkout/checkout.module';
+import { NotificationsModule } from './modules/notifications/notifications.module';
 import { ProjectsModule } from './modules/projects/projects.module';
 
 /** Default per-route ceiling. OTP/login keep tighter `@Throttle` on those handlers. */
@@ -33,6 +34,7 @@ function defaultThrottleLimit(): number {
 		ProjectsModule,
 		CatalogModule,
 		CheckoutModule,
+		NotificationsModule,
 	],
 	providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })

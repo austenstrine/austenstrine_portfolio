@@ -60,8 +60,31 @@ model User {
   checkouts                 Checkout[]
   placeEtMarqueOrders       PlaceEtMarqueOrder[]
   orderRefunds              OrderRefund[]
+  notifications             Notification[]
 
   @@index([createdAt])
+}
+
+/// In-app inbox for a signed-in user. `kind` + `payload` grow without schema churn.
+model Notification {
+  id          String    @id @default(uuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// Dot-namespaced kind, e.g. system.welcome, order.paid, vendor.invite
+  kind        String
+  title       String
+  body        String?
+  /// Optional in-app path (web absolute path under the marketplace)
+  href        String?
+  payload     Json?
+  readAt      DateTime?
+  dismissedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([userId, createdAt])
+  @@index([userId, readAt, createdAt])
+  @@index([kind])
 }
 
 model RefreshToken {

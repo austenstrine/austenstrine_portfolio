@@ -4,11 +4,20 @@ import { useEffect, useLayoutEffect, useRef, useState, type RefObject } from 're
 import { usePathname } from 'next/navigation';
 import { pathUsesSellerChrome } from '../../lib/accessGate';
 import { getCart } from '../../lib/checkout-api';
+import {
+	listNotifications,
+	getUnreadNotificationCount,
+	markAllNotificationsRead,
+	markNotificationRead,
+	type NotificationDto,
+} from '../../lib/notifications-api';
 import { useSession } from '../../lib/useSession';
+import { BellIcon } from '../icons/BellIcon';
 import { CaretDownIcon } from '../icons/CaretDownIcon';
 import { CartIcon } from '../icons/CartIcon';
 import { CatalogCategoryBar } from './CatalogCategoryBar';
 import { MarketplaceBrandLink } from './MarketplaceBrandLink';
+import { SellerModeChip } from './SellerModeChip';
 import { useCatalogSearch } from './CatalogSearchContext';
 import { CatalogSearchField } from './CatalogSearchField';
 
@@ -34,6 +43,33 @@ function accountLabel(email: string) {
 	return email.slice(0, at);
 }
 
+function UnreadBadge({ count }: { count: number }) {
+	if(count <= 0) {
+		return null;
+	}
+	const label = count > 99 ? '99+' : String(count);
+	return (
+		<span
+			className="
+				absolute
+				-right-1
+				-top-1
+				min-w-4
+				rounded-full
+				bg-signal
+				px-1
+				text-center
+				text-[10px]
+				font-semibold
+				leading-4
+				text-white
+			"
+		>
+			{label}
+		</span>
+	);
+}
+
 function AccountMenu({
 	email,
 	onSignOut,
@@ -42,10 +78,33 @@ function AccountMenu({
 	onSignOut: () => void;
 }) {
 	const [open, setOpen] = useState(false);
+	const [notificationsOpen, setNotificationsOpen] = useState(false);
+	const [notifications, setNotifications] = useState<NotificationDto[]>([]);
+	const [unreadCount, setUnreadCount] = useState(0);
+	const [notificationsLoading, setNotificationsLoading] = useState(false);
 	const rootRef = useRef<HTMLDivElement>(null);
 
 	useEffect(() => {
+		let cancelled = false;
+		getUnreadNotificationCount()
+			.then((result) => {
+				if(!cancelled) {
+					setUnreadCount(result.count);
+				}
+			})
+			.catch(() => {
+				if(!cancelled) {
+					setUnreadCount(0);
+				}
+			});
+		return () => {
+			cancelled = true;
+		};
+	}, []);
+
+	useEffect(() => {
 		if(!open) {
+			setNotificationsOpen(false);
 			return;
 		}
 
@@ -68,6 +127,72 @@ function AccountMenu({
 		};
 	}, [open]);
 
+	useEffect(() => {
+		if(!open || !notificationsOpen) {
+			return;
+		}
+		let cancelled = false;
+		setNotificationsLoading(true);
+		listNotifications(20)
+			.then((rows) => {
+				if(!cancelled) {
+					setNotifications(rows);
+				}
+			})
+			.catch(() => {
+				if(!cancelled) {
+					setNotifications([]);
+				}
+			})
+			.finally(() => {
+				if(!cancelled) {
+					setNotificationsLoading(false);
+				}
+			});
+		return () => {
+			cancelled = true;
+		};
+	}, [open, notificationsOpen]);
+
+	async function onOpenNotification(item: NotificationDto) {
+		try {
+			if(!item.readAt) {
+				await markNotificationRead(item.id);
+				setNotifications((current) =>
+					current.map((row) =>
+						row.id === item.id
+							? { ...row, readAt: new Date().toISOString() }
+							: row,
+					),
+				);
+				setUnreadCount((current) => Math.max(0, current - 1));
+			}
+		}
+		catch {
+			// Navigation still proceeds when mark-read fails.
+		}
+		setOpen(false);
+		if(item.href) {
+			window.location.assign(item.href);
+		}
+	}
+
+	async function onMarkAllRead() {
+		try {
+			await markAllNotificationsRead();
+			setUnreadCount(0);
+			setNotifications((current) =>
+				current.map((row) => ({
+					...row,
+					readAt: row.readAt ?? new Date().toISOString(),
+				})),
+			);
+		}
+		catch {
+			// Keep prior unread state when the request fails.
+		}
+	}
+
 	return (
 		<div
 			className="relative"
@@ -76,12 +201,18 @@ function AccountMenu({
 			<button
 				aria-expanded={open}
 				aria-haspopup="menu"
-				aria-label={`${accountLabel(email)} account menu`}
+				aria-label={
+					unreadCount > 0
+						? `${accountLabel(email)} account menu, ${unreadCount} unread`
+						: `${accountLabel(email)} account menu`
+				}
 				className="
+					relative
 					inline-flex
 					max-w-[9rem]
 					items-center
 					gap-1
+					pr-1
 					text-slate-600
 					hover:text-ink
 					sm:max-w-[14rem]
@@ -111,6 +242,7 @@ function AccountMenu({
 							`
 					}
 				/>
+				<UnreadBadge count={unreadCount} />
 			</button>
 			{open
 				? (
@@ -120,7 +252,8 @@ function AccountMenu({
 							right-0
 							z-20
 							mt-2
-							min-w-[12rem]
+							min-w-[16rem]
+							max-w-[20rem]
 							rounded-xl
 							border
 							border-slate-200
@@ -149,6 +282,194 @@ function AccountMenu({
 								>
 									Your account
 								</a>
+							</li>
+							<li
+								className="
+									mt-1
+									border-t
+									border-slate-100
+									pt-2
+								"
+							>
+								<details
+									onToggle={(event) => {
+										setNotificationsOpen(
+											(event.currentTarget as HTMLDetailsElement).open,
+										);
+									}}
+									open={notificationsOpen}
+								>
+									<summary
+										className="
+											flex
+											cursor-pointer
+											list-none
+											items-center
+											gap-2
+											text-[11px]
+											font-semibold
+											uppercase
+											tracking-[0.16em]
+											text-slate-500
+											[&::-webkit-details-marker]:hidden
+										"
+									>
+										<BellIcon
+											className="
+												h-3.5
+												w-3.5
+												shrink-0
+												text-sky
+											"
+										/>
+										<span className="flex-1">
+											Notifications
+										</span>
+										{unreadCount > 0
+											? (
+												<span
+													className="
+														rounded-full
+														bg-signal
+														px-1.5
+														text-[10px]
+														font-semibold
+														normal-case
+														tracking-normal
+														text-white
+													"
+												>
+													{unreadCount > 99
+														? '99+'
+														: unreadCount
+													}
+												</span>
+											)
+											: null
+										}
+									</summary>
+									<div
+										className="
+											mt-2
+											flex
+											flex-col
+											gap-2
+										"
+									>
+										{unreadCount > 0
+											? (
+												<button
+													className="
+														self-start
+														text-xs
+														font-semibold
+														text-asgreen
+														hover:underline
+													"
+													onClick={() => {
+														void onMarkAllRead();
+													}}
+													type="button"
+												>
+													Mark all read
+												</button>
+											)
+											: null
+										}
+										{notificationsLoading
+											? (
+												<p className="text-xs text-slate-500">
+													Loading…
+												</p>
+											)
+											: notifications.length === 0
+												? (
+													<p className="text-xs text-slate-500">
+														No notifications yet.
+													</p>
+												)
+												: (
+													<ul
+														className="
+															flex
+															max-h-56
+															flex-col
+															gap-1
+															overflow-y-auto
+														"
+													>
+														{notifications.map((item) => (
+															<li key={item.id}>
+																<button
+																	className={
+																		item.readAt
+																			? `
+																				w-full
+																				rounded-lg
+																				px-2
+																				py-1.5
+																				text-left
+																				hover:bg-frost
+																			`
+																			: `
+																				w-full
+																				rounded-lg
+																				bg-asgreen/10
+																				px-2
+																				py-1.5
+																				text-left
+																				hover:bg-asgreen/15
+																			`
+																	}
+																	onClick={() => {
+																		void onOpenNotification(item);
+																	}}
+																	role="menuitem"
+																	type="button"
+																>
+																	<span
+																		className={
+																			item.readAt
+																				? `
+																					block
+																					text-sm
+																					font-medium
+																					text-ink
+																				`
+																				: `
+																					block
+																					text-sm
+																					font-semibold
+																					text-sky
+																				`
+																		}
+																	>
+																		{item.title}
+																	</span>
+																	{item.body
+																		? (
+																			<span
+																				className="
+																					mt-0.5
+																					block
+																					text-xs
+																					text-slate-500
+																					line-clamp-2
+																				"
+																			>
+																				{item.body}
+																			</span>
+																		)
+																		: null
+																	}
+																</button>
+															</li>
+														))}
+													</ul>
+												)
+										}
+									</div>
+								</details>
 							</li>
 							<li
 								className="
@@ -394,14 +715,14 @@ export function CatalogHeader() {
 	}, [extrasHost]);
 
 	useEffect(() => {
-		if(!user) {
+		if(!user || sellerChrome) {
 			setCartCount(0);
 			return;
 		}
 		getCart()
 			.then((cart) => setCartCount(cart.lineCount ?? cart.lines.length))
 			.catch(() => setCartCount(0));
-	}, [user]);
+	}, [user, sellerChrome]);
 
 	return (
 		<>
@@ -461,6 +782,10 @@ export function CatalogHeader() {
 						"
 					>
 						<MarketplaceBrandLink />
+						{sellerChrome
+							? <SellerModeChip />
+							: null
+						}
 						<div className="hidden min-w-0 flex-1 md:flex">
 							<HeaderSearch
 								inputId="store-search-desktop"
@@ -480,46 +805,51 @@ export function CatalogHeader() {
 								sm:gap-3
 							"
 						>
-							<a
-								className="
-									relative
-									inline-flex
-									h-10
-									w-10
-									items-center
-									justify-center
-									rounded-full
-									text-ink
-									hover:bg-frost
-								"
-								href="/place-et-marque/cart"
-							>
-								<CartIcon />
-								<span className="sr-only">Cart</span>
-								{cartCount > 0
-									? (
-										<span
-											className="
-												absolute
-												right-0.5
-												top-0.5
-												min-w-4
-												rounded-full
-												bg-signal
-												px-1
-												text-center
-												text-[10px]
-												font-semibold
-												leading-4
-												text-white
-											"
-										>
-											{cartCount}
-										</span>
-									)
-									: null
-								}
-							</a>
+							{sellerChrome
+								? null
+								: (
+									<a
+										className="
+											relative
+											inline-flex
+											h-10
+											w-10
+											items-center
+											justify-center
+											rounded-full
+											text-ink
+											hover:bg-frost
+										"
+										href="/place-et-marque/cart"
+									>
+										<CartIcon />
+										<span className="sr-only">Cart</span>
+										{cartCount > 0
+											? (
+												<span
+													className="
+														absolute
+														right-0.5
+														top-0.5
+														min-w-4
+														rounded-full
+														bg-signal
+														px-1
+														text-center
+														text-[10px]
+														font-semibold
+														leading-4
+														text-white
+													"
+												>
+													{cartCount}
+												</span>
+											)
+											: null
+										}
+									</a>
+								)
+							}
 							{loading
 								? null
 								: user

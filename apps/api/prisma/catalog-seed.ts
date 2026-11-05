@@ -8,6 +8,7 @@ import {
 import { Decimal } from '@prisma/client/runtime/library';
 import { ensureSupervendor } from '../src/modules/catalog/ensure-supervendor';
 import { seedGlobalUoms } from '../src/modules/catalog/seed-global-uoms';
+import { seedDemoNotifications } from '../src/modules/notifications/seed-demo-notifications';
 
 function demoVendorFromSeed(): {
 	id: string;
@@ -219,4 +220,6 @@ export async function seedCatalog(prisma: PrismaClient): Promise<void> {
 		where: { id: pieceOffering.id },
 		data: { availableQty: new Decimal('440') },
 	});
+
+	await seedDemoNotifications(prisma);
 }
