@@ -38,7 +38,7 @@ export function CurrentHighlightCard({
 				duration-300
 				ease-out
 				${showWrapper
-					? '-mx-4'
+					? '-mx-gutter'
 					: 'mx-0'
 				}
 			`}
