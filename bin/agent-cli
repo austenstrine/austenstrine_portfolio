@@ -195,7 +195,7 @@ cmd_layout() {
   if [[ "$JSON" -eq 1 ]]; then
     node_json '({
       root,
-      apps: ["apps/api (NestJS+Prisma)", "apps/web (Next.js)"],
+      apps: ["apps/api (NestJS+Prisma)", "apps/web (Next.js)", "apps/crm (admin CRM Next.js)"],
       packages: exists("packages") ? fs.readdirSync(path.join(root,"packages")).filter(n=>!n.startsWith(".")) : [],
       ops: exists("ops") ? fs.readdirSync(path.join(root,"ops")).filter(n=>!n.startsWith(".")) : [],
       dssh: exists("dssh"),
@@ -209,7 +209,8 @@ cmd_layout() {
   cat <<EOF
 layout
   apps/api          NestJS API, Prisma, seed, Swagger
-  apps/web          Next.js frontend
+  apps/web          Next.js frontend (Place et Marque + portfolio)
+  apps/crm          Next.js admin CRM (crm.austenstrine.dev)
   packages/*        workspace packages (if present)
   ops/cdn           Go image CDN (local + live)
   ops/deploy        live.sh, TLS, env-backup ensure/push
@@ -233,7 +234,8 @@ cmd_scripts() {
       root: readJson("package.json").scripts || {},
       workspaces: readJson("package.json").workspaces || [],
       api: exists("apps/api/package.json") ? (readJson("apps/api/package.json").scripts || {}) : {},
-      web: exists("apps/web/package.json") ? (readJson("apps/web/package.json").scripts || {}) : {}
+      web: exists("apps/web/package.json") ? (readJson("apps/web/package.json").scripts || {}) : {},
+      crm: exists("apps/crm/package.json") ? (readJson("apps/crm/package.json").scripts || {}) : {}
     })'
     return
   fi
@@ -242,6 +244,9 @@ const fs=require("fs");
 const root=JSON.parse(fs.readFileSync("package.json","utf8"));
 const api=JSON.parse(fs.readFileSync("apps/api/package.json","utf8"));
 const web=JSON.parse(fs.readFileSync("apps/web/package.json","utf8"));
+const crm=fs.existsSync("apps/crm/package.json")
+  ? JSON.parse(fs.readFileSync("apps/crm/package.json","utf8"))
+  : {scripts:{}};
 const dump=(title,scripts)=>{
   console.log(title);
   for (const [k,v] of Object.entries(scripts||{})) console.log("  "+k+": "+v);
@@ -250,10 +255,11 @@ console.log("workspaces: "+JSON.stringify(root.workspaces||[]));
 dump("root", root.scripts);
 dump("apps/api", api.scripts);
 dump("apps/web", web.scripts);
+dump("apps/crm", crm.scripts);
 console.log("hints:");
 console.log("  npm ci");
 console.log("  npm run prepare:api-types   # before lint/test/build");
-console.log("  npm run dev:api | dev:web");
+console.log("  npm run dev:api | dev:web | dev:crm");
 console.log("  npm run prisma:migrate -w apps/api && npm run prisma:seed -w apps/api");
 console.log("  ./dssh status | ./dssh backend start | ./dssh publish  (live box)");
 '

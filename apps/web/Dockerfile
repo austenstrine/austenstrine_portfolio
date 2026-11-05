@@ -17,6 +17,7 @@ RUN chmod +x /usr/local/bin/ensure-npm.sh && ensure-npm.sh
 COPY package*.json ./
 COPY apps/web/package.json ./apps/web/
 COPY apps/api/package.json ./apps/api/
+COPY apps/crm/package.json ./apps/crm/
 RUN npm ci
 COPY . .
 # NEXT_PUBLIC_* is inlined at build time. Pass via compose build.args / --build-arg.

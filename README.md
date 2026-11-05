@@ -4,6 +4,7 @@ Full-stack portfolio + Place et Marque marketplace demo:
 
 - Backend: NestJS, TypeScript, PostgreSQL (Prisma), Swagger, Redis, OpenSearch
 - Frontend: Next.js (React + TypeScript), Tailwind CSS v3, custom icon components
+- Admin CRM: separate Next.js app (`apps/crm`) at `crm.austenstrine.dev` / `local.crm.austenstrine.dev`
 - Local infra: Docker Compose via `./dssh` ([developers-sugary-shell-helper](https://github.com/austenstrine/developers-sugary-shell-helper); project map in `.dsshrc`)
 - CI/CD: GitHub Actions → EC2 (`t3a.large`) via `ops/deploy/live.sh`
 
@@ -17,7 +18,8 @@ Full-stack portfolio + Place et Marque marketplace demo:
 ## Monorepo Structure
 
 - apps/api: NestJS API
-- apps/web: Next.js frontend
+- apps/web: Next.js frontend (portfolio + Place et Marque seller/buyer UI)
+- apps/crm: Next.js admin CRM (dark side menu; link-name approvals, etc.)
 - docs: architecture and deployment docs
 - docker-compose.yml: local PostgreSQL, Redis, OpenSearch services
 
@@ -55,6 +57,9 @@ Helpers are not vendored. Install/clone them, then use the thin portfolio wrappe
 	- Or containers: `./dssh backend start`
 7. Start frontend:
 	- npm run dev:web
+8. Start admin CRM (optional):
+	- npm run dev:crm
+	- With local TLS/nginx: add `127.0.0.1 local.crm.austenstrine.dev` to `/etc/hosts`, set `CRM_URL` + `COOKIE_DOMAIN=.austenstrine.dev`, then `./dssh proxy start` / `./dssh crm start`
 
 ## Useful Endpoints
 
@@ -62,6 +67,7 @@ Helpers are not vendored. Install/clone them, then use the thin portfolio wrappe
 - API projects: http://localhost:4000/api/projects
 - Swagger docs: http://localhost:4000/api/docs
 - Web app: http://localhost:3000
+- Admin CRM: http://localhost:3001 (or https://local.crm.austenstrine.dev via nginx)
 
 ## CI/CD
 

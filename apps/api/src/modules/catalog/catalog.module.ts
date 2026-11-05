@@ -10,6 +10,7 @@ import { CdnMediaService } from './cdn-media.service';
 import { CatalogSearchListener } from './search/catalog-search.listener';
 import { CatalogSearchService } from './search/catalog-search.service';
 import { CatalogAuthGuard } from './guards/catalog-auth.guard';
+import { CrmOriginGuard } from './guards/crm-origin.guard';
 import { CatalogImportService } from './import/catalog-import.service';
 import { InventoryService } from './inventory/inventory.service';
 import { VendorAccessService } from './vendor-access.service';
@@ -40,6 +41,7 @@ import { VendorService } from './vendor.service';
 		SupervendorBootstrapService,
 		JsonSeedBootstrapService,
 		CatalogAuthGuard,
+		CrmOriginGuard,
 		JwtAuthGuard,
 		OptionalJwtAuthGuard,
 	],
