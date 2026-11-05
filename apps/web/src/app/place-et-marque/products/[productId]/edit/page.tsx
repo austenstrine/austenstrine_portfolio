@@ -1,29 +1,71 @@
 'use client';
 
-import { Suspense } from 'react';
-import { useParams } from 'next/navigation';
+import { Suspense, useEffect, useState } from 'react';
+import { useParams, useRouter } from 'next/navigation';
 import { RequireAccess } from '../../../../../components/auth/RequireAccess';
-import { ProductEditorForm } from '../../../../../components/catalog/ProductEditorForm';
+import { getCatalogProductById } from '../../../../../lib/catalog-api';
+import { productEditHref } from '../../../../../lib/vendor-ref';
 
-function EditProductPageInner() {
+function LegacyEditProductRedirectInner() {
 	const params = useParams<{ productId: string }>();
-	const productId = params.productId;
+	const router = useRouter();
+	const [error, setError] = useState<string | null>(null);
+
+	useEffect(() => {
+		const productId = params.productId;
+		if(!productId) {
+			return;
+		}
+		let cancelled = false;
+		getCatalogProductById(productId)
+			.then((product) => {
+				if(cancelled) {
+					return;
+				}
+				router.replace(
+					productEditHref(
+						{
+							vendorSlug: product.vendor.slug,
+							productSlug: product.slug,
+						},
+						'standard',
+					),
+				);
+			})
+			.catch(() => {
+				if(!cancelled) {
+					setError('Could not open that product.');
+				}
+			});
+		return () => {
+			cancelled = true;
+		};
+	}, [params.productId, router]);
+
+	if(error) {
+		return (
+			<p className="px-4 py-10 text-sm text-rose-700">
+				{error}
+			</p>
+		);
+	}
 
 	return (
-		<RequireAccess vendorRequired>
-			<ProductEditorForm
-				productEditorSurface="standard"
-				productEditorIntent="edit"
-				existingProductId={productId}
-			/>
-		</RequireAccess>
+		<p className="px-4 py-10 text-sm text-slate-500">
+			Opening product…
+		</p>
 	);
 }
 
-export default function EditProductPage() {
+export default function LegacyEditProductRedirectPage() {
 	return (
-		<Suspense fallback={null}>
-			<EditProductPageInner />
-		</Suspense>
+		<RequireAccess
+			vendorRequired
+			reasonKey="products"
+		>
+			<Suspense fallback={null}>
+				<LegacyEditProductRedirectInner />
+			</Suspense>
+		</RequireAccess>
 	);
 }

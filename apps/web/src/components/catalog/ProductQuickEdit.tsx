@@ -6,6 +6,7 @@ import {
 	type CatalogProductDetail,
 } from '../../lib/catalog-api';
 import { centsToDollars, dollarsToCents } from '../../lib/catalog-product-form';
+import { productEditHref } from '../../lib/vendor-ref';
 import { ProductTagField } from './ProductTagField';
 
 type ProductQuickEditProps = {
@@ -91,7 +92,10 @@ export function ProductQuickEdit({ product, onUpdated }: ProductQuickEditProps) 
 						text-sky
 						hover:underline
 					"
-					href={`/place-et-marque/products/${product.id}/edit`}
+					href={productEditHref({
+						vendorSlug: product.vendor.slug,
+						productSlug: product.slug,
+					})}
 				>
 					Full edit
 				</a>

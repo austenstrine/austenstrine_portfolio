@@ -5,10 +5,10 @@
  *
  * | Intent  | Surface  | Route                                      |
  * |---------|-----------|--------------------------------------------|
- * | create  | standard  | /place-et-marque/products/new              |
- * | create  | advanced  | /place-et-marque/products/configure        |
- * | edit    | standard  | /place-et-marque/products/[id]/edit        |
- * | edit    | advanced  | /place-et-marque/products/[id]/configure   |
+ * | create  | standard  | /place-et-marque/products/new?vendorId=<slug> |
+ * | create  | advanced  | /place-et-marque/products/configure?vendorId=<slug> |
+ * | edit    | standard  | /place-et-marque/<vendor>/<product>/edit   |
+ * | edit    | advanced  | /place-et-marque/<vendor>/<product>/configure |
  *
  * Conditionals that matter while reading this file:
  * - `productEditorIntent` — create vs edit (edit needs existingProductId / loaded product)
@@ -33,6 +33,7 @@ import {
 } from 'react';
 import {
 	createCatalogProduct,
+	getCatalogProduct,
 	getCatalogProductById,
 	listCatalogAttributes,
 	listCatalogCategories,
@@ -61,6 +62,13 @@ import {
 } from '../../lib/catalog-product-form';
 import { sortCategoryTree } from '../../lib/category-tree';
 import { useSession } from '../../lib/useSession';
+import {
+	isUuidLike,
+	matchVendorByRef,
+	productCreateHref,
+	productViewHref,
+	vendorUrlRef,
+} from '../../lib/vendor-ref';
 import { PencilIcon } from '../icons/PencilIcon';
 import { PlusIcon } from '../icons/PlusIcon';
 import { CatalogImageField } from './CatalogImageField';
@@ -83,8 +91,11 @@ import { UrlSlugField } from './UrlSlugField';
 type ProductEditorFormProps = {
 	productEditorSurface: ProductEditorSurface;
 	productEditorIntent: ProductEditorIntent;
-	/** Required when productEditorIntent === 'edit'. */
+	/** Legacy UUID edit load; prefer existingVendorSlug + existingProductSlug. */
 	existingProductId?: string;
+	existingVendorSlug?: string;
+	existingProductSlug?: string;
+	/** Create: vendor slug or UUID from ?vendorId=. */
 	initialVendorId?: string;
 	initialCategoryId?: string;
 };
@@ -95,6 +106,8 @@ export function ProductEditorForm({
 	productEditorSurface,
 	productEditorIntent,
 	existingProductId,
+	existingVendorSlug = '',
+	existingProductSlug = '',
 	initialVendorId = '',
 	initialCategoryId = '',
 }: ProductEditorFormProps) {
@@ -116,7 +129,19 @@ export function ProductEditorForm({
 	const [attributeCatalog, setAttributeCatalog] = useState<CatalogAttributeDefinition[]>([]);
 	const categoryTree = sortCategoryTree(categories);
 
-	const [vendorId, setVendorId] = useState(initialVendorId);
+	const [resolvedProductId, setResolvedProductId] = useState(
+		existingProductId ?? '',
+	);
+	const [resolvedVendorSlug, setResolvedVendorSlug] = useState(
+		existingVendorSlug,
+	);
+	const [resolvedProductSlug, setResolvedProductSlug] = useState(
+		existingProductSlug,
+	);
+	/** Internal UUID only — URL query may carry a slug until bootstrap resolves. */
+	const [vendorId, setVendorId] = useState(
+		() => (isUuidLike(initialVendorId) ? initialVendorId.trim() : ''),
+	);
 	const [categoryId, setCategoryId] = useState(initialCategoryId);
 	const [title, setTitle] = useState('');
 	const [slug, setSlug] = useState('');
@@ -233,30 +258,27 @@ export function ProductEditorForm({
 				setCategories(categoryRows);
 
 				let selected = vendorId;
-				if(
-					isCreating
-					&& !vendorBootstrapDone.current
-					&& !selected
-				) {
+				if(isCreating && !vendorBootstrapDone.current) {
 					vendorBootstrapDone.current = true;
-					const fromQuery = initialVendorId
-						&& vendorRows.some((row) => row.id === initialVendorId)
-						? initialVendorId
-						: '';
+					const fromQuery = matchVendorByRef(vendorRows, initialVendorId);
 					if(fromQuery) {
-						selected = fromQuery;
-						setVendorId(fromQuery);
+						selected = fromQuery.id;
+						setVendorId(fromQuery.id);
 					}
-					else if(vendorRows.length === 1) {
+					else if(!selected && vendorRows.length === 1) {
 						selected = vendorRows[0]?.id || '';
 						if(selected) {
 							setVendorId(selected);
 						}
 					}
-					// Multi-vendor create: leave empty until the seller picks.
-				}
-				else if(isCreating && !vendorBootstrapDone.current) {
-					vendorBootstrapDone.current = true;
+					else if(
+						selected
+						&& !vendorRows.some((row) => row.id === selected)
+					) {
+						selected = '';
+						setVendorId('');
+					}
+					// Multi-vendor create with no query: leave empty until pick.
 				}
 
 				const uomRows = await listUoms(selected || undefined).catch(() => []);
@@ -276,13 +298,26 @@ export function ProductEditorForm({
 	}, [user, vendorId, isCreating, initialVendorId]);
 
 	useEffect(() => {
-		if(productEditorIntent !== 'edit' || !existingProductId || !user) {
+		if(productEditorIntent !== 'edit' || !user) {
+			return;
+		}
+		const hasSlugPair = Boolean(
+			existingVendorSlug.trim() && existingProductSlug.trim(),
+		);
+		const hasId = Boolean(existingProductId?.trim());
+		if(!hasSlugPair && !hasId) {
 			return;
 		}
 
 		setLoadingExisting(true);
-		getCatalogProductById(existingProductId)
+		const load = hasSlugPair
+			? getCatalogProduct(existingVendorSlug, existingProductSlug)
+			: getCatalogProductById(existingProductId!);
+		load
 			.then(async (product) => {
+				setResolvedProductId(product.id);
+				setResolvedVendorSlug(product.vendor.slug);
+				setResolvedProductSlug(product.slug);
 				setVendorId(product.vendor.id ?? '');
 				const categoryRows = await listCatalogCategories().catch(() => []);
 				setCategories(categoryRows);
@@ -442,12 +477,51 @@ export function ProductEditorForm({
 				);
 			})
 			.finally(() => setLoadingExisting(false));
-	}, [productEditorIntent, existingProductId, user]);
+	}, [
+		productEditorIntent,
+		existingProductId,
+		existingVendorSlug,
+		existingProductSlug,
+		user,
+		initialCategoryId,
+	]);
 
 	const selectedVendor = useMemo(
 		() => vendors.find((row) => row.id === vendorId) ?? null,
 		[vendors, vendorId],
 	);
+
+	/** Keep create URLs on the vendor slug (not UUID) in ?vendorId=. */
+	useEffect(() => {
+		if(!isCreating || vendors.length === 0) {
+			return;
+		}
+		const nextRef = selectedVendor
+			? vendorUrlRef(selectedVendor)
+			: '';
+		const currentParams = new URLSearchParams(
+			typeof window === 'undefined'
+				? ''
+				: window.location.search,
+		);
+		const current = currentParams.get('vendorId') ?? '';
+		if(current === nextRef) {
+			return;
+		}
+		const nextPath = productCreateHref({
+			surface: productEditorSurface,
+			vendorRef: nextRef || null,
+			categoryId: currentParams.get('categoryId') || initialCategoryId || null,
+		});
+		router.replace(nextPath, { scroll: false });
+	}, [
+		isCreating,
+		vendors.length,
+		selectedVendor,
+		productEditorSurface,
+		initialCategoryId,
+		router,
+	]);
 
 	const focusedRow = packOrPieceRows.find((row) => row.clientKey === focusedClientKey)
 		?? packOrPieceRows[0]
@@ -601,12 +675,15 @@ export function ProductEditorForm({
 			if(isCreating) {
 				const product = await createCatalogProduct(buildCreatePayload());
 				router.push(
-					`/place-et-marque/${product.vendor.slug}/${product.slug}`,
+					productViewHref({
+						vendorSlug: product.vendor.slug,
+						productSlug: product.slug,
+					}),
 				);
 				return;
 			}
 
-			if(!existingProductId) {
+			if(!resolvedProductId) {
 				throw new Error('Missing product id for edit.');
 			}
 
@@ -632,7 +709,7 @@ export function ProductEditorForm({
 				inheritQtyToChildren: Boolean(row.role === 'PACK' && row.breakable),
 			}));
 
-			const product = await updateCatalogProduct(existingProductId, {
+			const product = await updateCatalogProduct(resolvedProductId, {
 				title: payload.title,
 				slug: payload.slug,
 				description: payload.description,
@@ -648,8 +725,13 @@ export function ProductEditorForm({
 				offerings: offeringUpserts,
 				containments: payload.containments,
 			});
+			setResolvedVendorSlug(product.vendor.slug);
+			setResolvedProductSlug(product.slug);
 			router.push(
-				`/place-et-marque/${product.vendor.slug}/${product.slug}`,
+				productViewHref({
+					vendorSlug: product.vendor.slug,
+					productSlug: product.slug,
+				}),
 			);
 		}
 		catch(submitError) {
@@ -1762,8 +1844,25 @@ export function ProductEditorForm({
 
 			<CatalogWorkspaceSwitcher
 				active={productEditorSurface}
-				productId={existingProductId}
 				intent={productEditorIntent}
+				vendorRef={
+					isCreating
+						? (selectedVendor
+							? vendorUrlRef(selectedVendor)
+							: initialVendorId || null)
+						: null
+				}
+				vendorSlug={
+					isCreating
+						? null
+						: (resolvedVendorSlug || selectedVendor?.slug || null)
+				}
+				productSlug={
+					isCreating
+						? null
+						: (resolvedProductSlug || slug || null)
+				}
+				categoryId={initialCategoryId || null}
 				quiet={!isAdvancedSurface}
 				confirmLeave={formIsDirty}
 			/>

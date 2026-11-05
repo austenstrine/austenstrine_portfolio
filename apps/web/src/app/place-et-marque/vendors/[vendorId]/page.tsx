@@ -36,6 +36,7 @@ import { DocumentIcon } from '../../../../components/icons/DocumentIcon';
 import { EyeIcon } from '../../../../components/icons/EyeIcon';
 import { PlusIcon } from '../../../../components/icons/PlusIcon';
 import { useWidgetOpenState } from '../../../../hooks/useWidgetOpenState';
+import { productCreateHref } from '../../../../lib/vendor-ref';
 
 function slugify(value: string): string {
 	return value
@@ -1598,7 +1599,7 @@ function VendorDetailContent() {
 												transition
 												hover:bg-sky/5
 											"
-											href={`/place-et-marque/products/new?vendorId=${encodeURIComponent(vendor.id)}`}
+											href={productCreateHref({ vendor })}
 										>
 											<PlusIcon
 												className="

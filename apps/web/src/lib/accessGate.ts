@@ -45,6 +45,10 @@ export function safeNextPath(raw: string | null | undefined, fallback = '/'): st
 	return raw;
 }
 
+/** Seller edit/configure under /<vendorSlug>/<productSlug>/(edit|configure). */
+const PRODUCT_SLUG_EDITOR_PATH =
+	/^\/place-et-marque\/[^/]+\/[^/]+\/(edit|configure)$/;
+
 export function pathRequiresVendor(path: string): boolean {
 	const pathname = path.split('?')[0] ?? path;
 	if(pathname === '/place-et-marque/vendors') {
@@ -53,6 +57,9 @@ export function pathRequiresVendor(path: string): boolean {
 	}
 	if(pathname.startsWith('/place-et-marque/invites/')) {
 		return false;
+	}
+	if(PRODUCT_SLUG_EDITOR_PATH.test(pathname)) {
+		return true;
 	}
 	return VENDOR_REQUIRED_PREFIXES.some(
 		(prefix) => pathname === prefix || pathname.startsWith(prefix),
@@ -79,7 +86,10 @@ export function pathUsesSellerChrome(path: string): boolean {
 	) {
 		return true;
 	}
-	return /^\/place-et-marque\/products\/[^/]+\/(edit|configure)$/.test(pathname);
+	if(/^\/place-et-marque\/products\/[^/]+\/(edit|configure)$/.test(pathname)) {
+		return true;
+	}
+	return PRODUCT_SLUG_EDITOR_PATH.test(pathname);
 }
 
 export function buildLoginUrl(options: {
