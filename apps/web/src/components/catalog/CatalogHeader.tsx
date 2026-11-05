@@ -108,6 +108,31 @@ function AccountMenu({
 			return;
 		}
 
+		let cancelled = false;
+		setNotificationsLoading(true);
+		Promise.all([
+			getUnreadNotificationCount(),
+			listNotifications(20),
+		])
+			.then(([countResult, rows]) => {
+				if(cancelled) {
+					return;
+				}
+				setUnreadCount(countResult.count);
+				setNotifications(rows);
+			})
+			.catch(() => {
+				if(cancelled) {
+					return;
+				}
+				setNotifications([]);
+			})
+			.finally(() => {
+				if(!cancelled) {
+					setNotificationsLoading(false);
+				}
+			});
+
 		const onPointerDown = (event: PointerEvent) => {
 			if(!rootRef.current?.contains(event.target as Node)) {
 				setOpen(false);
@@ -122,37 +147,11 @@ function AccountMenu({
 		document.addEventListener('pointerdown', onPointerDown);
 		window.addEventListener('keydown', onKeyDown);
 		return () => {
+			cancelled = true;
 			document.removeEventListener('pointerdown', onPointerDown);
 			window.removeEventListener('keydown', onKeyDown);
 		};
 	}, [open]);
-
-	useEffect(() => {
-		if(!open || !notificationsOpen) {
-			return;
-		}
-		let cancelled = false;
-		setNotificationsLoading(true);
-		listNotifications(20)
-			.then((rows) => {
-				if(!cancelled) {
-					setNotifications(rows);
-				}
-			})
-			.catch(() => {
-				if(!cancelled) {
-					setNotifications([]);
-				}
-			})
-			.finally(() => {
-				if(!cancelled) {
-					setNotificationsLoading(false);
-				}
-			});
-		return () => {
-			cancelled = true;
-		};
-	}, [open, notificationsOpen]);
 
 	async function onOpenNotification(item: NotificationDto) {
 		try {
@@ -291,185 +290,191 @@ function AccountMenu({
 									pt-2
 								"
 							>
-								<details
-									onToggle={(event) => {
-										setNotificationsOpen(
-											(event.currentTarget as HTMLDetailsElement).open,
-										);
-									}}
-									open={notificationsOpen}
+								<button
+									aria-expanded={notificationsOpen}
+									className="
+										flex
+										w-full
+										cursor-pointer
+										items-center
+										gap-2
+										text-left
+										text-[11px]
+										font-semibold
+										uppercase
+										tracking-[0.16em]
+										text-slate-500
+									"
+									onClick={() =>
+										setNotificationsOpen((current) => !current)
+									}
+									type="button"
 								>
-									<summary
+									<BellIcon
 										className="
-											flex
-											cursor-pointer
-											list-none
-											items-center
-											gap-2
-											text-[11px]
-											font-semibold
-											uppercase
-											tracking-[0.16em]
-											text-slate-500
-											[&::-webkit-details-marker]:hidden
+											h-3.5
+											w-3.5
+											shrink-0
+											text-sky
 										"
-									>
-										<BellIcon
+									/>
+									<span className="flex-1">
+										Notifications
+									</span>
+									{unreadCount > 0
+										? (
+											<span
+												className="
+													rounded-full
+													bg-signal
+													px-1.5
+													text-[10px]
+													font-semibold
+													normal-case
+													tracking-normal
+													text-white
+												"
+											>
+												{unreadCount > 99
+													? '99+'
+													: unreadCount
+												}
+											</span>
+										)
+										: null
+									}
+								</button>
+								{notificationsOpen
+									? (
+										<div
 											className="
-												h-3.5
-												w-3.5
-												shrink-0
-												text-sky
+												mt-2
+												flex
+												flex-col
+												gap-2
 											"
-										/>
-										<span className="flex-1">
-											Notifications
-										</span>
-										{unreadCount > 0
-											? (
-												<span
-													className="
-														rounded-full
-														bg-signal
-														px-1.5
-														text-[10px]
-														font-semibold
-														normal-case
-														tracking-normal
-														text-white
-													"
-												>
-													{unreadCount > 99
-														? '99+'
-														: unreadCount
-													}
-												</span>
-											)
-											: null
-										}
-									</summary>
-									<div
-										className="
-											mt-2
-											flex
-											flex-col
-											gap-2
-										"
-									>
-										{unreadCount > 0
-											? (
-												<button
-													className="
-														self-start
-														text-xs
-														font-semibold
-														text-asgreen
-														hover:underline
-													"
-													onClick={() => {
-														void onMarkAllRead();
-													}}
-													type="button"
-												>
-													Mark all read
-												</button>
-											)
-											: null
-										}
-										{notificationsLoading
-											? (
-												<p className="text-xs text-slate-500">
-													Loading…
-												</p>
-											)
-											: notifications.length === 0
+										>
+											{unreadCount > 0
+												? (
+													<button
+														className="
+															relative
+															z-10
+															self-start
+															text-xs
+															font-semibold
+															text-asgreen
+															hover:underline
+														"
+														onClick={() => {
+															void onMarkAllRead();
+														}}
+														type="button"
+													>
+														Mark all read
+													</button>
+												)
+												: null
+											}
+											{notificationsLoading
 												? (
 													<p className="text-xs text-slate-500">
-														No notifications yet.
+														Loading…
 													</p>
 												)
-												: (
-													<ul
-														className="
-															flex
-															max-h-56
-															flex-col
-															gap-1
-															overflow-y-auto
-														"
-													>
-														{notifications.map((item) => (
-															<li key={item.id}>
-																<button
-																	className={
-																		item.readAt
-																			? `
-																				w-full
-																				rounded-lg
-																				px-2
-																				py-1.5
-																				text-left
-																				hover:bg-frost
-																			`
-																			: `
-																				w-full
-																				rounded-lg
-																				bg-asgreen/10
-																				px-2
-																				py-1.5
-																				text-left
-																				hover:bg-asgreen/15
-																			`
-																	}
-																	onClick={() => {
-																		void onOpenNotification(item);
-																	}}
-																	role="menuitem"
-																	type="button"
-																>
-																	<span
+												: notifications.length === 0
+													? (
+														<p className="text-xs text-slate-500">
+															{unreadCount > 0
+																? 'Loading…'
+																: 'No notifications yet.'
+															}
+														</p>
+													)
+													: (
+														<ul
+															className="
+																flex
+																max-h-56
+																flex-col
+																gap-1
+																overflow-y-auto
+															"
+														>
+															{notifications.map((item) => (
+																<li key={item.id}>
+																	<button
 																		className={
 																			item.readAt
 																				? `
-																					block
-																					text-sm
-																					font-medium
-																					text-ink
+																					w-full
+																					rounded-lg
+																					px-2
+																					py-1.5
+																					text-left
+																					hover:bg-frost
 																				`
 																				: `
-																					block
-																					text-sm
-																					font-semibold
-																					text-sky
+																					w-full
+																					rounded-lg
+																					bg-asgreen/10
+																					px-2
+																					py-1.5
+																					text-left
+																					hover:bg-asgreen/15
 																				`
 																		}
+																		onClick={() => {
+																			void onOpenNotification(item);
+																		}}
+																		role="menuitem"
+																		type="button"
 																	>
-																		{item.title}
-																	</span>
-																	{item.body
-																		? (
-																			<span
-																				className="
-																					mt-0.5
-																					block
-																					text-xs
-																					text-slate-500
-																					line-clamp-2
-																				"
-																			>
-																				{item.body}
-																			</span>
-																		)
-																		: null
-																	}
-																</button>
-															</li>
-														))}
-													</ul>
-												)
-										}
-									</div>
-								</details>
+																		<span
+																			className={
+																				item.readAt
+																					? `
+																						block
+																						text-sm
+																						font-medium
+																						text-ink
+																					`
+																					: `
+																						block
+																						text-sm
+																						font-semibold
+																						text-sky
+																					`
+																			}
+																		>
+																			{item.title}
+																		</span>
+																		{item.body
+																			? (
+																				<span
+																					className="
+																						mt-0.5
+																						block
+																						text-xs
+																						text-slate-500
+																						line-clamp-2
+																					"
+																				>
+																					{item.body}
+																				</span>
+																			)
+																			: null
+																		}
+																	</button>
+																</li>
+															))}
+														</ul>
+													)
+											}
+										</div>
+									)
+									: null
+								}
 							</li>
 							<li
 								className="

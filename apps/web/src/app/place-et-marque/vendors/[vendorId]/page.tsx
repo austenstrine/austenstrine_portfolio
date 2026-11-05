@@ -629,14 +629,15 @@ function VendorDetailContent() {
 													ease-out
 													${linkNameOpen
 														? 'grid-rows-[1fr] opacity-100'
-														: 'grid-rows-[0fr] opacity-0'
+														: 'hidden grid-rows-[0fr] opacity-0'
 													}
 												`}
 												aria-hidden={!linkNameOpen}
-												{...(!linkNameOpen
-													? { inert: true }
-													: {})
-												}
+												ref={(el) => {
+													if(el) {
+														el.inert = !linkNameOpen;
+													}
+												}}
 											>
 												<div className="overflow-hidden">
 													<section
@@ -948,15 +949,16 @@ function VendorDetailContent() {
 									ease-out
 									${membersOpen
 										? 'grid-rows-[1fr] opacity-100'
-										: 'grid-rows-[0fr] opacity-0'
+										: 'hidden grid-rows-[0fr] opacity-0'
 									}
 								`}
 								id="members-panel"
 								aria-hidden={!membersOpen}
-								{...(!membersOpen
-									? { inert: true }
-									: {})
-								}
+								ref={(el) => {
+									if(el) {
+										el.inert = !membersOpen;
+									}
+								}}
 							>
 								<div className="overflow-hidden">
 							<ul
@@ -1490,15 +1492,16 @@ function VendorDetailContent() {
 											ease-out
 											${payoutsOpen
 												? 'grid-rows-[1fr] opacity-100'
-												: 'grid-rows-[0fr] opacity-0'
+												: 'hidden grid-rows-[0fr] opacity-0'
 											}
 										`}
 										id="payouts-panel"
 										aria-hidden={!payoutsOpen}
-										{...(!payoutsOpen
-											? { inert: true }
-											: {})
-										}
+										ref={(el) => {
+											if(el) {
+												el.inert = !payoutsOpen;
+											}
+										}}
 									>
 										<div className="overflow-hidden">
 									<p
@@ -2244,15 +2247,16 @@ function VendorDetailContent() {
 											ease-out
 											${appPasswordsOpen
 												? 'grid-rows-[1fr] opacity-100'
-												: 'grid-rows-[0fr] opacity-0'
+												: 'hidden grid-rows-[0fr] opacity-0'
 											}
 										`}
 										id="app-passwords-panel"
 										aria-hidden={!appPasswordsOpen}
-										{...(!appPasswordsOpen
-											? { inert: true }
-											: {})
-										}
+										ref={(el) => {
+											if(el) {
+												el.inert = !appPasswordsOpen;
+											}
+										}}
 									>
 										<div className="overflow-hidden">
 											<p
