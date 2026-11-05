@@ -89,3 +89,16 @@ export function productEditHrefById(
 		? `/place-et-marque/products/${encodeURIComponent(productId)}/configure`
 		: `/place-et-marque/products/${encodeURIComponent(productId)}/edit`;
 }
+
+/** True when URL segments are not the human vendor/product link names. */
+export function productPathNeedsCanonicalRedirect(
+	current: { vendorSlug: string; productSlug: string },
+	canonical: ProductPathParts,
+): boolean {
+	const vendor = current.vendorSlug.trim();
+	const product = current.productSlug.trim();
+	if(!vendor || !product) {
+		return false;
+	}
+	return vendor !== canonical.vendorSlug || product !== canonical.productSlug;
+}

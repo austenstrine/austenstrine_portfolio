@@ -66,6 +66,8 @@ import {
 	isUuidLike,
 	matchVendorByRef,
 	productCreateHref,
+	productEditHref,
+	productPathNeedsCanonicalRedirect,
 	productViewHref,
 	vendorUrlRef,
 } from '../../lib/vendor-ref';
@@ -301,24 +303,49 @@ export function ProductEditorForm({
 		if(productEditorIntent !== 'edit' || !user) {
 			return;
 		}
-		const hasSlugPair = Boolean(
-			existingVendorSlug.trim() && existingProductSlug.trim(),
-		);
+		const vendorRef = existingVendorSlug.trim();
+		const productRef = existingProductSlug.trim();
+		const hasSlugPair = Boolean(vendorRef && productRef);
 		const hasId = Boolean(existingProductId?.trim());
 		if(!hasSlugPair && !hasId) {
 			return;
 		}
 
 		setLoadingExisting(true);
-		const load = hasSlugPair
-			? getCatalogProduct(existingVendorSlug, existingProductSlug)
-			: getCatalogProductById(existingProductId!);
+		const load = hasId
+			? getCatalogProductById(existingProductId!)
+			: isUuidLike(productRef)
+				? getCatalogProductById(productRef)
+				: getCatalogProduct(vendorRef, productRef);
 		load
 			.then(async (product) => {
 				setResolvedProductId(product.id);
 				setResolvedVendorSlug(product.vendor.slug);
 				setResolvedProductSlug(product.slug);
 				setVendorId(product.vendor.id ?? '');
+				if(
+					hasSlugPair
+					&& productPathNeedsCanonicalRedirect(
+						{
+							vendorSlug: vendorRef,
+							productSlug: productRef,
+						},
+						{
+							vendorSlug: product.vendor.slug,
+							productSlug: product.slug,
+						},
+					)
+				) {
+					router.replace(
+						productEditHref(
+							{
+								vendorSlug: product.vendor.slug,
+								productSlug: product.slug,
+							},
+							productEditorSurface,
+						),
+					);
+				}
 				const categoryRows = await listCatalogCategories().catch(() => []);
 				setCategories(categoryRows);
 				const matchedCategoryId = categoryRows.find(
@@ -479,11 +506,13 @@ export function ProductEditorForm({
 			.finally(() => setLoadingExisting(false));
 	}, [
 		productEditorIntent,
+		productEditorSurface,
 		existingProductId,
 		existingVendorSlug,
 		existingProductSlug,
 		user,
 		initialCategoryId,
+		router,
 	]);
 
 	const selectedVendor = useMemo(
@@ -491,7 +520,10 @@ export function ProductEditorForm({
 		[vendors, vendorId],
 	);
 
-	/** Keep create URLs on the vendor slug (not UUID) in ?vendorId=. */
+	/**
+	 * Keep create URLs on the vendor link name (not UUID) in ?vendorId=.
+	 * Resolves against the signed-in user's vendors (selected membership).
+	 */
 	useEffect(() => {
 		if(!isCreating || vendors.length === 0) {
 			return;
@@ -506,6 +538,10 @@ export function ProductEditorForm({
 		);
 		const current = currentParams.get('vendorId') ?? '';
 		if(current === nextRef) {
+			return;
+		}
+		/** Avoid wiping a typed slug before membership rows finish matching. */
+		if(!nextRef && current && !isUuidLike(current)) {
 			return;
 		}
 		const nextPath = productCreateHref({
