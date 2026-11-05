@@ -19,10 +19,19 @@ Deploy-on-box, not ECR/Fargate. Images build on the instance.
   records at it. Canonical shopper host is **www**; apex HTTP/HTTPS redirect
   there. Admin CRM is `crm.austenstrine.dev` (own Next app + nginx vhost).
   Public IP can change on stop/start without EIP.
-- **TLS certs:** `live.sh` → `ops/deploy/ensure-tls.sh` obtains/expands LE for
-  `austenstrine.dev` + `www` + `cdn` + `crm` (needs `CERTBOT_EMAIL`), copies
-  into `TLS_CERTS_DIR` (default `/etc/nginx/certs`) via `sync-tls-certs.sh`,
-  and installs a certbot renew deploy hook. Nginx mounts that dir read-only.
+- **TLS certs:** `live.sh` stops compose `nginx` briefly, then
+  `ops/deploy/ensure-tls.sh` obtains/expands LE. Default is **HTTP-01
+  standalone** for `austenstrine.dev` + `www` + `cdn` + `crm` (needs
+  `CERTBOT_EMAIL` in `.env` — deploy fails if SANs are incomplete and email
+  is missing). Optional wildcard: set `CERTBOT_AUTH=dns-namecheap` and put
+  Namecheap API creds in `CERTBOT_DNS_CREDENTIALS` (default
+  `/etc/letsencrypt/namecheap.ini`); issues `austenstrine.dev` +
+  `*.austenstrine.dev`. Namecheap API needs account eligibility + EIP
+  whitelist — use HTTP-01 + crm SAN unless that is already set up. Syncs
+  into `TLS_CERTS_DIR` (default `/etc/nginx/certs`) via `sync-tls-certs.sh`
+  and installs a certbot renew deploy hook. Nginx mounts that dir read-only;
+  `live.sh` force-recreates the proxy so bind-mounted `nginx.prod.conf`
+  always applies.
 - **CDN:** Go binary from
   [golang-image-cdn](https://github.com/austenstrine/golang-image-cdn);
   `live.sh` runs `ops/cdn/ensure-source.sh` (shallow clone → `ops/cdn/src`)
@@ -41,13 +50,23 @@ Deploy-on-box, not ECR/Fargate. Images build on the instance.
 - **CI:** `.github/workflows/deploy.yml` SSHs to the box, `git reset --hard
   origin/master`, then runs `live.sh` (native x86_64 build). Ship live by
   merging `development` → `master` first; deploy always tracks `master`.
-- **Live `.env` for CRM (after CRM lands on master):** set
-  `WEB_URL=https://www.austenstrine.dev`,
-  `CRM_URL=https://crm.austenstrine.dev`,
-  `COOKIE_DOMAIN=.austenstrine.dev`. Leave `CHECKOUT_DEV_BYPASS` unset.
-  `CDN_TOKEN` must not be `local-cdn-dev`. Optional override:
+- **Live `.env` keys (CRM / cookies / CORS / TLS):** `live.sh` refuses to
+  roll without these non-empty values:
+
+  | Key | Exact live value |
+  |-----|------------------|
+  | `WEB_URL` | `https://www.austenstrine.dev` |
+  | `CRM_URL` | `https://crm.austenstrine.dev` |
+  | `COOKIE_DOMAIN` | `.austenstrine.dev` (leading dot) |
+  | `CERTBOT_EMAIL` | your ACME contact email |
+  | `CDN_TOKEN` | strong random (`openssl rand -hex 32`), not `local-cdn-dev` |
+  | `JWT_ACCESS_SECRET` / `JWT_PENDING_SECRET` / `OTP_PEPPER` | distinct secrets |
+  | `OPENSEARCH_PASSWORD` | matches compose OpenSearch admin password |
+
+  Leave `CHECKOUT_DEV_BYPASS` unset. Optional:
   `CRM_NEXT_PUBLIC_API_BASE_URL=https://crm.austenstrine.dev/api`
-  (compose default already).
+  (compose default already). `WEB_URL` + `CRM_URL` feed Nest CORS and
+  `CrmOriginGuard`; without them the API container exits and nginx returns 502.
 
 Prisma engines for Alpine: `binaryTargets` in `apps/api/prisma/schema.prisma`
 include `linux-musl-openssl-3.0.x` (amd64 live) plus optional

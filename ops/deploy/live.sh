@@ -77,6 +77,32 @@ wait_http() {
 	return 1
 }
 
+# Require production CORS / cookie / TLS keys before rolling API/CRM.
+# Missing WEB_URL/CRM_URL → Nest refuses to boot (502 through nginx).
+require_live_env() {
+	local missing=()
+	local key val
+	for key in WEB_URL CRM_URL COOKIE_DOMAIN CERTBOT_EMAIL OPENSEARCH_PASSWORD CDN_TOKEN \
+		JWT_ACCESS_SECRET JWT_PENDING_SECRET OTP_PEPPER; do
+		val="$(grep -E "^[[:space:]]*${key}=" "$ROOT/.env" 2>/dev/null | head -1 | cut -d= -f2- | tr -d '"' | tr -d "'" | tr -d '\r' || true)"
+		if [[ -z "${val// }" ]]; then
+			missing+=("$key")
+		fi
+	done
+	if [[ ${#missing[@]} -gt 0 ]]; then
+		echo "live.sh: .env missing required live keys: ${missing[*]}" >&2
+		echo "live.sh: set at least WEB_URL CRM_URL COOKIE_DOMAIN=.austenstrine.dev CERTBOT_EMAIL (see docs/aws-cicd-notes.md)" >&2
+		exit 1
+	fi
+	if grep -Eiq '^[[:space:]]*CDN_TOKEN[[:space:]]*=[[:space:]]*local-cdn-dev[[:space:]]*$' "$ROOT/.env"; then
+		echo "live.sh: CDN_TOKEN=local-cdn-dev is refused in production — set a strong random value" >&2
+		exit 1
+	fi
+	if grep -Eiq '^[[:space:]]*CHECKOUT_DEV_BYPASS[[:space:]]*=[[:space:]]*1[[:space:]]*$' "$ROOT/.env"; then
+		echo "live.sh: WARN CHECKOUT_DEV_BYPASS=1 on live — unset it" >&2
+	fi
+}
+
 ensure_docker
 COMPOSE=("${DOCKER[@]}" compose -f docker-compose.yml -f docker-compose.prod.yml)
 
@@ -114,6 +140,8 @@ if [[ ! -f "$ROOT/.env" ]]; then
 	echo "live.sh: missing $ROOT/.env — copy .env.example and fill production secrets first." >&2
 	exit 1
 fi
+
+require_live_env
 
 # Dust banner shows on non-local hosts unless maintenance_banner_bypass=true.
 # Live must leave that flag unset/false.
@@ -155,7 +183,16 @@ if command -v systemctl >/dev/null 2>&1 && systemctl is-active --quiet nginx 2>/
 	sudo systemctl disable nginx || true
 fi
 
-# TLS into the path nginx mounts. Standalone obtain needs :80 free (host nginx stopped).
+# Certbot HTTP-01 standalone needs :80 free. Compose proxy holds 80/443 on a
+# live box — stop it briefly before ensure-tls (DNS-01 skips this need, but
+# stopping is still harmless and keeps one code path).
+if "${DOCKER[@]}" ps --format '{{.Names}}' 2>/dev/null | grep -qx portfolio-proxy \
+	|| "${DOCKER[@]}" ps -a --format '{{.Names}}' 2>/dev/null | grep -qx portfolio-proxy; then
+	echo "live.sh: stopping portfolio-proxy so certbot can bind :80"
+	"${COMPOSE[@]}" stop nginx || "${DOCKER[@]}" stop portfolio-proxy || true
+fi
+
+# TLS into the path nginx mounts. Standalone obtain needs :80 free.
 echo "live.sh: ensuring TLS certs in ${TLS_CERTS_DIR:-/etc/nginx/certs}"
 bash "$ROOT/ops/deploy/ensure-tls.sh"
 
@@ -164,6 +201,38 @@ echo "live.sh: building api web crm cdn nginx images (infra stays up)"
 
 echo "live.sh: ensuring infra (postgres redis opensearch)"
 "${COMPOSE[@]}" up -d postgres redis opensearch
+
+echo "live.sh: waiting for postgres"
+for ((i = 1; i <= 45; i++)); do
+	if "${DOCKER[@]}" exec -T portfolio-postgres pg_isready -U postgres >/dev/null 2>&1; then
+		echo "live.sh: postgres ready"
+		break
+	fi
+	sleep 2
+	if [[ "$i" -eq 45 ]]; then
+		echo "live.sh: postgres not ready after 90s" >&2
+		"${DOCKER[@]}" logs --tail 80 portfolio-postgres || true
+		exit 1
+	fi
+done
+
+os_user="$(grep -E '^[[:space:]]*OPENSEARCH_USERNAME=' "$ROOT/.env" | head -1 | cut -d= -f2- | tr -d '"' | tr -d "'" | tr -d '\r' || true)"
+os_pass="$(grep -E '^[[:space:]]*OPENSEARCH_PASSWORD=' "$ROOT/.env" | head -1 | cut -d= -f2- | tr -d '"' | tr -d "'" | tr -d '\r' || true)"
+os_user="${os_user:-admin}"
+echo "live.sh: waiting for opensearch"
+for ((i = 1; i <= 60; i++)); do
+	if "${DOCKER[@]}" exec -T portfolio-opensearch curl -sk -u "${os_user}:${os_pass}" \
+		'https://127.0.0.1:9200/_cluster/health' >/dev/null 2>&1; then
+		echo "live.sh: opensearch ready"
+		break
+	fi
+	sleep 2
+	if [[ "$i" -eq 60 ]]; then
+		echo "live.sh: opensearch not ready after 120s" >&2
+		"${DOCKER[@]}" logs --tail 80 portfolio-opensearch || true
+		exit 1
+	fi
+done
 
 # CDN after infra, before api (uploads talk to portfolio-cdn on the
 # compose network). Pull-origin web may still be rolling — fine.
@@ -185,8 +254,10 @@ echo "live.sh: rolling web (--no-deps)"
 echo "live.sh: rolling crm (--no-deps)"
 "${COMPOSE[@]}" up -d --no-deps crm
 
-echo "live.sh: rolling nginx (--no-deps)"
-"${COMPOSE[@]}" up -d --no-deps nginx
+# Force recreate so bind-mounted nginx.prod.conf + new image always apply
+# (plain `up -d` left a 43h-old proxy running after the CRM merge deploy).
+echo "live.sh: rolling nginx (--no-deps --force-recreate)"
+"${COMPOSE[@]}" up -d --no-deps --force-recreate nginx
 
 echo "live.sh: stack is up (OpenSearch Dashboards off; Go CDN + CRM on-box)"
 "${COMPOSE[@]}" ps
