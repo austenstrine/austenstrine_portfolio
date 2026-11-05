@@ -233,6 +233,7 @@ function AccountMenu({
 					max-w-[9rem]
 					items-center
 					gap-1
+					overflow-visible
 					text-slate-600
 					hover:text-ink
 					sm:max-w-[14rem]
@@ -246,11 +247,13 @@ function AccountMenu({
 					className="
 						relative
 						min-w-0
-						truncate
+						overflow-visible
 						pr-2.5
 					"
 				>
-					{accountLabel(email)}
+					<span className="block truncate">
+						{accountLabel(email)}
+					</span>
 					<UnreadBadge
 						className="
 							absolute

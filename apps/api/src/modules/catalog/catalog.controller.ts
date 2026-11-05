@@ -39,6 +39,7 @@ import { AcceptVendorInviteDto } from './dto/accept-vendor-invite.dto';
 import { CreateVendorAppPasswordDto } from './dto/create-vendor-app-password.dto';
 import { CreateVendorDto } from './dto/create-vendor.dto';
 import { CreateVendorInviteDto } from './dto/create-vendor-invite.dto';
+import { JoinDemoDto } from './dto/join-demo.dto';
 import { DeleteCatalogProductsDto } from './dto/delete-catalog-products.dto';
 import { RequestCategoryDto } from './dto/request-category.dto';
 import { RequestVendorLinkNameDto } from './dto/request-vendor-link-name.dto';
@@ -53,6 +54,7 @@ import { CatalogImportService } from './import/catalog-import.service';
 import { InventoryService } from './inventory/inventory.service';
 import { VendorAppPasswordService } from './vendor-app-password.service';
 import { VendorInviteService } from './vendor-invite.service';
+import { DemoJoinService } from './demo-join.service';
 import { UomMergeService } from './uom-merge.service';
 import { VendorService } from './vendor.service';
 
@@ -68,6 +70,7 @@ export class CatalogController {
 		private readonly inventory: InventoryService,
 		private readonly vendors: VendorService,
 		private readonly invites: VendorInviteService,
+		private readonly demoJoin: DemoJoinService,
 		private readonly uomMerges: UomMergeService,
 		private readonly appPasswords: VendorAppPasswordService,
 		private readonly imports: CatalogImportService,
@@ -334,6 +337,16 @@ export class CatalogController {
 			throw new BadRequestException('Authenticated user is missing an email address.');
 		}
 		return this.invites.acceptInvite(req.user!.id, email, dto.token);
+	}
+
+	@Get('demo')
+	getDemoInfo() {
+		return this.demoJoin.getDemoInfo();
+	}
+
+	@Post('demo/join')
+	joinDemo(@Body() dto: JoinDemoDto) {
+		return this.demoJoin.joinDemo(dto.email);
 	}
 
 	@Get('products')

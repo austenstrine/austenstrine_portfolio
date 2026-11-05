@@ -222,10 +222,16 @@ function AcceptInviteContent() {
 														hover:border-sky
 														hover:text-sky
 													"
-													href={buildRegisterUrl({
-														next: acceptPath,
-														reason: ACCESS_REASONS.invite,
-													})}
+													href={(() => {
+														const base = buildRegisterUrl({
+															next: acceptPath,
+															reason: ACCESS_REASONS.invite,
+														});
+														const sep = base.includes('?')
+															? '&'
+															: '?';
+														return `${base}${sep}email=${encodeURIComponent(peek.email)}`;
+													})()}
 												>
 													Create account
 												</a>

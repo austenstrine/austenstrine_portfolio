@@ -586,6 +586,37 @@ export function acceptVendorInvite(token: string): Promise<AcceptVendorInviteRes
 	});
 }
 
+export type DemoVendorInfo = {
+	vendorId: string;
+	vendorName: string;
+	vendorSlug: string;
+	role: 'EDITOR' | 'VIEWER' | 'OWNER';
+	description: string;
+};
+
+export type JoinDemoResult = {
+	alreadyMember: boolean;
+	vendorId: string;
+	vendorName: string;
+	vendorSlug: string;
+	role: 'EDITOR' | 'VIEWER' | 'OWNER';
+	email: string;
+	token: string | null;
+	acceptPath: string | null;
+	expiresAt: string | null;
+};
+
+export function getDemoVendorInfo(): Promise<DemoVendorInfo> {
+	return catalogRequest<DemoVendorInfo>('/demo');
+}
+
+export function joinDemoVendor(email: string): Promise<JoinDemoResult> {
+	return catalogRequest<JoinDemoResult>('/demo/join', {
+		method: 'POST',
+		body: JSON.stringify({ email }),
+	});
+}
+
 export type UnitOfMeasure = {
 	id: string;
 	code: string;
