@@ -4,11 +4,15 @@
 
 :root {
   color-scheme: light;
-  /* flex-sheet viewport-element: mean of 1vw and 1vh (see austenstrine/flex-sheet) */
-  --viewport-element--large: calc(1vw + 1vh);
-  --viewport-element: calc(var(--viewport-element--large) / 2);
-  --viewport-element--small: calc(var(--viewport-element--large) / 4);
-  --viewport-element--tiny: calc(var(--viewport-element--large) / 8);
+  /*
+   * Viewport-element scale: flex-sheet names, shifted +1 step larger than flex-sheet
+   * defaults (flex-sheet base was (1vw+1vh)/2; ours is 1vw+1vh).
+   * See https://github.com/austenstrine/flex-sheet/blob/master/flex-sheet.css
+   */
+  --viewport-element--large: calc(2vw + 2vh);
+  --viewport-element: calc(1vw + 1vh);
+  --viewport-element--small: calc(var(--viewport-element) / 2);
+  --viewport-element--tiny: calc(var(--viewport-element) / 4);
   --gutter: clamp(0.75rem, 4vw, 2rem);
   /* CatalogHeader writes the live px value; 4.5rem is search-page chrome without the department bar. */
   --catalog-header-h: 4.5rem;
