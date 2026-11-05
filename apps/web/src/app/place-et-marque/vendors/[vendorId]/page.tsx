@@ -357,247 +357,376 @@ function VendorDetailContent() {
 							>
 								{vendor.name}
 							</h1>
-							<p
-								className="
-									mt-1
-									flex
-									flex-wrap
-									items-baseline
-									gap-x-2
-									gap-y-1
-									text-slate-600
-								"
-							>
-								<span>
-									/place-et-marque/vendors/{vendor.slug}
-								</span>
-								{vendor.myRole === 'OWNER'
-									? (
-											<button
-												type="button"
-												onClick={() => setLinkNameOpen((open) => !open)}
-												aria-expanded={linkNameOpen}
-												aria-label={
-													linkNameOpen
-														? 'Close link name form'
-														: 'Change link name'
+							{vendor.myRole === 'OWNER'
+								? (
+										<div
+											className={`
+												mt-2
+												overflow-hidden
+												rounded-2xl
+												border
+												border-slate-200
+												bg-white
+												transition-[padding]
+												duration-300
+												ease-out
+												${linkNameOpen
+													? 'p-5'
+													: 'px-3 py-2'
 												}
+											`}
+										>
+											<div
 												className="
-													inline-flex
+													flex
 													items-center
-													gap-1.5
-													whitespace-nowrap
-													rounded-full
-													border
-													border-slate-200
-													bg-white
-													px-3
-													py-1
-													text-xs
-													font-semibold
-													text-slate-600
-													transition
-													hover:border-sky
-													hover:text-sky
+													justify-between
+													gap-2
 												"
 											>
-												{linkNameOpen
+												<p
+													className="
+														min-w-0
+														flex-1
+														truncate
+														text-left
+														text-slate-600
+													"
+												>
+													/place-et-marque/vendors/{vendor.slug}
+												</p>
+												{!linkNameOpen
 													? (
-															<>
+															<div
+																className="
+																	flex
+																	shrink-0
+																	items-center
+																	gap-2
+																"
+															>
+																{vendor.linkNameRequest?.status === 'PENDING'
+																	? (
+																			<span
+																				className="
+																					hidden
+																					text-sm
+																					text-slate-500
+																					sm:inline
+																				"
+																			>
+																				Pending review
+																			</span>
+																		)
+																	: null
+																}
+																<button
+																	type="button"
+																	onClick={() => setLinkNameOpen(true)}
+																	aria-expanded={false}
+																	aria-label="Change link name"
+																	className="
+																		inline-flex
+																		h-8
+																		w-8
+																		items-center
+																		justify-center
+																		gap-1.5
+																		rounded-full
+																		border
+																		border-slate-200
+																		bg-white
+																		text-xs
+																		font-semibold
+																		text-slate-600
+																		transition
+																		hover:border-sky
+																		hover:text-sky
+																		sm:h-auto
+																		sm:w-auto
+																		sm:px-3
+																		sm:py-1
+																	"
+																>
+																	<span
+																		className="
+																			hidden
+																			sm:inline
+																		"
+																	>
+																		Change link name
+																	</span>
+																	<ArrowRightIcon
+																		className="
+																			h-3
+																			w-3
+																			shrink-0
+																		"
+																	/>
+																</button>
+															</div>
+														)
+													: null
+												}
+											</div>
+											{!linkNameOpen
+												&& vendor.linkNameRequest?.status === 'PENDING'
+												? (
+														<p
+															className="
+																mt-1
+																text-sm
+																text-slate-500
+																sm:hidden
+															"
+														>
+															Pending review
+														</p>
+													)
+												: null
+											}
+											<div
+												className={`
+													grid
+													transition-[grid-template-rows]
+													duration-300
+													ease-out
+													${linkNameOpen
+														? 'grid-rows-[1fr] opacity-100'
+														: 'grid-rows-[0fr] opacity-0'
+													}
+												`}
+												aria-hidden={!linkNameOpen}
+												{...(!linkNameOpen
+													? { inert: true }
+													: {})
+												}
+											>
+												<div className="overflow-hidden">
+													<section
+														className={`
+															transition-[margin-top]
+															duration-300
+															ease-out
+															${linkNameOpen
+																? 'mt-4'
+																: 'mt-0'
+															}
+														`}
+													>
+														<div
+															className="
+																flex
+																items-center
+																justify-between
+																gap-2
+															"
+														>
+															<h2 className="text-lg font-semibold">
+																Name in the link
+															</h2>
+															<button
+																type="button"
+																onClick={() => setLinkNameOpen(false)}
+																aria-expanded={true}
+																aria-label="Close link name form"
+																className="
+																	inline-flex
+																	h-8
+																	w-8
+																	shrink-0
+																	items-center
+																	justify-center
+																	gap-1.5
+																	rounded-full
+																	border
+																	border-slate-200
+																	bg-white
+																	text-xs
+																	font-semibold
+																	text-slate-600
+																	transition
+																	hover:border-sky
+																	hover:text-sky
+																	sm:h-auto
+																	sm:w-auto
+																	sm:px-3
+																	sm:py-1
+																"
+															>
 																<CloseIcon
 																	className="
 																		h-3
 																		w-3
+																		shrink-0
 																	"
 																/>
-																Close
-															</>
-														)
-													: (
-															<>
-																Change link name
-																<ArrowRightIcon
+																<span
 																	className="
-																		h-3
-																		w-3
+																		hidden
+																		sm:inline
 																	"
+																>
+																	Close
+																</span>
+															</button>
+														</div>
+														<p
+															className="
+																mt-2
+																text-sm
+																text-slate-600
+															"
+														>
+															This short name appears in your organization page and store address.
+															Changing it later needs Place et Marque approval.
+														</p>
+														{vendor.linkNameRequest?.status === 'PENDING'
+															? (
+																	<p
+																		className="
+																			mt-3
+																			rounded-xl
+																			border
+																			border-sky/30
+																			bg-sky/5
+																			px-4
+																			py-3
+																			text-sm
+																			text-slate-700
+																		"
+																	>
+																		Pending request:
+																		{' '}
+																		<strong>
+																			{vendor.linkNameRequest.requestedSlug}
+																		</strong>
+																		. We&apos;ll email or show the decision here when reviewed.
+																	</p>
+																)
+															: null
+														}
+														{vendor.linkNameRequest?.status === 'DENIED'
+															? (
+																	<p
+																		className="
+																			mt-3
+																			rounded-xl
+																			border
+																			border-red-200
+																			bg-red-50
+																			px-4
+																			py-3
+																			text-sm
+																			text-red-800
+																		"
+																	>
+																		Last request denied
+																		{vendor.linkNameRequest.reviewReason
+																			? `: ${vendor.linkNameRequest.reviewReason}`
+																			: '.'
+																		}
+																	</p>
+																)
+															: null
+														}
+														<form
+															className="
+																mt-4
+																flex
+																flex-col
+																gap-3
+															"
+															noValidate
+															onSubmit={onRequestLinkName}
+														>
+															<UrlSlugField
+																label="Requested name in the link"
+																value={linkNameDraft}
+																onChange={(next) => setLinkNameDraft(slugifyTyping(next))}
+																prefixPath="/place-et-marque/vendors"
+																placeholder={vendor.slug}
+																helpText="Ask for a different name if the current one no longer fits."
+															/>
+															<label className="block text-sm">
+																<span className="font-semibold">
+																	Note for reviewers (optional)
+																</span>
+																<textarea
+																	className="
+																		mt-1
+																		w-full
+																		rounded-lg
+																		border
+																		border-slate-300
+																		px-3
+																		py-2
+																	"
+																	rows={3}
+																	value={linkNameNote}
+																	onChange={(event) => setLinkNameNote(event.target.value)}
+																	maxLength={500}
+																	placeholder="Why this name works better"
 																/>
-															</>
-														)
-												}
-											</button>
-										)
-									: null
-								}
-								{!linkNameOpen
-									&& vendor.linkNameRequest?.status === 'PENDING'
-									? (
-											<span className="text-sm text-slate-500">
-												Pending review
-											</span>
-										)
-									: null
-								}
-							</p>
-						</div>
-
-						{linkNameOpen
-							? (
-									<section
-										className="
-											rounded-2xl
-											border
-											border-slate-200
-											bg-white
-											p-5
-										"
-									>
-										<h2 className="text-lg font-semibold">
-											Name in the link
-										</h2>
+															</label>
+															{linkNameError
+																? (
+																		<p className="text-sm text-red-700">
+																			{linkNameError}
+																		</p>
+																	)
+																: null
+															}
+															{linkNameMessage
+																? (
+																		<p className="text-sm text-asgreen">
+																			{linkNameMessage}
+																		</p>
+																	)
+																: null
+															}
+															<button
+																type="submit"
+																disabled={
+																	linkNameBusy
+																	|| slugify(linkNameDraft) === vendor.slug
+																	|| vendor.linkNameRequest?.status === 'PENDING'
+																}
+																className="
+																	self-start
+																	rounded-full
+																	bg-sky
+																	px-4
+																	py-2.5
+																	text-sm
+																	font-semibold
+																	text-white
+																	disabled:opacity-60
+																"
+															>
+																{linkNameBusy
+																	? 'Sending…'
+																	: 'Request new name'
+																}
+															</button>
+														</form>
+													</section>
+												</div>
+											</div>
+										</div>
+									)
+								: (
 										<p
 											className="
-												mt-2
-												text-sm
+												mt-1
 												text-slate-600
 											"
 										>
-											This short name appears in your organization page and store address.
-											Changing it later needs Place et Marque approval.
+											/place-et-marque/vendors/{vendor.slug}
 										</p>
-										{vendor.linkNameRequest?.status === 'PENDING'
-											? (
-													<p
-														className="
-															mt-3
-															rounded-xl
-															border
-															border-sky/30
-															bg-sky/5
-															px-4
-															py-3
-															text-sm
-															text-slate-700
-														"
-													>
-														Pending request:
-														{' '}
-														<strong>
-															{vendor.linkNameRequest.requestedSlug}
-														</strong>
-														. We&apos;ll email or show the decision here when reviewed.
-													</p>
-												)
-											: null
-										}
-										{vendor.linkNameRequest?.status === 'DENIED'
-											? (
-													<p
-														className="
-															mt-3
-															rounded-xl
-															border
-															border-red-200
-															bg-red-50
-															px-4
-															py-3
-															text-sm
-															text-red-800
-														"
-													>
-														Last request denied
-														{vendor.linkNameRequest.reviewReason
-															? `: ${vendor.linkNameRequest.reviewReason}`
-															: '.'
-														}
-													</p>
-												)
-											: null
-										}
-										<form
-											className="
-												mt-4
-												flex
-												flex-col
-												gap-3
-											"
-											noValidate
-											onSubmit={onRequestLinkName}
-										>
-											<UrlSlugField
-												label="Requested name in the link"
-												value={linkNameDraft}
-												onChange={(next) => setLinkNameDraft(slugifyTyping(next))}
-												prefixPath="/place-et-marque/vendors"
-												placeholder={vendor.slug}
-												helpText="Ask for a different name if the current one no longer fits."
-											/>
-											<label className="block text-sm">
-												<span className="font-semibold">
-													Note for reviewers (optional)
-												</span>
-												<textarea
-													className="
-														mt-1
-														w-full
-														rounded-lg
-														border
-														border-slate-300
-														px-3
-														py-2
-													"
-													rows={3}
-													value={linkNameNote}
-													onChange={(event) => setLinkNameNote(event.target.value)}
-													maxLength={500}
-													placeholder="Why this name works better"
-												/>
-											</label>
-											{linkNameError
-												? (
-														<p className="text-sm text-red-700">
-															{linkNameError}
-														</p>
-													)
-												: null
-											}
-											{linkNameMessage
-												? (
-														<p className="text-sm text-asgreen">
-															{linkNameMessage}
-														</p>
-													)
-												: null
-											}
-											<button
-												type="submit"
-												disabled={
-													linkNameBusy
-													|| slugify(linkNameDraft) === vendor.slug
-													|| vendor.linkNameRequest?.status === 'PENDING'
-												}
-												className="
-													self-start
-													rounded-full
-													bg-sky
-													px-4
-													py-2.5
-													text-sm
-													font-semibold
-													text-white
-													disabled:opacity-60
-												"
-											>
-												{linkNameBusy
-													? 'Sending…'
-													: 'Request new name'
-												}
-											</button>
-										</form>
-									</section>
-								)
-							: null
-						}
+									)
+							}
+						</div>
 
 						<section
 							className="
