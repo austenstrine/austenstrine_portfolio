@@ -60,8 +60,13 @@ import {
 } from '../../lib/catalog-product-form';
 import { sortCategoryTree } from '../../lib/category-tree';
 import { useSession } from '../../lib/useSession';
+import { PencilIcon } from '../icons/PencilIcon';
+import { PlusIcon } from '../icons/PlusIcon';
 import { CatalogImageField } from './CatalogImageField';
-import { SellerTopContextPortal } from './CatalogSearchContext';
+import {
+	PageBottomPanePortal,
+	SellerTopContextPortal,
+} from './CatalogSearchContext';
 import { CatalogWorkspaceSwitcher } from './CatalogWorkspaceSwitcher';
 import { CompoundQtyField } from './CompoundQtyField';
 import { DisclosurePrompt } from './DisclosurePrompt';
@@ -654,24 +659,45 @@ export function ProductEditorForm({
 		|| packOrPieceRows.some((row) => row.price !== '' || row.sku !== '');
 
 	const saveButtonClassName = `
+		inline-flex
+		h-10
+		w-10
+		shrink-0
+		items-center
+		justify-center
+		gap-1.5
 		rounded-full
 		bg-sky
-		px-5
-		py-2.5
 		text-sm
 		font-semibold
 		text-white
 		hover:bg-sky/90
 		disabled:opacity-60
+		sm:h-auto
+		sm:w-auto
+		sm:px-5
+		sm:py-2.5
 	`;
 	const saveButtonLabel = submitting
 		? 'Saving…'
 		: isCreating
 			? 'Create product'
 			: 'Save changes';
+	const SaveGlyph = isCreating
+		? PlusIcon
+		: PencilIcon;
 
 	return (
-		<div className="mx-auto max-w-3xl space-y-6 px-4 py-10">
+		<div
+			className="
+				mx-auto
+				max-w-3xl
+				space-y-6
+				px-4
+				py-10
+				pb-[calc(6rem+var(--seller-bottom-pane-stack,0px))]
+			"
+		>
 			<SellerTopContextPortal>
 				{vendors.length > 1
 					? (
@@ -745,22 +771,15 @@ export function ProductEditorForm({
 				}
 			</SellerTopContextPortal>
 
-			<header className="space-y-2">
+			<header>
 				<h1 className="text-3xl font-semibold text-ink">
 					{pageTitle}
 				</h1>
-				<p className="text-sm text-slate-600">
-					{isCreating
-						? isAdvancedSurface
-							? 'Full product tools open by default: packs, chains, break fees, attributes, and measurements.'
-							: 'Start with a simple listing. More options appear as questions when they matter.'
-						: 'Update this listing. Extra structure expands in place when you need it.'
-					}
-				</p>
 			</header>
 
 			<form
-				className="space-y-8"
+				id="product-editor-form"
+				className="space-y-6"
 				onSubmit={onSubmit}
 			>
 				<p className="flex flex-wrap gap-3 text-sm">
@@ -798,6 +817,17 @@ export function ProductEditorForm({
 					</a>
 				</p>
 
+				<div
+					className="
+						space-y-8
+						rounded-2xl
+						border
+						border-slate-200
+						bg-white
+						p-4
+						sm:p-6
+					"
+				>
 				<section className="space-y-4">
 					<label className="block text-sm">
 						<span className="font-semibold">
@@ -892,11 +922,9 @@ export function ProductEditorForm({
 				<section
 					className="
 						space-y-4
-						rounded-2xl
-						border
-						border-slate-200
-						bg-white
-						p-4
+						border-t
+						border-slate-100
+						pt-8
 					"
 				>
 					{/* Default assumption: a single packless piece — no "Packs and pieces" title. */}
@@ -1492,31 +1520,16 @@ export function ProductEditorForm({
 							)
 						: null
 					}
-					<div
-						className="
-							flex
-							flex-wrap
-							items-center
-							gap-3
-							border-t
-							border-slate-100
-							pt-4
-						"
-					>
-						<button
-							type="submit"
-							disabled={submitting}
-							className={saveButtonClassName}
-						>
-							{saveButtonLabel}
-						</button>
-						<span className="text-xs text-slate-500">
-							Photos, tags, and attributes follow if you need them.
-						</span>
-					</div>
 				</section>
 
-				<section className="space-y-4">
+				<section
+					className="
+						space-y-4
+						border-t
+						border-slate-100
+						pt-8
+					"
+				>
 					<CatalogImageField
 						kind="product"
 						value={imageUrls}
@@ -1537,11 +1550,9 @@ export function ProductEditorForm({
 				<section
 					className="
 						space-y-3
-						rounded-2xl
-						border
-						border-slate-200
-						bg-white
-						p-4
+						border-t
+						border-slate-100
+						pt-8
 					"
 				>
 					<h2 className="text-lg font-semibold text-ink">
@@ -1622,11 +1633,9 @@ export function ProductEditorForm({
 							<section
 								className="
 									space-y-3
-									rounded-2xl
-									border
-									border-slate-200
-									bg-white
-									p-4
+									border-t
+									border-slate-100
+									pt-8
 								"
 							>
 								<div
@@ -1676,30 +1685,19 @@ export function ProductEditorForm({
 						)
 					: null
 				}
+				</div>
 
-				<div
-					className="
-						flex
-						flex-wrap
-						items-center
-						gap-x-3
-						gap-y-1
-					"
-				>
-					<button
-						id="product-save"
-						type="submit"
-						disabled={submitting}
-						className={saveButtonClassName}
-					>
-						{saveButtonLabel}
-					</button>
+				<PageBottomPanePortal>
 					{selectedVendor
 						? (
 							<span
 								className="
+									hidden
+									max-w-[10rem]
+									truncate
 									text-xs
-									text-slate-500
+									text-slate-600
+									sm:inline
 								"
 							>
 								{selectedVendor.name}
@@ -1707,7 +1705,32 @@ export function ProductEditorForm({
 						)
 						: null
 					}
-				</div>
+					<button
+						id="product-save"
+						type="submit"
+						form="product-editor-form"
+						disabled={submitting}
+						aria-label={saveButtonLabel}
+						className={saveButtonClassName}
+					>
+						<SaveGlyph
+							className="
+								h-4
+								w-4
+								shrink-0
+							"
+						/>
+						<span
+							className="
+								hidden
+								whitespace-nowrap
+								sm:inline
+							"
+						>
+							{saveButtonLabel}
+						</span>
+					</button>
+				</PageBottomPanePortal>
 			</form>
 
 			<CatalogWorkspaceSwitcher
