@@ -9,7 +9,10 @@ import {
 } from '../../../lib/catalog-api';
 import { useSession } from '../../../lib/useSession';
 import { RequireAccess } from '../../../components/auth/RequireAccess';
-import { PageBottomPanePortal } from '../../../components/catalog/CatalogSearchContext';
+import {
+	PageBottomPanePortal,
+	SellerTopContextPortal,
+} from '../../../components/catalog/CatalogSearchContext';
 import { ArrowLeftIcon } from '../../../components/icons/ArrowLeftIcon';
 import { ArrowRightIcon } from '../../../components/icons/ArrowRightIcon';
 
@@ -257,27 +260,37 @@ function PlaceEtMarqueManageContent() {
 				gap-6
 			"
 		>
-			<PageBottomPanePortal>
+			<SellerTopContextPortal>
 				{vendorsReady && vendors.length > 0
 					? (
 						<label
 							className="
-								min-w-[10rem]
+								flex
+								min-w-[12rem]
+								max-w-full
+								flex-1
+								flex-col
+								gap-1
 								text-sm
-								sm:max-w-xs
+								sm:max-w-sm
+								sm:flex-none
 							"
 						>
-							<span className="sr-only">
-								Vendor
+							<span
+								className="
+									font-medium
+									text-ink
+								"
+							>
+								Show products for vendor:
 							</span>
 							<select
-								aria-label="Vendor"
 								className="
 									w-full
 									rounded-full
 									border
 									border-slate-300
-									bg-white/90
+									bg-white
 									px-3
 									py-1.5
 									text-sm
@@ -314,6 +327,9 @@ function PlaceEtMarqueManageContent() {
 					)
 					: null
 				}
+			</SellerTopContextPortal>
+
+			<PageBottomPanePortal>
 				{newProductVendorId
 					? (
 						<a

@@ -46,6 +46,8 @@ type CatalogSearchContextValue = {
 	headerDesktopExtrasEl: HTMLDivElement | null;
 	headerMobileExtrasEl: HTMLDivElement | null;
 	pageExtrasEl: HTMLDivElement | null;
+	sellerTopContextHostEl: HTMLDivElement | null;
+	setSellerTopContextHost: (el: HTMLDivElement | null) => void;
 	pageBottomPaneHostEl: HTMLDivElement | null;
 	setPageBottomPaneHost: (el: HTMLDivElement | null) => void;
 	desktop: boolean;
@@ -66,6 +68,7 @@ export function CatalogSearchProvider({ children }: { children: ReactNode }) {
 	const [headerDesktopExtrasEl, setHeaderDesktopExtras] = useState<HTMLDivElement | null>(null);
 	const [headerMobileExtrasEl, setHeaderMobileExtras] = useState<HTMLDivElement | null>(null);
 	const [pageExtrasEl, setPageExtras] = useState<HTMLDivElement | null>(null);
+	const [sellerTopContextHostEl, setSellerTopContextHost] = useState<HTMLDivElement | null>(null);
 	const [pageBottomPaneHostEl, setPageBottomPaneHost] = useState<HTMLDivElement | null>(null);
 	const [extrasHost, setExtrasHost] = useState<'page' | 'header'>(
 		() => (pathname === '/place-et-marque/search' ? 'page' : 'header'),
@@ -218,6 +221,8 @@ export function CatalogSearchProvider({ children }: { children: ReactNode }) {
 		headerDesktopExtrasEl,
 		headerMobileExtrasEl,
 		pageExtrasEl,
+		sellerTopContextHostEl,
+		setSellerTopContextHost,
 		pageBottomPaneHostEl,
 		setPageBottomPaneHost,
 		desktop,
@@ -235,6 +240,7 @@ export function CatalogSearchProvider({ children }: { children: ReactNode }) {
 		headerDesktopExtrasEl,
 		headerMobileExtrasEl,
 		pageExtrasEl,
+		sellerTopContextHostEl,
 		pageBottomPaneHostEl,
 		desktop,
 	]);
@@ -337,7 +343,35 @@ export function SearchExtrasPortal({ children }: { children: ReactNode }) {
 	return createPortal(content, target);
 }
 
-/** Page-specific seller actions for the frosted bottom pane (not the top bar). */
+/** Site-wide seller context for the top bar (e.g. vendor picker). Not page actions. */
+export function SellerTopContextPortal({ children }: { children: ReactNode }) {
+	const { sellerTopContextHostEl } = useCatalogSearch();
+	if(!sellerTopContextHostEl) {
+		return null;
+	}
+	return createPortal(
+		<div
+			aria-label="Seller context"
+			className="
+				mx-auto
+				flex
+				max-w-7xl
+				flex-wrap
+				items-end
+				gap-x-3
+				gap-y-2
+				px-gutter
+				py-2
+			"
+			role="region"
+		>
+			{children}
+		</div>,
+		sellerTopContextHostEl,
+	);
+}
+
+/** Page-specific seller actions for the frosted bottom pane (not site-wide context). */
 export function PageBottomPanePortal({ children }: { children: ReactNode }) {
 	const { pageBottomPaneHostEl } = useCatalogSearch();
 	if(!pageBottomPaneHostEl) {
