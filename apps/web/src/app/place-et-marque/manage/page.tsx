@@ -9,10 +9,7 @@ import {
 } from '../../../lib/catalog-api';
 import { useSession } from '../../../lib/useSession';
 import { RequireAccess } from '../../../components/auth/RequireAccess';
-import {
-	PageBottomPanePortal,
-	SellerTopContextPortal,
-} from '../../../components/catalog/CatalogSearchContext';
+import { SellerTopContextPortal } from '../../../components/catalog/CatalogSearchContext';
 import { ManageProductRowActions } from '../../../components/catalog/ManageProductRowActions';
 import { ArrowLeftIcon } from '../../../components/icons/ArrowLeftIcon';
 import { ArrowRightIcon } from '../../../components/icons/ArrowRightIcon';
@@ -329,31 +326,27 @@ function PlaceEtMarqueManageContent() {
 					)
 					: null
 				}
-			</SellerTopContextPortal>
-
-			<PageBottomPanePortal>
 				{newProductVendorId
 					? (
 						<a
 							aria-label="New product"
 							className="
+								ml-auto
 								inline-flex
 								h-10
-								w-10
 								shrink-0
 								items-center
 								justify-center
 								gap-1.5
+								self-end
 								rounded-full
 								bg-asgreen
+								px-3.5
+								py-1.5
 								text-sm
 								font-semibold
 								text-white
 								hover:bg-asgreen/90
-								sm:h-auto
-								sm:w-auto
-								sm:px-3.5
-								sm:py-1.5
 							"
 							href={`/place-et-marque/products/new?vendorId=${encodeURIComponent(newProductVendorId)}`}
 							title={
@@ -369,20 +362,14 @@ function PlaceEtMarqueManageContent() {
 									shrink-0
 								"
 							/>
-							<span
-								className="
-									hidden
-									whitespace-nowrap
-									sm:inline
-								"
-							>
+							<span className="whitespace-nowrap">
 								New product
 							</span>
 						</a>
 					)
 					: null
 				}
-			</PageBottomPanePortal>
+			</SellerTopContextPortal>
 
 			<div>
 				<h1
