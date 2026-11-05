@@ -16,7 +16,8 @@ function crmPublicBase(): string {
 		return `${protocol}//localhost:3001`;
 	}
 	if(hostname.startsWith('local.')) {
-		return `${protocol}//local.crm.${hostname.slice('local.'.length)}`;
+		// local.austenstrine.dev → crm.local.austenstrine.dev
+		return `${protocol}//crm.${hostname}`;
 	}
 	if(hostname.startsWith('www.')) {
 		return `${protocol}//crm.${hostname.slice('www.'.length)}`;
