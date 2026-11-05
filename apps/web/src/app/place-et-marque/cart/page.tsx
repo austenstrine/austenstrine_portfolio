@@ -170,7 +170,7 @@ function CartContent() {
 								text-slate-600
 							"
 						>
-							Browse the store and add a listing to get started.
+							No merchandise selected.
 						</p>
 						<Link
 							className="

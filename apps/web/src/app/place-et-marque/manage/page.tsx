@@ -397,7 +397,7 @@ function PlaceEtMarqueManageContent() {
 						text-slate-600
 					"
 				>
-					Inventory for vendors you can edit. Open a product to change price, qty, or full listing details.
+					Inventory for vendors you can edit.
 				</p>
 				{user
 					? (
