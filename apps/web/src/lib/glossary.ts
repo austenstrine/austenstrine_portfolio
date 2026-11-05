@@ -33,7 +33,7 @@ export const glossaryTerms = [
 		id: 'supervendor',
 		term: 'Supervendor',
 		short: 'The one vendor allowed to edit shared catalog structure.',
-		long: 'Exactly one vendor (currently austenstrine.dev) is the supervendor. That membership can create and change global categories and global units. Other vendors still tag products and can request new categories.',
+		long: 'Exactly one vendor (currently austenstrine.dev) is the supervendor. That membership can create and change global categories and global units in the admin CRM. Other vendors still tag products and can request new categories from the storefront.',
 	},
 	{
 		id: 'offering-key',

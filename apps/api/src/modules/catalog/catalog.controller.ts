@@ -48,7 +48,7 @@ import { UpdateCatalogProductDto } from './dto/update-catalog-product.dto';
 import { UpdateCatalogCategoryDto, UploadCatalogMediaDto } from './dto/upload-catalog-media.dto';
 import type { CatalogAuthedRequest } from './guards/catalog-auth.guard';
 import { CatalogAuthGuard } from './guards/catalog-auth.guard';
-import { CrmOriginGuard } from './guards/crm-origin.guard';
+import { assertCrmBrowserOrigin, CrmOriginGuard } from './guards/crm-origin.guard';
 import { CatalogImportService } from './import/catalog-import.service';
 import { InventoryService } from './inventory/inventory.service';
 import { VendorAppPasswordService } from './vendor-app-password.service';
@@ -126,9 +126,13 @@ export class CatalogController {
 	@UseGuards(JwtAuthGuard)
 	@Post('uoms')
 	createUom(@Req() req: AuthedRequest, @Body() dto: CreateUomDto) {
+		if(!dto.vendorId) {
+			assertCrmBrowserOrigin(req);
+		}
 		return this.catalog.createUom(req.user!.id, dto);
 	}
 
+	@UseGuards(CrmOriginGuard)
 	@Get('uom-merges/apply')
 	async applyUomMerge(@Query('token') token?: string) {
 		if(!token?.trim()) {
@@ -142,13 +146,13 @@ export class CatalogController {
 		return this.catalog.listCategories();
 	}
 
-	@UseGuards(JwtAuthGuard)
+	@UseGuards(JwtAuthGuard, CrmOriginGuard)
 	@Post('categories')
 	createCategory(@Req() req: AuthedRequest, @Body() dto: CreateCategoryDto) {
 		return this.catalog.createCategory(req.user!.id, dto);
 	}
 
-	@UseGuards(JwtAuthGuard)
+	@UseGuards(JwtAuthGuard, CrmOriginGuard)
 	@Patch('categories/:categoryId')
 	updateCategory(
 		@Req() req: AuthedRequest,
@@ -171,6 +175,9 @@ export class CatalogController {
 		this.cdnMedia.assertImageFile(file);
 		await this.catalog.assertCanUploadMedia(req.user!.id, dto);
 		const kind = dto.kind ?? (dto.categoryId ? 'category' : 'product');
+		if(kind === 'category' || dto.categoryId) {
+			assertCrmBrowserOrigin(req);
+		}
 		const folder = kind === 'category'
 			? `catalog/categories/${dto.categoryId ?? 'new'}`
 			: `catalog/products/${dto.vendorId ?? dto.productId ?? 'new'}`;

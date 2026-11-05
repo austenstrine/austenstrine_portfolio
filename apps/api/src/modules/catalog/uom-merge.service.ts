@@ -339,21 +339,15 @@ export class UomMergeService {
 
 	private async sendAutomergeEmail(group: CollisionGroup): Promise<void> {
 		const to = process.env.UOM_AUTOMERGE_EMAIL ?? 'automerge@austenstrine.dev';
-		const apiBase = process.env.API_PUBLIC_URL
-			?? process.env.WEB_URL?.replace(/:\d+$/, ':3001')
-			?? 'http://localhost:3001';
-		const webBase = process.env.WEB_URL ?? 'http://localhost:3000';
+		const crmBase = (process.env.CRM_URL ?? 'http://localhost:3001').replace(/\/$/, '');
 
 		const confirmToken = this.signToken('confirm', group.nameKey);
 		const skipOnceToken = this.signToken('skip-once', group.nameKey);
 		const skipForeverToken = this.signToken('skip-forever', group.nameKey);
 
-		const confirmUrl = `${webBase}/place-et-marque/uom-merges?token=${encodeURIComponent(confirmToken)}`;
-		const skipOnceUrl = `${webBase}/place-et-marque/uom-merges?token=${encodeURIComponent(skipOnceToken)}`;
-		const skipForeverUrl = `${webBase}/place-et-marque/uom-merges?token=${encodeURIComponent(skipForeverToken)}`;
-
-		// Keep API token routes as well for email clients that prefer direct API hits
-		void apiBase;
+		const confirmUrl = `${crmBase}/uom-merges?token=${encodeURIComponent(confirmToken)}`;
+		const skipOnceUrl = `${crmBase}/uom-merges?token=${encodeURIComponent(skipOnceToken)}`;
+		const skipForeverUrl = `${crmBase}/uom-merges?token=${encodeURIComponent(skipForeverToken)}`;
 
 		const lines = group.uoms.map((row) => {
 			const owner = row.vendorId
