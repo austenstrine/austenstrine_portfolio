@@ -81,7 +81,23 @@ function AccountForm() {
 					: 'You signed in with Google. Add a password if you also want to sign in with email.'
 			}
 			footer={
-				<p>
+				<p
+					className="
+						flex
+						flex-col
+						gap-2
+					"
+				>
+					<a
+						className="
+							font-semibold
+							text-sky
+							hover:underline
+						"
+						href="/place-et-marque/preferences"
+					>
+						Manage widget preferences
+					</a>
 					<a
 						className="
 							font-semibold
