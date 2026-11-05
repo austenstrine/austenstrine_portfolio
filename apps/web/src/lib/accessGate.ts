@@ -59,7 +59,7 @@ export function pathRequiresVendor(path: string): boolean {
 	);
 }
 
-/** Seller chrome (actions bar instead of category bar) on manage and related pages. */
+/** Seller chrome: hide category bar; page actions use frosted bottom pane. */
 export function pathUsesSellerChrome(path: string): boolean {
 	const pathname = path.split('?')[0] ?? path;
 	if(

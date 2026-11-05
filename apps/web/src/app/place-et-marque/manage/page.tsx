@@ -9,7 +9,7 @@ import {
 } from '../../../lib/catalog-api';
 import { useSession } from '../../../lib/useSession';
 import { RequireAccess } from '../../../components/auth/RequireAccess';
-import { PageTopBarPortal } from '../../../components/catalog/CatalogSearchContext';
+import { PageBottomPanePortal } from '../../../components/catalog/CatalogSearchContext';
 import { ArrowLeftIcon } from '../../../components/icons/ArrowLeftIcon';
 import { ArrowRightIcon } from '../../../components/icons/ArrowRightIcon';
 
@@ -257,16 +257,14 @@ function PlaceEtMarqueManageContent() {
 				gap-6
 			"
 		>
-			<PageTopBarPortal>
+			<PageBottomPanePortal>
 				{vendorsReady && vendors.length > 0
 					? (
 						<label
 							className="
 								min-w-[10rem]
-								flex-1
 								text-sm
 								sm:max-w-xs
-								sm:flex-none
 							"
 						>
 							<span className="sr-only">
@@ -279,7 +277,7 @@ function PlaceEtMarqueManageContent() {
 									rounded-full
 									border
 									border-slate-300
-									bg-white
+									bg-white/90
 									px-3
 									py-1.5
 									text-sm
@@ -320,7 +318,6 @@ function PlaceEtMarqueManageContent() {
 					? (
 						<a
 							className="
-								ml-auto
 								inline-flex
 								items-center
 								rounded-full
@@ -344,7 +341,7 @@ function PlaceEtMarqueManageContent() {
 					)
 					: null
 				}
-			</PageTopBarPortal>
+			</PageBottomPanePortal>
 
 			<div>
 				<h1

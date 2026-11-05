@@ -311,7 +311,6 @@ export function CatalogHeader() {
 		headerMobileRef,
 		setHeaderDesktopExtras,
 		setHeaderMobileExtras,
-		setPageTopBarHost,
 	} = useCatalogSearch();
 	const { user, loading, signOut } = useSession();
 	const [cartCount, setCartCount] = useState(0);
@@ -559,27 +558,15 @@ export function CatalogHeader() {
 						/>
 					</div>
 				</div>
-				{sellerChrome
+				{showDepartmentBar
 					? (
-						<div
-							className="
-								border-t
-								border-slate-100
-								bg-white
-								empty:hidden
-							"
-							ref={setPageTopBarHost}
+						<CatalogCategoryBar
+							categories={categories}
+							category={category}
+							onChoose={applyCategory}
 						/>
 					)
-					: showDepartmentBar
-						? (
-							<CatalogCategoryBar
-								categories={categories}
-								category={category}
-								onChoose={applyCategory}
-							/>
-						)
-						: null
+					: null
 				}
 			</header>
 		</>

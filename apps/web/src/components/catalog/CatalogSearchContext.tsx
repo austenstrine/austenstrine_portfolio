@@ -46,8 +46,8 @@ type CatalogSearchContextValue = {
 	headerDesktopExtrasEl: HTMLDivElement | null;
 	headerMobileExtrasEl: HTMLDivElement | null;
 	pageExtrasEl: HTMLDivElement | null;
-	pageTopBarHostEl: HTMLDivElement | null;
-	setPageTopBarHost: (el: HTMLDivElement | null) => void;
+	pageBottomPaneHostEl: HTMLDivElement | null;
+	setPageBottomPaneHost: (el: HTMLDivElement | null) => void;
 	desktop: boolean;
 };
 
@@ -66,7 +66,7 @@ export function CatalogSearchProvider({ children }: { children: ReactNode }) {
 	const [headerDesktopExtrasEl, setHeaderDesktopExtras] = useState<HTMLDivElement | null>(null);
 	const [headerMobileExtrasEl, setHeaderMobileExtras] = useState<HTMLDivElement | null>(null);
 	const [pageExtrasEl, setPageExtras] = useState<HTMLDivElement | null>(null);
-	const [pageTopBarHostEl, setPageTopBarHost] = useState<HTMLDivElement | null>(null);
+	const [pageBottomPaneHostEl, setPageBottomPaneHost] = useState<HTMLDivElement | null>(null);
 	const [extrasHost, setExtrasHost] = useState<'page' | 'header'>(
 		() => (pathname === '/place-et-marque/search' ? 'page' : 'header'),
 	);
@@ -218,8 +218,8 @@ export function CatalogSearchProvider({ children }: { children: ReactNode }) {
 		headerDesktopExtrasEl,
 		headerMobileExtrasEl,
 		pageExtrasEl,
-		pageTopBarHostEl,
-		setPageTopBarHost,
+		pageBottomPaneHostEl,
+		setPageBottomPaneHost,
 		desktop,
 	}), [
 		query,
@@ -235,7 +235,7 @@ export function CatalogSearchProvider({ children }: { children: ReactNode }) {
 		headerDesktopExtrasEl,
 		headerMobileExtrasEl,
 		pageExtrasEl,
-		pageTopBarHostEl,
+		pageBottomPaneHostEl,
 		desktop,
 	]);
 
@@ -337,30 +337,29 @@ export function SearchExtrasPortal({ children }: { children: ReactNode }) {
 	return createPortal(content, target);
 }
 
-/** Page-specific actions for the header row that replaces the category bar on seller pages. */
-export function PageTopBarPortal({ children }: { children: ReactNode }) {
-	const { pageTopBarHostEl } = useCatalogSearch();
-	if(!pageTopBarHostEl) {
+/** Page-specific seller actions for the frosted bottom pane (not the top bar). */
+export function PageBottomPanePortal({ children }: { children: ReactNode }) {
+	const { pageBottomPaneHostEl } = useCatalogSearch();
+	if(!pageBottomPaneHostEl) {
 		return null;
 	}
 	return createPortal(
 		<div
 			aria-label="Page actions"
 			className="
-				mx-auto
 				flex
-				max-w-7xl
 				flex-wrap
 				items-center
+				justify-end
 				gap-x-3
 				gap-y-2
-				px-gutter
-				py-2
+				px-3
+				py-2.5
 			"
 			role="region"
 		>
 			{children}
 		</div>,
-		pageTopBarHostEl,
+		pageBottomPaneHostEl,
 	);
 }
