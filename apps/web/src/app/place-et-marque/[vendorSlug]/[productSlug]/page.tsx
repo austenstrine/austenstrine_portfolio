@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { redirect } from 'next/navigation';
 import { cache } from 'react';
 import { ApiUnavailable } from '../../../../components/ApiUnavailable';
 import { ProductDetailClient } from '../../../../components/catalog/ProductDetailClient';
@@ -8,6 +9,10 @@ import {
 	type CatalogProductDetail,
 	type CatalogProductSummary,
 } from '../../../../lib/catalog-api';
+import {
+	productPathNeedsCanonicalRedirect,
+	productViewHref,
+} from '../../../../lib/vendor-ref';
 
 type ProductPageProps = {
 	params: Promise<{ vendorSlug: string; productSlug: string }>;
@@ -69,6 +74,18 @@ export default async function ProductPage({ params }: ProductPageProps) {
 	const { vendorSlug, productSlug } = await params;
 	try {
 		const product = await loadProduct(vendorSlug, productSlug);
+		const canonical = {
+			vendorSlug: product.vendor.slug,
+			productSlug: product.slug,
+		};
+		if(
+			productPathNeedsCanonicalRedirect(
+				{ vendorSlug, productSlug },
+				canonical,
+			)
+		) {
+			redirect(productViewHref(canonical));
+		}
 		const related = await relatedProducts(product);
 		return (
 			<ProductDetailClient

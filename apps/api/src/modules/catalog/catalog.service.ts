@@ -24,6 +24,7 @@ import { UpdateCatalogProductDto } from './dto/update-catalog-product.dto';
 import { UomMergeService } from './uom-merge.service';
 import { resolveQty } from './uom-qty';
 import type { QtyCompoundDto } from './dto/qty-compound.dto';
+import { isUuidLike } from './vendor-link-name';
 
 const productInclude = {
 	vendor: true,
@@ -380,11 +381,41 @@ export class CatalogService {
 	}
 
 	async getProduct(vendorSlug: string, productSlug: string, viewerUserId?: string) {
+		const vendorRef = vendorSlug.trim();
+		const productRef = productSlug.trim();
+		if(!vendorRef || !productRef) {
+			throw new NotFoundException('Product not found.');
+		}
+
+		/** UUID product segment: resolve by id (vendor segment ignored for lookup). */
+		if(isUuidLike(productRef)) {
+			const byId = await this.prisma.catalogProduct.findFirst({
+				where: {
+					id: productRef,
+					active: true,
+				},
+				include: productInclude,
+			});
+			if(!byId) {
+				throw new NotFoundException('Product not found.');
+			}
+			const canEditById = await this.vendorAccess.canEditProduct(
+				viewerUserId,
+				byId.id,
+			);
+			return {
+				...this.toDetail(byId),
+				permissions: { canEdit: canEditById },
+			};
+		}
+
 		const product = await this.prisma.catalogProduct.findFirst({
 			where: {
-				slug: productSlug,
-				vendor: { slug: vendorSlug },
+				slug: productRef,
 				active: true,
+				vendor: isUuidLike(vendorRef)
+					? { id: vendorRef }
+					: { slug: vendorRef },
 			},
 			include: productInclude,
 		});
