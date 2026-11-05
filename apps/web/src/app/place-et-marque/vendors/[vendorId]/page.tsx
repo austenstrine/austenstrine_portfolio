@@ -27,7 +27,6 @@ import {
 } from '../../../../lib/checkout-api';
 import { useSession } from '../../../../lib/useSession';
 import { RequireAccess } from '../../../../components/auth/RequireAccess';
-import { BackLink } from '../../../../components/BackLink';
 import { UrlSlugField } from '../../../../components/catalog/UrlSlugField';
 import { ArrowRightIcon } from '../../../../components/icons/ArrowRightIcon';
 import { CartIcon } from '../../../../components/icons/CartIcon';
@@ -59,6 +58,37 @@ function slugifyTyping(value: string): string {
 		? `${body}-`
 		: body;
 	return next.slice(0, 80);
+}
+
+function formatPayoutStatus(status: string): string {
+	switch(status) {
+		case 'PENDING':
+			return 'Pending';
+		case 'READY':
+			return 'Ready';
+		case 'TRANSFERRED':
+			return 'Paid out';
+		case 'FAILED':
+			return 'Failed';
+		case 'CANCELLED':
+			return 'Cancelled';
+		case 'SKIPPED':
+			return 'Skipped';
+		case 'REVERSED':
+			return 'Reversed';
+		default:
+			return status.charAt(0) + status.slice(1).toLowerCase();
+	}
+}
+
+function formatPayoutTrigger(trigger: string): string {
+	if(trigger === 'ON_SHIPMENT') {
+		return 'Pays out when shipped';
+	}
+	if(trigger === 'ON_PAYMENT') {
+		return 'Pays out when paid';
+	}
+	return trigger.replace(/_/g, ' ').toLowerCase();
 }
 
 function VendorDetailContent() {
@@ -172,25 +202,46 @@ function VendorDetailContent() {
 
 	async function onRequestLinkName(event: FormEvent) {
 		event.preventDefault();
-		if(!vendorId) {
+		setLinkNameMessage(null);
+		if(!vendorId || !vendor) {
+			setLinkNameError('Organization is still loading. Try again in a moment.');
 			return;
 		}
 		const linkName = slugify(linkNameDraft);
-		if(linkName.length < 2) {
-			setLinkNameError('Use at least two letters or numbers in the name.');
+		const incomplete: string[] = [];
+		if(!linkNameDraft.trim() || linkName.length < 2) {
+			incomplete.push(
+				'Requested name in the link — enter at least two letters or numbers',
+			);
+		}
+		else if(linkName === vendor.slug) {
+			incomplete.push(
+				'Requested name in the link — choose a name that differs from the current one',
+			);
+		}
+		if(vendor.linkNameRequest?.status === 'PENDING') {
+			incomplete.push(
+				'A request is already pending review — wait for that decision before sending another',
+			);
+		}
+		if(incomplete.length > 0) {
+			setLinkNameError(
+				incomplete.length === 1
+					? incomplete[0]
+					: `Still needed:\n• ${incomplete.join('\n• ')}`,
+			);
 			return;
 		}
 		setLinkNameDraft(linkName);
 		setLinkNameBusy(true);
 		setLinkNameError(null);
-		setLinkNameMessage(null);
 		try {
 			const result = await requestVendorLinkName(vendorId, {
 				linkName,
 				note: linkNameNote.trim() || undefined,
 			});
 			setLinkNameMessage(result.message);
-			const refreshed = await getMyVendor(vendor?.slug || vendorId);
+			const refreshed = await getMyVendor(vendor.slug || vendorId);
 			setVendor(refreshed);
 			setLinkNameDraft(refreshed.slug);
 		}
@@ -314,9 +365,46 @@ function VendorDetailContent() {
 				gap-6
 			"
 		>
-			<BackLink href="/place-et-marque/vendors">
-				Back to vendors
-			</BackLink>
+			<nav
+				aria-label="Breadcrumb"
+				className="
+					text-sm
+					text-slate-500
+				"
+			>
+				<ol
+					className="
+						flex
+						flex-wrap
+						items-center
+						gap-2
+					"
+				>
+					<li>
+						<a
+							className="
+								font-semibold
+								text-sky
+								hover:underline
+							"
+							href="/place-et-marque/vendors"
+						>
+							Vendors
+						</a>
+					</li>
+					<li aria-hidden="true">
+						›
+					</li>
+					<li
+						className="
+							font-semibold
+							text-ink
+						"
+					>
+						{vendor?.name ?? 'Organization'}
+					</li>
+				</ol>
+			</nav>
 
 			{sessionLoading || loading
 				? (
@@ -364,21 +452,14 @@ function VendorDetailContent() {
 							{vendor.myRole === 'OWNER'
 								? (
 										<div
-											className={`
+											className="
 												mt-2
 												overflow-hidden
 												rounded-2xl
 												border
 												border-slate-200
 												bg-white
-												transition-[padding]
-												duration-300
-												ease-out
-												${linkNameOpen
-													? 'p-5'
-													: 'px-3 py-2'
-												}
-											`}
+											"
 										>
 											<div
 												className="
@@ -386,6 +467,8 @@ function VendorDetailContent() {
 													items-center
 													justify-between
 													gap-2
+													px-3
+													py-2
 												"
 											>
 												<p
@@ -524,7 +607,8 @@ function VendorDetailContent() {
 												? (
 														<p
 															className="
-																mt-1
+																px-3
+																pb-2
 																text-sm
 																text-slate-500
 																sm:hidden
@@ -554,15 +638,13 @@ function VendorDetailContent() {
 											>
 												<div className="overflow-hidden">
 													<section
-														className={`
-															transition-[margin-top]
-															duration-300
-															ease-out
-															${linkNameOpen
-																? 'mt-4'
-																: 'mt-0'
-															}
-														`}
+														className="
+															border-t
+															border-slate-100
+															px-5
+															pb-5
+															pt-4
+														"
 													>
 														<h2 className="text-lg font-semibold">
 															Name in the link
@@ -639,7 +721,12 @@ function VendorDetailContent() {
 															<UrlSlugField
 																label="Requested name in the link"
 																value={linkNameDraft}
-																onChange={(next) => setLinkNameDraft(slugifyTyping(next))}
+																onChange={(next) => {
+																	setLinkNameDraft(slugifyTyping(next));
+																	if(linkNameError) {
+																		setLinkNameError(null);
+																	}
+																}}
 																prefixPath="/place-et-marque/vendors"
 																placeholder={vendor.slug}
 																helpText="Ask for a different name if the current one no longer fits."
@@ -667,7 +754,14 @@ function VendorDetailContent() {
 															</label>
 															{linkNameError
 																? (
-																		<p className="text-sm text-red-700">
+																		<p
+																			className="
+																				whitespace-pre-line
+																				text-sm
+																				text-red-700
+																			"
+																			role="alert"
+																		>
 																			{linkNameError}
 																		</p>
 																	)
@@ -683,11 +777,7 @@ function VendorDetailContent() {
 															}
 															<button
 																type="submit"
-																disabled={
-																	linkNameBusy
-																	|| slugify(linkNameDraft) === vendor.slug
-																	|| vendor.linkNameRequest?.status === 'PENDING'
-																}
+																disabled={linkNameBusy}
 																className="
 																	self-end
 																	rounded-full
@@ -702,7 +792,7 @@ function VendorDetailContent() {
 															>
 																{linkNameBusy
 																	? 'Sending…'
-																	: 'Request new name'
+																	: 'Submit request'
 																}
 															</button>
 														</form>
@@ -1312,30 +1402,93 @@ function VendorDetailContent() {
 																pt-3
 															"
 														>
-															{connectStatus.recent!.map((row) => (
-																<li
-																	className="
-																		flex
-																		flex-wrap
-																		items-center
-																		justify-between
-																		gap-2
-																		text-sm
-																	"
-																	key={row.id}
-																>
-																	<span className="text-slate-600">
-																		{row.status} · {row.trigger.replace('_', ' ').toLowerCase()}
-																	</span>
-																	<span className="font-semibold">
-																		{formatMoney(row.vendorNetCents)}
-																		{' '}
-																		<span className="font-normal text-slate-500">
-																			(fee {formatMoney(row.feeCents)})
+															{connectStatus.recent!.map((row) => {
+																const orderedAt = row.orderCreatedAt ?? row.createdAt;
+																const whenLabel = row.transferredAt
+																	? `Paid ${new Date(row.transferredAt).toLocaleString()}`
+																	: row.shippedAt
+																		? `Ordered ${new Date(orderedAt).toLocaleString()} · shipped ${new Date(row.shippedAt).toLocaleString()}`
+																		: `Ordered ${new Date(orderedAt).toLocaleString()}`;
+																const orderLabel = row.orderRef || row.orderId;
+																return (
+																	<li
+																		className="
+																			flex
+																			flex-wrap
+																			items-start
+																			justify-between
+																			gap-3
+																			rounded-xl
+																			border
+																			border-slate-100
+																			px-3
+																			py-2.5
+																			text-sm
+																		"
+																		key={row.id}
+																	>
+																		<div className="min-w-0 flex-1">
+																			<p className="font-semibold text-ink">
+																				<a
+																					className="
+																						text-sky
+																						hover:underline
+																					"
+																					href={`/place-et-marque/vendors/${vendor.slug}/orders#${encodeURIComponent(row.orderId)}`}
+																				>
+																					{orderLabel}
+																				</a>
+																				{' '}
+																				<span
+																					className="
+																						font-normal
+																						text-slate-500
+																					"
+																				>
+																					· {formatPayoutStatus(row.status)}
+																				</span>
+																			</p>
+																			{row.customerHint || row.productHint
+																				? (
+																						<p className="mt-0.5 text-slate-600">
+																							{[row.customerHint, row.productHint]
+																								.filter(Boolean)
+																								.join(' · ')
+																							}
+																						</p>
+																					)
+																				: null
+																			}
+																			<p className="mt-0.5 text-xs text-slate-500">
+																				{formatPayoutTrigger(row.trigger)}
+																				{' · '}
+																				{whenLabel}
+																			</p>
+																			{row.lastError
+																				? (
+																						<p className="mt-1 text-xs text-red-700">
+																							{row.lastError}
+																						</p>
+																					)
+																				: null
+																			}
+																		</div>
+																		<span
+																			className="
+																				shrink-0
+																				text-right
+																				font-semibold
+																			"
+																		>
+																			{formatMoney(row.vendorNetCents)}
+																			{' '}
+																			<span className="font-normal text-slate-500">
+																				(fee {formatMoney(row.feeCents)})
+																			</span>
 																		</span>
-																	</span>
-																</li>
-															))}
+																	</li>
+																);
+															})}
 														</ul>
 													)
 													: null

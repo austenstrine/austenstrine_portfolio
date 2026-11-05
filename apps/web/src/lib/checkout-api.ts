@@ -172,6 +172,7 @@ export type ConnectStatus = {
 	recent?: Array<{
 		id: string;
 		orderId: string;
+		orderRef?: string;
 		status: string;
 		vendorNetCents: number;
 		feeCents: number;
@@ -179,6 +180,11 @@ export type ConnectStatus = {
 		lastError: string | null;
 		transferredAt: string | null;
 		createdAt: string;
+		orderCreatedAt?: string;
+		shippedAt?: string | null;
+		customerHint?: string | null;
+		productHint?: string | null;
+		lineCount?: number;
 	}>;
 };
 

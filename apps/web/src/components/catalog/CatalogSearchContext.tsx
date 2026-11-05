@@ -374,7 +374,7 @@ export function SellerTopContextPortal({ children }: { children: ReactNode }) {
 	);
 }
 
-/** Page-specific seller actions for the frosted bottom pane (not site-wide context). */
+/** Optional floating host — not the header page-action slot (vendor / New product). */
 export function PageBottomPanePortal({ children }: { children: ReactNode }) {
 	const { pageBottomPaneHostEl } = useCatalogSearch();
 	if(!pageBottomPaneHostEl || children == null || children === false) {
@@ -382,7 +382,7 @@ export function PageBottomPanePortal({ children }: { children: ReactNode }) {
 	}
 	return createPortal(
 		<div
-			aria-label="Page actions"
+			aria-label="Floating seller controls"
 			className="
 				flex
 				flex-wrap
