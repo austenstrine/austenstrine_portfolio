@@ -189,30 +189,118 @@ export function useCatalogFloatingMenu({
 			});
 		};
 
+		const menuItems = () =>
+			[
+				...(panelRef.current?.querySelectorAll<HTMLElement>('[role="menuitem"]') ?? []),
+			];
+
+		const closeMenu = (restoreTriggerFocus = true) => {
+			setOpen(false);
+			if(restoreTriggerFocus) {
+				triggerRef.current?.focus();
+			}
+		};
+
 		place();
 		window.addEventListener('resize', place);
 		window.addEventListener('scroll', place, true);
+
+		let focusAttempts = 0;
+		let focusFrame = 0;
+		const focusFirstItem = () => {
+			const first = menuItems()[0];
+			if(first) {
+				first.focus();
+				return;
+			}
+			focusAttempts += 1;
+			if(focusAttempts < 12) {
+				focusFrame = requestAnimationFrame(focusFirstItem);
+			}
+		};
+		focusFrame = requestAnimationFrame(focusFirstItem);
 
 		const onPointerDown = (event: PointerEvent) => {
 			const target = event.target as Node;
 			if(triggerRef.current?.contains(target) || panelRef.current?.contains(target)) {
 				return;
 			}
-			setOpen(false);
+			closeMenu(false);
 		};
 		const onKeyDown = (event: KeyboardEvent) => {
-			if(event.key !== 'Escape') {
+			const items = menuItems();
+			const activeIndex = items.findIndex((item) => item === document.activeElement);
+
+			if(event.key === 'Escape') {
+				if(onEscapeRef.current?.()) {
+					return;
+				}
+				event.preventDefault();
+				closeMenu(true);
 				return;
 			}
-			if(onEscapeRef.current?.()) {
+
+			if(items.length === 0) {
 				return;
 			}
-			setOpen(false);
+
+			if(event.key === 'ArrowDown') {
+				event.preventDefault();
+				const next = activeIndex < 0
+					? 0
+					: (activeIndex + 1) % items.length;
+				items[next]?.focus();
+				return;
+			}
+
+			if(event.key === 'ArrowUp') {
+				event.preventDefault();
+				const next = activeIndex <= 0
+					? items.length - 1
+					: activeIndex - 1;
+				items[next]?.focus();
+				return;
+			}
+
+			if(event.key === 'Home') {
+				event.preventDefault();
+				items[0]?.focus();
+				return;
+			}
+
+			if(event.key === 'End') {
+				event.preventDefault();
+				items[items.length - 1]?.focus();
+				return;
+			}
+
+			if(event.key !== 'Tab') {
+				return;
+			}
+
+			// Keep Tab inside the open menu (portal items are otherwise last in document order).
+			event.preventDefault();
+			if(items.length === 1) {
+				items[0]?.focus();
+				return;
+			}
+			if(event.shiftKey) {
+				const next = activeIndex <= 0
+					? items.length - 1
+					: activeIndex - 1;
+				items[next]?.focus();
+				return;
+			}
+			const next = activeIndex < 0
+				? 0
+				: (activeIndex + 1) % items.length;
+			items[next]?.focus();
 		};
 
 		document.addEventListener('pointerdown', onPointerDown);
 		window.addEventListener('keydown', onKeyDown);
 		return () => {
+			cancelAnimationFrame(focusFrame);
 			window.removeEventListener('resize', place);
 			window.removeEventListener('scroll', place, true);
 			document.removeEventListener('pointerdown', onPointerDown);
