@@ -29,6 +29,7 @@ import { useSession } from '../../../../lib/useSession';
 import { RequireAccess } from '../../../../components/auth/RequireAccess';
 import { BackLink } from '../../../../components/BackLink';
 import { UrlSlugField } from '../../../../components/catalog/UrlSlugField';
+import { ArrowRightIcon } from '../../../../components/icons/ArrowRightIcon';
 
 function slugify(value: string): string {
 	return value
@@ -53,6 +54,7 @@ function VendorDetailContent() {
 	const [linkNameBusy, setLinkNameBusy] = useState(false);
 	const [linkNameError, setLinkNameError] = useState<string | null>(null);
 	const [linkNameMessage, setLinkNameMessage] = useState<string | null>(null);
+	const [linkNameOpen, setLinkNameOpen] = useState(false);
 	const [passwords, setPasswords] = useState<VendorAppPassword[]>([]);
 	const [passwordName, setPasswordName] = useState('Inventory sync');
 	const [createdToken, setCreatedToken] = useState<CreatedVendorAppPassword | null>(null);
@@ -330,84 +332,136 @@ function VendorDetailContent() {
 							>
 								{vendor.name}
 							</h1>
-							<p className="mt-1 text-slate-600">
-								/place-et-marque/vendors/{vendor.slug}
-							</p>
-						</div>
-
-						<section
-							className="
-								rounded-2xl
-								border
-								border-slate-200
-								bg-white
-								p-5
-							"
-						>
-							<h2 className="text-lg font-semibold">
-								Name in the link
-							</h2>
 							<p
 								className="
-									mt-2
-									text-sm
+									mt-1
+									flex
+									flex-wrap
+									items-baseline
+									gap-x-2
+									gap-y-1
 									text-slate-600
 								"
 							>
-								This short name appears in your organization page and store address.
-								Changing it later needs Place et Marque approval.
+								<span>
+									/place-et-marque/vendors/{vendor.slug}
+								</span>
+								{vendor.myRole === 'OWNER'
+									? (
+											<button
+												type="button"
+												onClick={() => setLinkNameOpen((open) => !open)}
+												aria-expanded={linkNameOpen}
+												className="
+													inline-flex
+													items-center
+													gap-1
+													text-sm
+													text-slate-500
+													hover:text-sky
+												"
+											>
+												(
+												{linkNameOpen
+													? 'close'
+													: 'change'
+												}
+												<ArrowRightIcon
+													className="
+														h-3
+														w-3
+													"
+												/>
+												)
+											</button>
+										)
+									: null
+								}
+								{!linkNameOpen
+									&& vendor.linkNameRequest?.status === 'PENDING'
+									? (
+											<span className="text-sm text-slate-500">
+												Pending review
+											</span>
+										)
+									: null
+								}
 							</p>
-							{vendor.linkNameRequest?.status === 'PENDING'
-								? (
+						</div>
+
+						{linkNameOpen
+							? (
+									<section
+										className="
+											rounded-2xl
+											border
+											border-slate-200
+											bg-white
+											p-5
+										"
+									>
+										<h2 className="text-lg font-semibold">
+											Name in the link
+										</h2>
 										<p
 											className="
-												mt-3
-												rounded-xl
-												border
-												border-sky/30
-												bg-sky/5
-												px-4
-												py-3
+												mt-2
 												text-sm
-												text-slate-700
+												text-slate-600
 											"
 										>
-											Pending request:
-											{' '}
-											<strong>
-												{vendor.linkNameRequest.requestedSlug}
-											</strong>
-											. We&apos;ll email or show the decision here when reviewed.
+											This short name appears in your organization page and store address.
+											Changing it later needs Place et Marque approval.
 										</p>
-									)
-								: null
-							}
-							{vendor.linkNameRequest?.status === 'DENIED'
-								? (
-										<p
-											className="
-												mt-3
-												rounded-xl
-												border
-												border-red-200
-												bg-red-50
-												px-4
-												py-3
-												text-sm
-												text-red-800
-											"
-										>
-											Last request denied
-											{vendor.linkNameRequest.reviewReason
-												? `: ${vendor.linkNameRequest.reviewReason}`
-												: '.'
-											}
-										</p>
-									)
-								: null
-							}
-							{vendor.myRole === 'OWNER'
-								? (
+										{vendor.linkNameRequest?.status === 'PENDING'
+											? (
+													<p
+														className="
+															mt-3
+															rounded-xl
+															border
+															border-sky/30
+															bg-sky/5
+															px-4
+															py-3
+															text-sm
+															text-slate-700
+														"
+													>
+														Pending request:
+														{' '}
+														<strong>
+															{vendor.linkNameRequest.requestedSlug}
+														</strong>
+														. We&apos;ll email or show the decision here when reviewed.
+													</p>
+												)
+											: null
+										}
+										{vendor.linkNameRequest?.status === 'DENIED'
+											? (
+													<p
+														className="
+															mt-3
+															rounded-xl
+															border
+															border-red-200
+															bg-red-50
+															px-4
+															py-3
+															text-sm
+															text-red-800
+														"
+													>
+														Last request denied
+														{vendor.linkNameRequest.reviewReason
+															? `: ${vendor.linkNameRequest.reviewReason}`
+															: '.'
+														}
+													</p>
+												)
+											: null
+										}
 										<form
 											className="
 												mt-4
@@ -487,14 +541,10 @@ function VendorDetailContent() {
 												}
 											</button>
 										</form>
-									)
-								: (
-										<p className="mt-3 text-sm text-slate-500">
-											Only an organization owner can request a different name in the link.
-										</p>
-									)
-							}
-						</section>
+									</section>
+								)
+							: null
+						}
 
 						<section
 							className="
