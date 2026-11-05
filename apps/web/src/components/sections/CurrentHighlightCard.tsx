@@ -38,7 +38,7 @@ export function CurrentHighlightCard({
 				duration-300
 				ease-out
 				${showWrapper
-					? '-mx-ve'
+					? '-mx-4'
 					: 'mx-0'
 				}
 			`}
@@ -73,7 +73,7 @@ export function CurrentHighlightCard({
 							top-3
 							z-10
 							rounded-full
-							p-ve-0.375
+							p-1.5
 							text-slate-200
 							transition-colors
 							duration-200
@@ -110,7 +110,7 @@ export function CurrentHighlightCard({
 					duration-300
 					ease-out
 					${showWrapper
-						? 'p-ve'
+						? 'p-4'
 						: 'p-0'
 					}
 				`}
@@ -131,7 +131,7 @@ export function CurrentHighlightCard({
 					<div className="overflow-hidden">
 						<p
 							className={`
-								pr-ve-lg
+								pr-8
 								text-xs
 								font-semibold
 								uppercase
@@ -159,7 +159,7 @@ export function CurrentHighlightCard({
 								duration-300
 								ease-out
 								${showWrapper
-									? 'mt-ve-0.75'
+									? 'mt-3'
 									: 'mt-0'
 								}
 							`}
@@ -196,7 +196,7 @@ export function CurrentHighlightCard({
 						>
 							<h3
 								className="
-									mt-ve
+									mt-4
 									text-2xl
 									font-semibold
 									text-white
@@ -206,7 +206,7 @@ export function CurrentHighlightCard({
 							</h3>
 							<p
 								className="
-									mt-ve-0.75
+									mt-3
 									text-sm
 									leading-6
 									text-slate-100
@@ -217,12 +217,12 @@ export function CurrentHighlightCard({
 
 							<div
 								className="
-									mt-ve-1.25
+									mt-5
 									rounded-xl
 									border
 									border-white/20
 									bg-white/10
-									p-ve
+									p-4
 								"
 								id={body.stackId}
 							>
@@ -239,10 +239,10 @@ export function CurrentHighlightCard({
 								</p>
 								<div
 									className="
-										mt-ve-0.75
+										mt-3
 										flex
 										flex-wrap
-										gap-ve-sm
+										gap-2
 									"
 								>
 									{
@@ -251,8 +251,8 @@ export function CurrentHighlightCard({
 												className="
 													rounded-full
 													bg-white/15
-													px-ve-0.75
-													py-ve-tiny
+													px-3
+													py-1
 													text-xs
 													font-medium
 													text-white
@@ -268,8 +268,8 @@ export function CurrentHighlightCard({
 
 							<div
 								className="
-									mt-ve-1.25
-									space-y-ve-sm
+									mt-5
+									space-y-2
 									text-sm
 									text-slate-100
 								"
@@ -285,10 +285,10 @@ export function CurrentHighlightCard({
 
 							<div
 								className="
-									mt-ve-1.5
+									mt-6
 									flex
 									flex-wrap
-									gap-ve-0.75
+									gap-3
 								"
 							>
 								{
@@ -300,8 +300,8 @@ export function CurrentHighlightCard({
 														rounded-full
 														border
 														border-white/30
-														px-ve
-														py-ve-sm
+														px-4
+														py-2
 														text-sm
 														font-semibold
 														text-white
@@ -311,8 +311,8 @@ export function CurrentHighlightCard({
 													: `
 														rounded-full
 														bg-white
-														px-ve
-														py-ve-sm
+														px-4
+														py-2
 														text-sm
 														font-semibold
 														text-ink

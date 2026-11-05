@@ -15,12 +15,12 @@ export function HeroSection() {
 				min-h-dvh
 				items-center
 				px-gutter
-				py-ve
+				py-4
 				text-white
 				shadow-2xl
 				sm:block
 				sm:min-h-0
-				sm:py-ve-4
+				sm:py-16
 			"
 		>
 			<div
@@ -28,9 +28,9 @@ export function HeroSection() {
 					grid
 					w-full
 					items-center
-					gap-ve-1.25
+					gap-5
 					md:grid-cols-[220px,1fr]
-					md:gap-ve-lg
+					md:gap-8
 				"
 			>
 				<CdnImg
@@ -62,7 +62,7 @@ export function HeroSection() {
 					</p>
 					<h1
 						className="
-							mt-ve-sm
+							mt-2
 							text-4xl
 							font-semibold
 							tracking-tight
@@ -73,7 +73,7 @@ export function HeroSection() {
 					</h1>
 					<p
 						className="
-							mt-ve
+							mt-4
 							max-w-2xl
 							text-lg
 							text-slate-100
@@ -83,7 +83,7 @@ export function HeroSection() {
 					</p>
 					<p
 						className="
-							mt-ve
+							mt-4
 							max-w-2xl
 							text-base
 							text-slate-100
@@ -98,10 +98,10 @@ export function HeroSection() {
 					</p>
 					<div
 						className="
-							mt-ve-lg
+							mt-8
 							flex
 							flex-wrap
-							gap-ve-0.75
+							gap-3
 						"
 					>
 						<a
@@ -109,8 +109,8 @@ export function HeroSection() {
 								inline-block
 								rounded-full
 								bg-white
-								px-ve-1.5
-								py-ve-0.75
+								px-6
+								py-3
 								text-sm
 								font-semibold
 								text-ink
@@ -128,8 +128,8 @@ export function HeroSection() {
 								rounded-full
 								border
 								border-white/60
-								px-ve-1.5
-								py-ve-0.75
+								px-6
+								py-3
 								text-sm
 								font-semibold
 								text-white
@@ -147,8 +147,8 @@ export function HeroSection() {
 								rounded-full
 								border
 								border-white/60
-								px-ve-1.5
-								py-ve-0.75
+								px-6
+								py-3
 								text-sm
 								font-semibold
 								text-white

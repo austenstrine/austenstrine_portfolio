@@ -33,7 +33,7 @@ export function FeaturedBuildSection() {
 				border-slate-200
 				bg-white
 				px-gutter
-				py-ve-lg
+				py-8
 				shadow-sm
 				sm:rounded-2xl
 			"
@@ -52,7 +52,7 @@ export function FeaturedBuildSection() {
 			</p>
 			<h2
 				className="
-					mt-ve-sm
+					mt-2
 					text-3xl
 					font-semibold
 					text-ink
@@ -62,7 +62,7 @@ export function FeaturedBuildSection() {
 			</h2>
 			<p
 				className="
-					mt-ve-0.75
+					mt-3
 					max-w-3xl
 					text-slate-700
 				"
@@ -83,9 +83,9 @@ export function FeaturedBuildSection() {
 
 			<ul
 				className="
-					mt-ve-lg
+					mt-8
 					grid
-					gap-ve
+					gap-4
 					md:grid-cols-2
 				"
 			>
@@ -101,7 +101,7 @@ export function FeaturedBuildSection() {
 								border
 								border-slate-200
 								bg-frost/60
-								p-ve-1.25
+								p-5
 								transition
 								hover:border-ink
 								hover:bg-white
@@ -123,7 +123,7 @@ export function FeaturedBuildSection() {
 							</p>
 							<p
 								className="
-									mt-ve-sm
+									mt-2
 									flex-1
 									text-sm
 									leading-relaxed
@@ -134,11 +134,11 @@ export function FeaturedBuildSection() {
 							</p>
 							<span
 								className="
-									mt-ve-1.25
+									mt-5
 									inline-flex
 									items-center
 									justify-end
-									gap-ve-tiny
+									gap-1
 									self-end
 									text-sm
 									font-semibold
@@ -165,7 +165,7 @@ export function FeaturedBuildSection() {
 
 			<div
 				className="
-					mt-ve-lg
+					mt-8
 					flex
 					justify-end
 				"
@@ -175,8 +175,8 @@ export function FeaturedBuildSection() {
 						inline-flex
 						rounded-full
 						bg-sky
-						px-ve-1.25
-						py-ve-0.625
+						px-5
+						py-2.5
 						text-sm
 						font-semibold
 						text-white

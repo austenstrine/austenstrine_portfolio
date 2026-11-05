@@ -11,7 +11,7 @@ html:has(.cv-page) body {
 .cv-page {
 	--asgreen: #257257;
 	min-height: 100vh;
-	padding: 0 0 calc(4 * var(--viewport-element));
+	padding: 0 0 4rem;
 	font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 	font-size: 10.5pt;
 	line-height: 1.55;
@@ -30,7 +30,7 @@ html:has(.cv-page) body {
 
 @media (min-width: 640px) {
 	.cv-page {
-		padding-top: var(--viewport-element--large);
+		padding-top: 2rem;
 	}
 
 	.cv-page .page-shell {
@@ -42,9 +42,9 @@ html:has(.cv-page) body {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
-	padding: calc(0.7 * var(--viewport-element)) calc(1.5 * var(--viewport-element));
+	padding: 0.7rem 1.5rem;
 	background: #1b263b;
-	gap: var(--viewport-element);
+	gap: 1rem;
 }
 
 .cv-page .screen-toolbar a,
@@ -52,7 +52,7 @@ html:has(.cv-page) body {
 .cv-page .print-btn {
 	display: inline-flex;
 	align-items: center;
-	gap: calc(0.4 * var(--viewport-element));
+	gap: 0.4rem;
 	color: #e0e1dd;
 	text-decoration: none;
 	font-size: 0.8rem;
@@ -79,7 +79,7 @@ html:has(.cv-page) body {
 }
 
 .cv-page .print-btn {
-	padding: calc(0.45 * var(--viewport-element)) calc(0.85 * var(--viewport-element));
+	padding: 0.45rem 0.85rem;
 	border: 1px solid rgba(224, 225, 221, 0.28);
 	border-radius: 6px;
 }
@@ -91,13 +91,13 @@ html:has(.cv-page) body {
 }
 
 .cv-page .cv {
-	padding: calc(2.2 * var(--viewport-element)) calc(2.6 * var(--viewport-element)) calc(2.8 * var(--viewport-element));
+	padding: 2.2rem 2.6rem 2.8rem;
 }
 
 .cv-page .cv-header {
 	border-bottom: 1.5px solid var(--asgreen);
-	padding-bottom: var(--viewport-element);
-	margin-bottom: calc(1.4 * var(--viewport-element));
+	padding-bottom: 1rem;
+	margin-bottom: 1.4rem;
 }
 
 .cv-page .cv-header h1 {
@@ -113,14 +113,14 @@ html:has(.cv-page) body {
 	font-size: 10.5pt;
 	color: #1b263b;
 	font-weight: 500;
-	margin-top: calc(0.3 * var(--viewport-element));
-	margin-bottom: calc(0.85 * var(--viewport-element));
+	margin-top: 0.3rem;
+	margin-bottom: 0.85rem;
 }
 
 .cv-page .cv-contact {
 	display: flex;
 	flex-direction: column;
-	gap: calc(0.35 * var(--viewport-element));
+	gap: 0.35rem;
 	font-size: 9.5pt;
 	color: #4a5560;
 }
@@ -129,12 +129,12 @@ html:has(.cv-page) body {
 	display: flex;
 	flex-wrap: wrap;
 	align-items: baseline;
-	row-gap: var(--viewport-element--tiny);
+	row-gap: 0.25rem;
 	margin: 0;
 }
 
 .cv-page .cv-sep {
-	margin: 0 calc(0.65 * var(--viewport-element));
+	margin: 0 0.65rem;
 	color: #9aa3ad;
 	user-select: none;
 }
@@ -156,7 +156,7 @@ html:has(.cv-page) body {
 }
 
 .cv-page .cv-section {
-	margin-top: calc(1.4 * var(--viewport-element));
+	margin-top: 1.4rem;
 }
 
 .cv-page .cv-section-title {
@@ -166,16 +166,16 @@ html:has(.cv-page) body {
 	letter-spacing: 1.2px;
 	color: #0d1b2a;
 	border-bottom: 1px solid #d0d5da;
-	padding-bottom: var(--viewport-element--tiny);
-	margin: 0 0 calc(0.9 * var(--viewport-element));
+	padding-bottom: 0.25rem;
+	margin: 0 0 0.9rem;
 }
 
 .cv-page .cv-summary p {
-	margin: 0 0 var(--viewport-element--small);
+	margin: 0 0 0.5rem;
 }
 
 .cv-page .cv-job {
-	margin-bottom: calc(1.2 * var(--viewport-element));
+	margin-bottom: 1.2rem;
 }
 
 .cv-page .cv-job:last-child {
@@ -187,7 +187,7 @@ html:has(.cv-page) body {
 	justify-content: space-between;
 	align-items: baseline;
 	flex-wrap: wrap;
-	gap: calc(0.2 * var(--viewport-element));
+	gap: 0.2rem;
 }
 
 .cv-page .cv-job-title {
@@ -206,22 +206,22 @@ html:has(.cv-page) body {
 	font-size: 9.5pt;
 	color: #1b263b;
 	font-weight: 600;
-	margin-bottom: calc(0.1 * var(--viewport-element));
+	margin-bottom: 0.1rem;
 }
 
 .cv-page .cv-job-meta {
 	font-size: 8.5pt;
 	color: #777;
-	margin-bottom: var(--viewport-element--small);
+	margin-bottom: 0.5rem;
 }
 
 .cv-page .cv-job ul {
-	padding-left: calc(1.2 * var(--viewport-element));
-	margin: calc(0.3 * var(--viewport-element)) 0 0;
+	padding-left: 1.2rem;
+	margin: 0.3rem 0 0;
 }
 
 .cv-page .cv-job li {
-	margin-bottom: calc(0.3 * var(--viewport-element));
+	margin-bottom: 0.3rem;
 	font-size: 10pt;
 }
 
@@ -232,7 +232,7 @@ html:has(.cv-page) body {
 }
 
 .cv-page .cv-additional td {
-	padding: calc(0.2 * var(--viewport-element)) var(--viewport-element--small) calc(0.2 * var(--viewport-element)) 0;
+	padding: 0.2rem 0.5rem 0.2rem 0;
 	vertical-align: top;
 	color: #444;
 }
@@ -254,7 +254,7 @@ html:has(.cv-page) body {
 	font-size: 8.5pt;
 	text-align: right;
 	white-space: nowrap;
-	padding-left: var(--viewport-element);
+	padding-left: 1rem;
 }
 
 @media (max-width: 639px) {
@@ -268,7 +268,7 @@ html:has(.cv-page) body {
 		display: grid;
 		grid-template-columns: minmax(0, 1fr) auto;
 		width: 100%;
-		padding-bottom: calc(0.75 * var(--viewport-element));
+		padding-bottom: 0.75rem;
 	}
 
 	.cv-page .cv-additional tr:last-child {
@@ -297,7 +297,7 @@ html:has(.cv-page) body {
 		grid-column: 2;
 		grid-row: 1;
 		align-self: start;
-		padding-left: calc(0.75 * var(--viewport-element));
+		padding-left: 0.75rem;
 		text-align: right;
 		white-space: nowrap;
 	}
@@ -306,7 +306,7 @@ html:has(.cv-page) body {
 .cv-page .cv-skills-grid {
 	display: grid;
 	grid-template-columns: 1fr 1fr;
-	gap: var(--viewport-element--small) var(--viewport-element--large);
+	gap: 0.5rem 2rem;
 }
 
 .cv-page .cv-skill-label {
@@ -315,7 +315,7 @@ html:has(.cv-page) body {
 	text-transform: uppercase;
 	letter-spacing: 0.8px;
 	color: #0d1b2a;
-	margin-bottom: calc(0.15 * var(--viewport-element));
+	margin-bottom: 0.15rem;
 }
 
 .cv-page .cv-skill-list {

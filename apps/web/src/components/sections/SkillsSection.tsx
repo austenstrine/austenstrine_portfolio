@@ -35,7 +35,7 @@ export function SkillsSection() {
 				border
 				border-slate-200
 				bg-white
-				p-ve-lg
+				p-8
 				shadow-sm
 				sm:rounded-2xl
 			"
@@ -52,9 +52,9 @@ export function SkillsSection() {
 			</h2>
 			<div
 				className="
-					mt-ve-1.5
+					mt-6
 					grid
-					gap-ve
+					gap-4
 					md:grid-cols-2
 				"
 			>
@@ -65,7 +65,7 @@ export function SkillsSection() {
 							border
 							border-slate-200
 							bg-slate-50
-							p-ve-1.25
+							p-5
 						"
 						key={skill.title}
 					>
@@ -80,7 +80,7 @@ export function SkillsSection() {
 						</h3>
 						<p
 							className="
-								mt-ve-sm
+								mt-2
 								text-sm
 								text-slate-700
 							"
