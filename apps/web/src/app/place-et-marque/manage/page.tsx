@@ -9,10 +9,7 @@ import {
 } from '../../../lib/catalog-api';
 import { useSession } from '../../../lib/useSession';
 import { RequireAccess } from '../../../components/auth/RequireAccess';
-import {
-	PageBottomPanePortal,
-	SellerTopContextPortal,
-} from '../../../components/catalog/CatalogSearchContext';
+import { SellerTopContextPortal } from '../../../components/catalog/CatalogSearchContext';
 import { ManageProductRowActions } from '../../../components/catalog/ManageProductRowActions';
 import { ArrowLeftIcon } from '../../../components/icons/ArrowLeftIcon';
 import { ArrowRightIcon } from '../../../components/icons/ArrowRightIcon';
@@ -329,14 +326,12 @@ function PlaceEtMarqueManageContent() {
 					)
 					: null
 				}
-			</SellerTopContextPortal>
-
-			<PageBottomPanePortal>
 				{newProductVendorId
 					? (
 						<a
 							aria-label="New product"
 							className="
+								ml-auto
 								inline-flex
 								h-10
 								w-10
@@ -344,6 +339,7 @@ function PlaceEtMarqueManageContent() {
 								items-center
 								justify-center
 								gap-1.5
+								self-end
 								rounded-full
 								bg-asgreen
 								text-sm
@@ -382,7 +378,7 @@ function PlaceEtMarqueManageContent() {
 					)
 					: null
 				}
-			</PageBottomPanePortal>
+			</SellerTopContextPortal>
 
 			<div>
 				<h1
