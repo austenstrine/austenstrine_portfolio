@@ -15,6 +15,26 @@ type ContactMethodRowProps = {
 	onCopied: () => void;
 };
 
+function mobileActionValue(href: string, copyValue: string): string {
+	if(href.startsWith('http://') || href.startsWith('https://')) {
+		try {
+			const path = new URL(href).pathname.replace(/\/$/, '');
+			if(path) {
+				return path;
+			}
+		}
+		catch {
+			return copyValue;
+		}
+	}
+
+	if(href.startsWith('/') && !href.startsWith('//')) {
+		return href;
+	}
+
+	return copyValue;
+}
+
 export function ContactMethodRow({
 	rowId,
 	copyLabel,
@@ -32,6 +52,7 @@ export function ContactMethodRow({
 	const linkRel = isExternal
 		? 'noreferrer'
 		: undefined;
+	const actionValue = mobileActionValue(href, copyValue);
 
 	const onCopy = async () => {
 		try {
@@ -46,33 +67,72 @@ export function ContactMethodRow({
 	return (
 		<div
 			className="
-				grid
+				flex
 				items-stretch
 				gap-3
-				md:grid-cols-[minmax(0,1fr),minmax(0,1fr)]
 			"
 			id={rowId}
 		>
-			<div className="relative">
+			<div
+				className="
+					relative
+					shrink-0
+					self-stretch
+					md:min-w-0
+					md:flex-1
+				"
+			>
 				<button
 					className="
 						group
 						inline-flex
-						max-w-full
+						h-full
+						w-12
 						items-center
-						justify-start
-						gap-3
-						px-1
-						py-2
-						text-left
+						justify-center
+						rounded-xl
+						border
+						border-white/20
+						bg-white/10
+						text-slate-100
 						transition
-						hover:opacity-90
+						hover:bg-white/20
+						hover:text-white
+						md:h-auto
+						md:w-auto
+						md:max-w-full
+						md:justify-start
+						md:gap-3
+						md:rounded-none
+						md:border-0
+						md:bg-transparent
+						md:px-1
+						md:py-2
+						md:text-left
+						md:hover:bg-transparent
+						md:hover:opacity-90
 					"
 					type="button"
 					onClick={onCopy}
 					aria-label={`Copy ${copyLabel} to clipboard`}
 				>
-					<div className="min-w-0">
+					<span
+						className="
+							shrink-0
+							text-slate-100
+							md:hidden
+						"
+						aria-hidden="true"
+					>
+						<CopyIcon />
+					</span>
+					<div
+						className="
+							hidden
+							min-w-0
+							md:block
+						"
+					>
 						<p
 							className="
 								text-[11px]
@@ -93,26 +153,25 @@ export function ContactMethodRow({
 								gap-2
 							"
 						>
-						<p
-							className="
-								min-w-0
-								truncate
-								text-sm
-								text-slate-100
-							"
-						>
-							{copyValue}
-						</p>
+							<p
+								className="
+									min-w-0
+									truncate
+									text-sm
+									text-slate-100
+								"
+							>
+								{copyValue}
+							</p>
 							<span
 								className="
 									shrink-0
 									text-slate-200
+									opacity-0
 									transition
-									opacity-100
-									md:opacity-0
-									md:group-hover:opacity-100
-									md:group-focus-visible:opacity-100
+									group-hover:opacity-100
 									group-hover:text-white
+									group-focus-visible:opacity-100
 								"
 								aria-hidden="true"
 							>
@@ -127,6 +186,8 @@ export function ContactMethodRow({
 				className="
 					group
 					flex
+					min-w-0
+					flex-1
 					items-center
 					justify-between
 					rounded-xl
@@ -146,12 +207,15 @@ export function ContactMethodRow({
 				<div
 					className="
 						flex
+						min-w-0
 						items-center
 						gap-3
+						md:justify-start
 					"
 				>
 					<span
 						className="
+							shrink-0
 							rounded-md
 							bg-white/15
 							p-2
@@ -159,17 +223,36 @@ export function ContactMethodRow({
 					>
 						{icon}
 					</span>
-					<div>
-						<p className="font-semibold">
+					<div className="min-w-0 text-left">
+						<p className="font-semibold truncate">
 							{linkTitle}
 						</p>
-						<p className="text-sm text-slate-200">
+						<p
+							className="
+								truncate
+								text-sm
+								text-slate-200
+								md:hidden
+							"
+						>
+							{actionValue}
+						</p>
+						<p
+							className="
+								hidden
+								text-sm
+								text-slate-200
+								md:block
+							"
+						>
 							{linkSummary}
 						</p>
 					</div>
 				</div>
 				<span
 					className="
+						ml-2
+						shrink-0
 						transition
 						group-hover:translate-x-0.5
 					"

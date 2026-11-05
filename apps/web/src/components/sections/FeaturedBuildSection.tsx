@@ -137,7 +137,9 @@ export function FeaturedBuildSection() {
 									mt-5
 									inline-flex
 									items-center
+									justify-end
 									gap-1
+									self-end
 									text-sm
 									font-semibold
 									text-ink

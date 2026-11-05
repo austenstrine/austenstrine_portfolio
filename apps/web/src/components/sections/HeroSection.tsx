@@ -1,4 +1,3 @@
-import { AccountMenu } from '../AccountMenu';
 import { CdnImg } from '../CdnImg';
 import { JOIN_DEMO_HREF, SITE_HEADLINE } from '../../lib/site';
 
@@ -13,7 +12,7 @@ export function HeroSection() {
 				from-sky
 				to-asgreen
 				flex
-				min-h-screen
+				min-h-dvh
 				items-center
 				px-gutter
 				py-4
@@ -24,8 +23,6 @@ export function HeroSection() {
 				sm:py-16
 			"
 		>
-			<AccountMenu />
-
 			<div
 				className="
 					grid

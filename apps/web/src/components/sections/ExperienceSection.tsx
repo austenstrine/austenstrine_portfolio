@@ -489,6 +489,15 @@ export function ExperienceSection() {
 		setPeekedIds((current) => current.filter((row) => row !== id));
 	}
 
+	function togglePeek(id: string) {
+		if(peekedIds.includes(id)) {
+			hidePeek(id);
+			return;
+		}
+
+		peekRole(id);
+	}
+
 	const shownCount = professionalExperience.filter((role) => inScope(role.kind)).length;
 
 	return (
@@ -840,6 +849,43 @@ export function ExperienceSection() {
 									)}
 							</div>
 							<div className="min-w-0 flex-1">
+								{!scoped
+									? (
+										<button
+											aria-expanded={expanded}
+											aria-label={
+												expanded
+													? `Hide ${role.title}`
+													: `Peek ${role.title}`
+											}
+											className="
+												mt-1.5
+												flex
+												h-4
+												w-full
+												items-center
+												justify-start
+												gap-1.5
+												text-sm
+												leading-none
+												text-slate-400
+												hover:text-slate-600
+											"
+											onClick={() => togglePeek(role.id)}
+											type="button"
+										>
+											<span className="font-medium">
+												{role.title}
+											</span>
+											<span aria-hidden="true">
+												·
+											</span>
+											<span>
+												{splitRoleDates(role.dates).range}
+											</span>
+										</button>
+									)
+									: null}
 								<div
 									aria-hidden={!expanded}
 									className={
@@ -853,71 +899,6 @@ export function ExperienceSection() {
 											range={splitRoleDates(role.dates).range}
 										/>
 										<ExperienceRoleCard role={role} />
-									</div>
-								</div>
-								<div
-									aria-hidden={expanded}
-									className={
-										expanded
-											? 'timeline-fold'
-											: 'timeline-fold timeline-fold-open'
-									}
-								>
-									<div className="timeline-fold-inner">
-										<p
-											className="
-												mt-1.5
-												flex
-												h-4
-												items-center
-												justify-start
-												gap-1.5
-												text-sm
-												leading-none
-												text-slate-400
-												md:hidden
-											"
-										>
-											<span className="font-medium">
-												{role.title}
-											</span>
-											<span aria-hidden="true">
-												·
-											</span>
-											<span>
-												{splitRoleDates(role.dates).range}
-											</span>
-										</p>
-										<button
-											aria-label={`Peek ${role.title}`}
-											className="
-												mt-1.5
-												hidden
-												h-4
-												w-full
-												items-center
-												justify-start
-												gap-1.5
-												text-sm
-												leading-none
-												text-slate-400
-												hover:text-slate-600
-												md:flex
-											"
-											onClick={() => peekRole(role.id)}
-											tabIndex={expanded ? -1 : 0}
-											type="button"
-										>
-											<span className="font-medium">
-												{role.title}
-											</span>
-											<span aria-hidden="true">
-												·
-											</span>
-											<span>
-												{splitRoleDates(role.dates).range}
-											</span>
-										</button>
 									</div>
 								</div>
 							</div>
