@@ -216,92 +216,100 @@ export function ManageProductRowActions({
 					</button>
 				</div>
 			</div>
-			{/* Mobile: circular View / Edit / Delete. */}
-			<a
-				aria-label={`View ${product.title}`}
+			{/* Mobile: circular View / Edit / Delete in one horizontal row. */}
+			<div
 				className="
-					inline-flex
-					h-9
-					w-9
+					flex
+					flex-row
 					items-center
-					justify-center
-					rounded-full
-					border
-					border-slate-300
-					bg-white
-					text-ink
-					hover:border-sky
-					hover:text-sky
+					justify-end
+					gap-2
 					sm:hidden
 				"
-				href={productViewHref({
-					vendorSlug: product.vendor.slug,
-					productSlug: product.slug,
-				})}
 			>
-				<EyeIcon
-					className="h-3.5 w-3.5 shrink-0"
-				/>
-			</a>
-			<a
-				aria-disabled={deleteBusy || undefined}
-				aria-label={`Edit ${product.title}`}
-				className="
-					inline-flex
-					h-9
-					w-9
-					items-center
-					justify-center
-					rounded-full
-					border
-					border-slate-300
-					bg-white
-					text-ink
-					hover:border-sky
-					hover:text-sky
-					aria-disabled:pointer-events-none
-					aria-disabled:opacity-60
-					sm:hidden
-				"
-				href={productEditHref({
-					vendorSlug: product.vendor.slug,
-					productSlug: product.slug,
-				})}
-				tabIndex={deleteBusy ? -1 : undefined}
-			>
-				<PencilIcon
-					className="h-3.5 w-3.5 shrink-0"
-				/>
-			</a>
-			<button
-				aria-label={`Delete ${product.title}`}
-				className="
-					inline-flex
-					h-9
-					w-9
-					items-center
-					justify-center
-					rounded-full
-					border
-					border-red-300
-					bg-white
-					text-red-700
-					hover:border-red-500
-					disabled:opacity-60
-					sm:hidden
-				"
-				disabled={deleteBusy}
-				onClick={
-					() => {
-						void onDelete();
+				<a
+					aria-label={`View ${product.title}`}
+					className="
+						inline-flex
+						h-9
+						w-9
+						items-center
+						justify-center
+						rounded-full
+						border
+						border-slate-300
+						bg-white
+						text-ink
+						hover:border-sky
+						hover:text-sky
+					"
+					href={productViewHref({
+						vendorSlug: product.vendor.slug,
+						productSlug: product.slug,
+					})}
+				>
+					<EyeIcon
+						className="h-3.5 w-3.5 shrink-0"
+					/>
+				</a>
+				<a
+					aria-disabled={deleteBusy || undefined}
+					aria-label={`Edit ${product.title}`}
+					className="
+						inline-flex
+						h-9
+						w-9
+						items-center
+						justify-center
+						rounded-full
+						border
+						border-slate-300
+						bg-white
+						text-ink
+						hover:border-sky
+						hover:text-sky
+						aria-disabled:pointer-events-none
+						aria-disabled:opacity-60
+					"
+					href={productEditHref({
+						vendorSlug: product.vendor.slug,
+						productSlug: product.slug,
+					})}
+					tabIndex={deleteBusy ? -1 : undefined}
+				>
+					<PencilIcon
+						className="h-3.5 w-3.5 shrink-0"
+					/>
+				</a>
+				<button
+					aria-label={`Delete ${product.title}`}
+					className="
+						inline-flex
+						h-9
+						w-9
+						items-center
+						justify-center
+						rounded-full
+						border
+						border-red-300
+						bg-white
+						text-red-700
+						hover:border-red-500
+						disabled:opacity-60
+					"
+					disabled={deleteBusy}
+					onClick={
+						() => {
+							void onDelete();
+						}
 					}
-				}
-				type="button"
-			>
-				<TrashIcon
-					className="h-3.5 w-3.5 shrink-0"
-				/>
-			</button>
+					type="button"
+				>
+					<TrashIcon
+						className="h-3.5 w-3.5 shrink-0"
+					/>
+				</button>
+			</div>
 			{open && panelBox
 				? (
 					<CatalogMenuSurface

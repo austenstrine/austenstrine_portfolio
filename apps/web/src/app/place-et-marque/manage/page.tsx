@@ -20,7 +20,9 @@ import { ArrowRightIcon } from '../../../components/icons/ArrowRightIcon';
 import { PlusIcon } from '../../../components/icons/PlusIcon';
 
 /** Match catalog-search hard cap (`Math.min(..., 96)`); 100 never returns a full page. */
-const PAGE_SIZE = 96;
+const PAGE_SIZE_OPTIONS = [24, 48, 96] as const;
+type PageSize = (typeof PAGE_SIZE_OPTIONS)[number];
+const DEFAULT_PAGE_SIZE: PageSize = 24;
 
 function formatPriceCents(cents: number | null): string {
 	if(cents == null) {
@@ -46,17 +48,18 @@ function pageItems(current: number, total: number) {
 async function loadSellerProductPage(
 	vendorRows: VendorSummary[],
 	page: number,
+	pageSize: PageSize,
 ): Promise<{ items: CatalogProductSummary[]; total: number; pageCount: number }> {
 	if(vendorRows.length === 0) {
 		return { items: [], total: 0, pageCount: 1 };
 	}
 
-	const offset = (page - 1) * PAGE_SIZE;
+	const offset = (page - 1) * pageSize;
 	const results = await Promise.all(
 		vendorRows.map((vendor) =>
 			searchCatalogProducts({
 				vendor: vendor.slug,
-				limit: PAGE_SIZE,
+				limit: pageSize,
 				offset,
 			}).catch(() => ({ items: [] as CatalogProductSummary[], total: 0 })),
 		),
@@ -72,7 +75,7 @@ async function loadSellerProductPage(
 		total += vendorTotal;
 		pageCount = Math.max(
 			pageCount,
-			Math.max(1, Math.ceil(vendorTotal / PAGE_SIZE)),
+			Math.max(1, Math.ceil(vendorTotal / pageSize)),
 		);
 		for(const item of result.items) {
 			byId.set(item.id, item);
@@ -106,13 +109,13 @@ function PagerButton({
 				active
 					? `
 						inline-flex
-						min-w-10
+						min-w-8
 						items-center
 						justify-center
 						rounded-full
 						bg-asgreen/15
-						px-3
-						py-2
+						px-2.5
+						py-1.5
 						text-sm
 						font-semibold
 						text-asgreen
@@ -123,15 +126,15 @@ function PagerButton({
 					`
 					: `
 						inline-flex
-						min-w-10
+						min-w-8
 						items-center
 						justify-center
 						rounded-full
 						border
 						border-slate-300
 						bg-white
-						px-3
-						py-2
+						px-2.5
+						py-1.5
 						text-sm
 						font-semibold
 						text-ink
@@ -163,12 +166,15 @@ function PlaceEtMarqueManageContent() {
 	const [vendorsReady, setVendorsReady] = useState(false);
 	const [loadingProducts, setLoadingProducts] = useState(false);
 	const [page, setPage] = useState(1);
+	const [pageSize, setPageSize] = useState<PageSize>(DEFAULT_PAGE_SIZE);
 	const [pageCount, setPageCount] = useState(1);
 	const [total, setTotal] = useState(0);
 
 	const selectedVendor = vendors.find((vendor) => vendor.id === selectedVendorId) ?? null;
 	const newProductVendor = selectedVendor ?? vendors[0] ?? null;
 	const newProductVendorName = newProductVendor?.name ?? null;
+	const showPager = vendorsReady && !loadingProducts && pageCount > 1 && products.length > 0;
+	const showPerPage = vendorsReady && vendors.length > 0;
 
 	useEffect(() => {
 		if(!user) {
@@ -215,7 +221,7 @@ function PlaceEtMarqueManageContent() {
 
 	useEffect(() => {
 		setPage(1);
-	}, [selectedVendorId, vendorsReady]);
+	}, [selectedVendorId, vendorsReady, pageSize]);
 
 	useEffect(() => {
 		if(!user || !vendorsReady) {
@@ -229,7 +235,7 @@ function PlaceEtMarqueManageContent() {
 			? [selectedVendor]
 			: vendors;
 
-		loadSellerProductPage(scope, page)
+		loadSellerProductPage(scope, page, pageSize)
 			.then((result) => {
 				if(!cancelled) {
 					setProducts(result.items);
@@ -253,7 +259,7 @@ function PlaceEtMarqueManageContent() {
 		return () => {
 			cancelled = true;
 		};
-	}, [user, vendorsReady, vendors, selectedVendor, page]);
+	}, [user, vendorsReady, vendors, selectedVendor, page, pageSize]);
 
 	return (
 		<div
@@ -334,6 +340,111 @@ function PlaceEtMarqueManageContent() {
 			</SellerTopContextPortal>
 
 			<PageBottomPanePortal>
+				{showPerPage
+					? (
+						<label
+							className="
+								inline-flex
+								items-center
+								gap-1.5
+								text-[11px]
+								font-medium
+								text-slate-500
+							"
+						>
+							<span className="whitespace-nowrap">
+								Show
+							</span>
+							<select
+								aria-label="Products per page"
+								className="
+									rounded-full
+									border
+									border-slate-300
+									bg-white
+									px-2.5
+									py-1.5
+									text-sm
+									font-semibold
+									text-ink
+								"
+								onChange={
+									(event) => {
+										const next = Number(event.target.value) as PageSize;
+										if(PAGE_SIZE_OPTIONS.includes(next)) {
+											setPageSize(next);
+										}
+									}
+								}
+								value={pageSize}
+							>
+								{PAGE_SIZE_OPTIONS.map((size) => (
+									<option
+										key={size}
+										value={size}
+									>
+										{size} per page
+									</option>
+								))}
+							</select>
+						</label>
+					)
+					: null
+				}
+				{showPager
+					? (
+						<nav
+							aria-label="Pagination"
+							className="
+								flex
+								flex-wrap
+								items-center
+								justify-end
+								gap-1
+							"
+						>
+							<PagerButton
+								ariaLabel="Previous page"
+								disabled={page <= 1}
+								onClick={() => setPage((current) => Math.max(1, current - 1))}
+							>
+								<ArrowLeftIcon
+									className="h-4 w-4"
+								/>
+							</PagerButton>
+							{pageItems(page, pageCount).map((item, index) =>
+								item === 'gap'
+									? (
+										<span
+											className="px-1 text-slate-400"
+											key={`gap-${index}`}
+										>
+											…
+										</span>
+									)
+									: (
+										<PagerButton
+											active={item === page}
+											ariaCurrent={item === page ? 'page' : undefined}
+											key={item}
+											onClick={() => setPage(item)}
+										>
+											{item}
+										</PagerButton>
+									))}
+							<PagerButton
+								ariaLabel="Next page"
+								disabled={page >= pageCount}
+								onClick={() => setPage((current) => Math.min(pageCount, current + 1))}
+							>
+								<ArrowRightIcon
+									className="h-4 w-4"
+								/>
+							</PagerButton>
+						</nav>
+					)
+					: null
+				}
 				{newProductVendor
 					? (
 						<a
@@ -457,7 +568,7 @@ function PlaceEtMarqueManageContent() {
 					? (
 						<p className="text-xs text-slate-500">
 							{selectedVendor
-								? `Showing ${((page - 1) * PAGE_SIZE + 1).toLocaleString()}–${Math.min(page * PAGE_SIZE, total).toLocaleString()} of ${total.toLocaleString()}`
+								? `Showing ${((page - 1) * pageSize + 1).toLocaleString()}–${Math.min(page * pageSize, total).toLocaleString()} of ${total.toLocaleString()}`
 								: `Page ${page} of ${pageCount} · ${total.toLocaleString()} product${total === 1 ? '' : 's'} across your vendors`
 							}
 						</p>
@@ -520,61 +631,6 @@ function PlaceEtMarqueManageContent() {
 							/>
 						</div>
 					))
-					: null
-				}
-				{vendorsReady && !loadingProducts && pageCount > 1 && products.length > 0
-					? (
-						<nav
-							aria-label="Pagination"
-							className="
-								mt-4
-								flex
-								flex-wrap
-								items-center
-								justify-center
-								gap-1.5
-							"
-						>
-							<PagerButton
-								ariaLabel="Previous page"
-								disabled={page <= 1}
-								onClick={() => setPage((current) => Math.max(1, current - 1))}
-							>
-								<ArrowLeftIcon
-									className="h-4 w-4"
-								/>
-							</PagerButton>
-							{pageItems(page, pageCount).map((item, index) =>
-								item === 'gap'
-									? (
-										<span
-											className="px-1 text-slate-400"
-											key={`gap-${index}`}
-										>
-											…
-										</span>
-									)
-									: (
-										<PagerButton
-											active={item === page}
-											ariaCurrent={item === page ? 'page' : undefined}
-											key={item}
-											onClick={() => setPage(item)}
-										>
-											{item}
-										</PagerButton>
-									))}
-							<PagerButton
-								ariaLabel="Next page"
-								disabled={page >= pageCount}
-								onClick={() => setPage((current) => Math.min(pageCount, current + 1))}
-							>
-								<ArrowRightIcon
-									className="h-4 w-4"
-								/>
-							</PagerButton>
-						</nav>
-					)
 					: null
 				}
 			</section>
