@@ -186,15 +186,43 @@ fi
 # Certbot HTTP-01 standalone needs :80 free. Compose proxy holds 80/443 on a
 # live box — stop it briefly before ensure-tls (DNS-01 skips this need, but
 # stopping is still harmless and keeps one code path).
+#
+# Never leave :80/:443 down if ensure-tls/sync fails: trap + explicit restore
+# after the TLS window. Final nginx --force-recreate still runs later.
+_live_start_proxy() {
+	echo "live.sh: starting portfolio-proxy"
+	"${COMPOSE[@]}" up -d --no-deps nginx 2>/dev/null \
+		|| "${DOCKER[@]}" start portfolio-proxy 2>/dev/null \
+		|| true
+}
+
+_proxy_tls_window=0
+_live_restore_proxy_trap() {
+	if [[ "${_proxy_tls_window}" -eq 1 ]]; then
+		echo "live.sh: TLS window aborted — restoring portfolio-proxy" >&2
+		_live_start_proxy
+	fi
+}
+trap '_live_restore_proxy_trap' EXIT
+
 if "${DOCKER[@]}" ps --format '{{.Names}}' 2>/dev/null | grep -qx portfolio-proxy \
 	|| "${DOCKER[@]}" ps -a --format '{{.Names}}' 2>/dev/null | grep -qx portfolio-proxy; then
 	echo "live.sh: stopping portfolio-proxy so certbot can bind :80"
+	_proxy_tls_window=1
 	"${COMPOSE[@]}" stop nginx || "${DOCKER[@]}" stop portfolio-proxy || true
 fi
 
 # TLS into the path nginx mounts. Standalone obtain needs :80 free.
+# Owned entirely by live.sh / Deploy-to-EC2 (obtain/expand + sync + hook).
 echo "live.sh: ensuring TLS certs in ${TLS_CERTS_DIR:-/etc/nginx/certs}"
-bash "$ROOT/ops/deploy/ensure-tls.sh"
+tls_rc=0
+bash "$ROOT/ops/deploy/ensure-tls.sh" || tls_rc=$?
+_live_start_proxy
+_proxy_tls_window=0
+if [[ "$tls_rc" -ne 0 ]]; then
+	echo "live.sh: ensure-tls failed (exit ${tls_rc}) — proxy restored; aborting deploy" >&2
+	exit "$tls_rc"
+fi
 
 echo "live.sh: building api web crm cdn nginx images (infra stays up)"
 "${COMPOSE[@]}" build api web crm cdn nginx

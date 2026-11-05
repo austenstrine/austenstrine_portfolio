@@ -30,10 +30,18 @@ else
 	DOMAINS=(austenstrine.dev www.austenstrine.dev cdn.austenstrine.dev crm.austenstrine.dev)
 fi
 
+# LE live dir is root-only (0700); never use bare [[ -f ]] as the deploy user.
+le_fullchain_present() {
+	if [[ -f "${LE_LIVE}/fullchain.pem" ]]; then
+		return 0
+	fi
+	command -v sudo >/dev/null 2>&1 && sudo test -f "${LE_LIVE}/fullchain.pem"
+}
+
 # Exit 0 when obtain/expand is required; 1 when the live cert already has every SAN.
 need_certbot_domains() {
 	local d
-	if [[ ! -f "${LE_LIVE}/fullchain.pem" ]]; then
+	if ! le_fullchain_present; then
 		return 0
 	fi
 	local sans
