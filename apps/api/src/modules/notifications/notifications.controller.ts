@@ -24,10 +24,17 @@ export class NotificationsController {
 	list(
 		@Req() req: AuthedRequest,
 		@Query('limit') limitRaw?: string,
+		@Query('unreadOnly') unreadOnlyRaw?: string,
 	) {
 		const parsed = limitRaw ? Number(limitRaw) : undefined;
 		const limit = Number.isFinite(parsed) ? parsed : undefined;
-		return this.notifications.listForUser(req.user!.id, { limit });
+		const unreadOnly =
+			unreadOnlyRaw === '1'
+			|| unreadOnlyRaw === 'true';
+		return this.notifications.listForUser(req.user!.id, {
+			limit,
+			unreadOnly,
+		});
 	}
 
 	@UseGuards(JwtAuthGuard)

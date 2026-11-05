@@ -11,6 +11,15 @@ export type NotificationDto = {
 	createdAt: string;
 };
 
+export const NOTIFICATIONS_INBOX_PATH = '/place-et-marque/notifications';
+
+export function notificationInboxHref(id?: string) {
+	if(!id) {
+		return NOTIFICATIONS_INBOX_PATH;
+	}
+	return `${NOTIFICATIONS_INBOX_PATH}#${encodeURIComponent(id)}`;
+}
+
 async function notificationsRequest<T>(
 	path: string,
 	options: RequestInit = {},
@@ -32,8 +41,14 @@ async function notificationsRequest<T>(
 	return body as T;
 }
 
-export function listNotifications(limit = 30) {
+export function listNotifications(
+	limit = 30,
+	options?: { unreadOnly?: boolean },
+) {
 	const params = new URLSearchParams({ limit: String(limit) });
+	if(options?.unreadOnly) {
+		params.set('unreadOnly', '1');
+	}
 	return notificationsRequest<NotificationDto[]>(`?${params.toString()}`);
 }
 
