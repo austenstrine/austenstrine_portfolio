@@ -57,37 +57,10 @@ function RecommendationAttribution({
 
 function RecommendationQuote({
 	recommendation,
-	featured = false,
 }: {
 	recommendation: Recommendation;
-	featured?: boolean;
 }) {
 	const paragraphs = recommendation.text.split('\n').filter(Boolean);
-
-	if(featured) {
-		return (
-			<blockquote
-				className="
-					mt-4
-					space-y-3
-					border-l-2
-					border-sky/40
-					pl-4
-					text-base
-					leading-relaxed
-					text-slate-700
-				"
-			>
-				{
-					paragraphs.map((paragraph) => (
-						<p key={paragraph.slice(0, 48)}>
-							{paragraph}
-						</p>
-					))
-				}
-			</blockquote>
-		);
-	}
 
 	return (
 		<blockquote
@@ -97,7 +70,7 @@ function RecommendationQuote({
 				border-l-2
 				border-sky/40
 				pl-4
-				text-sm
+				text-base
 				leading-relaxed
 				text-slate-700
 			"
@@ -172,7 +145,6 @@ function FeaturedRecommendation({
 						recommendation={recommendation}
 					/>
 					<RecommendationQuote
-						featured
 						recommendation={recommendation}
 					/>
 				</div>

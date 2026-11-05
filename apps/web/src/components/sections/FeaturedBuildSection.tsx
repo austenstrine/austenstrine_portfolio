@@ -5,27 +5,22 @@ import {
 } from '../../lib/site';
 import { ArrowRightIcon } from '../icons/ArrowRightIcon';
 
+const CATALOG_HREF = '/place-et-marque';
+
 const entries = [
 	{
-		title: 'What it is',
-		href: JOIN_DEMO_HREF,
+		title: 'Shop as a buyer',
+		href: CATALOG_HREF,
 		summary:
-			'A working multi-vendor marketplace: catalog search, pack/piece inventory, cart, and Stripe checkout — built as a public demo of Place et Marque.',
-		cta: 'Read the intro',
+			'Browse the live multi-vendor catalog: search products, add packs or pieces to cart, and check out with Stripe.',
+		cta: 'Open the catalog',
 	},
 	{
-		title: 'Join demo',
+		title: 'Join as a seller',
 		href: JOIN_DEMO_HREF,
 		summary:
-			'Get invited into Demo Supply Co. the same way a real org invites a teammate: register with your email, accept membership, then explore seller tools on seeded products and orders.',
-		cta: 'Join as a seller',
-	},
-	{
-		title: 'Sign in',
-		href: `/auth/login?next=${encodeURIComponent('/place-et-marque/vendors/demo-supply')}`,
-		summary:
-			'Already joined Demo Supply Co.? Sign in and open the seller workspace — products, orders, members, and payouts.',
-		cta: 'Sign in',
+			'Get invited into Demo Supply Co. the same way a real org invites a teammate, then explore products, orders, members, and payouts.',
+		cta: 'Join the seller demo',
 	},
 ];
 
@@ -86,16 +81,16 @@ export function FeaturedBuildSection() {
 				</a>.
 			</p>
 
-			<ol
+			<ul
 				className="
 					mt-8
 					grid
 					gap-4
-					md:grid-cols-3
+					md:grid-cols-2
 				"
 			>
-				{entries.map((entry, index) => (
-					<li key={`${entry.title}-${entry.href}`}>
+				{entries.map((entry) => (
+					<li key={entry.href}>
 						<a
 							className="
 								group
@@ -117,20 +112,8 @@ export function FeaturedBuildSection() {
 							"
 							href={entry.href}
 						>
-							<span
-								className="
-									text-[11px]
-									font-semibold
-									uppercase
-									tracking-[0.18em]
-									text-slate-500
-								"
-							>
-								{`Step ${index + 1}`}
-							</span>
 							<p
 								className="
-									mt-3
 									text-lg
 									font-semibold
 									text-ink
@@ -176,7 +159,7 @@ export function FeaturedBuildSection() {
 						</a>
 					</li>
 				))}
-			</ol>
+			</ul>
 
 			<a
 				className="

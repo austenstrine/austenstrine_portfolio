@@ -25,11 +25,11 @@ export const GUIDED_DEMO_PRODUCT = {
 	summary: '10 AWG THHN building wire from Demo Supply Co.',
 };
 
-/** Primary portfolio entry into Place et Marque (explain + join demo + sign in). */
+/** Primary seller-demo entry into Place et Marque (invite + accept + sign in). */
 export const JOIN_DEMO_HREF = '/place-et-marque/join-demo';
 
 export const PLACE_ET_MARQUE_BLURB =
-	'A live multi-vendor catalog: packs, pieces, units of measure, search, and Stripe checkout. Join Demo Supply Co. as a seller teammate and explore products, orders, members, and payouts.';
+	'A live multi-vendor catalog: packs, pieces, units of measure, search, and Stripe checkout. Shop as a buyer, or join Demo Supply Co. as a seller teammate to explore products, orders, members, and payouts.';
 
 export const personJsonLd = {
 	'@context': 'https://schema.org',
