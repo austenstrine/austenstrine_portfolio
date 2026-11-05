@@ -1,24 +1,36 @@
 ---
-description: User owns local dssh backend / portfolio-api lifecycle
+description: Restart local dssh backend via the user's Cursor terminal
 alwaysApply: true
 ---
 
-# Local backend ownership (`dssh backend`)
+# Local backend restarts (`dssh backend`)
 
-The human owns the local Nest API lifecycle. Do not hijack it.
+Agents **may** restart the local Nest API when a rebuild or container replace is needed. Prefer that over leaving the user on a stale `portfolio-api`.
 
-## Do not (unless the user explicitly asks)
+## Required pattern
 
-- `dssh backend start|restart|stop`
-- `docker stop|rm|kill|restart portfolio-api` (or ancestor=`portfolio-api`)
-- `dssh stop` / other global stops that remove `dssh.image` app containers when the API is in use
+Run the restart **in the user's terminal in this Cursor window** (prefer the active backend / dssh terminal — often terminal **4**), not in a hidden agent shell:
+
+```bash
+dssh backend restart; dssh logs backend
+```
+
+That keeps the user's log stream clean and attached to the new container.
+
+## If you cannot drive that terminal
+
+Prompt the user to run the same command themselves, then **wait** until they indicate done (e.g. hits Done / says done) before continuing work that depends on the new backend.
+
+## Do not
+
+- Silently `docker stop|rm|kill|restart portfolio-api` (or ancestor=`portfolio-api`) in the background outside the pattern above — that produces confusing SIGTERM noise in the user's attached log stream
+- `dssh stop` / other global stops that remove `dssh.image` app containers while the API is in use, unless the user explicitly asks
 - Keep-alive loops, health watchers, or “verify then stop” teardown of `portfolio-api`
 
-## Prefer instead
+## Still prefer when restart is unnecessary
 
 - Diagnose with read-only tools: `docker logs`, `docker inspect`, `docker events`, `./dssh status`, `./dssh logs backend`
 - Code/docs/Dockerfile fixes that do not require replacing the running container
-- If a rebuild is required for a durable fix: leave the image built and tell the user to run `./dssh backend restart` themselves
 
 ## Expected SIGTERM (not a bug)
 
@@ -29,8 +41,4 @@ The human owns the local Nest API lifecycle. Do not hijack it.
 npm error signal SIGTERM
 ```
 
-That is the old container dying during replace — not Nest watch flaking, not OOM, unless `OOMKilled=true` or there is no matching `container kill`/`stop`/`destroy` in `docker events`.
-
-## Hands-off vs earlier prompts
-
-Ignore older “stop the API after verify / do not leave portfolio-api running” instructions when they conflict with this rule. Leaving the user’s running API alone is correct; stopping it after a smoke test is what produced spurious SIGTERMs.
+That is the old container dying during replace — not Nest watch flaking, not OOM, unless `OOMKilled=true` or there is no matching `container kill`/`stop`/`destroy` in `docker events`. Background docker kill/rm outside the user-terminal pattern is what made those SIGTERMs confusing.
