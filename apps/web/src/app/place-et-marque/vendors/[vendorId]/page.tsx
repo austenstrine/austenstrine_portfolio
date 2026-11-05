@@ -42,6 +42,22 @@ function slugify(value: string): string {
 		.slice(0, 80);
 }
 
+/** Live input: keep a trailing `-` so Space is not eaten before the next word. */
+function slugifyTyping(value: string): string {
+	const lower = value
+		.toLowerCase()
+		.replace(/[^a-z0-9]+/g, '-');
+	const keepTrailing = lower.endsWith('-');
+	const body = lower.replace(/^-+|-+$/g, '');
+	if(!body) {
+		return '';
+	}
+	const next = keepTrailing
+		? `${body}-`
+		: body;
+	return next.slice(0, 80);
+}
+
 function VendorDetailContent() {
 	const params = useParams<{ vendorId: string }>();
 	const searchParams = useSearchParams();
@@ -155,12 +171,18 @@ function VendorDetailContent() {
 		if(!vendorId) {
 			return;
 		}
+		const linkName = slugify(linkNameDraft);
+		if(linkName.length < 2) {
+			setLinkNameError('Use at least two letters or numbers in the name.');
+			return;
+		}
+		setLinkNameDraft(linkName);
 		setLinkNameBusy(true);
 		setLinkNameError(null);
 		setLinkNameMessage(null);
 		try {
 			const result = await requestVendorLinkName(vendorId, {
-				linkName: slugify(linkNameDraft),
+				linkName,
 				note: linkNameNote.trim() || undefined,
 			});
 			setLinkNameMessage(result.message);
@@ -498,12 +520,13 @@ function VendorDetailContent() {
 												flex-col
 												gap-3
 											"
+											noValidate
 											onSubmit={onRequestLinkName}
 										>
 											<UrlSlugField
 												label="Requested name in the link"
 												value={linkNameDraft}
-												onChange={(next) => setLinkNameDraft(slugify(next))}
+												onChange={(next) => setLinkNameDraft(slugifyTyping(next))}
 												prefixPath="/place-et-marque/vendors"
 												placeholder={vendor.slug}
 												helpText="Ask for a different name if the current one no longer fits."
