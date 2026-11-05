@@ -161,28 +161,35 @@ export function FeaturedBuildSection() {
 				))}
 			</ul>
 
-			<a
+			<div
 				className="
 					mt-8
-					inline-flex
-					rounded-full
-					bg-sky
-					px-5
-					py-2.5
-					text-sm
-					font-semibold
-					text-white
-					transition
-					hover:bg-sky/90
-					focus-visible:outline-none
-					focus-visible:ring-2
-					focus-visible:ring-ink
-					focus-visible:ring-offset-2
+					flex
+					justify-end
 				"
-				href={JOIN_DEMO_HREF}
 			>
-				Join the Place et Marque demo
-			</a>
+				<a
+					className="
+						inline-flex
+						rounded-full
+						bg-sky
+						px-5
+						py-2.5
+						text-sm
+						font-semibold
+						text-white
+						transition
+						hover:bg-sky/90
+						focus-visible:outline-none
+						focus-visible:ring-2
+						focus-visible:ring-ink
+						focus-visible:ring-offset-2
+					"
+					href={JOIN_DEMO_HREF}
+				>
+					Join the Place et Marque demo
+				</a>
+			</div>
 		</section>
 	);
 }
