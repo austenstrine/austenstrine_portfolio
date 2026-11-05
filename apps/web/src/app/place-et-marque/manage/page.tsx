@@ -1,6 +1,12 @@
 'use client';
 
-import { Suspense, useEffect, useState, type ReactNode } from 'react';
+import {
+	Suspense,
+	useDeferredValue,
+	useEffect,
+	useState,
+	type ReactNode,
+} from 'react';
 import {
 	listMyVendors,
 	searchCatalogProducts,
@@ -24,6 +30,32 @@ const PAGE_SIZE_OPTIONS = [24, 48, 96] as const;
 type PageSize = (typeof PAGE_SIZE_OPTIONS)[number];
 const DEFAULT_PAGE_SIZE: PageSize = 24;
 
+const MANAGE_SORTS = [
+	{ id: 'title', label: 'Name A–Z' },
+	{ id: 'price-asc', label: 'Price: Low to High' },
+	{ id: 'price-desc', label: 'Price: High to Low' },
+] as const;
+type ManageSort = (typeof MANAGE_SORTS)[number]['id'];
+const DEFAULT_MANAGE_SORT: ManageSort = 'title';
+
+const STOCK_FILTERS = [
+	{ id: 'all', label: 'All stock' },
+	{ id: 'in-stock', label: 'In stock' },
+] as const;
+type StockFilter = (typeof STOCK_FILTERS)[number]['id'];
+
+const frostControlClassName = `
+	rounded-full
+	border
+	border-slate-300
+	bg-white
+	px-2.5
+	py-1.5
+	text-sm
+	font-semibold
+	text-ink
+`;
+
 function formatPriceCents(cents: number | null): string {
 	if(cents == null) {
 		return '—';
@@ -45,10 +77,38 @@ function pageItems(current: number, total: number) {
 	return items;
 }
 
+function sortManageProducts(
+	items: CatalogProductSummary[],
+	sort: ManageSort,
+) {
+	const next = [...items];
+	if(sort === 'price-asc') {
+		next.sort(
+			(left, right) =>
+				(left.primaryPriceCents ?? 0) - (right.primaryPriceCents ?? 0),
+		);
+		return next;
+	}
+	if(sort === 'price-desc') {
+		next.sort(
+			(left, right) =>
+				(right.primaryPriceCents ?? 0) - (left.primaryPriceCents ?? 0),
+		);
+		return next;
+	}
+	next.sort((left, right) => left.title.localeCompare(right.title));
+	return next;
+}
+
 async function loadSellerProductPage(
 	vendorRows: VendorSummary[],
 	page: number,
 	pageSize: PageSize,
+	options: {
+		q?: string;
+		sort: ManageSort;
+		inStock: boolean;
+	},
 ): Promise<{ items: CatalogProductSummary[]; total: number; pageCount: number }> {
 	if(vendorRows.length === 0) {
 		return { items: [], total: 0, pageCount: 1 };
@@ -61,6 +121,9 @@ async function loadSellerProductPage(
 				vendor: vendor.slug,
 				limit: pageSize,
 				offset,
+				q: options.q,
+				sort: options.sort,
+				inStock: options.inStock || undefined,
 			}).catch(() => ({ items: [] as CatalogProductSummary[], total: 0 })),
 		),
 	);
@@ -82,7 +145,7 @@ async function loadSellerProductPage(
 		}
 	}
 	return {
-		items: [...byId.values()],
+		items: sortManageProducts([...byId.values()], options.sort),
 		total,
 		pageCount,
 	};
@@ -169,12 +232,17 @@ function PlaceEtMarqueManageContent() {
 	const [pageSize, setPageSize] = useState<PageSize>(DEFAULT_PAGE_SIZE);
 	const [pageCount, setPageCount] = useState(1);
 	const [total, setTotal] = useState(0);
+	const [filterText, setFilterText] = useState('');
+	const deferredFilterText = useDeferredValue(filterText);
+	const [sort, setSort] = useState<ManageSort>(DEFAULT_MANAGE_SORT);
+	const [stockFilter, setStockFilter] = useState<StockFilter>('all');
 
 	const selectedVendor = vendors.find((vendor) => vendor.id === selectedVendorId) ?? null;
 	const newProductVendor = selectedVendor ?? vendors[0] ?? null;
 	const newProductVendorName = newProductVendor?.name ?? null;
 	const showPager = vendorsReady && !loadingProducts && pageCount > 1 && products.length > 0;
-	const showPerPage = vendorsReady && vendors.length > 0;
+	const showListControls = vendorsReady && vendors.length > 0;
+	const activeFilterQuery = deferredFilterText.trim();
 
 	useEffect(() => {
 		if(!user) {
@@ -221,7 +289,14 @@ function PlaceEtMarqueManageContent() {
 
 	useEffect(() => {
 		setPage(1);
-	}, [selectedVendorId, vendorsReady, pageSize]);
+	}, [
+		selectedVendorId,
+		vendorsReady,
+		pageSize,
+		activeFilterQuery,
+		sort,
+		stockFilter,
+	]);
 
 	useEffect(() => {
 		if(!user || !vendorsReady) {
@@ -235,7 +310,11 @@ function PlaceEtMarqueManageContent() {
 			? [selectedVendor]
 			: vendors;
 
-		loadSellerProductPage(scope, page, pageSize)
+		loadSellerProductPage(scope, page, pageSize, {
+			q: activeFilterQuery || undefined,
+			sort,
+			inStock: stockFilter === 'in-stock',
+		})
 			.then((result) => {
 				if(!cancelled) {
 					setProducts(result.items);
@@ -259,7 +338,17 @@ function PlaceEtMarqueManageContent() {
 		return () => {
 			cancelled = true;
 		};
-	}, [user, vendorsReady, vendors, selectedVendor, page, pageSize]);
+	}, [
+		user,
+		vendorsReady,
+		vendors,
+		selectedVendor,
+		page,
+		pageSize,
+		activeFilterQuery,
+		sort,
+		stockFilter,
+	]);
 
 	return (
 		<div
@@ -340,54 +429,145 @@ function PlaceEtMarqueManageContent() {
 			</SellerTopContextPortal>
 
 			<PageBottomPanePortal>
-				{showPerPage
+				{showListControls
 					? (
-						<label
-							className="
-								inline-flex
-								items-center
-								gap-1.5
-								text-[11px]
-								font-medium
-								text-slate-500
-							"
-						>
-							<span className="whitespace-nowrap">
-								Show
-							</span>
-							<select
-								aria-label="Products per page"
+						<>
+							<label
 								className="
-									rounded-full
-									border
-									border-slate-300
-									bg-white
-									px-2.5
-									py-1.5
-									text-sm
-									font-semibold
-									text-ink
+									inline-flex
+									min-w-[9rem]
+									max-w-[14rem]
+									flex-1
+									flex-col
+									gap-0.5
+									text-[11px]
+									font-medium
+									text-slate-500
 								"
-								onChange={
-									(event) => {
-										const next = Number(event.target.value) as PageSize;
-										if(PAGE_SIZE_OPTIONS.includes(next)) {
-											setPageSize(next);
+							>
+								<span>
+									Filter
+								</span>
+								<input
+									aria-label="Filter products"
+									className={frostControlClassName}
+									onChange={
+										(event) => setFilterText(event.target.value)
+									}
+									placeholder="Name or SKU"
+									type="search"
+									value={filterText}
+								/>
+							</label>
+							<label
+								className="
+									inline-flex
+									flex-col
+									gap-0.5
+									text-[11px]
+									font-medium
+									text-slate-500
+								"
+							>
+								<span>
+									Stock
+								</span>
+								<select
+									aria-label="Stock filter"
+									className={frostControlClassName}
+									onChange={
+										(event) => {
+											const next = event.target.value as StockFilter;
+											if(STOCK_FILTERS.some((row) => row.id === next)) {
+												setStockFilter(next);
+											}
 										}
 									}
-								}
-								value={pageSize}
+									value={stockFilter}
+								>
+									{STOCK_FILTERS.map((row) => (
+										<option
+											key={row.id}
+											value={row.id}
+										>
+											{row.label}
+										</option>
+									))}
+								</select>
+							</label>
+							<label
+								className="
+									inline-flex
+									flex-col
+									gap-0.5
+									text-[11px]
+									font-medium
+									text-slate-500
+								"
 							>
-								{PAGE_SIZE_OPTIONS.map((size) => (
-									<option
-										key={size}
-										value={size}
-									>
-										{size} per page
-									</option>
-								))}
-							</select>
-						</label>
+								<span>
+									Sort
+								</span>
+								<select
+									aria-label="Sort products"
+									className={frostControlClassName}
+									onChange={
+										(event) => {
+											const next = event.target.value as ManageSort;
+											if(MANAGE_SORTS.some((row) => row.id === next)) {
+												setSort(next);
+											}
+										}
+									}
+									value={sort}
+								>
+									{MANAGE_SORTS.map((row) => (
+										<option
+											key={row.id}
+											value={row.id}
+										>
+											{row.label}
+										</option>
+									))}
+								</select>
+							</label>
+							<label
+								className="
+									inline-flex
+									flex-col
+									gap-0.5
+									text-[11px]
+									font-medium
+									text-slate-500
+								"
+							>
+								<span>
+									Show
+								</span>
+								<select
+									aria-label="Products per page"
+									className={frostControlClassName}
+									onChange={
+										(event) => {
+											const next = Number(event.target.value) as PageSize;
+											if((PAGE_SIZE_OPTIONS as readonly number[]).includes(next)) {
+												setPageSize(next);
+											}
+										}
+									}
+									value={pageSize}
+								>
+									{PAGE_SIZE_OPTIONS.map((size) => (
+										<option
+											key={size}
+											value={size}
+										>
+											{size} per page
+										</option>
+									))}
+								</select>
+							</label>
+						</>
 					)
 					: null
 				}
@@ -556,9 +736,11 @@ function PlaceEtMarqueManageContent() {
 						<p className="text-sm text-slate-500">
 							{vendors.length === 0
 								? 'Create a vendor organization to start listing products.'
-								: selectedVendor
-									? 'No products yet for this vendor.'
-									: 'No products yet for your vendors.'
+								: activeFilterQuery || stockFilter === 'in-stock'
+									? 'No products match these filters.'
+									: selectedVendor
+										? 'No products yet for this vendor.'
+										: 'No products yet for your vendors.'
 							}
 						</p>
 					)

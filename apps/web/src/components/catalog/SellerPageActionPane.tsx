@@ -123,7 +123,7 @@ export function SellerPageActionPane() {
 				bottom-0
 				right-0
 				z-30
-				max-w-[min(100%,42rem)]
+				max-w-[min(100%,52rem)]
 				rounded-tl-2xl
 				border
 				border-b-0
