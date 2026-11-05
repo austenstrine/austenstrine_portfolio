@@ -9,9 +9,13 @@ import {
 } from '../../../lib/catalog-api';
 import { useSession } from '../../../lib/useSession';
 import { RequireAccess } from '../../../components/auth/RequireAccess';
-import { PageTopBarPortal } from '../../../components/catalog/CatalogSearchContext';
+import {
+	PageBottomPanePortal,
+	SellerTopContextPortal,
+} from '../../../components/catalog/CatalogSearchContext';
 import { ArrowLeftIcon } from '../../../components/icons/ArrowLeftIcon';
 import { ArrowRightIcon } from '../../../components/icons/ArrowRightIcon';
+import { PlusIcon } from '../../../components/icons/PlusIcon';
 
 /** Match catalog-search hard cap (`Math.min(..., 96)`); 100 never returns a full page. */
 const PAGE_SIZE = 96;
@@ -257,7 +261,7 @@ function PlaceEtMarqueManageContent() {
 				gap-6
 			"
 		>
-			<PageTopBarPortal>
+			<SellerTopContextPortal>
 				{vendorsReady && vendors.length > 0
 					? (
 						<label
@@ -324,36 +328,58 @@ function PlaceEtMarqueManageContent() {
 					)
 					: null
 				}
+			</SellerTopContextPortal>
+
+			<PageBottomPanePortal>
 				{newProductVendorId
 					? (
 						<a
+							aria-label="New product"
 							className="
-								ml-auto
 								inline-flex
+								h-10
+								w-10
 								items-center
-								self-end
+								justify-center
+								gap-1.5
 								rounded-full
 								bg-asgreen
-								px-3.5
-								py-1.5
 								text-sm
 								font-semibold
 								text-white
 								hover:bg-asgreen/90
+								sm:h-auto
+								sm:w-auto
+								sm:px-3.5
+								sm:py-1.5
 							"
 							href={`/place-et-marque/products/new?vendorId=${encodeURIComponent(newProductVendorId)}`}
 							title={
 								selectedVendor
-									? undefined
+									? 'New product'
 									: `Creates under ${newProductVendorName}`
 							}
 						>
-							New product
+							<PlusIcon
+								className="
+									h-4
+									w-4
+									shrink-0
+								"
+							/>
+							<span
+								className="
+									hidden
+									sm:inline
+								"
+							>
+								New product
+							</span>
 						</a>
 					)
 					: null
 				}
-			</PageTopBarPortal>
+			</PageBottomPanePortal>
 
 			<div>
 				<h1
