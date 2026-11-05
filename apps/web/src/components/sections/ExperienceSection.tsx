@@ -38,7 +38,7 @@ function DateConnector({
 		<div
 			className="
 				relative
-				mt-1.5
+				mt-ve-0.375
 			"
 		>
 			<div
@@ -53,8 +53,8 @@ function DateConnector({
 				<p
 					className="
 						col-start-1
-						pl-2
-						pr-2
+						pl-ve-sm
+						pr-ve-sm
 						text-sm
 						leading-none
 						text-slate-500
@@ -108,8 +108,8 @@ function ExperienceRoleCard({
 				border
 				border-slate-100
 				bg-frost/60
-				p-5
-				md:p-6
+				p-ve-1.25
+				md:p-ve-1.5
 				${className}
 			`}
 		>
@@ -118,8 +118,8 @@ function ExperienceRoleCard({
 					flex
 					items-baseline
 					justify-between
-					gap-4
-					md:gap-6
+					gap-ve
+					md:gap-ve-1.5
 				"
 			>
 				<h3
@@ -148,7 +148,7 @@ function ExperienceRoleCard({
 			</div>
 			<p
 				className="
-					mt-1
+					mt-ve-tiny
 					text-sm
 					font-semibold
 					text-sky
@@ -173,10 +173,10 @@ function ExperienceRoleCard({
 				: null}
 			<ul
 				className="
-					mt-4
+					mt-ve
 					list-disc
-					space-y-2
-					pl-5
+					space-y-ve-sm
+					pl-ve-1.25
 					text-sm
 					leading-relaxed
 					text-slate-700
@@ -210,7 +210,7 @@ function FacetCheck({
 				min-h-11
 				cursor-pointer
 				items-center
-				gap-2
+				gap-ve-sm
 				text-[13px]
 				text-ink
 			"
@@ -508,7 +508,7 @@ export function ExperienceSection() {
 				border-slate-200
 				bg-white
 				px-gutter
-				py-8
+				py-ve-lg
 				shadow-sm
 				sm:rounded-2xl
 			"
@@ -533,7 +533,7 @@ export function ExperienceSection() {
 				</p>
 				<h2
 					className="
-						mt-2
+						mt-ve-sm
 						text-3xl
 						font-semibold
 						text-ink
@@ -557,7 +557,7 @@ export function ExperienceSection() {
 					z-20
 					bg-white
 					px-gutter
-					py-2
+					py-ve-sm
 					[overflow-anchor:none]
 					after:pointer-events-none
 					after:absolute
@@ -579,7 +579,7 @@ export function ExperienceSection() {
 						flex-nowrap
 						items-center
 						justify-between
-						gap-3
+						gap-ve-0.75
 						md:hidden
 					"
 				>
@@ -590,7 +590,7 @@ export function ExperienceSection() {
 									flex
 									min-w-0
 									items-center
-									gap-x-4
+									gap-x-ve
 								"
 							>
 								<FacetCheck
@@ -641,7 +641,7 @@ export function ExperienceSection() {
 						hidden
 						items-center
 						justify-between
-						gap-x-4
+						gap-x-ve
 						md:flex
 					"
 				>
@@ -649,7 +649,7 @@ export function ExperienceSection() {
 						className="
 							flex
 							items-center
-							gap-x-5
+							gap-x-ve-1.25
 						"
 					>
 						<FacetCheck
@@ -684,7 +684,7 @@ export function ExperienceSection() {
 				className="
 					timeline-list
 					relative
-					mt-8
+					mt-ve-lg
 				"
 				ref={listRef}
 			>
@@ -730,8 +730,8 @@ export function ExperienceSection() {
 										relative
 										flex
 										items-start
-										gap-4
-										pb-6
+										gap-ve
+										pb-ve-1.5
 										transition-[padding]
 										duration-300
 										last:pb-0
@@ -740,8 +740,8 @@ export function ExperienceSection() {
 										relative
 										flex
 										items-start
-										gap-4
-										pb-3
+										gap-ve
+										pb-ve-0.75
 										transition-[padding]
 										duration-300
 										last:pb-0
@@ -771,7 +771,7 @@ export function ExperienceSection() {
 								className="
 									relative
 									z-10
-									mt-1.5
+									mt-ve-0.375
 									h-4
 									w-4
 									shrink-0
@@ -859,13 +859,13 @@ export function ExperienceSection() {
 													: `Peek ${role.title}`
 											}
 											className="
-												mt-1.5
+												mt-ve-0.375
 												flex
 												h-4
 												w-full
 												items-center
 												justify-start
-												gap-1.5
+												gap-ve-0.375
 												text-sm
 												leading-none
 												text-slate-400
@@ -909,10 +909,10 @@ export function ExperienceSection() {
 
 			<div
 				className="
-					mt-8
+					mt-ve-lg
 					flex
 					flex-col
-					gap-4
+					gap-ve
 				"
 			>
 				<p
@@ -933,8 +933,8 @@ export function ExperienceSection() {
 							border
 							border-slate-100
 							bg-frost/60
-							p-5
-							md:p-6
+							p-ve-1.25
+							md:p-ve-1.5
 						"
 						key={`${entry.school}-${entry.dates}`}
 					>
@@ -949,7 +949,7 @@ export function ExperienceSection() {
 						</h3>
 						<p
 							className="
-								mt-1
+								mt-ve-tiny
 								text-sm
 								font-semibold
 								text-sky
@@ -969,7 +969,7 @@ export function ExperienceSection() {
 						</p>
 						<p
 							className="
-								mt-3
+								mt-ve-0.75
 								text-sm
 								text-slate-700
 							"

@@ -75,7 +75,7 @@ export function ContactMethodRow({
 				min-w-0
 				w-full
 				items-stretch
-				gap-3
+				gap-ve-0.75
 			"
 			id={rowId}
 		>
@@ -103,13 +103,13 @@ export function ContactMethodRow({
 						flex-col
 						items-center
 						justify-center
-						gap-1.5
+						gap-ve-0.375
 						rounded-xl
 						border
 						border-white/20
 						bg-white/10
-						px-2.5
-						py-2
+						px-ve-0.625
+						py-ve-sm
 						text-center
 						text-slate-100
 						transition
@@ -125,8 +125,8 @@ export function ContactMethodRow({
 						md:rounded-none
 						md:border-0
 						md:bg-transparent
-						md:px-1
-						md:py-2
+						md:px-ve-tiny
+						md:py-ve-sm
 						md:text-left
 						md:hover:bg-transparent
 						md:hover:opacity-90
@@ -164,7 +164,7 @@ export function ContactMethodRow({
 							min-w-0
 							items-center
 							justify-between
-							gap-2
+							gap-ve-sm
 							md:flex
 						"
 					>
@@ -210,8 +210,8 @@ export function ContactMethodRow({
 					border
 					border-white/20
 					bg-white/10
-					px-4
-					py-3
+					px-ve
+					py-ve-0.75
 					transition
 					hover:-translate-y-0.5
 					hover:bg-white/20
@@ -225,7 +225,7 @@ export function ContactMethodRow({
 						flex
 						min-w-0
 						items-center
-						gap-3
+						gap-ve-0.75
 						md:justify-start
 					"
 				>
@@ -234,7 +234,7 @@ export function ContactMethodRow({
 							shrink-0
 							rounded-md
 							bg-white/15
-							p-2
+							p-ve-sm
 						"
 					>
 						{icon}
@@ -278,7 +278,7 @@ export function ContactMethodRow({
 				</div>
 				<span
 					className="
-						ml-2
+						ml-ve-sm
 						shrink-0
 						transition
 						group-hover:translate-x-0.5

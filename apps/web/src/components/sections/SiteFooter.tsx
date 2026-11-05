@@ -3,11 +3,11 @@ export function SiteFooter() {
 		<footer
 			className="
 				relative
-				-mt-6
+				-mt-ve-1.5
 				rounded-none
 				bg-sky
 				px-gutter
-				py-6
+				py-ve-1.5
 				text-center
 				text-sm
 				text-slate-300

@@ -12,7 +12,7 @@ function RecommendationAttribution({
 			className="
 				flex
 				flex-col
-				gap-1
+				gap-ve-tiny
 				text-center
 				md:text-left
 			"
@@ -65,11 +65,11 @@ function RecommendationQuote({
 	return (
 		<blockquote
 			className="
-				mt-4
-				space-y-3
+				mt-ve
+				space-y-ve-0.75
 				border-l-2
 				border-sky/40
-				pl-4
+				pl-ve
 				text-base
 				leading-relaxed
 				text-slate-700
@@ -98,20 +98,20 @@ function FeaturedRecommendation({
 				border
 				border-slate-100
 				bg-frost/60
-				p-5
+				p-ve-1.25
 				md:col-span-2
-				md:p-6
+				md:p-ve-1.5
 			"
 		>
 			<div
 				className="
 					flex
 					flex-col
-					gap-5
+					gap-ve-1.25
 					md:grid
 					md:grid-cols-[auto,1fr]
 					md:items-start
-					md:gap-8
+					md:gap-ve-lg
 				"
 			>
 				<a
@@ -165,15 +165,15 @@ function SupportingRecommendation({
 				border
 				border-slate-100
 				bg-frost/60
-				p-5
-				md:p-6
+				p-ve-1.25
+				md:p-ve-1.5
 			"
 		>
 			<div
 				className="
 					flex
 					flex-col
-					gap-4
+					gap-ve
 				"
 			>
 				<a
@@ -225,7 +225,7 @@ export function AboutSection() {
 				border
 				border-slate-200
 				bg-white
-				p-8
+				p-ve-lg
 				shadow-sm
 				sm:rounded-2xl
 			"
@@ -249,7 +249,7 @@ export function AboutSection() {
 				</p>
 				<h2
 					className="
-						mt-2
+						mt-ve-sm
 						text-3xl
 						font-semibold
 						text-ink
@@ -259,7 +259,7 @@ export function AboutSection() {
 				</h2>
 				<p
 					className="
-						mt-3
+						mt-ve-0.75
 						text-slate-600
 					"
 				>
@@ -269,9 +269,9 @@ export function AboutSection() {
 
 			<div
 				className="
-					mt-8
+					mt-ve-lg
 					grid
-					gap-6
+					gap-ve-1.5
 					md:grid-cols-2
 				"
 			>

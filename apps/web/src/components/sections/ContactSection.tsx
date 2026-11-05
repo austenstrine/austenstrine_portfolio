@@ -106,7 +106,7 @@ export function ContactSection() {
 			className="
 				rounded-none
 				bg-sky
-				p-8
+				p-ve-lg
 				text-white
 				shadow-none
 				sm:rounded-2xl
@@ -119,7 +119,7 @@ export function ContactSection() {
 			</h2>
 			<p
 				className="
-					mt-3
+					mt-ve-0.75
 					max-w-3xl
 					text-slate-200
 				"
@@ -131,10 +131,10 @@ export function ContactSection() {
 
 			<div
 				className="
-					mt-6
+					mt-ve-1.5
 					grid
-					gap-4
-					md:gap-3
+					gap-ve
+					md:gap-ve-0.75
 				"
 			>
 				{
@@ -167,8 +167,8 @@ export function ContactSection() {
 							whitespace-nowrap
 							rounded-md
 							bg-sky/90
-							px-3
-							py-1.5
+							px-ve-0.75
+							py-ve-0.375
 							text-xs
 							font-medium
 							text-white
