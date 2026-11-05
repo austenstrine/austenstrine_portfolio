@@ -61,8 +61,8 @@ function WidgetPreferencesPanel() {
 				"
 			>
 				Remembered open or closed defaults for expandable sections.
-				Hold Alt on a section, then open the ⋮ menu to pin a state.
-				Saved in this browser
+				Use the ⋮ next to a section title (faint until you hover, focus,
+				or hold Alt) to pin open or closed. Saved in this browser
 				{user
 					? ` for ${user.email}`
 					: ' on this device'

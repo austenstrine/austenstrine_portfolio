@@ -78,6 +78,7 @@ export function CollapsibleWidget({
 	const { altHeld } = useWidgetPrefsChrome();
 	const [rememberedOpen, setRememberedOpen] = useState<boolean | null>(null);
 	const [headerFocused, setHeaderFocused] = useState(false);
+	const [headerHovered, setHeaderHovered] = useState(false);
 	const {
 		open: menuOpen,
 		panelBox,
@@ -102,7 +103,10 @@ export function CollapsibleWidget({
 		return subscribeWidgetPrefs(userKey, sync);
 	}, [userKey, widgetId]);
 
-	const prefsChromeVisible = altHeld || menuOpen || headerFocused;
+	// Faint ⋮ is always painted (discovery + forward Tab). Alt / hover / focus
+	// only boost contrast — absolute slot + pr-10 gutter keep CLS at zero.
+	const prefsChromeEmphasized =
+		altHeld || menuOpen || headerFocused || headerHovered;
 	const isRemembering = rememberedOpen !== null;
 	const rememberMatches = isRemembering && rememberedOpen === open;
 
@@ -131,6 +135,8 @@ export function CollapsibleWidget({
 					}
 				}}
 				onFocus={() => setHeaderFocused(true)}
+				onMouseEnter={() => setHeaderHovered(true)}
+				onMouseLeave={() => setHeaderHovered(false)}
 			>
 				<div
 					className="
@@ -142,18 +148,12 @@ export function CollapsibleWidget({
 					<h2 className="text-lg font-semibold">
 						{title}
 					</h2>
-					{/*
-						Absolute ⋮: never participates in layout flow, so
-						Alt-reveal cannot cause CLS. pr-10 reserves a title
-						gutter so the glyph does not cover long titles.
-					*/}
 					<button
 						aria-expanded={menuOpen}
 						aria-haspopup="menu"
-						aria-hidden={!prefsChromeVisible}
 						aria-label={`Preferences for ${label}`}
 						className={
-							prefsChromeVisible
+							prefsChromeEmphasized
 								? `
 									absolute
 									-right-1
@@ -186,20 +186,19 @@ export function CollapsibleWidget({
 									justify-center
 									rounded-full
 									border
-									border-transparent
-									bg-transparent
-									text-slate-600
-									opacity-0
-									pointer-events-none
+									border-slate-200/70
+									bg-white/80
+									text-slate-500
+									opacity-40
+									transition
+									hover:border-sky
+									hover:text-sky
+									hover:opacity-100
 								`
 						}
 						onClick={() => setMenuOpen((current) => !current)}
 						ref={triggerRef}
-						tabIndex={
-							prefsChromeVisible
-								? 0
-								: -1
-						}
+						title="Widget preferences (or hold Alt)"
 						type="button"
 					>
 						<MoreVerticalIcon className="h-4 w-4" />
