@@ -10,7 +10,9 @@ Deploy-on-box, not ECR/Fargate. Images build on the instance.
 - **Arch:** x86_64. No `platform:` / `--platform` pins in compose or Dockerfiles;
   Docker follows the host. `live.sh` refuses `DOCKER_DEFAULT_PLATFORM` only when
   it conflicts with `uname -m` (ARM optional, not the live target).
-- **Build on the box.** Clone → `.env` → `./dssh publish` (or `./ops/deploy/live.sh`).
+- **Build on the box.** Clone → `.env` → `./ops/deploy/live.sh` (GH Actions
+  path). Manual: `./dssh publish` only if `developers-sugary-shell-helper` is
+  installed on the box (`./install.sh` → `~/.local/bin`); CI does not need it.
   Do **not** copy foreign-arch `node_modules` or laptop-built images onto the host.
   `.dockerignore` already excludes `**/node_modules`.
 - **DNS:** attach an **Elastic IP**; point apex + `www` + `cdn` A records at it.
@@ -23,14 +25,21 @@ Deploy-on-box, not ECR/Fargate. Images build on the instance.
 - **CDN:** Go binary from
   [golang-image-cdn](https://github.com/austenstrine/golang-image-cdn);
   `live.sh` runs `ops/cdn/ensure-source.sh` (shallow clone → `ops/cdn/src`)
-  before `compose build cdn`. Bind-mounts `./ops/cdn/data/origin` into both
-  `cdn` and `api` so seed stock downloads land where the CDN serves. No
-  `docker cp`. After API seed, `live.sh` prewarms stock variants.
-- **.env backup:** CLI from `linux-gdrive-dotenv-backup-recovery` (clone on the
-  box); `ensure-env-backup.sh` installs restic/rclone + timer; one-time
-  `push-env-backup-secrets.sh` from the laptop copies pass + rclone config.
-- **CI:** `.github/workflows/deploy.yml` SSHs to the box, `git reset`, then
-  runs `live.sh` there (native x86_64 build). No buildx / multi-arch push needed.
+  before `compose build cdn`. Dockerfile also clones if `src/` is empty.
+  Bind-mounts `./ops/cdn/data/origin` into both `cdn` and `api` so seed stock
+  downloads land where the CDN serves. No `docker cp`. After API seed,
+  `live.sh` prewarms stock variants.
+- **.env backup:** `ensure-env-backup.sh` resolves or shallow-clones
+  `linux-gdrive-dotenv-backup-recovery` into `~/src/…`, installs restic/rclone +
+  timer; one-time `push-env-backup-secrets.sh` from the laptop copies pass +
+  rclone config.
+- **prisma-seed-migration-sync:** npm git dep in `apps/api` (`#v0.1.0`); API
+  image `npm ci` needs `git` (already in Dockerfile). No in-repo `packages/`
+  copy — remove any leftover `packages/prisma-seed-migration-sync` on old
+  checkouts (`git reset --hard` does not delete untracked files).
+- **CI:** `.github/workflows/deploy.yml` SSHs to the box, `git reset --hard
+  origin/master`, then runs `live.sh` (native x86_64 build). Ship live by
+  merging `development` → `master` first; deploy always tracks `master`.
 
 Prisma engines for Alpine: `binaryTargets` in `apps/api/prisma/schema.prisma`
 include `linux-musl-openssl-3.0.x` (amd64 live) plus optional

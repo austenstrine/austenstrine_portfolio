@@ -1,29 +1,37 @@
-'use client';
+import { redirect } from 'next/navigation';
+import { ApiUnavailable } from '../../../../../components/ApiUnavailable';
+import { getCatalogProductById } from '../../../../../lib/catalog-api';
+import { productEditHref } from '../../../../../lib/vendor-ref';
 
-import { Suspense } from 'react';
-import { useParams } from 'next/navigation';
-import { RequireAccess } from '../../../../../components/auth/RequireAccess';
-import { ProductEditorForm } from '../../../../../components/catalog/ProductEditorForm';
+type LegacyEditRedirectProps = {
+	params: Promise<{ productId: string }>;
+};
 
-function EditProductPageInner() {
-	const params = useParams<{ productId: string }>();
-	const productId = params.productId;
+export default async function LegacyEditProductRedirectPage({
+	params,
+}: LegacyEditRedirectProps) {
+	const { productId } = await params;
+	let vendorSlug: string;
+	let productSlug: string;
+	try {
+		const product = await getCatalogProductById(productId);
+		vendorSlug = product.vendor.slug;
+		productSlug = product.slug;
+	}
+	catch {
+		return (
+			<ApiUnavailable detail="This edit link loaded, but the product could not be found or the catalog API could not be reached." />
+		);
+	}
 
-	return (
-		<RequireAccess vendorRequired>
-			<ProductEditorForm
-				productEditorSurface="standard"
-				productEditorIntent="edit"
-				existingProductId={productId}
-			/>
-		</RequireAccess>
-	);
-}
-
-export default function EditProductPage() {
-	return (
-		<Suspense fallback={null}>
-			<EditProductPageInner />
-		</Suspense>
+	// Must stay outside the load try/catch — Next.js redirect() throws.
+	redirect(
+		productEditHref(
+			{
+				vendorSlug,
+				productSlug,
+			},
+			'standard',
+		),
 	);
 }

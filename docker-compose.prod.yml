@@ -66,9 +66,11 @@ services:
     environment:
       NODE_ENV: production
       PORT: 4000
-      DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:postgres@postgres:5432/portfolio}
-      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
-      OPENSEARCH_NODE: ${OPENSEARCH_NODE:-https://opensearch:9200}
+      # Force compose DNS — do not inherit laptop localhost from .env
+      # (host-local tooling / dssh --network host still use .env as-is).
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/portfolio
+      REDIS_URL: redis://redis:6379
+      OPENSEARCH_NODE: https://opensearch:9200
       OPENSEARCH_USERNAME: ${OPENSEARCH_USERNAME:-admin}
       OPENSEARCH_PASSWORD: ${OPENSEARCH_PASSWORD}
       OPENSEARCH_TLS_REJECT_UNAUTHORIZED: ${OPENSEARCH_TLS_REJECT_UNAUTHORIZED:-false}
@@ -99,10 +101,30 @@ services:
       - .env
     environment:
       NODE_ENV: production
-      API_INTERNAL_BASE_URL: ${API_INTERNAL_BASE_URL:-http://api:4000/api}
+      # Force compose DNS — do not inherit laptop 127.0.0.1 from .env.
+      API_INTERNAL_BASE_URL: http://api:4000/api
       CDN_PUBLIC_URL: ${CDN_PUBLIC_URL:-https://cdn.austenstrine.dev}
     expose:
       - "3000"
+
+  crm:
+    build:
+      context: .
+      dockerfile: apps/crm/Dockerfile
+      args:
+        NEXT_PUBLIC_API_BASE_URL: ${CRM_NEXT_PUBLIC_API_BASE_URL:-https://crm.austenstrine.dev/api}
+    image: portfolio-crm:latest
+    container_name: portfolio-crm
+    restart: unless-stopped
+    depends_on:
+      - api
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+      API_INTERNAL_BASE_URL: http://api:4000/api
+    expose:
+      - "3001"
 
   nginx:
     build:
@@ -113,6 +135,7 @@ services:
     restart: unless-stopped
     depends_on:
       - web
+      - crm
       - api
       - cdn
     ports:

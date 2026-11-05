@@ -30,9 +30,9 @@ export function JumpToTop() {
 			aria-label="Back to top"
 			className="
 				fixed
-				bottom-[max(12px,calc(var(--gutter)-12px))]
+				bottom-[calc(max(12px,var(--gutter)-12px)+var(--seller-bottom-pane-stack,0px))]
 				right-[max(12px,calc(var(--gutter)-12px))]
-				z-20
+				z-40
 				inline-flex
 				h-12
 				w-12
@@ -42,11 +42,15 @@ export function JumpToTop() {
 				bg-asgreen
 				text-white
 				shadow-[0_8px_22px_rgba(13,27,42,0.38),0_2px_8px_rgba(37,114,87,0.45)]
+				transition-[bottom]
+				duration-200
+				ease-out
 				hover:bg-asgreen/90
 				focus-visible:outline
 				focus-visible:outline-2
 				focus-visible:outline-offset-2
 				focus-visible:outline-white
+				motion-reduce:transition-none
 			"
 			onClick={() => {
 				window.scrollTo({

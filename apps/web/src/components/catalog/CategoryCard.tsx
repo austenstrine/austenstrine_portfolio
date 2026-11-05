@@ -432,8 +432,8 @@ export function CategoryCard({
 					absolute
 					inset-0
 					bg-gradient-to-t
-					from-ink/80
-					via-ink/25
+					from-sky/80
+					via-sky/25
 					to-transparent
 				"
 			/>

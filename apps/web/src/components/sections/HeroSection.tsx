@@ -10,8 +10,7 @@ export function HeroSection() {
 				rounded-none
 				sm:rounded-3xl
 				bg-gradient-to-br
-				from-ink
-				via-sky
+				from-sky
 				to-asgreen
 				flex
 				min-h-screen

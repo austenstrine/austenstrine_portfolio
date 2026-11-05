@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+# Thin wrapper: CLI lives in sibling agent-coord (or AGENT_COORD_BIN / ~/.local/bin).
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+THIS="$(readlink -f "${BASH_SOURCE[0]}" 2>/dev/null || printf '%s\n' "${BASH_SOURCE[0]}")"
+
+accept() {
+	local candidate="$1" resolved
+	[[ -n "$candidate" && -x "$candidate" ]] || return 1
+	resolved="$(readlink -f "$candidate" 2>/dev/null || printf '%s\n' "$candidate")"
+	[[ "$resolved" != "$THIS" ]] || return 1
+	printf '%s\n' "$candidate"
+	return 0
+}
+
+resolve() {
+	local candidate path_bin
+	if [[ -n "${AGENT_COORD_BIN:-}" ]]; then
+		accept "$AGENT_COORD_BIN" && return 0
+	fi
+	for candidate in \
+		"${HOME}/.local/bin/agent-coord" \
+		"$ROOT/../agent-coord/bin/agent-coord" \
+		"/agent/repos/agent-coord/bin/agent-coord" \
+		"${HOME}/.local/share/agent-coord/bin/agent-coord" \
+		"${HOME}/Development/agent-coord/bin/agent-coord" \
+		"${HOME}/src/agent-coord/bin/agent-coord"
+	do
+		accept "$candidate" && return 0
+	done
+	path_bin="$(type -P agent-coord 2>/dev/null || true)"
+	accept "$path_bin" && return 0
+	return 1
+}
+
+bin="$(resolve)" || {
+	echo "agent-coord: not found. Clone ~/Development/agent-coord and run ./install.sh, or set AGENT_COORD_BIN." >&2
+	exit 127
+}
+exec "$bin" "$@"

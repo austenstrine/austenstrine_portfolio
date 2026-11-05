@@ -183,15 +183,13 @@ export function ProductAttributeField({
 														items-center
 														gap-1
 														rounded-full
-														bg-white
+														bg-asgreen/15
 														px-2.5
 														py-1
 														text-xs
 														font-semibold
-														text-slate-700
-														ring-1
-														ring-slate-200
-														hover:bg-slate-100
+														text-asgreen
+														hover:bg-asgreen/25
 													"
 													onClick={() => removeValue(row.valueId)}
 													title={`Remove ${row.valueLabel}`}
@@ -394,7 +392,7 @@ export function ProductAttributeField({
 															text-left
 															text-sm
 															${isOn
-														? 'bg-slate-100 text-slate-500'
+														? 'bg-asgreen/15 text-asgreen'
 														: 'hover:bg-slate-50'
 													}
 														`}
@@ -411,21 +409,47 @@ export function ProductAttributeField({
 															{!activeAttribute
 																? (
 																		<>
-																			<span className="font-medium text-slate-800">
+																			<span
+																				className={
+																					isOn
+																						? 'font-medium text-asgreen'
+																						: 'font-medium text-slate-800'
+																				}
+																			>
 																				{row.attributeName}
 																			</span>
-																			<span className="text-slate-400">
+																			<span
+																				className={
+																					isOn
+																						? 'text-asgreen/60'
+																						: 'text-slate-400'
+																				}
+																			>
 																				{' · '}
 																			</span>
 																		</>
 																	)
 																: null
 															}
-															<span className={activeAttribute ? 'font-medium text-slate-800' : 'text-slate-700'}>
+															<span
+																className={
+																	isOn
+																		? 'font-medium text-asgreen'
+																		: activeAttribute
+																			? 'font-medium text-slate-800'
+																			: 'text-slate-700'
+																}
+															>
 																{row.valueLabel}
 															</span>
 														</span>
-														<span className="shrink-0 text-xs font-semibold text-slate-500">
+														<span
+															className={
+																isOn
+																	? 'shrink-0 text-xs font-semibold text-asgreen/70'
+																	: 'shrink-0 text-xs font-semibold text-slate-500'
+															}
+														>
 															{isOn ? 'Remove' : 'Add'}
 														</span>
 													</button>

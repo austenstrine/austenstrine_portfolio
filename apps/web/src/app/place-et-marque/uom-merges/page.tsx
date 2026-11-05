@@ -1,35 +1,40 @@
 'use client';
 
 import { useSearchParams } from 'next/navigation';
-import { Suspense, useEffect, useState } from 'react';
-import { applyUomMerge } from '../../../lib/catalog-api';
+import { Suspense, useEffect } from 'react';
 
-function UomMergeContent() {
+function crmPublicBase(): string {
+	const fromEnv = process.env.NEXT_PUBLIC_CRM_URL?.trim();
+	if(fromEnv) {
+		return fromEnv.replace(/\/$/, '');
+	}
+	if(typeof window === 'undefined') {
+		return 'http://localhost:3001';
+	}
+	const { protocol, hostname } = window.location;
+	if(hostname === 'localhost' || hostname === '127.0.0.1') {
+		return `${protocol}//localhost:3001`;
+	}
+	if(hostname.startsWith('local.')) {
+		// local.austenstrine.dev → crm.local.austenstrine.dev
+		return `${protocol}//crm.${hostname}`;
+	}
+	if(hostname.startsWith('www.')) {
+		return `${protocol}//crm.${hostname.slice('www.'.length)}`;
+	}
+	return `${protocol}//crm.${hostname}`;
+}
+
+function UomMergeRedirect() {
 	const searchParams = useSearchParams();
 	const token = searchParams.get('token')?.trim() ?? '';
-	const [message, setMessage] = useState<string | null>(null);
-	const [error, setError] = useState<string | null>(null);
-	const [loading, setLoading] = useState(true);
 
 	useEffect(() => {
-		if(!token) {
-			setError('This merge link is missing a token.');
-			setLoading(false);
-			return;
-		}
-
-		applyUomMerge(token)
-			.then((result) => {
-				setMessage(result.message);
-			})
-			.catch((loadError) => {
-				setError(
-					loadError instanceof Error
-						? loadError.message
-						: 'Could not apply this merge decision.',
-				);
-			})
-			.finally(() => setLoading(false));
+		const base = crmPublicBase();
+		const target = token
+			? `${base}/uom-merges?token=${encodeURIComponent(token)}`
+			: `${base}/uom-merges`;
+		window.location.replace(target);
 	}, [token]);
 
 	return (
@@ -51,61 +56,9 @@ function UomMergeContent() {
 			>
 				UOM merge decision
 			</h1>
-			{loading
-				? (
-						<p className="text-sm text-slate-500">
-							Applying…
-						</p>
-					)
-				: null
-			}
-			{message
-				? (
-						<p
-							className="
-								rounded-xl
-								border
-								border-emerald-200
-								bg-emerald-50
-								p-4
-								text-sm
-								text-emerald-900
-							"
-						>
-							{message}
-						</p>
-					)
-				: null
-			}
-			{error
-				? (
-						<p
-							className="
-								rounded-xl
-								border
-								border-red-200
-								bg-red-50
-								p-4
-								text-sm
-								text-red-800
-							"
-						>
-							{error}
-						</p>
-					)
-				: null
-			}
-			<a
-				className="
-					text-sm
-					font-semibold
-					text-sky
-					hover:underline
-				"
-				href="/place-et-marque/uoms"
-			>
-				Back to units of measure
-			</a>
+			<p className="text-sm text-slate-600">
+				Opening the admin CRM…
+			</p>
 		</div>
 	);
 }
@@ -119,7 +72,7 @@ export default function UomMergePage() {
 				</p>
 			}
 		>
-			<UomMergeContent />
+			<UomMergeRedirect />
 		</Suspense>
 	);
 }

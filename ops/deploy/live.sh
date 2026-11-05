@@ -131,10 +131,10 @@ echo "live.sh: ensuring golang-image-cdn source"
 bash "$ROOT/ops/cdn/ensure-source.sh"
 
 # Encrypted .env backup via extracted linux-gdrive-dotenv-backup-recovery
-# (portfolio wrapper: ops/tooling/env-backup.sh). Install tools/timer always;
-# backup runs when restic.pass exists. Secrets:
+# (portfolio wrapper: ops/tooling/env-backup.sh). ensure-env-backup.sh
+# resolves or shallow-clones the tool, installs restic/rclone + timer;
+# backup smoke runs when restic.pass + rclone gdrive: exist. Secrets:
 #   ./ops/deploy/push-env-backup-secrets.sh from a configured laptop.
-# Tool checkout must be on the box (ENV_BACKUP_HOME / ~/src/… / sibling).
 pass_file="${RESTIC_PASSWORD_FILE:-$HOME/.config/env-backup/restic.pass}"
 backup_sh="$ROOT/ops/tooling/env-backup.sh"
 ensure_backup="$ROOT/ops/deploy/ensure-env-backup.sh"

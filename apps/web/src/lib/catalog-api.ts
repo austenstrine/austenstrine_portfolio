@@ -305,6 +305,7 @@ export function updateCatalogProduct(
 	productId: string,
 	payload: ProductMeasuresPayload & {
 		title?: string;
+		slug?: string;
 		description?: string;
 		imageUrls?: string[];
 		tags?: string[];
@@ -320,14 +321,26 @@ export function updateCatalogProduct(
 			booleanValue?: boolean | null;
 		}>;
 		offerings?: Array<{
-			id: string;
+			id?: string;
+			clientKey?: string;
+			offeringKey?: string;
 			sku?: string;
+			uomId?: string;
+			role?: 'PACK' | 'PIECE';
 			priceCents?: number;
 			qtyOnHand?: string;
 			tracksOwnQty?: boolean;
 			minUnbrokenQty?: string;
 			breakPoolAboveQty?: string;
 			inheritQtyToChildren?: boolean;
+		}>;
+		containments?: Array<{
+			parentOfferingKey?: string;
+			childOfferingKey?: string;
+			parentOfferingId?: string;
+			childOfferingId?: string;
+			childQtyPerParent: string;
+			breakFeeCents?: number;
 		}>;
 	},
 ): Promise<CatalogProductDetail> {
@@ -448,6 +461,17 @@ export type VendorSummary = {
 	joinedAt?: string;
 };
 
+export type VendorLinkNameRequestSummary = {
+	id: string;
+	requestedSlug: string;
+	currentSlug: string;
+	status: 'PENDING' | 'APPROVED' | 'DENIED' | 'CANCELLED';
+	requesterNote?: string | null;
+	reviewReason?: string | null;
+	createdAt: string;
+	reviewedAt?: string | null;
+};
+
 export type VendorDetail = VendorSummary & {
 	members: Array<{
 		userId: string;
@@ -455,6 +479,14 @@ export type VendorDetail = VendorSummary & {
 		role: 'OWNER' | 'EDITOR' | 'VIEWER';
 		joinedAt: string;
 	}>;
+	linkNameRequest?: VendorLinkNameRequestSummary | null;
+	resolvedFromId?: boolean;
+};
+
+export type VendorLinkNameCheck = {
+	available: boolean;
+	kind: 'taken' | 'too_similar' | null;
+	message: string | null;
 };
 
 export function listMyVendors(): Promise<VendorSummary[]> {
@@ -462,11 +494,36 @@ export function listMyVendors(): Promise<VendorSummary[]> {
 }
 
 export function getMyVendor(vendorId: string): Promise<VendorDetail> {
-	return catalogRequest<VendorDetail>(`/vendors/mine/${vendorId}`);
+	return catalogRequest<VendorDetail>(
+		`/vendors/mine/${encodeURIComponent(vendorId)}`,
+	);
 }
 
 export function createVendor(payload: { name: string; slug: string }): Promise<VendorSummary> {
 	return catalogRequest<VendorSummary>('/vendors', {
+		method: 'POST',
+		body: JSON.stringify(payload),
+	});
+}
+
+export function checkVendorLinkName(
+	name: string,
+	excludeVendorId?: string,
+): Promise<VendorLinkNameCheck> {
+	const params = new URLSearchParams({ name });
+	if(excludeVendorId) {
+		params.set('excludeVendorId', excludeVendorId);
+	}
+	return catalogRequest<VendorLinkNameCheck>(
+		`/vendors/link-name/check?${params.toString()}`,
+	);
+}
+
+export function requestVendorLinkName(
+	vendorId: string,
+	payload: { linkName: string; note?: string },
+): Promise<VendorLinkNameRequestSummary & { message: string }> {
+	return catalogRequest(`/vendors/${vendorId}/link-name-requests`, {
 		method: 'POST',
 		body: JSON.stringify(payload),
 	});

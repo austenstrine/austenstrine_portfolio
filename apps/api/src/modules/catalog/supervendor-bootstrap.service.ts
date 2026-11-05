@@ -1,5 +1,6 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { PrismaService } from '../../infra/prisma/prisma.service';
+import { seedDemoNotifications } from '../notifications/seed-demo-notifications';
 import {
 	SUPERVENDOR_ADMIN_EMAIL,
 	ensureSupervendor,
@@ -19,6 +20,7 @@ export class SupervendorBootstrapService implements OnModuleInit {
 
 	private async ensure(): Promise<void> {
 		await ensureSupervendor(this.prisma);
+		await seedDemoNotifications(this.prisma);
 		this.logger.log(
 			`Ensured supervendor membership for ${SUPERVENDOR_ADMIN_EMAIL}`,
 		);

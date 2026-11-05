@@ -5,11 +5,13 @@ import { useEffect, useState } from 'react';
 import {
 	cancelBuyerOrder,
 	formatMoney,
+	formatOrderStatus,
 	getBuyerOrder,
 	type PlaceEtMarqueOrder,
 } from '../../../../lib/checkout-api';
 import { useSession } from '../../../../lib/useSession';
 import { BackLink } from '../../../../components/BackLink';
+import { OrderSupportCode } from '../../../../components/orders/OrderSupportCode';
 
 export default function OrderDetailPage() {
 	const params = useParams<{ orderId: string }>();
@@ -119,8 +121,18 @@ export default function OrderDetailPage() {
 								font-semibold
 							"
 						>
-							{order.vendor?.name ?? 'Order'} · {order.orderRef}
+							{order.vendor?.name ?? 'Order'}
 						</h1>
+						<p
+							className="
+								mt-1
+								text-base
+								font-medium
+								text-slate-800
+							"
+						>
+							{order.orderRef}
+						</p>
 						<p
 							className="
 								mt-2
@@ -128,12 +140,13 @@ export default function OrderDetailPage() {
 								text-slate-600
 							"
 						>
-							{order.status} · {formatMoney(order.totalCents, order.currency)}
+							{formatOrderStatus(order.status)} · {formatMoney(order.totalCents, order.currency)}
 							{order.shippingLabel
 								? ` · ${order.shippingLabel}`
 								: ''
 							}
 						</p>
+						<OrderSupportCode orderId={order.id} />
 						{order.refundedAt
 							? (
 								<p

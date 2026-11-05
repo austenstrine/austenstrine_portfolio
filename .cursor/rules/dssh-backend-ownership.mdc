@@ -1,0 +1,47 @@
+---
+description: Restart local dssh backend/CRM via the user's Cursor terminal
+alwaysApply: true
+---
+
+# Local backend / CRM restarts (`dssh backend`, `dssh crm`)
+
+Agents **may** restart the local Nest API or admin CRM when a rebuild or container replace is needed. Prefer that over leaving the user on a stale `portfolio-api` / `portfolio-crm`.
+
+## Required pattern
+
+Run the restart **in the user's terminal in this Cursor window** (prefer the active backend / CRM / dssh terminal — backend often terminal **4**), not in a hidden agent shell:
+
+```bash
+dssh backend restart; dssh logs backend
+dssh crm restart; dssh logs crm
+```
+
+Prefer `dssh logs <target>` (global action). Local `dssh <target> logs` also works after the dssh fix, but keep the documented form consistent with backend/frontend/cdn.
+
+That keeps the user's log stream clean and attached to the new container.
+
+## If you cannot drive that terminal
+
+Prompt the user to run the same command themselves, then **wait** until they indicate done (e.g. hits Done / says done) before continuing work that depends on the new process.
+
+## Do not
+
+- Silently `docker stop|rm|kill|restart portfolio-api` or `portfolio-crm` (or ancestor=`portfolio-api` / `portfolio-crm`) in the background outside the pattern above — that produces confusing SIGTERM noise in the user's attached log stream
+- `dssh stop` / other global stops that remove `dssh.image` app containers while API/CRM are in use, unless the user explicitly asks
+- Keep-alive loops, health watchers, or “verify then stop” teardown of `portfolio-api` / `portfolio-crm`
+
+## Still prefer when restart is unnecessary
+
+- Diagnose with read-only tools: `docker logs`, `docker inspect`, `docker events`, `./dssh status`, `./dssh logs backend`, `./dssh logs crm`
+- Code/docs/Dockerfile fixes that do not require replacing the running container
+
+## Expected SIGTERM (not a bug)
+
+`dssh backend restart` / `dssh crm restart` (and `backend_start_local`’s `docker rm -f`) sends **SIGTERM** to the old Nest/`nest start --watch` or Next process. Following `dssh logs …` across a restart almost always shows:
+
+```text
+[NestApplication] Nest application successfully started
+npm error signal SIGTERM
+```
+
+(or the Next equivalent). That is the old container dying during replace — not Nest/Next watch flaking, not OOM, unless `OOMKilled=true` or there is no matching `container kill`/`stop`/`destroy` in `docker events`. Background docker kill/rm outside the user-terminal pattern is what made those SIGTERMs confusing.

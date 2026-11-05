@@ -4,20 +4,47 @@ import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import cookieParser from 'cookie-parser';
 import { AppModule } from './app.module';
+import { corsAllowedOrigins, normalizeOrigin } from './common/app-origins';
 
 async function bootstrap() {
 	const isProduction = process.env.NODE_ENV === 'production';
-	const webUrl = process.env.WEB_URL?.trim();
+	const webUrl = normalizeOrigin(process.env.WEB_URL);
+	const crmUrl = normalizeOrigin(process.env.CRM_URL);
+	const allowedOrigins = corsAllowedOrigins();
 
 	if(isProduction && !webUrl) {
 		throw new Error('WEB_URL is required when NODE_ENV=production (CORS fail-closed).');
 	}
+	if(isProduction && !crmUrl) {
+		throw new Error('CRM_URL is required when NODE_ENV=production (admin CRM CORS).');
+	}
 
 	const app = await NestFactory.create(AppModule, { rawBody: true });
 
+	// Nest sits behind nginx locally and on live. Without this, req.ip is the
+	// proxy hop for every client, so ThrottlerGuard shares one bucket site-wide
+	// and seller rapid-nav / Load more can starve /auth/me into a fake sign-out.
+	const trustProxy = process.env.TRUST_PROXY?.trim();
+	app.getHttpAdapter().getInstance().set(
+		'trust proxy',
+		trustProxy === undefined || trustProxy === ''
+			? 1
+			: trustProxy === 'true'
+				? true
+				: Number(trustProxy) || 1,
+	);
+
 	app.setGlobalPrefix('api');
 	app.enableCors({
-		origin: webUrl ?? 'http://localhost:3000',
+		origin: (origin, callback) => {
+			// Non-browser / same-origin proxy clients may omit Origin.
+			if(!origin || allowedOrigins.includes(origin)) {
+				callback(null, true);
+				return;
+			}
+			// Reject without throwing — a thrown Error becomes HTTP 500.
+			callback(null, false);
+		},
 		credentials: true,
 	});
 	app.use(cookieParser());

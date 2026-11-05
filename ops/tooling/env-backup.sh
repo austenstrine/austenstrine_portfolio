@@ -28,6 +28,7 @@ resolve_env_backup_sh() {
 		"$HOME/src/linux-gdrive-dotenv-backup-recovery/env-backup.sh"
 		"$HOME/linux-gdrive-dotenv-backup-recovery/env-backup.sh"
 		"$ROOT/../linux-gdrive-dotenv-backup-recovery/env-backup.sh"
+		"/agent/repos/linux-gdrive-dotenv-backup-recovery/env-backup.sh"
 		"/opt/linux-gdrive-dotenv-backup-recovery/env-backup.sh"
 		"$HOME/bin/env-backup.sh"
 	)

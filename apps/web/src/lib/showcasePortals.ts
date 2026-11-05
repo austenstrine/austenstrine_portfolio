@@ -15,7 +15,7 @@ export const showcasePortals: ShowcasePortal[] = [
 	{
 		id: 'uom-management',
 		title: 'Units of measure',
-		summary: 'Expandable UOMs with dimensions and conversion factors—feet, spools, packs, and more.',
+		summary: 'Expandable UOMs with dimensions and conversion factors such as feet, spools, and packs.',
 		href: '/place-et-marque/uoms',
 	},
 	{

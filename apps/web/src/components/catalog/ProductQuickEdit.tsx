@@ -5,6 +5,8 @@ import {
 	updateCatalogProduct,
 	type CatalogProductDetail,
 } from '../../lib/catalog-api';
+import { centsToDollars, dollarsToCents } from '../../lib/catalog-product-form';
+import { productEditHref } from '../../lib/vendor-ref';
 import { ProductTagField } from './ProductTagField';
 
 type ProductQuickEditProps = {
@@ -13,9 +15,14 @@ type ProductQuickEditProps = {
 };
 
 export function ProductQuickEdit({ product, onUpdated }: ProductQuickEditProps) {
+	const primaryOffering = product.offerings[0] ?? null;
 	const [title, setTitle] = useState(product.title);
 	const [description, setDescription] = useState(product.description ?? '');
 	const [tags, setTags] = useState<string[]>(product.tags ?? []);
+	const [price, setPrice] = useState(
+		primaryOffering ? centsToDollars(primaryOffering.priceCents) : '',
+	);
+	const [qtyOnHand, setQtyOnHand] = useState(primaryOffering?.qtyOnHand ?? '0');
 	const [saving, setSaving] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 
@@ -28,10 +35,16 @@ export function ProductQuickEdit({ product, onUpdated }: ProductQuickEditProps) 
 				title,
 				description,
 				tags,
-				offerings: product.offerings.map((offering) => ({
+				offerings: product.offerings.map((offering, index) => ({
 					id: offering.id,
-					priceCents: offering.priceCents,
-					qtyOnHand: offering.qtyOnHand,
+					priceCents:
+						index === 0 && primaryOffering
+							? dollarsToCents(price)
+							: offering.priceCents,
+					qtyOnHand:
+						index === 0 && primaryOffering
+							? qtyOnHand || '0'
+							: offering.qtyOnHand,
 				})),
 			});
 			onUpdated(updated);
@@ -49,8 +62,8 @@ export function ProductQuickEdit({ product, onUpdated }: ProductQuickEditProps) 
 			className="
 				rounded-2xl
 				border
-				border-amber-200
-				bg-amber-50
+				border-slate-200
+				bg-white
 				p-5
 			"
 		>
@@ -67,9 +80,7 @@ export function ProductQuickEdit({ product, onUpdated }: ProductQuickEditProps) 
 					className="
 						text-sm
 						font-semibold
-						uppercase
-						tracking-wide
-						text-amber-900
+						text-ink
 					"
 				>
 					Quick edit
@@ -81,7 +92,10 @@ export function ProductQuickEdit({ product, onUpdated }: ProductQuickEditProps) 
 						text-sky
 						hover:underline
 					"
-					href={`/place-et-marque/products/${product.id}/edit`}
+					href={productEditHref({
+						vendorSlug: product.vendor.slug,
+						productSlug: product.slug,
+					})}
 				>
 					Full edit
 				</a>
@@ -104,7 +118,7 @@ export function ProductQuickEdit({ product, onUpdated }: ProductQuickEditProps) 
 							w-full
 							rounded-lg
 							border
-							border-amber-200
+							border-slate-300
 							px-3
 							py-2
 						"
@@ -112,6 +126,53 @@ export function ProductQuickEdit({ product, onUpdated }: ProductQuickEditProps) 
 						onChange={(event) => setTitle(event.target.value)}
 					/>
 				</label>
+				{primaryOffering
+					? (
+						<div className="grid gap-3 sm:grid-cols-2">
+							<label className="text-sm">
+								<span className="font-semibold">
+									Price
+									{primaryOffering.uom?.code
+										? ` / ${primaryOffering.uom.code}`
+										: ''
+									}
+								</span>
+								<input
+									className="
+										mt-1
+										w-full
+										rounded-lg
+										border
+										border-slate-300
+										px-3
+										py-2
+									"
+									value={price}
+									onChange={(event) => setPrice(event.target.value)}
+								/>
+							</label>
+							<label className="text-sm">
+								<span className="font-semibold">
+									Qty on hand
+								</span>
+								<input
+									className="
+										mt-1
+										w-full
+										rounded-lg
+										border
+										border-slate-300
+										px-3
+										py-2
+									"
+									value={qtyOnHand}
+									onChange={(event) => setQtyOnHand(event.target.value)}
+								/>
+							</label>
+						</div>
+					)
+					: null
+				}
 				<label className="text-sm">
 					<span className="font-semibold">
 						Description
@@ -122,7 +183,7 @@ export function ProductQuickEdit({ product, onUpdated }: ProductQuickEditProps) 
 							w-full
 							rounded-lg
 							border
-							border-amber-200
+							border-slate-300
 							px-3
 							py-2
 						"
@@ -148,13 +209,13 @@ export function ProductQuickEdit({ product, onUpdated }: ProductQuickEditProps) 
 					className="
 						self-start
 						rounded-full
-						bg-ink
+						bg-sky
 						px-4
 						py-2
 						text-sm
 						font-semibold
 						text-white
-						hover:bg-sky
+						hover:bg-sky/90
 						disabled:opacity-60
 					"
 					type="button"

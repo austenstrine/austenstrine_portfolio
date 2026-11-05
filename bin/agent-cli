@@ -27,7 +27,8 @@ Flags:
   -h, --help
 
 Same-VM note: edit via git worktree; do not mutate /agent/repos/* in place.
-Portfolio default branch: master. Sibling remotes: check git ls-remote (often master).
+Integrate on development (based on master). Feature: feature/<user>/development/<name>.
+Sibling remotes: check git ls-remote (often master).
 EOF
 }
 
@@ -114,7 +115,7 @@ dssh_mode_line() {
 }
 
 helper_status_text() {
-  local seed_dep seed_pkg dssh_kind env_kind cdn_kind
+  local seed_dep seed_pkg dssh_kind env_kind cdn_kind coord_kind
   seed_dep="$(node -e 'const p=require("./apps/api/package.json"); console.log((p.dependencies||{})["prisma-seed-migration-sync"]||"(missing)")' 2>/dev/null || echo "(no apps/api)")"
   if [[ -d packages/prisma-seed-migration-sync ]]; then
     seed_pkg="in-tree packages/prisma-seed-migration-sync"
@@ -124,7 +125,7 @@ helper_status_text() {
   if [[ -f dssh ]]; then
     local lines
     lines="$(wc -l < dssh | tr -d ' ')"
-    if grep -q 'developers-sugary-shell-helper\|DSSH_HOME\|exec .*dssh' dssh 2>/dev/null && [[ "$lines" -lt 80 ]]; then
+    if grep -q 'developers-sugary-shell-helper\|DSSH_BIN\|resolve_dssh' dssh 2>/dev/null && [[ "$lines" -lt 160 ]]; then
       dssh_kind="thin wrapper → developers-sugary-shell-helper ($lines lines)"
     else
       dssh_kind="vendored at ./dssh ($lines lines)"
@@ -143,7 +144,7 @@ helper_status_text() {
   fi
   if [[ -d ops/cdn ]]; then
     if [[ -f ops/cdn/ensure-source.sh ]]; then
-      cdn_kind="ops/cdn (clone-in-deploy / ensure-source.sh); golang-image-cdn may be blocked until GitHub repo exists"
+      cdn_kind="ops/cdn/ensure-source.sh → github.com/austenstrine/golang-image-cdn (ops/cdn/src)"
     elif [[ -f ops/cdn/go.mod ]] || [[ -d ops/cdn/cmd ]]; then
       cdn_kind="ops/cdn (Go sources in-tree)"
     else
@@ -152,6 +153,17 @@ helper_status_text() {
   else
     cdn_kind="ops/cdn missing"
   fi
+  if [[ -f bin/agent-coord ]]; then
+    local clines
+    clines="$(wc -l < bin/agent-coord | tr -d ' ')"
+    if grep -q 'AGENT_COORD_BIN\|agent-coord' bin/agent-coord 2>/dev/null && [[ "$clines" -lt 80 ]]; then
+      coord_kind="thin wrapper → agent-coord ($clines lines)"
+    else
+      coord_kind="bin/agent-coord present ($clines lines)"
+    fi
+  else
+    coord_kind="missing ./bin/agent-coord"
+  fi
   cat <<EOF
 prisma-seed-migration-sync:
   apps/api dep: $seed_dep
@@ -159,18 +171,23 @@ prisma-seed-migration-sync:
   sibling: https://github.com/austenstrine/prisma-seed-migration-sync (branch master)
 dssh / rlog:
   $dssh_kind
+  install: sibling clone, /agent/repos/…, ~/.local/bin/dssh (install.sh), or DSSH_BIN
   config stays here: .dsshrc .dsshrc.example (.dsshrc.local gitignored)
   sibling: https://github.com/austenstrine/developers-sugary-shell-helper (branch master)
+agent-coord:
+  $coord_kind
+  install: sibling ~/Development/agent-coord ./install.sh → ~/.local/bin/agent-coord, or AGENT_COORD_BIN
+  sock/state: ~/.local/share/agent-coord/ (AGENT_COORD_DIR override)
+  sibling path: ~/Development/agent-coord (local; publish remote when ready)
 env-backup:
   $env_kind
   docs: docs/tooling/env-backup.md
   sibling: https://github.com/austenstrine/linux-gdrive-dotenv-backup-recovery (branch master)
 cdn:
   $cdn_kind
-  do not recreate golang-image-cdn if blocked on user creating the GitHub repo
 prisma-type-sync-generator:
-  not in this tree; reserved empty sibling https://github.com/austenstrine/prisma-type-sync-generator
-  build there, not under packages/ first
+  optional soft dep; scaffold lives in https://github.com/austenstrine/prisma-type-sync-generator
+  not wired into Nest prepare:api-types yet
 EOF
 }
 
@@ -178,7 +195,7 @@ cmd_layout() {
   if [[ "$JSON" -eq 1 ]]; then
     node_json '({
       root,
-      apps: ["apps/api (NestJS+Prisma)", "apps/web (Next.js)"],
+      apps: ["apps/api (NestJS+Prisma)", "apps/web (Next.js)", "apps/crm (admin CRM Next.js)"],
       packages: exists("packages") ? fs.readdirSync(path.join(root,"packages")).filter(n=>!n.startsWith(".")) : [],
       ops: exists("ops") ? fs.readdirSync(path.join(root,"ops")).filter(n=>!n.startsWith(".")) : [],
       dssh: exists("dssh"),
@@ -192,7 +209,8 @@ cmd_layout() {
   cat <<EOF
 layout
   apps/api          NestJS API, Prisma, seed, Swagger
-  apps/web          Next.js frontend
+  apps/web          Next.js frontend (Place et Marque + portfolio)
+  apps/crm          Next.js admin CRM (crm.austenstrine.dev)
   packages/*        workspace packages (if present)
   ops/cdn           Go image CDN (local + live)
   ops/deploy        live.sh, TLS, env-backup ensure/push
@@ -216,7 +234,8 @@ cmd_scripts() {
       root: readJson("package.json").scripts || {},
       workspaces: readJson("package.json").workspaces || [],
       api: exists("apps/api/package.json") ? (readJson("apps/api/package.json").scripts || {}) : {},
-      web: exists("apps/web/package.json") ? (readJson("apps/web/package.json").scripts || {}) : {}
+      web: exists("apps/web/package.json") ? (readJson("apps/web/package.json").scripts || {}) : {},
+      crm: exists("apps/crm/package.json") ? (readJson("apps/crm/package.json").scripts || {}) : {}
     })'
     return
   fi
@@ -225,6 +244,9 @@ const fs=require("fs");
 const root=JSON.parse(fs.readFileSync("package.json","utf8"));
 const api=JSON.parse(fs.readFileSync("apps/api/package.json","utf8"));
 const web=JSON.parse(fs.readFileSync("apps/web/package.json","utf8"));
+const crm=fs.existsSync("apps/crm/package.json")
+  ? JSON.parse(fs.readFileSync("apps/crm/package.json","utf8"))
+  : {scripts:{}};
 const dump=(title,scripts)=>{
   console.log(title);
   for (const [k,v] of Object.entries(scripts||{})) console.log("  "+k+": "+v);
@@ -233,10 +255,11 @@ console.log("workspaces: "+JSON.stringify(root.workspaces||[]));
 dump("root", root.scripts);
 dump("apps/api", api.scripts);
 dump("apps/web", web.scripts);
+dump("apps/crm", crm.scripts);
 console.log("hints:");
 console.log("  npm ci");
 console.log("  npm run prepare:api-types   # before lint/test/build");
-console.log("  npm run dev:api | dev:web");
+console.log("  npm run dev:api | dev:web | dev:crm");
 console.log("  npm run prisma:migrate -w apps/api && npm run prisma:seed -w apps/api");
 console.log("  ./dssh status | ./dssh backend start | ./dssh publish  (live box)");
 '
@@ -382,7 +405,7 @@ if (dssh.present) {
   const text=fs.readFileSync(dsshPath,"utf8");
   const lines=text.split(/\n/).length;
   dssh.lines=lines;
-  dssh.kind=(lines<80 && /developers-sugary-shell-helper|DSSH_HOME|exec .*dssh/.test(text)) ? "wrapper" : "vendored";
+  dssh.kind=(lines<160 && /developers-sugary-shell-helper|DSSH_BIN|resolve_dssh/.test(text)) ? "wrapper" : "vendored";
 }
 let envBackup={present:exists("ops/tooling/env-backup.sh")};
 if (envBackup.present) {
@@ -392,7 +415,8 @@ if (envBackup.present) {
 const cdn={
   present: exists("ops/cdn"),
   ensureSource: exists("ops/cdn/ensure-source.sh"),
-  goMod: exists("ops/cdn/go.mod")
+  goMod: exists("ops/cdn/src/go.mod") || exists("ops/cdn/go.mod"),
+  sourceRepo: "https://github.com/austenstrine/golang-image-cdn"
 };
 const out={
   prismaSeedMigrationSync: {
@@ -403,15 +427,31 @@ const out={
   },
   dssh,
   dsshSibling: "https://github.com/austenstrine/developers-sugary-shell-helper",
+  agentCoord: (()=>{
+    const p=path.join(root,"bin/agent-coord");
+    const present=exists("bin/agent-coord");
+    let kind="missing";
+    if (present) {
+      const text=fs.readFileSync(p,"utf8");
+      const lines=text.split(/\n/).length;
+      kind=(lines<80 && /AGENT_COORD_BIN|agent-coord/.test(text)) ? "wrapper" : "present";
+    }
+    return {
+      present,
+      kind,
+      siblingPath: "~/Development/agent-coord",
+      install: "~/.local/bin via sibling install.sh or AGENT_COORD_BIN"
+    };
+  })(),
   envBackup,
   envBackupSibling: "https://github.com/austenstrine/linux-gdrive-dotenv-backup-recovery",
   cdn,
-  golangImageCdnNote: "do not recreate; blocked until user creates GitHub repo",
   prismaTypeSyncGenerator: {
     inTree: false,
     sibling: "https://github.com/austenstrine/prisma-type-sync-generator",
-    note: "scaffold in reserved repo, not packages/ first"
+    note: "optional; scaffolded in sibling; not wired into Nest yet"
   },
+  portfolioIntegrationBranch: "development",
   portfolioDefaultBranch: "master"
 };
 process.stdout.write(JSON.stringify(out,null,2)+"\n");
@@ -431,9 +471,12 @@ const bin=root+"/bin/agent-cli";
 const run=(cmd)=>JSON.parse(execFileSync(bin,[cmd,"--json"],{encoding:"utf8"}));
 const out={
   project: "austenstrine_portfolio (Place et Marque marketplace demo)",
+  integrationBranch: "development",
   defaultBranch: "master",
   rule: "Run ./bin/agent-cli orient first; prefer subcommands over re-reading files.",
+  coord: "Assume async peers; agent-coord claim before contested edits (./bin/agent-coord or ~/.local/bin/agent-coord).",
   sameVm: "git worktree add before edits; do not edit shared /agent/repos checkouts in place",
+  branching: "feature/<user>/development/<name> → merge to development (no PR); master only when asked",
   layout: run("layout"),
   scripts: run("scripts"),
   env: run("env"),
@@ -447,9 +490,11 @@ process.stdout.write(JSON.stringify(out,null,2)+"\n");
   fi
   cat <<EOF
 orient — austenstrine_portfolio
-  NestJS API + Next.js web + Docker/dssh + Go CDN. Default branch: master.
+  NestJS API + Next.js web + Docker/dssh + Go CDN.
+  Branches: integrate on development (based on master); features feature/<user>/development/<name>.
   Same-VM: git worktree before edits (do not mutate shared checkouts in place).
   Prefer: ./bin/agent-cli <cmd> over re-reading files / guessing npm or dssh.
+  Coord first when editing: assume async peers; agent-coord claim before contested edits.
 
 EOF
   cmd_layout

@@ -39,7 +39,7 @@ export function CatalogEmptyActions() {
 				"
 			>
 				{showCreateVendor
-					? 'No seed data—create a vendor, add units and categories, then list a product.'
+					? 'No seed data. Create a vendor, add units and categories, then list a product.'
 					: 'Add units and categories if you need them, then list a product.'
 				}
 			</p>
@@ -57,13 +57,13 @@ export function CatalogEmptyActions() {
 							className="
 								inline-flex
 								rounded-full
-								bg-ink
+								bg-sky
 								px-4
 								py-2
 								text-sm
 								font-semibold
 								text-white
-								hover:bg-sky
+								hover:bg-sky/90
 							"
 							href="/place-et-marque/vendors"
 						>

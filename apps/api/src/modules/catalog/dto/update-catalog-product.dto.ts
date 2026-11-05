@@ -1,4 +1,4 @@
-import { BreakFeeMode } from '@prisma/client';
+import { BreakFeeMode, ProductOfferingRole } from '@prisma/client';
 import { Type } from 'class-transformer';
 import {
 	IsArray,
@@ -19,9 +19,19 @@ import {
 } from './product-measure.dto';
 import { QtyCompoundDto } from './qty-compound.dto';
 
-class ProductOfferingPatchDto {
+/**
+ * Patch an existing offering (id set) or create one on the product (id omitted).
+ * Create requires uomId, role, sku, and priceCents.
+ */
+class ProductOfferingUpsertDto {
+	@IsOptional()
 	@IsUUID()
-	id!: string;
+	id?: string;
+
+	@IsOptional()
+	@IsString()
+	@MaxLength(40)
+	clientKey?: string;
 
 	@IsOptional()
 	@IsString()
@@ -34,9 +44,22 @@ class ProductOfferingPatchDto {
 	offeringKey?: string;
 
 	@IsOptional()
+	@IsUUID()
+	uomId?: string;
+
+	@IsOptional()
+	@IsEnum(ProductOfferingRole)
+	role?: ProductOfferingRole;
+
+	@IsOptional()
 	@IsInt()
 	@Min(0)
 	priceCents?: number;
+
+	@IsOptional()
+	@IsString()
+	@MaxLength(3)
+	currency?: string;
 
 	@IsOptional()
 	@IsString()
@@ -64,12 +87,50 @@ class ProductOfferingPatchDto {
 	inheritQtyToChildren?: boolean;
 }
 
+class OfferingContainmentInputDto {
+	@IsOptional()
+	@IsString()
+	@MaxLength(40)
+	parentOfferingKey?: string;
+
+	@IsOptional()
+	@IsUUID()
+	parentOfferingId?: string;
+
+	@IsOptional()
+	@IsString()
+	@MaxLength(40)
+	childOfferingKey?: string;
+
+	@IsOptional()
+	@IsUUID()
+	childOfferingId?: string;
+
+	@IsString()
+	childQtyPerParent!: string;
+
+	@IsOptional()
+	@ValidateNested()
+	@Type(() => QtyCompoundDto)
+	childQtyCompound?: QtyCompoundDto;
+
+	@IsOptional()
+	@IsInt()
+	@Min(0)
+	breakFeeCents?: number;
+}
+
 export class UpdateCatalogProductDto extends ProductMeasureFieldsDto {
 	@IsOptional()
 	@IsString()
 	@MinLength(2)
 	@MaxLength(200)
 	title?: string;
+
+	@IsOptional()
+	@IsString()
+	@MaxLength(120)
+	slug?: string;
 
 	@IsOptional()
 	@IsString()
@@ -99,7 +160,7 @@ export class UpdateCatalogProductDto extends ProductMeasureFieldsDto {
 
 	@IsOptional()
 	@IsArray()
-	@IsUUID('4', { each: true })
+	@IsUUID('all', { each: true })
 	attributeValueIds?: string[];
 
 	@IsOptional()
@@ -122,7 +183,14 @@ export class UpdateCatalogProductDto extends ProductMeasureFieldsDto {
 
 	@IsOptional()
 	@ValidateNested({ each: true })
-	@Type(() => ProductOfferingPatchDto)
+	@Type(() => ProductOfferingUpsertDto)
 	@IsArray()
-	offerings?: ProductOfferingPatchDto[];
+	offerings?: ProductOfferingUpsertDto[];
+
+	/** When set, replaces all containments among this product's offerings. */
+	@IsOptional()
+	@ValidateNested({ each: true })
+	@Type(() => OfferingContainmentInputDto)
+	@IsArray()
+	containments?: OfferingContainmentInputDto[];
 }

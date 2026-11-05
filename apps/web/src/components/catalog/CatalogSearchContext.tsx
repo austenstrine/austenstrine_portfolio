@@ -46,6 +46,10 @@ type CatalogSearchContextValue = {
 	headerDesktopExtrasEl: HTMLDivElement | null;
 	headerMobileExtrasEl: HTMLDivElement | null;
 	pageExtrasEl: HTMLDivElement | null;
+	sellerTopContextHostEl: HTMLDivElement | null;
+	setSellerTopContextHost: (el: HTMLDivElement | null) => void;
+	pageBottomPaneHostEl: HTMLDivElement | null;
+	setPageBottomPaneHost: (el: HTMLDivElement | null) => void;
 	desktop: boolean;
 };
 
@@ -64,6 +68,8 @@ export function CatalogSearchProvider({ children }: { children: ReactNode }) {
 	const [headerDesktopExtrasEl, setHeaderDesktopExtras] = useState<HTMLDivElement | null>(null);
 	const [headerMobileExtrasEl, setHeaderMobileExtras] = useState<HTMLDivElement | null>(null);
 	const [pageExtrasEl, setPageExtras] = useState<HTMLDivElement | null>(null);
+	const [sellerTopContextHostEl, setSellerTopContextHost] = useState<HTMLDivElement | null>(null);
+	const [pageBottomPaneHostEl, setPageBottomPaneHost] = useState<HTMLDivElement | null>(null);
 	const [extrasHost, setExtrasHost] = useState<'page' | 'header'>(
 		() => (pathname === '/place-et-marque/search' ? 'page' : 'header'),
 	);
@@ -215,6 +221,10 @@ export function CatalogSearchProvider({ children }: { children: ReactNode }) {
 		headerDesktopExtrasEl,
 		headerMobileExtrasEl,
 		pageExtrasEl,
+		sellerTopContextHostEl,
+		setSellerTopContextHost,
+		pageBottomPaneHostEl,
+		setPageBottomPaneHost,
 		desktop,
 	}), [
 		query,
@@ -230,6 +240,8 @@ export function CatalogSearchProvider({ children }: { children: ReactNode }) {
 		headerDesktopExtrasEl,
 		headerMobileExtrasEl,
 		pageExtrasEl,
+		sellerTopContextHostEl,
+		pageBottomPaneHostEl,
 		desktop,
 	]);
 
@@ -329,4 +341,61 @@ export function SearchExtrasPortal({ children }: { children: ReactNode }) {
 		return content;
 	}
 	return createPortal(content, target);
+}
+
+/** Seller context for the top bar (e.g. vendor picker). Not page actions. */
+export function SellerTopContextPortal({ children }: { children: ReactNode }) {
+	const { sellerTopContextHostEl } = useCatalogSearch();
+	if(!sellerTopContextHostEl) {
+		return null;
+	}
+	return createPortal(
+		<div
+			aria-label="Seller context"
+			className="
+				mx-auto
+				flex
+				max-w-7xl
+				flex-wrap
+				items-end
+				gap-x-3
+				gap-y-2
+				px-gutter
+				py-2
+			"
+			role="region"
+		>
+			{children}
+		</div>,
+		sellerTopContextHostEl,
+	);
+}
+
+/** Page-specific actions for the frosted bottom-right pane (e.g. New product on manage). */
+export function PageBottomPanePortal({ children }: { children: ReactNode }) {
+	const { pageBottomPaneHostEl } = useCatalogSearch();
+	if(!pageBottomPaneHostEl || children == null || children === false) {
+		return null;
+	}
+	return createPortal(
+		<div
+			aria-label="Page actions"
+			className="
+				flex
+				flex-wrap
+				items-center
+				justify-end
+				gap-x-2
+				gap-y-2
+				p-2
+				sm:gap-x-3
+				sm:px-3
+				sm:py-2.5
+			"
+			role="region"
+		>
+			{children}
+		</div>,
+		pageBottomPaneHostEl,
+	);
 }

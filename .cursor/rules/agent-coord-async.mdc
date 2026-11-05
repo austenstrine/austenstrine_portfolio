@@ -1,0 +1,8 @@
+---
+description: Assume async peers; claim contested files via agent-coord
+alwaysApply: true
+---
+
+# Agent coordination
+
+Assume async peers may edit at any time. Before contested edits: `./bin/agent-coord` (or `agent-coord` on PATH) claim / negotiate / release. See `AGENTS.md` §7 and `~/Development/agent-coord`.

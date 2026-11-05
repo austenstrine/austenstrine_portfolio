@@ -54,14 +54,14 @@ export function CopyField({ label, value }: CopyFieldProps) {
 			<button
 				className="
 					rounded-md
-					bg-ink
+					bg-sky
 					px-3
 					py-1.5
 					text-xs
 					font-semibold
 					text-white
 					transition
-					hover:bg-sky
+					hover:bg-sky/90
 				"
 				type="button"
 				onClick={onCopy}

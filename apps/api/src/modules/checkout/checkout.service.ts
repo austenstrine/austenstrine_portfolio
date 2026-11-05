@@ -20,6 +20,10 @@ import { ConnectService } from './connect.service';
 import { PayoutService } from './payout.service';
 import { ShippingService } from './shipping.service';
 import { StripeService } from './stripe.service';
+import {
+	buildVendorOrderLabel,
+	withOrderLabelSuffix,
+} from './vendor-order-label';
 
 const CHECKOUT_TTL_MS = 1000 * 60 * 45;
 const TTL_SWEEP_MS = 1000 * 60 * 5;
@@ -104,9 +108,15 @@ export class CheckoutService implements OnModuleInit, OnModuleDestroy {
 			shipments: ShipmentRatePick[];
 		},
 	) {
-		if(!this.stripe.enabled) {
+		const unpaidDevBypass = process.env.CHECKOUT_DEV_BYPASS === '1';
+		if(!this.stripe.enabled && !unpaidDevBypass) {
 			throw new BadRequestException(
 				'Stripe is not configured on the server (STRIPE_SECRET_KEY).',
+			);
+		}
+		if(unpaidDevBypass && !this.stripe.enabled) {
+			this.logger.warn(
+				'CHECKOUT_DEV_BYPASS=1: completing checkout without Stripe payment.',
 			);
 		}
 
@@ -208,9 +218,23 @@ export class CheckoutService implements OnModuleInit, OnModuleDestroy {
 					? PayoutTrigger.ON_SHIPMENT
 					: PayoutTrigger.ON_PAYMENT);
 
+			const itemCount = shipment.lines.reduce(
+				(sum, line) => sum + Number(line.quantity),
+				0,
+			);
+			const orderRef = await this.allocateVendorOrderRef({
+				shipName: shipment.shipName,
+				buyerEmail: buyer.email,
+				itemCount,
+				shipCity: shipment.shipCity,
+				shipRegion: shipment.shipRegion,
+				shipCountry: shipment.shipCountry,
+				at: new Date(),
+			});
+
 			const holdOrder = await this.prisma.placeEtMarqueOrder.create({
 				data: {
-					orderRef: `hold:${checkout.id}:${shipment.id}`,
+					orderRef,
 					buyerId,
 					vendorId: shipment.vendorId,
 					checkoutId: checkout.id,
@@ -271,6 +295,27 @@ export class CheckoutService implements OnModuleInit, OnModuleDestroy {
 					},
 				});
 			}
+		}
+
+		if(unpaidDevBypass && !this.stripe.enabled) {
+			await this.prisma.checkout.update({
+				where: { id: checkout.id },
+				data: {
+					status: CheckoutStatus.AWAITING_PAYMENT,
+					merchandiseCents,
+					shippingCents,
+					totalCents,
+				},
+			});
+			await this.finalizePaidCheckout(checkout.id);
+			return {
+				checkoutId: checkout.id,
+				clientSecret: null,
+				publishableKey: null,
+				totalCents,
+				currency: checkout.currency,
+				expiresAt: checkout.expiresAt,
+			};
 		}
 
 		const paymentIntent = await this.stripe.createPaymentIntent({
@@ -532,12 +577,7 @@ export class CheckoutService implements OnModuleInit, OnModuleDestroy {
 		for(const order of orders) {
 			await this.prisma.placeEtMarqueOrder.update({
 				where: { id: order.id },
-				data: {
-					status: PlaceEtMarqueOrderStatus.PAID,
-					orderRef: order.orderRef.startsWith('hold:')
-						? `ord_${randomUUID().slice(0, 12)}`
-						: order.orderRef,
-				},
+				data: { status: PlaceEtMarqueOrderStatus.PAID },
 			});
 
 			await this.payouts.createPayoutForPaidOrder(order.id);
@@ -583,6 +623,29 @@ export class CheckoutService implements OnModuleInit, OnModuleDestroy {
 		for(const order of orders) {
 			await this.inventory.releaseClaimsForOrder(order.id);
 		}
+	}
+
+	private async allocateVendorOrderRef(input: {
+		shipName: string | null;
+		buyerEmail: string;
+		itemCount: number;
+		shipCity: string | null;
+		shipRegion: string | null;
+		shipCountry: string | null;
+		at: Date;
+	}): Promise<string> {
+		const base = buildVendorOrderLabel(input);
+		for(let attempt = 1; attempt <= 40; attempt++) {
+			const candidate = withOrderLabelSuffix(base, attempt);
+			const existing = await this.prisma.placeEtMarqueOrder.findUnique({
+				where: { orderRef: candidate },
+				select: { id: true },
+			});
+			if(!existing) {
+				return candidate;
+			}
+		}
+		return `${base} · ${randomUUID().slice(0, 6)}`;
 	}
 
 	private async partitionCart(buyerId: string) {

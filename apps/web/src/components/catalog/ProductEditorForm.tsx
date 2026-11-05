@@ -5,10 +5,10 @@
  *
  * | Intent  | Surface  | Route                                      |
  * |---------|-----------|--------------------------------------------|
- * | create  | standard  | /place-et-marque/products/new              |
- * | create  | advanced  | /place-et-marque/products/configure        |
- * | edit    | standard  | /place-et-marque/products/[id]/edit        |
- * | edit    | advanced  | /place-et-marque/products/[id]/configure   |
+ * | create  | standard  | /place-et-marque/products/new?vendorId=<slug> |
+ * | create  | advanced  | /place-et-marque/products/configure?vendorId=<slug> |
+ * | edit    | standard  | /place-et-marque/<vendor>/<product>/edit   |
+ * | edit    | advanced  | /place-et-marque/<vendor>/<product>/configure |
  *
  * Conditionals that matter while reading this file:
  * - `productEditorIntent` — create vs edit (edit needs existingProductId / loaded product)
@@ -27,11 +27,13 @@ import { useRouter } from 'next/navigation';
 import {
 	useEffect,
 	useMemo,
+	useRef,
 	useState,
 	type FormEvent,
 } from 'react';
 import {
 	createCatalogProduct,
+	getCatalogProduct,
 	getCatalogProductById,
 	listCatalogAttributes,
 	listCatalogCategories,
@@ -60,7 +62,22 @@ import {
 } from '../../lib/catalog-product-form';
 import { sortCategoryTree } from '../../lib/category-tree';
 import { useSession } from '../../lib/useSession';
+import {
+	isUuidLike,
+	matchVendorByRef,
+	productCreateHref,
+	productEditHref,
+	productPathNeedsCanonicalRedirect,
+	productViewHref,
+	vendorUrlRef,
+} from '../../lib/vendor-ref';
+import { PencilIcon } from '../icons/PencilIcon';
+import { PlusIcon } from '../icons/PlusIcon';
 import { CatalogImageField } from './CatalogImageField';
+import {
+	PageBottomPanePortal,
+	SellerTopContextPortal,
+} from './CatalogSearchContext';
 import { CatalogWorkspaceSwitcher } from './CatalogWorkspaceSwitcher';
 import { CompoundQtyField } from './CompoundQtyField';
 import { DisclosurePrompt } from './DisclosurePrompt';
@@ -76,8 +93,11 @@ import { UrlSlugField } from './UrlSlugField';
 type ProductEditorFormProps = {
 	productEditorSurface: ProductEditorSurface;
 	productEditorIntent: ProductEditorIntent;
-	/** Required when productEditorIntent === 'edit'. */
+	/** Legacy UUID edit load; prefer existingVendorSlug + existingProductSlug. */
 	existingProductId?: string;
+	existingVendorSlug?: string;
+	existingProductSlug?: string;
+	/** Create: vendor slug or UUID from ?vendorId=. */
 	initialVendorId?: string;
 	initialCategoryId?: string;
 };
@@ -88,6 +108,8 @@ export function ProductEditorForm({
 	productEditorSurface,
 	productEditorIntent,
 	existingProductId,
+	existingVendorSlug = '',
+	existingProductSlug = '',
 	initialVendorId = '',
 	initialCategoryId = '',
 }: ProductEditorFormProps) {
@@ -95,6 +117,8 @@ export function ProductEditorForm({
 	const { user } = useSession();
 	const isCreating = productEditorIntent === 'create';
 	const isAdvancedSurface = productEditorSurface === 'advanced';
+	/** One-shot create default: only membership / ?vendorId, never re-fill after clear. */
+	const vendorBootstrapDone = useRef(false);
 
 	const [vendors, setVendors] = useState<VendorSummary[]>([]);
 	const [categories, setCategories] = useState<Array<{
@@ -107,7 +131,19 @@ export function ProductEditorForm({
 	const [attributeCatalog, setAttributeCatalog] = useState<CatalogAttributeDefinition[]>([]);
 	const categoryTree = sortCategoryTree(categories);
 
-	const [vendorId, setVendorId] = useState(initialVendorId);
+	const [resolvedProductId, setResolvedProductId] = useState(
+		existingProductId ?? '',
+	);
+	const [resolvedVendorSlug, setResolvedVendorSlug] = useState(
+		existingVendorSlug,
+	);
+	const [resolvedProductSlug, setResolvedProductSlug] = useState(
+		existingProductSlug,
+	);
+	/** Internal UUID only — URL query may carry a slug until bootstrap resolves. */
+	const [vendorId, setVendorId] = useState(
+		() => (isUuidLike(initialVendorId) ? initialVendorId.trim() : ''),
+	);
 	const [categoryId, setCategoryId] = useState(initialCategoryId);
 	const [title, setTitle] = useState('');
 	const [slug, setSlug] = useState('');
@@ -222,10 +258,31 @@ export function ProductEditorForm({
 			.then(async ([vendorRows, categoryRows]) => {
 				setVendors(vendorRows);
 				setCategories(categoryRows);
-				const selected = vendorId || vendorRows[0]?.id || '';
-				if(!vendorId && selected) {
-					setVendorId(selected);
+
+				let selected = vendorId;
+				if(isCreating && !vendorBootstrapDone.current) {
+					vendorBootstrapDone.current = true;
+					const fromQuery = matchVendorByRef(vendorRows, initialVendorId);
+					if(fromQuery) {
+						selected = fromQuery.id;
+						setVendorId(fromQuery.id);
+					}
+					else if(!selected && vendorRows.length === 1) {
+						selected = vendorRows[0]?.id || '';
+						if(selected) {
+							setVendorId(selected);
+						}
+					}
+					else if(
+						selected
+						&& !vendorRows.some((row) => row.id === selected)
+					) {
+						selected = '';
+						setVendorId('');
+					}
+					// Multi-vendor create with no query: leave empty until pick.
 				}
+
 				const uomRows = await listUoms(selected || undefined).catch(() => []);
 				setUoms(uomRows);
 				const attrs = await listCatalogAttributes(selected || undefined).catch(() => []);
@@ -240,17 +297,55 @@ export function ProductEditorForm({
 				}
 			})
 			.catch(() => undefined);
-	}, [user, vendorId, isCreating]);
+	}, [user, vendorId, isCreating, initialVendorId]);
 
 	useEffect(() => {
-		if(productEditorIntent !== 'edit' || !existingProductId || !user) {
+		if(productEditorIntent !== 'edit' || !user) {
+			return;
+		}
+		const vendorRef = existingVendorSlug.trim();
+		const productRef = existingProductSlug.trim();
+		const hasSlugPair = Boolean(vendorRef && productRef);
+		const hasId = Boolean(existingProductId?.trim());
+		if(!hasSlugPair && !hasId) {
 			return;
 		}
 
 		setLoadingExisting(true);
-		getCatalogProductById(existingProductId)
+		const load = hasId
+			? getCatalogProductById(existingProductId!)
+			: isUuidLike(productRef)
+				? getCatalogProductById(productRef)
+				: getCatalogProduct(vendorRef, productRef);
+		load
 			.then(async (product) => {
+				setResolvedProductId(product.id);
+				setResolvedVendorSlug(product.vendor.slug);
+				setResolvedProductSlug(product.slug);
 				setVendorId(product.vendor.id ?? '');
+				if(
+					hasSlugPair
+					&& productPathNeedsCanonicalRedirect(
+						{
+							vendorSlug: vendorRef,
+							productSlug: productRef,
+						},
+						{
+							vendorSlug: product.vendor.slug,
+							productSlug: product.slug,
+						},
+					)
+				) {
+					router.replace(
+						productEditHref(
+							{
+								vendorSlug: product.vendor.slug,
+								productSlug: product.slug,
+							},
+							productEditorSurface,
+						),
+					);
+				}
 				const categoryRows = await listCatalogCategories().catch(() => []);
 				setCategories(categoryRows);
 				const matchedCategoryId = categoryRows.find(
@@ -268,7 +363,7 @@ export function ProductEditorForm({
 				);
 				setBreakFeeDollars(centsToDollars(product.breakFeeCents ?? 0));
 				setSelectedAttributeValueIds(product.attributes.map((row) => row.id));
-				setMeasures({
+				const loadedMeasures = {
 					...emptyProductMeasures(),
 					lengthNumeric: product.lengthNumeric ?? '',
 					widthNumeric: product.widthNumeric ?? '',
@@ -291,7 +386,8 @@ export function ProductEditorForm({
 					mpn: product.mpn ?? '',
 					countryOfOrigin: product.countryOfOrigin ?? '',
 					condition: product.condition ?? 'NA',
-				});
+				};
+				setMeasures(loadedMeasures);
 				const nextScalars: Record<string, string> = {};
 				for(const row of product.scalarValues ?? []) {
 					nextScalars[row.attributeId] =
@@ -355,12 +451,50 @@ export function ProductEditorForm({
 				}
 				setContainments(links);
 
-				if(drafts.some((row) => row.role === 'PACK') || links.length > 0) {
-					setAdvancedFeatureToggles((prev) => ({
-						...prev,
-						packsAndPieces: true,
-					}));
-				}
+				const hasMeasureValues = [
+					loadedMeasures.lengthNumeric,
+					loadedMeasures.widthNumeric,
+					loadedMeasures.heightNumeric,
+					loadedMeasures.weightNumeric,
+					loadedMeasures.packageLengthNumeric,
+					loadedMeasures.packageWidthNumeric,
+					loadedMeasures.packageHeightNumeric,
+					loadedMeasures.packageWeightNumeric,
+					loadedMeasures.voltageNumeric,
+					loadedMeasures.wattageNumeric,
+					loadedMeasures.amperageNumeric,
+					loadedMeasures.gtin,
+					loadedMeasures.mpn,
+				].some((value) => Boolean(value && String(value).trim()))
+					|| (loadedMeasures.condition != null && loadedMeasures.condition !== 'NA');
+
+				const loadedBreakFeeMode =
+					(product.breakFeeMode as BreakFeeMode | undefined) ?? 'OFF';
+				const hasBreakFees =
+					loadedBreakFeeMode !== 'OFF'
+					|| (product.breakFeeCents ?? 0) > 0
+					|| links.some((link) => {
+						const cents = Number(link.breakFeeCents ?? 0);
+						return Number.isFinite(cents) && cents > 0;
+					});
+				const hasPackBreakRules = drafts.some(
+					(row) =>
+						row.role === 'PACK'
+						&& (
+							row.breakable
+							|| row.minUnbrokenQty !== '0'
+							|| row.breakPoolAboveQty !== '0'
+							|| row.inheritQtyToChildren
+						),
+				);
+
+				setAdvancedFeatureToggles((prev) => ({
+					...prev,
+					packsAndPieces: drafts.some((row) => row.role === 'PACK') || links.length > 0,
+					measurements: hasMeasureValues,
+					breakFees: hasBreakFees,
+					packBreakRules: hasPackBreakRules,
+				}));
 			})
 			.catch((loadError) => {
 				setError(
@@ -370,12 +504,60 @@ export function ProductEditorForm({
 				);
 			})
 			.finally(() => setLoadingExisting(false));
-	}, [productEditorIntent, existingProductId, user]);
+	}, [
+		productEditorIntent,
+		productEditorSurface,
+		existingProductId,
+		existingVendorSlug,
+		existingProductSlug,
+		user,
+		initialCategoryId,
+		router,
+	]);
 
 	const selectedVendor = useMemo(
 		() => vendors.find((row) => row.id === vendorId) ?? null,
 		[vendors, vendorId],
 	);
+
+	/**
+	 * Keep create URLs on the vendor link name (not UUID) in ?vendorId=.
+	 * Resolves against the signed-in user's vendors (selected membership).
+	 */
+	useEffect(() => {
+		if(!isCreating || vendors.length === 0) {
+			return;
+		}
+		const nextRef = selectedVendor
+			? vendorUrlRef(selectedVendor)
+			: '';
+		const currentParams = new URLSearchParams(
+			typeof window === 'undefined'
+				? ''
+				: window.location.search,
+		);
+		const current = currentParams.get('vendorId') ?? '';
+		if(current === nextRef) {
+			return;
+		}
+		/** Avoid wiping a typed slug before membership rows finish matching. */
+		if(!nextRef && current && !isUuidLike(current)) {
+			return;
+		}
+		const nextPath = productCreateHref({
+			surface: productEditorSurface,
+			vendorRef: nextRef || null,
+			categoryId: currentParams.get('categoryId') || initialCategoryId || null,
+		});
+		router.replace(nextPath, { scroll: false });
+	}, [
+		isCreating,
+		vendors.length,
+		selectedVendor,
+		productEditorSurface,
+		initialCategoryId,
+		router,
+	]);
 
 	const focusedRow = packOrPieceRows.find((row) => row.clientKey === focusedClientKey)
 		?? packOrPieceRows[0]
@@ -529,37 +711,43 @@ export function ProductEditorForm({
 			if(isCreating) {
 				const product = await createCatalogProduct(buildCreatePayload());
 				router.push(
-					`/place-et-marque/${product.vendor.slug}/${product.slug}`,
+					productViewHref({
+						vendorSlug: product.vendor.slug,
+						productSlug: product.slug,
+					}),
 				);
 				return;
 			}
 
-			if(!existingProductId) {
+			if(!resolvedProductId) {
 				throw new Error('Missing product id for edit.');
 			}
 
 			const payload = buildCreatePayload();
-			const offeringPatches = packOrPieceRows
-				.filter((row) => row.id)
-				.map((row) => ({
-					id: row.id!,
-					sku: row.sku.trim() || undefined,
-					priceCents: dollarsToCents(row.price),
-					qtyOnHand: row.qtyOnHand || '0',
-					tracksOwnQty: !(
-						row.role === 'PIECE'
-						&& containments.some((link) => link.childClientKey === row.clientKey)
-					),
-					minUnbrokenQty:
-						row.role === 'PACK' && row.breakable
-							? row.minUnbrokenQty || '0'
-							: '-1',
-					breakPoolAboveQty: row.breakPoolAboveQty || '0',
-					inheritQtyToChildren: Boolean(row.role === 'PACK' && row.breakable),
-				}));
+			const offeringUpserts = packOrPieceRows.map((row) => ({
+				...(row.id ? { id: row.id } : {}),
+				clientKey: row.clientKey,
+				offeringKey: row.clientKey,
+				sku: row.sku.trim() || `${payload.slug.trim()}-${row.role.toLowerCase()}`,
+				uomId: row.uomId,
+				role: row.role,
+				priceCents: dollarsToCents(row.price),
+				qtyOnHand: row.qtyOnHand || '0',
+				tracksOwnQty: !(
+					row.role === 'PIECE'
+					&& containments.some((link) => link.childClientKey === row.clientKey)
+				),
+				minUnbrokenQty:
+					row.role === 'PACK' && row.breakable
+						? row.minUnbrokenQty || '0'
+						: '-1',
+				breakPoolAboveQty: row.breakPoolAboveQty || '0',
+				inheritQtyToChildren: Boolean(row.role === 'PACK' && row.breakable),
+			}));
 
-			const product = await updateCatalogProduct(existingProductId, {
+			const product = await updateCatalogProduct(resolvedProductId, {
 				title: payload.title,
+				slug: payload.slug,
 				description: payload.description,
 				imageUrls: payload.imageUrls,
 				tags: payload.tags,
@@ -568,10 +756,18 @@ export function ProductEditorForm({
 				breakFeeMode: payload.breakFeeMode,
 				breakFeeCents: payload.breakFeeCents,
 				attributeValueIds: payload.attributeValueIds,
-				offerings: offeringPatches,
+				scalarValues: payload.scalarValues,
+				...measures,
+				offerings: offeringUpserts,
+				containments: payload.containments,
 			});
+			setResolvedVendorSlug(product.vendor.slug);
+			setResolvedProductSlug(product.slug);
 			router.push(
-				`/place-et-marque/${product.vendor.slug}/${product.slug}`,
+				productViewHref({
+					vendorSlug: product.vendor.slug,
+					productSlug: product.slug,
+				}),
 			);
 		}
 		catch(submitError) {
@@ -598,50 +794,94 @@ export function ProductEditorForm({
 		? (isAdvancedSurface ? 'Advanced new product' : 'Create product')
 		: (isAdvancedSurface ? 'Advanced edit product' : 'Edit product');
 
+	const formIsDirty =
+		title !== ''
+		|| description !== ''
+		|| slugTouched
+		|| imageUrls.length > 0
+		|| tags.length > 0
+		|| selectedAttributeValueIds.length > 0
+		|| packOrPieceRows.some((row) => row.price !== '' || row.sku !== '');
+
+	const saveButtonClassName = `
+		inline-flex
+		h-10
+		w-10
+		shrink-0
+		items-center
+		justify-center
+		gap-1.5
+		rounded-full
+		bg-sky
+		text-sm
+		font-semibold
+		text-white
+		hover:bg-sky/90
+		disabled:opacity-60
+		sm:h-auto
+		sm:w-auto
+		sm:px-5
+		sm:py-2.5
+	`;
+	const saveButtonLabel = submitting
+		? 'Saving…'
+		: isCreating
+			? 'Create product'
+			: 'Save changes';
+	const SaveGlyph = isCreating
+		? PlusIcon
+		: PencilIcon;
+
 	return (
-		<div className="mx-auto max-w-3xl space-y-6 px-4 py-10">
-			<CatalogWorkspaceSwitcher
-				active={productEditorSurface}
-				productId={existingProductId}
-				intent={productEditorIntent}
-			/>
-
-			<header className="space-y-2">
-				<h1 className="text-3xl font-semibold text-ink">
-					{pageTitle}
-				</h1>
-				<p className="text-sm text-slate-600">
-					{isCreating
-						? isAdvancedSurface
-							? 'Full product tools open by default—packs, chains, break fees, attributes, and variants.'
-							: 'Start with a simple listing. More options appear as questions when they matter.'
-						: 'Update this listing. Extra structure expands in place when you need it.'
-					}
-				</p>
-			</header>
-
-			<form
-				className="space-y-8"
-				onSubmit={onSubmit}
-			>
-				<section className="space-y-4">
-					{vendors.length > 1 ? (
-						<label className="block text-sm">
-							<span className="font-semibold">
+		<div
+			className="
+				mx-auto
+				max-w-3xl
+				space-y-6
+				px-4
+				py-10
+				pb-[calc(6rem+var(--seller-bottom-pane-stack,0px))]
+			"
+		>
+			<SellerTopContextPortal>
+				{vendors.length > 1
+					? (
+						<label
+							className="
+								flex
+								min-w-[12rem]
+								max-w-full
+								flex-1
+								flex-col
+								gap-1
+								text-sm
+								sm:max-w-sm
+								sm:flex-none
+							"
+						>
+							<span
+								className="
+									font-medium
+									text-ink
+								"
+							>
 								Vendor
 							</span>
 							<select
+								aria-required={isCreating}
 								className="
-									mt-1
 									w-full
-									rounded-lg
+									rounded-full
 									border
 									border-slate-300
+									bg-white
 									px-3
-									py-2
+									py-1.5
+									text-sm
+									disabled:bg-slate-50
+									disabled:text-slate-600
 								"
 								value={vendorId}
-								required
 								disabled={!isCreating}
 								onChange={(event) => setVendorId(event.target.value)}
 							>
@@ -658,8 +898,82 @@ export function ProductEditorForm({
 								))}
 							</select>
 						</label>
-					) : null}
+					)
+					: null
+				}
+				{vendors.length === 0
+					? (
+						<p
+							className="
+								text-xs
+								text-slate-500
+							"
+						>
+							No vendor memberships yet.
+						</p>
+					)
+					: null
+				}
+			</SellerTopContextPortal>
 
+			<header>
+				<h1 className="text-3xl font-semibold text-ink">
+					{pageTitle}
+				</h1>
+			</header>
+
+			<form
+				id="product-editor-form"
+				className="space-y-6"
+				onSubmit={onSubmit}
+			>
+				<p className="flex flex-wrap gap-3 text-sm">
+					<a
+						className="
+							rounded
+							font-semibold
+							text-sky
+							underline
+							underline-offset-2
+							focus:outline
+							focus:outline-2
+							focus:outline-offset-2
+							focus:outline-sky
+						"
+						href="#product-price"
+					>
+						Skip to price
+					</a>
+					<a
+						className="
+							rounded
+							font-semibold
+							text-sky
+							underline
+							underline-offset-2
+							focus:outline
+							focus:outline-2
+							focus:outline-offset-2
+							focus:outline-sky
+						"
+						href="#product-save"
+					>
+						Skip to save
+					</a>
+				</p>
+
+				<div
+					className="
+						space-y-8
+						rounded-2xl
+						border
+						border-slate-200
+						bg-white
+						p-4
+						sm:p-6
+					"
+				>
+				<section className="space-y-4">
 					<label className="block text-sm">
 						<span className="font-semibold">
 							Category
@@ -748,32 +1062,14 @@ export function ProductEditorForm({
 							onChange={(event) => setDescription(event.target.value)}
 						/>
 					</label>
-
-					<CatalogImageField
-						kind="product"
-						value={imageUrls}
-						onChange={setImageUrls}
-						vendorId={vendorId || undefined}
-						productId={existingProductId}
-						disabled={!vendorId}
-						disabledReason="Choose a vendor before uploading photos."
-					/>
-
-					<ProductTagField
-						vendorId={vendorId}
-						value={tags}
-						onChange={setTags}
-					/>
 				</section>
 
 				<section
 					className="
 						space-y-4
-						rounded-2xl
-						border
-						border-slate-200
-						bg-white
-						p-4
+						border-t
+						border-slate-100
+						pt-8
 					"
 				>
 					{/* Default assumption: a single packless piece — no "Packs and pieces" title. */}
@@ -788,20 +1084,25 @@ export function ProductEditorForm({
 										gap-2
 									"
 								>
-									<h2
-										className="
-											flex
-											items-center
-											gap-2
-											text-lg
-											font-semibold
-											text-ink
-										"
-									>
-										Packs and pieces
-										<TermHint termId="pack" />
-										<TermHint termId="piece" />
-									</h2>
+									<div className="space-y-1">
+										<h2
+											className="
+												flex
+												items-center
+												gap-2
+												text-lg
+												font-semibold
+												text-ink
+											"
+										>
+											Packs and pieces
+											<TermHint termId="pack" />
+											<TermHint termId="piece" />
+										</h2>
+										<p className="text-xs text-slate-500">
+											Each pack or piece row is a separately priced sellable option.
+										</p>
+									</div>
 									<div className="flex flex-wrap items-center gap-2">
 										{!isAdvancedSurface
 											? (
@@ -869,7 +1170,7 @@ export function ProductEditorForm({
 												text-xs
 												font-semibold
 												${focusedClientKey === row.clientKey
-											? 'bg-ink text-white'
+											? 'bg-asgreen/15 text-asgreen'
 											: 'border border-slate-300 text-slate-700'
 										}
 											`}
@@ -887,6 +1188,38 @@ export function ProductEditorForm({
 					{focusedRow
 						? (
 								<div className="grid gap-3 sm:grid-cols-2">
+									<label className="block text-sm">
+										<span className="font-semibold">
+											{pricePerLabel(focusedUom)}
+										</span>
+										<input
+											id="product-price"
+											className="
+												mt-1
+												w-full
+												rounded-lg
+												border
+												border-slate-300
+												px-3
+												py-2
+											"
+											value={focusedRow.price}
+											required
+											onChange={(event) =>
+												updateFocusedRow({ price: event.target.value })
+											}
+										/>
+									</label>
+									<div>
+										<CompoundQtyField
+											uomCode={focusedUom?.code}
+											label="Qty on hand"
+											value={focusedRow.qtyOnHand}
+											onChange={(value) =>
+												updateFocusedRow({ qtyOnHand: value })
+											}
+										/>
+									</div>
 									<label className="block text-sm sm:col-span-2">
 										<span className="font-semibold">
 											SKU
@@ -907,7 +1240,7 @@ export function ProductEditorForm({
 											}
 										/>
 									</label>
-									<label className="block text-sm">
+									<label className="block text-sm sm:col-span-2">
 										<span className="font-semibold">
 											UOM
 										</span>
@@ -942,37 +1275,6 @@ export function ProductEditorForm({
 											))}
 										</select>
 									</label>
-									<label className="block text-sm">
-										<span className="font-semibold">
-											{pricePerLabel(focusedUom)}
-										</span>
-										<input
-											className="
-												mt-1
-												w-full
-												rounded-lg
-												border
-												border-slate-300
-												px-3
-												py-2
-											"
-											value={focusedRow.price}
-											required
-											onChange={(event) =>
-												updateFocusedRow({ price: event.target.value })
-											}
-										/>
-									</label>
-									<div className="sm:col-span-2">
-										<CompoundQtyField
-											uomCode={focusedUom?.code}
-											label="Qty on hand"
-											value={focusedRow.qtyOnHand}
-											onChange={(value) =>
-												updateFocusedRow({ qtyOnHand: value })
-											}
-										/>
-									</div>
 
 									{focusedRow.role === 'PACK'
 										? (
@@ -1018,8 +1320,16 @@ export function ProductEditorForm({
 																		? (
 																				<div className="grid gap-3 sm:grid-cols-2">
 																					<label className="block text-sm">
-																						<span className="font-semibold">
-																							Min unbroken qty
+																						<span
+																							className="
+																								inline-flex
+																								items-center
+																								gap-2
+																								font-semibold
+																							"
+																						>
+																							Keep at least this many whole
+																							<TermHint termId="broken-pack" />
 																						</span>
 																						<input
 																							className="
@@ -1040,8 +1350,16 @@ export function ProductEditorForm({
 																						/>
 																					</label>
 																					<label className="block text-sm">
-																						<span className="font-semibold">
-																							Break pool above qty
+																						<span
+																							className="
+																								inline-flex
+																								items-center
+																								gap-2
+																								font-semibold
+																							"
+																						>
+																							Open packs above this stock
+																							<TermHint termId="broken-pack" />
 																						</span>
 																						<input
 																							className="
@@ -1351,19 +1669,42 @@ export function ProductEditorForm({
 
 				<section
 					className="
+						space-y-4
+						border-t
+						border-slate-100
+						pt-8
+					"
+				>
+					<CatalogImageField
+						kind="product"
+						value={imageUrls}
+						onChange={setImageUrls}
+						vendorId={vendorId || undefined}
+						productId={existingProductId}
+						disabled={!vendorId}
+						disabledReason="Choose a vendor before uploading photos."
+					/>
+
+					<ProductTagField
+						vendorId={vendorId}
+						value={tags}
+						onChange={setTags}
+					/>
+				</section>
+
+				<section
+					className="
 						space-y-3
-						rounded-2xl
-						border
-						border-slate-200
-						bg-white
-						p-4
+						border-t
+						border-slate-100
+						pt-8
 					"
 				>
 					<h2 className="text-lg font-semibold text-ink">
 						Attributes
 					</h2>
 					<p className="text-xs text-slate-500">
-						Facts about this product (color, material, and so on)—not separately priced variants.
+						Facts about this product such as color and material. Separately priced options use pack and piece rows above.
 						Search to add; only selected values stay on the product.
 					</p>
 					<ProductAttributeField
@@ -1432,35 +1773,14 @@ export function ProductEditorForm({
 					}
 				</section>
 
-				<section
-					className="
-						space-y-3
-						rounded-2xl
-						border
-						border-slate-200
-						bg-white
-						p-4
-					"
-				>
-					<h2 className="text-lg font-semibold text-ink">
-						Measurements
-					</h2>
-					<ProductMeasuresField
-						value={measures}
-						onChange={setMeasures}
-					/>
-				</section>
-
-				{advancedFeatureEnabled('variants')
+				{advancedFeatureEnabled('measurements')
 					? (
 							<section
 								className="
 									space-y-3
-									rounded-2xl
-									border
-									border-slate-200
-									bg-white
-									p-4
+									border-t
+									border-slate-100
+									pt-8
 								"
 							>
 								<div
@@ -1473,7 +1793,7 @@ export function ProductEditorForm({
 									"
 								>
 									<h2 className="text-lg font-semibold text-ink">
-										Variants
+										Measurements
 									</h2>
 									{!isAdvancedSurface
 										? (
@@ -1481,22 +1801,23 @@ export function ProductEditorForm({
 													question=""
 													onExpand={() => undefined}
 													expanded
-													onCollapse={() => setAdvancedFeature('variants', false)}
-													collapseLabel="No separately priced variants"
+													onCollapse={() => setAdvancedFeature('measurements', false)}
+													collapseLabel="Hide measurements"
 												/>
 											)
 										: null
 									}
 								</div>
-								<p className="text-xs text-slate-500">
-									Sellable options that can carry their own price (and later, stock). Tools for that land here next.
-								</p>
+								<ProductMeasuresField
+									value={measures}
+									onChange={setMeasures}
+								/>
 							</section>
 						)
 					: (
 							<DisclosurePrompt
-								question={ADVANCED_FEATURE_PROMPTS.variants}
-								onExpand={() => setAdvancedFeature('variants', true)}
+								question={ADVANCED_FEATURE_PROMPTS.measurements}
+								onExpand={() => setAdvancedFeature('measurements', true)}
 							/>
 						)
 				}
@@ -1509,30 +1830,78 @@ export function ProductEditorForm({
 						)
 					: null
 				}
+				</div>
 
-				<button
-					type="submit"
-					disabled={submitting}
-					className="
-						rounded-full
-						bg-ink
-						px-5
-						py-2.5
-						text-sm
-						font-semibold
-						text-white
-						hover:bg-sky
-						disabled:opacity-60
-					"
-				>
-					{submitting
-						? 'Saving…'
-						: isCreating
-							? 'Create product'
-							: 'Save changes'
+				<PageBottomPanePortal>
+					{selectedVendor
+						? (
+							<span
+								className="
+									hidden
+									max-w-[10rem]
+									truncate
+									text-xs
+									text-slate-600
+									sm:inline
+								"
+							>
+								{selectedVendor.name}
+							</span>
+						)
+						: null
 					}
-				</button>
+					<button
+						id="product-save"
+						type="submit"
+						form="product-editor-form"
+						disabled={submitting}
+						aria-label={saveButtonLabel}
+						className={saveButtonClassName}
+					>
+						<SaveGlyph
+							className="
+								h-4
+								w-4
+								shrink-0
+							"
+						/>
+						<span
+							className="
+								hidden
+								whitespace-nowrap
+								sm:inline
+							"
+						>
+							{saveButtonLabel}
+						</span>
+					</button>
+				</PageBottomPanePortal>
 			</form>
+
+			<CatalogWorkspaceSwitcher
+				active={productEditorSurface}
+				intent={productEditorIntent}
+				vendorRef={
+					isCreating
+						? (selectedVendor
+							? vendorUrlRef(selectedVendor)
+							: initialVendorId || null)
+						: null
+				}
+				vendorSlug={
+					isCreating
+						? null
+						: (resolvedVendorSlug || selectedVendor?.slug || null)
+				}
+				productSlug={
+					isCreating
+						? null
+						: (resolvedProductSlug || slug || null)
+				}
+				categoryId={initialCategoryId || null}
+				quiet={!isAdvancedSurface}
+				confirmLeave={formIsDirty}
+			/>
 		</div>
 	);
 }

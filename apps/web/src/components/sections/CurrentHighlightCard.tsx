@@ -50,8 +50,7 @@ export function CurrentHighlightCard({
 					inset-0
 					rounded-2xl
 					bg-gradient-to-br
-					from-ink
-					via-sky
+					from-sky
 					to-asgreen
 					shadow-xl
 					transition-opacity

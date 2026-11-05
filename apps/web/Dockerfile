@@ -1,13 +1,23 @@
-FROM node:20-alpine
+FROM node:20-bookworm-slim
 WORKDIR /app
+# Avoid node:20-alpine: musl SIGSEGV during monorepo npm ci (argon2 / git-dep prepare).
 # python3/make/g++: monorepo npm ci also builds api native deps (argon2).
 # git: temporary github: dep for prisma-seed-migration-sync until npm publish.
-RUN apk add --no-cache bash python3 make g++ git
+RUN apt-get update \
+	&& apt-get install -y --no-install-recommends \
+		bash \
+		ca-certificates \
+		git \
+		g++ \
+		make \
+		python3 \
+	&& rm -rf /var/lib/apt/lists/*
 COPY ops/docker/ensure-npm.sh /usr/local/bin/ensure-npm.sh
 RUN chmod +x /usr/local/bin/ensure-npm.sh && ensure-npm.sh
 COPY package*.json ./
 COPY apps/web/package.json ./apps/web/
 COPY apps/api/package.json ./apps/api/
+COPY apps/crm/package.json ./apps/crm/
 RUN npm ci
 COPY . .
 # NEXT_PUBLIC_* is inlined at build time. Pass via compose build.args / --build-arg.

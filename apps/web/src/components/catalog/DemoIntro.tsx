@@ -6,7 +6,7 @@ export function DemoIntro() {
 			className="
 				overflow-hidden
 				rounded-3xl
-				bg-ink
+				bg-sky
 				px-6
 				py-8
 				text-white
@@ -36,7 +36,7 @@ export function DemoIntro() {
 				"
 			>
 				Live inventory from multiple vendors, pack and piece units, and Stripe
-				checkout. This catalog is a working demo — sign in to buy.
+				checkout. This catalog is a working demo. Sign in to buy.
 			</p>
 			<div
 				className="

@@ -5,7 +5,7 @@ export function SiteFooter() {
 				relative
 				-mt-6
 				rounded-none
-				bg-ink
+				bg-sky
 				px-gutter
 				py-6
 				text-center
@@ -16,11 +16,11 @@ export function SiteFooter() {
 				before:inset-x-0
 				before:-top-px
 				before:h-0.5
-				before:bg-ink
+				before:bg-sky
 				before:content-['']
 				sm:mt-0
 				sm:rounded-2xl
-				sm:bg-slate-900
+				sm:bg-sky
 				sm:before:hidden
 			"
 		>

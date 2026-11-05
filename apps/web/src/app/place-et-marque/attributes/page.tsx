@@ -236,7 +236,7 @@ function AttributesPageContent() {
 					: null
 				}
 				<button
-					className="rounded-full bg-ink px-4 py-2 text-sm font-semibold text-white"
+					className="rounded-full bg-sky px-4 py-2 text-sm font-semibold text-white"
 					disabled={submitting}
 					type="submit"
 				>
@@ -346,7 +346,7 @@ function AttributesPageContent() {
 					</div>
 				</div>
 				<button
-					className="rounded-full bg-ink px-4 py-2 text-sm font-semibold text-white"
+					className="rounded-full bg-sky px-4 py-2 text-sm font-semibold text-white"
 					disabled={submitting}
 					type="submit"
 				>

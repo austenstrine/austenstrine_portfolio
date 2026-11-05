@@ -45,6 +45,10 @@ export function safeNextPath(raw: string | null | undefined, fallback = '/'): st
 	return raw;
 }
 
+/** Seller edit/configure under /<vendorSlug>/<productSlug>/(edit|configure). */
+const PRODUCT_SLUG_EDITOR_PATH =
+	/^\/place-et-marque\/[^/]+\/[^/]+\/(edit|configure)$/;
+
 export function pathRequiresVendor(path: string): boolean {
 	const pathname = path.split('?')[0] ?? path;
 	if(pathname === '/place-et-marque/vendors') {
@@ -54,9 +58,38 @@ export function pathRequiresVendor(path: string): boolean {
 	if(pathname.startsWith('/place-et-marque/invites/')) {
 		return false;
 	}
+	if(PRODUCT_SLUG_EDITOR_PATH.test(pathname)) {
+		return true;
+	}
 	return VENDOR_REQUIRED_PREFIXES.some(
 		(prefix) => pathname === prefix || pathname.startsWith(prefix),
 	);
+}
+
+/** Seller chrome: hide category bar; top = site-wide context; bottom pane = page actions. */
+export function pathUsesSellerChrome(path: string): boolean {
+	const pathname = path.split('?')[0] ?? path;
+	if(
+		pathname === '/place-et-marque/manage'
+		|| pathname === '/place-et-marque/vendors'
+		|| pathname.startsWith('/place-et-marque/vendors/')
+		|| pathname === '/place-et-marque/uoms'
+		|| pathname.startsWith('/place-et-marque/uoms/')
+		|| pathname === '/place-et-marque/attributes'
+		|| pathname.startsWith('/place-et-marque/attributes/')
+		|| pathname === '/place-et-marque/categories'
+		|| pathname.startsWith('/place-et-marque/categories/')
+		|| pathname === '/place-et-marque/orders'
+		|| pathname.startsWith('/place-et-marque/orders/')
+		|| pathname === '/place-et-marque/products/new'
+		|| pathname === '/place-et-marque/products/configure'
+	) {
+		return true;
+	}
+	if(/^\/place-et-marque\/products\/[^/]+\/(edit|configure)$/.test(pathname)) {
+		return true;
+	}
+	return PRODUCT_SLUG_EDITOR_PATH.test(pathname);
 }
 
 export function buildLoginUrl(options: {

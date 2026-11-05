@@ -22,7 +22,7 @@ Preferences, not build errors. Prefer format-on-save over a failing build.
 ### Catalog chrome
 
 - One radius for search controls: `rounded-full` (search field, Sort, chips, facet rows). Do not mix `rounded-md` selected rows with `rounded-full` fields.
-- Selected/highlight uses primary `asgreen` `#257257` (text and/or soft fill). Secondary navy is `sky` `#1b263b`. Never `ink` `#0d1b2a` as a selected fill — ink is body text, not a highlight.
+- Selected/highlight uses primary `asgreen` `#257257` (text and/or soft fill). Site navy `sky` `#1b263b` is the dark UI chrome color (panels, dark CTAs, footers, scrims) — do not use near-black or a darker-than-navy stop and treat navy as the light end. `ink` `#0d1b2a` is body text only; never a selected fill or dark surface.
 
 ## Indentation
 

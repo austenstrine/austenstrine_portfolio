@@ -24,15 +24,8 @@ function UomManagePageContent() {
 	const [factorToReference, setFactorToReference] = useState('1');
 	const [aliases, setAliases] = useState<string[]>([]);
 	const [aliasDraft, setAliasDraft] = useState('');
-	const [asGlobal, setAsGlobal] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 	const [submitting, setSubmitting] = useState(false);
-
-	const isSuperVendor = vendors.some(
-		(vendor) =>
-			vendor.isSuperVendor
-			&& (vendor.myRole === 'OWNER' || vendor.myRole === 'EDITOR'),
-	);
 
 	const refresh = useCallback(async () => {
 		setLoading(true);
@@ -108,7 +101,7 @@ function UomManagePageContent() {
 				dimensionKey: dimensionKey.trim().toLowerCase(),
 				factorToReference: factorToReference.trim(),
 				aliases,
-				vendorId: asGlobal && isSuperVendor ? undefined : vendorId,
+				vendorId,
 			});
 			setCode('');
 			setLabel('');
@@ -116,7 +109,6 @@ function UomManagePageContent() {
 			setFactorToReference('1');
 			setAliases([]);
 			setAliasDraft('');
-			setAsGlobal(false);
 			setUoms(await listUoms(vendorId || undefined));
 		}
 		catch(submitError) {
@@ -158,9 +150,9 @@ function UomManagePageContent() {
 						text-slate-600
 					"
 				>
-					Globals are units shared across all of Place et Marque. Each vendor can also define their own UOMs
-					with aliases (for example ft, foot, and &apos;). Matching names across vendors
-					trigger an automerge review email.
+					Globals are shared across Place et Marque and edited in the admin CRM. Each vendor can also
+					define their own UOMs with aliases (for example ft, foot, and &apos;). Matching names across
+					vendors trigger an automerge review email.
 				</p>
 			</div>
 
@@ -381,27 +373,6 @@ function UomManagePageContent() {
 										/>
 									</div>
 								</div>
-								{isSuperVendor
-									? (
-											<label
-												className="
-													flex
-													items-center
-													gap-2
-													text-sm
-													md:col-span-2
-												"
-											>
-												<input
-													type="checkbox"
-													checked={asGlobal}
-													onChange={(event) => setAsGlobal(event.target.checked)}
-												/>
-												Create as global UOM
-											</label>
-										)
-									: null
-								}
 								{error
 									? (
 											<p
@@ -420,17 +391,17 @@ function UomManagePageContent() {
 									className="
 										self-start
 										rounded-full
-										bg-ink
+										bg-sky
 										px-4
 										py-2.5
 										text-sm
 										font-semibold
 										text-white
-										hover:bg-sky
+										hover:bg-sky/90
 										disabled:opacity-60
 									"
 									type="submit"
-									disabled={submitting || (!asGlobal && !vendorId)}
+									disabled={submitting || !vendorId}
 								>
 									{submitting
 										? 'Creating…'

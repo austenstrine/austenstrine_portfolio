@@ -1,5 +1,6 @@
 import type { CatalogProductSummary } from '../../lib/catalog-api';
 import { formatAvailableQty } from '../../lib/uom-qty';
+import { productViewHref } from '../../lib/vendor-ref';
 import { ProductCardImageCarousel } from './ProductCardImageCarousel';
 
 function formatPrice(cents: number) {
@@ -31,7 +32,10 @@ export function ProductCard({ product }: { product: CatalogProductSummary }) {
 	);
 	const inStock = Number.isFinite(qty) && qty > 0;
 	const low = inStock && qty < 5;
-	const href = `/place-et-marque/${product.vendor.slug}/${product.slug}`;
+	const href = productViewHref({
+		vendorSlug: product.vendor.slug,
+		productSlug: product.slug,
+	});
 
 	return (
 		<article
@@ -55,7 +59,7 @@ export function ProductCard({ product }: { product: CatalogProductSummary }) {
 					relative
 					aspect-square
 					overflow-hidden
-					bg-[#d8d9d4]
+					bg-canvas
 				"
 			>
 				<ProductCardImageCarousel

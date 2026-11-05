@@ -8,7 +8,7 @@ import {
 	UseGuards,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { Throttle } from '@nestjs/throttler';
+import { SkipThrottle, Throttle } from '@nestjs/throttler';
 import type { CookieOptions, Request, Response } from 'express';
 import { AuthService, type IssuedSession, type SessionMeta } from './auth.service';
 import { CurrentUser } from './decorators/current-user.decorator';
@@ -121,7 +121,9 @@ export class AuthController {
 		return this.toPublicUser(session);
 	}
 
-	@Throttle({ default: { limit: 20, ttl: 60_000 } })
+	// Cookie refresh is session continuity, not OTP. Keep a ceiling, but high
+	// enough that parallel seller fetches recovering from 401 do not eject UX.
+	@Throttle({ default: { limit: 60, ttl: 60_000 } })
 	@Post('refresh')
 	async refresh(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
 		const rawRefreshToken = req.cookies?.[REFRESH_COOKIE];
@@ -187,6 +189,9 @@ export class AuthController {
 		return this.authService.setPassword(user.id, dto);
 	}
 
+	// Session probe must not share a rate-limit failure mode with catalog bursts;
+	// RequireAccess treats probe errors as "Sign-in service unavailable".
+	@SkipThrottle()
 	@Get('me')
 	@UseGuards(JwtAuthGuard)
 	async me(@CurrentUser() user: { id: string; email: string }) {

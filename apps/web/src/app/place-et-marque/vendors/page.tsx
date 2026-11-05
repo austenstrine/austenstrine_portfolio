@@ -3,13 +3,16 @@
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useCallback, useEffect, useState, type FormEvent } from 'react';
 import {
+	checkVendorLinkName,
 	createVendor,
 	listMyVendors,
 	type VendorSummary,
 } from '../../../lib/catalog-api';
 import { safeNextPath } from '../../../lib/accessGate';
 import { RequireAccess } from '../../../components/auth/RequireAccess';
+import { DisclosurePrompt } from '../../../components/catalog/DisclosurePrompt';
 import { UrlSlugField } from '../../../components/catalog/UrlSlugField';
+import { PlusIcon } from '../../../components/icons/PlusIcon';
 
 function slugify(value: string): string {
 	return value
@@ -26,11 +29,13 @@ function VendorManageContent() {
 	const nextPath = safeNextPath(searchParams.get('next'), '');
 	const [vendors, setVendors] = useState<VendorSummary[]>([]);
 	const [loading, setLoading] = useState(true);
+	const [createOpen, setCreateOpen] = useState(false);
 	const [name, setName] = useState('');
 	const [slug, setSlug] = useState('');
 	const [slugTouched, setSlugTouched] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 	const [submitting, setSubmitting] = useState(false);
+	const [linkCheckMessage, setLinkCheckMessage] = useState<string | null>(null);
 
 	const refresh = useCallback(async () => {
 		setLoading(true);
@@ -50,6 +55,14 @@ function VendorManageContent() {
 	}, [refresh]);
 
 	useEffect(() => {
+		if(loading || vendors.length > 0) {
+			return;
+		}
+		// No membership yet — creating (or waiting on an invite) is the needed path.
+		setCreateOpen(true);
+	}, [loading, vendors.length]);
+
+	useEffect(() => {
 		if(loading || !nextPath || vendors.length === 0) {
 			return;
 		}
@@ -59,7 +72,28 @@ function VendorManageContent() {
 	const onNameChange = (value: string) => {
 		setName(value);
 		if(!slugTouched) {
-			setSlug(slugify(value));
+			const next = slugify(value);
+			setSlug(next);
+			setLinkCheckMessage(null);
+		}
+	};
+
+	const onLinkNameChange = async (next: string) => {
+		setSlugTouched(true);
+		const normalized = slugify(next);
+		setSlug(normalized);
+		setLinkCheckMessage(null);
+		if(normalized.length < 2) {
+			return;
+		}
+		try {
+			const check = await checkVendorLinkName(normalized);
+			if(!check.available) {
+				setLinkCheckMessage(check.message);
+			}
+		}
+		catch {
+			/* create submit still validates */
 		}
 	};
 
@@ -69,15 +103,23 @@ function VendorManageContent() {
 		setSubmitting(true);
 
 		try {
-			await createVendor({ name: name.trim(), slug: slug.trim() });
+			const check = await checkVendorLinkName(slug.trim());
+			if(!check.available) {
+				setError(check.message ?? 'That name in the link is not available.');
+				setSubmitting(false);
+				return;
+			}
+			const created = await createVendor({ name: name.trim(), slug: slug.trim() });
 			setName('');
 			setSlug('');
 			setSlugTouched(false);
+			setLinkCheckMessage(null);
+			setCreateOpen(false);
 			if(nextPath) {
 				router.push(nextPath);
 				return;
 			}
-			await refresh();
+			router.push(`/place-et-marque/vendors/${created.slug}`);
 		}
 		catch(submitError) {
 			setError(
@@ -89,6 +131,15 @@ function VendorManageContent() {
 		finally {
 			setSubmitting(false);
 		}
+	};
+
+	const closeCreate = () => {
+		setCreateOpen(false);
+		setError(null);
+		setName('');
+		setSlug('');
+		setSlugTouched(false);
+		setLinkCheckMessage(null);
 	};
 
 	return (
@@ -116,8 +167,7 @@ function VendorManageContent() {
 						text-slate-600
 					"
 				>
-					Create a vendor organization and become its owner. That membership unlocks product
-					management for that vendor&apos;s catalog.
+					Seller organizations on your account.
 				</p>
 				{nextPath
 					? (
@@ -144,105 +194,6 @@ function VendorManageContent() {
 
 			<section
 				className="
-					rounded-2xl
-					border
-					border-slate-200
-					bg-white
-					p-5
-				"
-			>
-				<h2 className="text-lg font-semibold">
-					Create organization
-				</h2>
-				<p
-					className="
-						mt-2
-						text-sm
-						text-slate-600
-					"
-				>
-					If the vendor organization already exists, ask a current member to send you an
-					invite instead of creating a duplicate.
-				</p>
-				<form
-					className="
-						mt-4
-						flex
-						flex-col
-						gap-4
-					"
-					onSubmit={onSubmit}
-				>
-					<label className="block text-sm">
-						<span className="font-semibold">
-							Organization name
-						</span>
-						<input
-							className="
-								mt-1
-								w-full
-								rounded-lg
-								border
-								border-slate-300
-								px-3
-								py-2
-							"
-							value={name}
-							onChange={(event) => onNameChange(event.target.value)}
-							required
-							minLength={2}
-							maxLength={120}
-							placeholder="Demo Supply Co."
-						/>
-					</label>
-
-					<UrlSlugField
-						label="Store URL"
-						value={slug}
-						onChange={(next) => {
-							setSlugTouched(true);
-							setSlug(slugify(next));
-						}}
-						prefixPath="/place-et-marque"
-						placeholder="demo-supply"
-						helpText="Choose a short public address for your store. Product pages will look like …/place-et-marque/your-store/product-name."
-					/>
-
-					{error
-						? (
-								<p className="text-sm text-red-700">
-									{error}
-								</p>
-							)
-						: null
-					}
-
-					<button
-						className="
-							self-start
-							rounded-full
-							bg-ink
-							px-4
-							py-2.5
-							text-sm
-							font-semibold
-							text-white
-							hover:bg-sky
-							disabled:opacity-60
-						"
-						type="submit"
-						disabled={submitting}
-					>
-						{submitting
-							? 'Creating…'
-							: 'Create vendor'
-						}
-					</button>
-				</form>
-			</section>
-
-			<section
-				className="
 					flex
 					flex-col
 					gap-3
@@ -262,7 +213,7 @@ function VendorManageContent() {
 				{!loading && vendors.length === 0
 					? (
 							<p className="text-sm text-slate-500">
-								You are not a member of any vendor organization yet. Create one above,
+								You are not a member of any vendor organization yet. Create one below,
 								or wait for an invite from an existing vendor.
 							</p>
 						)
@@ -279,7 +230,7 @@ function VendorManageContent() {
 							hover:border-sky
 						"
 						key={vendor.id}
-						href={`/place-et-marque/vendors/${vendor.id}`}
+						href={`/place-et-marque/vendors/${vendor.slug}`}
 					>
 						<div
 							className="
@@ -332,7 +283,177 @@ function VendorManageContent() {
 						</p>
 					</a>
 				))}
+				{!loading && !createOpen
+					? (
+							<button
+								type="button"
+								aria-label="Create vendor organization"
+								className="
+									inline-flex
+									self-end
+									items-center
+									justify-center
+									rounded-xl
+									border
+									border-transparent
+									px-4
+									py-3
+									text-slate-400
+									transition
+									hover:text-sky
+								"
+								onClick={() => setCreateOpen(true)}
+							>
+								<PlusIcon className="h-4 w-4" />
+							</button>
+						)
+					: null
+				}
 			</section>
+
+			{createOpen
+				? (
+						<section
+							className="
+								flex
+								flex-col
+								gap-3
+							"
+						>
+							<div
+								className="
+									rounded-2xl
+									border
+									border-slate-200
+									bg-white
+									p-5
+								"
+							>
+								<div
+									className="
+										flex
+										flex-wrap
+										items-start
+										justify-between
+										gap-3
+									"
+								>
+									<div>
+										<h2 className="text-lg font-semibold">
+											Create organization
+										</h2>
+										<p
+											className="
+												mt-2
+												text-sm
+												text-slate-600
+											"
+										>
+											If the vendor organization already exists, ask a current member to
+											send you an invite instead of creating a duplicate.
+										</p>
+									</div>
+									{vendors.length > 0
+										? (
+												<DisclosurePrompt
+													question=""
+													onExpand={() => undefined}
+													expanded
+													onCollapse={closeCreate}
+													collapseLabel="Cancel"
+												/>
+											)
+										: null
+									}
+								</div>
+								<form
+									className="
+										mt-4
+										flex
+										flex-col
+										gap-4
+									"
+									onSubmit={onSubmit}
+								>
+									<label className="block text-sm">
+										<span className="font-semibold">
+											Organization name
+										</span>
+										<input
+											className="
+												mt-1
+												w-full
+												rounded-lg
+												border
+												border-slate-300
+												px-3
+												py-2
+											"
+											value={name}
+											onChange={(event) => onNameChange(event.target.value)}
+											required
+											minLength={2}
+											maxLength={120}
+											placeholder="Demo Supply Co."
+										/>
+									</label>
+
+									<UrlSlugField
+										label="Name in the link"
+										value={slug}
+										onChange={(next) => {
+											void onLinkNameChange(next);
+										}}
+										prefixPath="/place-et-marque/vendors"
+										placeholder="demo-supply-co"
+										helpText="This becomes your organization page and store address. Product pages look like …/place-et-marque/your-store/product-name."
+									/>
+
+									{linkCheckMessage
+										? (
+												<p className="text-sm text-red-700">
+													{linkCheckMessage}
+												</p>
+											)
+										: null
+									}
+
+									{error
+										? (
+												<p className="text-sm text-red-700">
+													{error}
+												</p>
+											)
+										: null
+									}
+
+									<button
+										className="
+											self-start
+											rounded-full
+											bg-sky
+											px-4
+											py-2.5
+											text-sm
+											font-semibold
+											text-white
+											hover:bg-sky/90
+											disabled:opacity-60
+										"
+										type="submit"
+										disabled={submitting}
+									>
+										{submitting
+											? 'Creating…'
+											: 'Create vendor'
+										}
+									</button>
+								</form>
+							</div>
+						</section>
+					)
+				: null
+			}
 		</div>
 	);
 }

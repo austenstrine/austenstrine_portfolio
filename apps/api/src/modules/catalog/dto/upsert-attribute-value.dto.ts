@@ -26,7 +26,7 @@ export class UpsertVendorAttributeValueDto {
 	parentId?: string;
 
 	@IsArray()
-	@IsUUID('4', { each: true })
+	@IsUUID('all', { each: true })
 	categoryIds!: string[];
 
 	@IsOptional()

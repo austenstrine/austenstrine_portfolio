@@ -172,6 +172,7 @@ export type ConnectStatus = {
 	recent?: Array<{
 		id: string;
 		orderId: string;
+		orderRef?: string;
 		status: string;
 		vendorNetCents: number;
 		feeCents: number;
@@ -179,6 +180,11 @@ export type ConnectStatus = {
 		lastError: string | null;
 		transferredAt: string | null;
 		createdAt: string;
+		orderCreatedAt?: string;
+		shippedAt?: string | null;
+		customerHint?: string | null;
+		productHint?: string | null;
+		lineCount?: number;
 	}>;
 };
 
@@ -324,6 +330,19 @@ export function formatMoney(cents: number, currency = 'USD'): string {
 		style: 'currency',
 		currency,
 	}).format(cents / 100);
+}
+
+const ORDER_STATUS_LABELS: Record<string, string> = {
+	HOLD: 'On hold',
+	PAID: 'Paid',
+	FULFILLING: 'Fulfilling',
+	SHIPPED: 'Shipped',
+	REFUNDED: 'Refunded',
+	CANCELLED: 'Cancelled',
+};
+
+export function formatOrderStatus(status: string): string {
+	return ORDER_STATUS_LABELS[status] ?? status;
 }
 
 /** Public helper for docs / webhook URL */

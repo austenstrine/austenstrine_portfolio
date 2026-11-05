@@ -2,12 +2,27 @@
 
 import { useEffect, useLayoutEffect, useRef, useState, type RefObject } from 'react';
 import { usePathname } from 'next/navigation';
+import { pathUsesSellerChrome } from '../../lib/accessGate';
 import { getCart } from '../../lib/checkout-api';
+import {
+	listNotifications,
+	getUnreadNotificationCount,
+	markAllNotificationsRead,
+	notificationInboxHref,
+	NOTIFICATIONS_INBOX_PATH,
+	type NotificationDto,
+} from '../../lib/notifications-api';
 import { useSession } from '../../lib/useSession';
+import { BellIcon } from '../icons/BellIcon';
 import { CaretDownIcon } from '../icons/CaretDownIcon';
 import { CartIcon } from '../icons/CartIcon';
 import { CatalogCategoryBar } from './CatalogCategoryBar';
+import {
+	CatalogMenuSurface,
+	useCatalogFloatingMenu,
+} from './CatalogMenu';
 import { MarketplaceBrandLink } from './MarketplaceBrandLink';
+import { SellerModeChip } from './SellerModeChip';
 import { useCatalogSearch } from './CatalogSearchContext';
 import { CatalogSearchField } from './CatalogSearchField';
 
@@ -15,8 +30,11 @@ const vendorToolLinks = [
 	{ href: '/place-et-marque/vendors', label: 'Vendors' },
 	{ href: '/place-et-marque/manage', label: 'Manage listings' },
 	{ href: '/place-et-marque/products/new', label: 'New product' },
-	{ href: '/place-et-marque/products/configure', label: 'Advanced product' },
 	{ href: '/place-et-marque/orders', label: 'Orders' },
+];
+
+const vendorSetupLinks = [
+	{ href: '/place-et-marque/products/configure', label: 'Advanced product' },
 	{ href: '/place-et-marque/uoms', label: 'UOMs' },
 	{ href: '/place-et-marque/attributes', label: 'Attributes' },
 	{ href: '/place-et-marque/categories', label: 'Categories' },
@@ -30,6 +48,63 @@ function accountLabel(email: string) {
 	return email.slice(0, at);
 }
 
+/** Fixed circle so counts never stretch into a pill over the caret. */
+function UnreadBadge({
+	count,
+	className = '',
+}: {
+	count: number;
+	className?: string;
+}) {
+	if(count <= 0) {
+		return null;
+	}
+	const label = count > 99 ? '99+' : String(count);
+	return (
+		<span
+			aria-hidden="true"
+			className={
+				`
+					inline-flex
+					size-4
+					shrink-0
+					aspect-square
+					items-center
+					justify-center
+					rounded-full
+					bg-signal
+					text-[9px]
+					font-semibold
+					leading-none
+					text-white
+					${className}
+				`.trim()
+			}
+		>
+			{label}
+		</span>
+	);
+}
+
+function sectionCaretClass(expanded: boolean) {
+	return expanded
+		? `
+			h-3
+			w-3
+			shrink-0
+			rotate-180
+			transition
+			text-slate-400
+		`
+		: `
+			h-3
+			w-3
+			shrink-0
+			transition
+			text-slate-400
+		`;
+}
+
 function AccountMenu({
 	email,
 	onSignOut,
@@ -37,42 +112,122 @@ function AccountMenu({
 	email: string;
 	onSignOut: () => void;
 }) {
-	const [open, setOpen] = useState(false);
-	const rootRef = useRef<HTMLDivElement>(null);
+	const [notificationsOpen, setNotificationsOpen] = useState(false);
+	const [catalogSetupOpen, setCatalogSetupOpen] = useState(false);
+	const [notifications, setNotifications] = useState<NotificationDto[]>([]);
+	const [unreadCount, setUnreadCount] = useState(0);
+	const [notificationsLoading, setNotificationsLoading] = useState(false);
+	const notificationsOpenRef = useRef(notificationsOpen);
+	const catalogSetupOpenRef = useRef(catalogSetupOpen);
+	notificationsOpenRef.current = notificationsOpen;
+	catalogSetupOpenRef.current = catalogSetupOpen;
+
+	const {
+		open,
+		panelBox,
+		panelRef,
+		setOpen,
+		triggerRef,
+	} = useCatalogFloatingMenu({
+		align: 'end',
+		minWidth: 288,
+		preferredWidth: 320,
+		onEscape: () => {
+			if(catalogSetupOpenRef.current) {
+				setCatalogSetupOpen(false);
+				return true;
+			}
+			if(notificationsOpenRef.current) {
+				setNotificationsOpen(false);
+				return true;
+			}
+			return false;
+		},
+	});
+
+	useEffect(() => {
+		let cancelled = false;
+		getUnreadNotificationCount()
+			.then((result) => {
+				if(!cancelled) {
+					setUnreadCount(result.count);
+				}
+			})
+			.catch(() => {
+				if(!cancelled) {
+					setUnreadCount(0);
+				}
+			});
+		return () => {
+			cancelled = true;
+		};
+	}, []);
 
 	useEffect(() => {
 		if(!open) {
+			setNotificationsOpen(false);
+			setCatalogSetupOpen(false);
 			return;
 		}
 
-		const onPointerDown = (event: PointerEvent) => {
-			if(!rootRef.current?.contains(event.target as Node)) {
-				setOpen(false);
-			}
-		};
-		const onKeyDown = (event: KeyboardEvent) => {
-			if(event.key === 'Escape') {
-				setOpen(false);
-			}
-		};
+		let cancelled = false;
+		setNotificationsLoading(true);
+		Promise.all([
+			getUnreadNotificationCount(),
+			listNotifications(20, { unreadOnly: true }),
+		])
+			.then(([countResult, rows]) => {
+				if(cancelled) {
+					return;
+				}
+				setUnreadCount(countResult.count);
+				setNotifications(rows);
+				if(countResult.count > 0) {
+					setNotificationsOpen(true);
+				}
+			})
+			.catch(() => {
+				if(cancelled) {
+					return;
+				}
+				setNotifications([]);
+			})
+			.finally(() => {
+				if(!cancelled) {
+					setNotificationsLoading(false);
+				}
+			});
 
-		document.addEventListener('pointerdown', onPointerDown);
-		window.addEventListener('keydown', onKeyDown);
 		return () => {
-			document.removeEventListener('pointerdown', onPointerDown);
-			window.removeEventListener('keydown', onKeyDown);
+			cancelled = true;
 		};
 	}, [open]);
 
+	async function onMarkAllRead() {
+		try {
+			await markAllNotificationsRead();
+			setUnreadCount(0);
+			setNotifications([]);
+		}
+		catch {
+			// Keep prior unread state when the request fails.
+		}
+	}
+
+	function closeMenu() {
+		setOpen(false);
+	}
+
 	return (
-		<div
-			className="relative"
-			ref={rootRef}
-		>
+		<div className="relative">
 			<button
 				aria-expanded={open}
 				aria-haspopup="menu"
-				aria-label={`${accountLabel(email)} account menu`}
+				aria-label={
+					unreadCount > 0
+						? `${accountLabel(email)} account menu, ${unreadCount} unread`
+						: `${accountLabel(email)} account menu`
+				}
 				className="
 					inline-flex
 					max-w-[9rem]
@@ -83,40 +238,44 @@ function AccountMenu({
 					sm:max-w-[14rem]
 				"
 				onClick={() => setOpen((current) => !current)}
+				ref={triggerRef}
 				title={email}
 				type="button"
 			>
-				<span className="truncate">
+				<span
+					className="
+						relative
+						min-w-0
+						truncate
+						pr-2.5
+					"
+				>
 					{accountLabel(email)}
-				</span>
-				<CaretDownIcon
-					className={
-						open
-							? `
-								h-3
-								w-3
-								shrink-0
-								rotate-180
-								transition
-							`
-							: `
-								h-3
-								w-3
-								shrink-0
-								transition
-							`
-					}
-				/>
-			</button>
-			{open
-				? (
-					<div
+					<UnreadBadge
 						className="
 							absolute
-							right-0
-							z-20
-							mt-2
-							min-w-[12rem]
+							-right-0.5
+							-top-1.5
+						"
+						count={unreadCount}
+					/>
+				</span>
+				<CaretDownIcon
+					className={sectionCaretClass(open)}
+				/>
+			</button>
+			{open && panelBox
+				? (
+					<CatalogMenuSurface
+						bodyClassName="
+							max-h-[min(28rem,calc(100vh-2*var(--gutter)))]
+							overflow-y-auto
+							scrollbar-thin-quiet
+						"
+						panelBox={panelBox}
+						panelClassName="
+							fixed
+							z-50
 							rounded-xl
 							border
 							border-slate-200
@@ -124,7 +283,7 @@ function AccountMenu({
 							p-3
 							shadow-lg
 						"
-						role="menu"
+						panelRef={panelRef}
 					>
 						<ul
 							className="
@@ -140,11 +299,184 @@ function AccountMenu({
 										hover:underline
 									"
 									href="/auth/account"
-									onClick={() => setOpen(false)}
+									onClick={closeMenu}
 									role="menuitem"
 								>
 									Your account
 								</a>
+							</li>
+							<li
+								className="
+									mt-1
+									border-t
+									border-slate-100
+									pt-2
+								"
+							>
+								<button
+									aria-expanded={notificationsOpen}
+									className="
+										flex
+										w-full
+										cursor-pointer
+										items-center
+										gap-2
+										text-left
+										text-[11px]
+										font-semibold
+										uppercase
+										tracking-[0.16em]
+										text-slate-500
+									"
+									onClick={() =>
+										setNotificationsOpen((current) => !current)
+									}
+									role="menuitem"
+									type="button"
+								>
+									<BellIcon
+										className="
+											h-3.5
+											w-3.5
+											shrink-0
+											text-sky
+										"
+									/>
+									<span className="flex-1">
+										Notifications
+									</span>
+									<UnreadBadge count={unreadCount} />
+									<CaretDownIcon
+										className={sectionCaretClass(notificationsOpen)}
+									/>
+								</button>
+								<a
+									className="
+										mt-2
+										inline-block
+										text-xs
+										font-semibold
+										text-sky
+										hover:underline
+									"
+									href={NOTIFICATIONS_INBOX_PATH}
+									onClick={closeMenu}
+									role="menuitem"
+								>
+									Open inbox
+								</a>
+								{notificationsOpen
+									? (
+										<div
+											className="
+												mt-2
+												flex
+												flex-col
+												gap-2
+											"
+										>
+											{unreadCount > 0
+												? (
+													<button
+														className="
+															relative
+															z-10
+															self-start
+															text-xs
+															font-semibold
+															text-asgreen
+															hover:underline
+														"
+														onClick={() => {
+															void onMarkAllRead();
+														}}
+														role="menuitem"
+														type="button"
+													>
+														Mark all read
+													</button>
+												)
+												: null
+											}
+											{notificationsLoading
+												? (
+													<p className="text-xs text-slate-500">
+														Loading…
+													</p>
+												)
+												: notifications.length === 0
+													? (
+														<p className="text-xs text-slate-500">
+															{unreadCount > 0
+																? 'Loading…'
+																: 'No unread notifications.'
+															}
+														</p>
+													)
+													: (
+														<ul
+															className="
+																flex
+																max-h-56
+																flex-col
+																gap-1
+																overflow-y-auto
+															"
+														>
+															{notifications.map((item) => (
+																<li key={item.id}>
+																	<a
+																		className="
+																			block
+																			w-full
+																			rounded-lg
+																			bg-asgreen/10
+																			px-2
+																			py-1.5
+																			text-left
+																			hover:bg-asgreen/15
+																		"
+																		href={notificationInboxHref(item.id)}
+																		onClick={closeMenu}
+																		role="menuitem"
+																	>
+																		<span
+																			className="
+																				block
+																				truncate
+																				text-sm
+																				font-semibold
+																				text-sky
+																			"
+																		>
+																			{item.title}
+																		</span>
+																		{item.body
+																			? (
+																				<span
+																					className="
+																						mt-0.5
+																						block
+																						truncate
+																						text-xs
+																						text-slate-500
+																					"
+																				>
+																					{item.body}
+																				</span>
+																			)
+																			: null
+																		}
+																	</a>
+																</li>
+															))}
+														</ul>
+													)
+											}
+										</div>
+									)
+									: null
+								}
 							</li>
 							<li
 								className="
@@ -169,7 +501,7 @@ function AccountMenu({
 											hover:underline
 										"
 										href={link.href}
-										onClick={() => setOpen(false)}
+										onClick={closeMenu}
 										role="menuitem"
 									>
 										{link.label}
@@ -185,12 +517,78 @@ function AccountMenu({
 								"
 							>
 								<button
+									aria-expanded={catalogSetupOpen}
+									className="
+										flex
+										w-full
+										cursor-pointer
+										items-center
+										gap-2
+										text-left
+										text-[11px]
+										font-semibold
+										uppercase
+										tracking-[0.16em]
+										text-slate-500
+									"
+									onClick={() =>
+										setCatalogSetupOpen((current) => !current)
+									}
+									role="menuitem"
+									type="button"
+								>
+									<span className="flex-1">
+										Catalog setup
+									</span>
+									<CaretDownIcon
+										className={sectionCaretClass(catalogSetupOpen)}
+									/>
+								</button>
+								{catalogSetupOpen
+									? (
+										<ul
+											className="
+												mt-2
+												flex
+												flex-col
+												gap-2
+											"
+										>
+											{vendorSetupLinks.map((link) => (
+												<li key={link.href}>
+													<a
+														className="
+															text-ink
+															hover:underline
+														"
+														href={link.href}
+														onClick={closeMenu}
+														role="menuitem"
+													>
+														{link.label}
+													</a>
+												</li>
+											))}
+										</ul>
+									)
+									: null
+								}
+							</li>
+							<li
+								className="
+									mt-1
+									border-t
+									border-slate-100
+									pt-2
+								"
+							>
+								<button
 									className="
 										text-slate-500
 										hover:text-ink
 									"
 									onClick={() => {
-										setOpen(false);
+										closeMenu();
 										onSignOut();
 									}}
 									role="menuitem"
@@ -200,7 +598,7 @@ function AccountMenu({
 								</button>
 							</li>
 						</ul>
-					</div>
+					</CatalogMenuSurface>
 				)
 				: null
 			}
@@ -260,6 +658,7 @@ export function CatalogHeader() {
 		headerMobileRef,
 		setHeaderDesktopExtras,
 		setHeaderMobileExtras,
+		setSellerTopContextHost,
 	} = useCatalogSearch();
 	const { user, loading, signOut } = useSession();
 	const [cartCount, setCartCount] = useState(0);
@@ -267,8 +666,10 @@ export function CatalogHeader() {
 	const [bannerOffset, setBannerOffset] = useState(0);
 	const [headerHidden, setHeaderHidden] = useState(false);
 	const lastScrollY = useRef(0);
+	const sellerChrome = pathUsesSellerChrome(pathname);
 	const showDepartmentBar =
-		categories.length > 0
+		!sellerChrome
+		&& categories.length > 0
 		&& pathname !== '/place-et-marque/search';
 	const headerRef = useRef<HTMLElement>(null);
 
@@ -340,14 +741,14 @@ export function CatalogHeader() {
 	}, [extrasHost]);
 
 	useEffect(() => {
-		if(!user) {
+		if(!user || sellerChrome) {
 			setCartCount(0);
 			return;
 		}
 		getCart()
 			.then((cart) => setCartCount(cart.lineCount ?? cart.lines.length))
 			.catch(() => setCartCount(0));
-	}, [user]);
+	}, [user, sellerChrome]);
 
 	return (
 		<>
@@ -407,6 +808,10 @@ export function CatalogHeader() {
 						"
 					>
 						<MarketplaceBrandLink />
+						{sellerChrome
+							? <SellerModeChip />
+							: null
+						}
 						<div className="hidden min-w-0 flex-1 md:flex">
 							<HeaderSearch
 								inputId="store-search-desktop"
@@ -426,46 +831,51 @@ export function CatalogHeader() {
 								sm:gap-3
 							"
 						>
-							<a
-								className="
-									relative
-									inline-flex
-									h-10
-									w-10
-									items-center
-									justify-center
-									rounded-full
-									text-ink
-									hover:bg-frost
-								"
-								href="/place-et-marque/cart"
-							>
-								<CartIcon />
-								<span className="sr-only">Cart</span>
-								{cartCount > 0
-									? (
-										<span
-											className="
-												absolute
-												right-0.5
-												top-0.5
-												min-w-4
-												rounded-full
-												bg-signal
-												px-1
-												text-center
-												text-[10px]
-												font-semibold
-												leading-4
-												text-white
-											"
-										>
-											{cartCount}
-										</span>
-									)
-									: null
-								}
-							</a>
+							{sellerChrome
+								? null
+								: (
+									<a
+										className="
+											relative
+											inline-flex
+											h-10
+											w-10
+											items-center
+											justify-center
+											rounded-full
+											text-ink
+											hover:bg-frost
+										"
+										href="/place-et-marque/cart"
+									>
+										<CartIcon />
+										<span className="sr-only">Cart</span>
+										{cartCount > 0
+											? (
+												<span
+													className="
+														absolute
+														right-0.5
+														top-0.5
+														min-w-4
+														rounded-full
+														bg-signal
+														px-1
+														text-center
+														text-[10px]
+														font-semibold
+														leading-4
+														text-white
+													"
+												>
+													{cartCount}
+												</span>
+											)
+											: null
+										}
+									</a>
+								)
+							}
 							{loading
 								? null
 								: user
@@ -505,15 +915,27 @@ export function CatalogHeader() {
 						/>
 					</div>
 				</div>
-				{showDepartmentBar
+				{sellerChrome
 					? (
-						<CatalogCategoryBar
-							categories={categories}
-							category={category}
-							onChoose={applyCategory}
+						<div
+							className="
+								border-t
+								border-slate-100
+								bg-white
+								empty:hidden
+							"
+							ref={setSellerTopContextHost}
 						/>
 					)
-					: null
+					: showDepartmentBar
+						? (
+							<CatalogCategoryBar
+								categories={categories}
+								category={category}
+								onChoose={applyCategory}
+							/>
+						)
+						: null
 				}
 			</header>
 		</>

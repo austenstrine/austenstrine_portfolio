@@ -3,18 +3,18 @@ export const glossaryTerms = [
 		id: 'pack',
 		term: 'Pack',
 		short: 'A larger sellable unit that can contain pieces or other packs.',
-		long: 'A pack is how you sell something in bulk—for example a spool of wire or a carton of parts. A pack can link to a piece (or to another pack in a chain) so inventory and break fees stay consistent when someone buys less than a full pack.',
+		long: 'A pack is how you sell something in bulk, for example a spool of wire or a carton of parts. A pack can link to a piece (or to another pack in a chain) so inventory and break fees stay consistent when someone buys less than a full pack.',
 	},
 	{
 		id: 'piece',
 		term: 'Piece',
-		short: 'The smaller sellable unit—often cut or broken out of a pack.',
-		long: 'A piece is the unit shoppers buy when they want less than a full pack—for example feet of cable cut from a spool. A product can be piece-only, or a piece can sit under one or more packs through pack links.',
+		short: 'The smaller sellable unit, often cut or broken out of a pack.',
+		long: 'A piece is the unit shoppers buy when they want less than a full pack, for example feet of cable cut from a spool. A product can be piece-only, or a piece can sit under one or more packs through pack links.',
 	},
 	{
 		id: 'uom',
 		term: 'UOM',
-		short: 'Unit of measure—how quantity is counted.',
+		short: 'Unit of measure: how quantity is counted.',
 		long: 'UOM is short for unit of measure: foot, spool, each, and so on. Place et Marque has shared global units plus units a vendor defines for their own catalog. Aliases (ft, foot, \') count as the same name when looking for duplicates.',
 	},
 	{
@@ -33,7 +33,7 @@ export const glossaryTerms = [
 		id: 'supervendor',
 		term: 'Supervendor',
 		short: 'The one vendor allowed to edit shared catalog structure.',
-		long: 'Exactly one vendor—currently austenstrine.dev—is the supervendor. That membership can create and change global categories and global units. Other vendors still tag products and can request new categories.',
+		long: 'Exactly one vendor (currently austenstrine.dev) is the supervendor. That membership can create and change global categories and global units in the admin CRM. Other vendors still tag products and can request new categories from the storefront.',
 	},
 	{
 		id: 'offering-key',

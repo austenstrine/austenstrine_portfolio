@@ -536,7 +536,7 @@ export function CatalogSearchExperience() {
 												h-full
 												w-1/3
 												animate-pulse
-												bg-ink
+												bg-sky
 											"
 										/>
 									</div>
@@ -588,18 +588,25 @@ export function CatalogSearchExperience() {
 							/>
 							<SearchExtrasPortal>
 								<button
+									aria-label={
+										clearableFilterCount > 0
+											? `Filters, ${clearableFilterCount} applied`
+											: 'Filters'
+									}
 									className="
 										inline-flex
+										h-10
+										shrink-0
 										items-center
-										gap-2
-										rounded-xl
+										gap-1.5
+										rounded-full
 										border
 										border-slate-300
 										bg-white
-										px-4
-										py-3
+										px-3
 										text-sm
 										font-semibold
+										text-ink
 										lg:hidden
 									"
 									onClick={() => setFiltersOpen(true)}
@@ -608,7 +615,22 @@ export function CatalogSearchExperience() {
 									Filters
 									{clearableFilterCount > 0
 										? (
-											<span className="rounded-full bg-ink px-1.5 py-0.5 text-[10px] text-white">
+											<span
+												className="
+													inline-flex
+													min-w-4
+													items-center
+													justify-center
+													rounded-full
+													bg-asgreen
+													px-1.5
+													text-center
+													text-[10px]
+													font-semibold
+													leading-4
+													text-white
+												"
+											>
 												{clearableFilterCount}
 											</span>
 										)
@@ -639,7 +661,7 @@ export function CatalogSearchExperience() {
 												<button
 													type="button"
 													onClick={clearAll}
-													className="mt-6 rounded-full bg-ink px-5 py-2.5 text-sm font-semibold text-white"
+													className="mt-6 rounded-full bg-sky px-5 py-2.5 text-sm font-semibold text-white"
 												>
 													Reset search
 												</button>
@@ -718,7 +740,7 @@ export function CatalogSearchExperience() {
 					<div className="fixed inset-0 z-40 lg:hidden">
 						<button
 							type="button"
-							className="absolute inset-0 bg-ink/40"
+							className="absolute inset-0 bg-sky/40"
 							aria-label="Close filters"
 							onClick={() => setFiltersOpen(false)}
 						/>

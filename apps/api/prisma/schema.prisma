@@ -1,9 +1,10 @@
 generator client {
   provider      = "prisma-client-js"
-  // native = host (laptop/CI). Alpine api image needs musl engines
-  // (node:20-alpine = OpenSSL 3). linux-musl-openssl-3.0.x = amd64 live
-  // (t3a.large); arm64 musl kept optional for Graviton/local ARM.
-  binaryTargets = ["native", "linux-musl-openssl-3.0.x", "linux-musl-arm64-openssl-3.0.x"]
+  // native = host (laptop/CI). API image is node:20-bookworm-slim (OpenSSL 3).
+  // debian-openssl-3.0.x = amd64 live (t3a.large); linux-arm64-openssl-3.0.x
+  // optional for Graviton/local ARM. (Alpine musl engines dropped — alpine
+  // Node builds SIGSEGV on this stack during npm ci / prisma generate.)
+  binaryTargets = ["native", "debian-openssl-3.0.x", "linux-arm64-openssl-3.0.x"]
 }
 
 datasource db {
@@ -59,8 +60,31 @@ model User {
   checkouts                 Checkout[]
   placeEtMarqueOrders       PlaceEtMarqueOrder[]
   orderRefunds              OrderRefund[]
+  notifications             Notification[]
 
   @@index([createdAt])
+}
+
+/// In-app inbox for a signed-in user. `kind` + `payload` grow without schema churn.
+model Notification {
+  id          String    @id @default(uuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// Dot-namespaced kind, e.g. system.welcome, order.paid, vendor.invite
+  kind        String
+  title       String
+  body        String?
+  /// Optional in-app path (web absolute path under the marketplace)
+  href        String?
+  payload     Json?
+  readAt      DateTime?
+  dismissedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([userId, createdAt])
+  @@index([userId, readAt, createdAt])
+  @@index([kind])
 }
 
 model RefreshToken {
@@ -106,6 +130,13 @@ enum VendorMemberRole {
   OWNER
   EDITOR
   VIEWER
+}
+
+enum VendorLinkNameRequestStatus {
+  PENDING
+  APPROVED
+  DENIED
+  CANCELLED
 }
 
 enum ProductOfferingRole {
@@ -237,9 +268,30 @@ model Vendor {
   placeEtMarqueOrders PlaceEtMarqueOrder[]
   checkoutShipments   CheckoutShipment[]
   payouts             VendorPayout[]
+  linkNameRequests    VendorLinkNameRequest[]
 
   @@index([name])
   @@index([stripeConnectAccountId])
+}
+
+/// Vendor asks to change the public/management name in the link; supervendor reviews.
+model VendorLinkNameRequest {
+  id                 String                       @id @default(uuid())
+  vendorId           String
+  vendor             Vendor                       @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  requestedSlug      String
+  currentSlug        String
+  status             VendorLinkNameRequestStatus  @default(PENDING)
+  requesterNote      String?
+  reviewReason       String?
+  requestedByUserId  String
+  reviewedByUserId   String?
+  createdAt          DateTime                     @default(now())
+  reviewedAt         DateTime?
+
+  @@index([vendorId, status])
+  @@index([status, createdAt])
+  @@index([requestedSlug])
 }
 
 model VendorInvite {

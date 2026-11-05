@@ -41,11 +41,14 @@ import { CreateVendorDto } from './dto/create-vendor.dto';
 import { CreateVendorInviteDto } from './dto/create-vendor-invite.dto';
 import { DeleteCatalogProductsDto } from './dto/delete-catalog-products.dto';
 import { RequestCategoryDto } from './dto/request-category.dto';
+import { RequestVendorLinkNameDto } from './dto/request-vendor-link-name.dto';
+import { ReviewVendorLinkNameDto } from './dto/review-vendor-link-name.dto';
 import { TrimInventoryDto } from './dto/trim-inventory.dto';
 import { UpdateCatalogProductDto } from './dto/update-catalog-product.dto';
 import { UpdateCatalogCategoryDto, UploadCatalogMediaDto } from './dto/upload-catalog-media.dto';
 import type { CatalogAuthedRequest } from './guards/catalog-auth.guard';
 import { CatalogAuthGuard } from './guards/catalog-auth.guard';
+import { assertCrmBrowserOrigin, CrmOriginGuard } from './guards/crm-origin.guard';
 import { CatalogImportService } from './import/catalog-import.service';
 import { InventoryService } from './inventory/inventory.service';
 import { VendorAppPasswordService } from './vendor-app-password.service';
@@ -111,21 +114,26 @@ export class CatalogController {
 		return this.attributeService.healthReportForUser(req.user!.id);
 	}
 
-	@UseGuards(JwtAuthGuard)
+	/** Public by UUID so legacy /products/<uuid>/edit|configure can canonical-redirect. */
+	@UseGuards(OptionalJwtAuthGuard)
 	@Get('products/by-id/:productId')
 	getProductById(
 		@Param('productId') productId: string,
 		@Req() req: AuthedRequest,
 	) {
-		return this.catalog.getProductByProductId(productId, req.user!.id);
+		return this.catalog.getProductByProductId(productId, req.user?.id);
 	}
 
 	@UseGuards(JwtAuthGuard)
 	@Post('uoms')
 	createUom(@Req() req: AuthedRequest, @Body() dto: CreateUomDto) {
+		if(!dto.vendorId) {
+			assertCrmBrowserOrigin(req);
+		}
 		return this.catalog.createUom(req.user!.id, dto);
 	}
 
+	@UseGuards(CrmOriginGuard)
 	@Get('uom-merges/apply')
 	async applyUomMerge(@Query('token') token?: string) {
 		if(!token?.trim()) {
@@ -139,13 +147,13 @@ export class CatalogController {
 		return this.catalog.listCategories();
 	}
 
-	@UseGuards(JwtAuthGuard)
+	@UseGuards(JwtAuthGuard, CrmOriginGuard)
 	@Post('categories')
 	createCategory(@Req() req: AuthedRequest, @Body() dto: CreateCategoryDto) {
 		return this.catalog.createCategory(req.user!.id, dto);
 	}
 
-	@UseGuards(JwtAuthGuard)
+	@UseGuards(JwtAuthGuard, CrmOriginGuard)
 	@Patch('categories/:categoryId')
 	updateCategory(
 		@Req() req: AuthedRequest,
@@ -168,6 +176,9 @@ export class CatalogController {
 		this.cdnMedia.assertImageFile(file);
 		await this.catalog.assertCanUploadMedia(req.user!.id, dto);
 		const kind = dto.kind ?? (dto.categoryId ? 'category' : 'product');
+		if(kind === 'category' || dto.categoryId) {
+			assertCrmBrowserOrigin(req);
+		}
 		const folder = kind === 'category'
 			? `catalog/categories/${dto.categoryId ?? 'new'}`
 			: `catalog/products/${dto.vendorId ?? dto.productId ?? 'new'}`;
@@ -221,6 +232,47 @@ export class CatalogController {
 	@Get('vendors/mine/:vendorId')
 	getMyVendor(@Req() req: AuthedRequest, @Param('vendorId') vendorId: string) {
 		return this.vendors.getMyVendor(req.user!.id, vendorId);
+	}
+
+	@UseGuards(JwtAuthGuard)
+	@Get('vendors/link-name/check')
+	checkVendorLinkName(
+		@Query('name') name: string | undefined,
+		@Query('excludeVendorId') excludeVendorId?: string,
+	) {
+		if(!name?.trim()) {
+			throw new BadRequestException('Provide a name in the link to check.');
+		}
+		return this.vendors.checkLinkNameAvailable(name, excludeVendorId);
+	}
+
+	@UseGuards(JwtAuthGuard, CrmOriginGuard)
+	@Get('vendors/link-name-requests')
+	listVendorLinkNameRequests(
+		@Req() req: AuthedRequest,
+		@Query('status') status?: string,
+	) {
+		return this.vendors.listLinkNameRequests(req.user!.id, status);
+	}
+
+	@UseGuards(JwtAuthGuard, CrmOriginGuard)
+	@Post('vendors/link-name-requests/:requestId/review')
+	reviewVendorLinkNameRequest(
+		@Req() req: AuthedRequest,
+		@Param('requestId') requestId: string,
+		@Body() dto: ReviewVendorLinkNameDto,
+	) {
+		return this.vendors.reviewLinkNameRequest(req.user!.id, requestId, dto);
+	}
+
+	@UseGuards(JwtAuthGuard)
+	@Post('vendors/:vendorId/link-name-requests')
+	requestVendorLinkName(
+		@Req() req: AuthedRequest,
+		@Param('vendorId') vendorId: string,
+		@Body() dto: RequestVendorLinkNameDto,
+	) {
+		return this.vendors.requestLinkNameChange(req.user!.id, vendorId, dto);
 	}
 
 	@UseGuards(JwtAuthGuard)
