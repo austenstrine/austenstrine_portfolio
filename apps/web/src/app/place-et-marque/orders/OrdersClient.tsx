@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';
 import {
 	formatMoney,
+	formatOrderStatus,
 	listBuyerOrders,
 	type PlaceEtMarqueOrder,
 } from '../../../lib/checkout-api';
@@ -131,7 +132,7 @@ function OrdersContent() {
 													{order.orderRef}
 												</p>
 												<p className="text-sm text-slate-600">
-													{order.status} ·{' '}
+													{formatOrderStatus(order.status)} ·{' '}
 													{new Date(order.createdAt).toLocaleString()}
 												</p>
 											</div>

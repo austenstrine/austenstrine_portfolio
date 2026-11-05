@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import {
 	cancelBuyerOrder,
 	formatMoney,
+	formatOrderStatus,
 	getBuyerOrder,
 	type PlaceEtMarqueOrder,
 } from '../../../../lib/checkout-api';
@@ -139,7 +140,7 @@ export default function OrderDetailPage() {
 								text-slate-600
 							"
 						>
-							{order.status} · {formatMoney(order.totalCents, order.currency)}
+							{formatOrderStatus(order.status)} · {formatMoney(order.totalCents, order.currency)}
 							{order.shippingLabel
 								? ` · ${order.shippingLabel}`
 								: ''
