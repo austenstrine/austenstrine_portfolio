@@ -4,6 +4,7 @@ import {
 	type ProductEditorIntent,
 	type ProductEditorSurface,
 } from '../../lib/catalog-product-form';
+import { ArrowRightIcon } from '../icons/ArrowRightIcon';
 
 type CatalogWorkspaceSwitcherProps = {
 	active: ProductEditorSurface;
@@ -46,30 +47,53 @@ export function CatalogWorkspaceSwitcher({
 		}
 	};
 
+	const switchLabel = CATALOG_WORKSPACE_LABELS[other].short;
+
 	if(quiet) {
 		return (
-			<p
+			<a
+				aria-label={switchLabel}
 				className="
+					inline-flex
+					h-9
+					w-9
+					items-center
+					justify-center
+					gap-1.5
+					rounded-full
+					border
+					border-slate-300
+					bg-white
 					text-sm
-					text-slate-500
+					font-semibold
+					text-ink
+					hover:border-sky
+					hover:text-sky
+					sm:h-auto
+					sm:w-auto
+					sm:px-3
+					sm:py-1.5
 				"
+				href={href}
+				onClick={onNavigate}
+				title={switchLabel}
 			>
-				Need packaging rules or quantity breaks first?
-				{' '}
-				<a
+				<span
 					className="
-						font-semibold
-						text-sky
-						hover:underline
+						hidden
+						sm:inline
 					"
-					href={href}
-					onClick={onNavigate}
 				>
-					Open
-					{' '}
-					{CATALOG_WORKSPACE_LABELS[other].short}
-				</a>
-			</p>
+					{switchLabel}
+				</span>
+				<ArrowRightIcon
+					className="
+						h-3.5
+						w-3.5
+						shrink-0
+					"
+				/>
+			</a>
 		);
 	}
 
@@ -113,25 +137,48 @@ export function CatalogWorkspaceSwitcher({
 				</p>
 			</div>
 			<a
+				aria-label={switchLabel}
 				className="
+					inline-flex
+					h-9
+					w-9
 					shrink-0
+					items-center
+					justify-center
+					gap-1.5
 					rounded-full
 					border
 					border-slate-300
-					px-3
-					py-1.5
+					px-0
 					text-xs
 					font-semibold
 					text-slate-700
 					hover:border-sky
 					hover:text-sky
+					sm:h-auto
+					sm:w-auto
+					sm:px-3
+					sm:py-1.5
 				"
 				href={href}
 				onClick={onNavigate}
+				title={switchLabel}
 			>
-				Switch to
-				{' '}
-				{CATALOG_WORKSPACE_LABELS[other].short}
+				<span
+					className="
+						hidden
+						sm:inline
+					"
+				>
+					{switchLabel}
+				</span>
+				<ArrowRightIcon
+					className="
+						h-3.5
+						w-3.5
+						shrink-0
+					"
+				/>
 			</a>
 		</div>
 	);
