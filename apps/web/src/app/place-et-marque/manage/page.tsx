@@ -334,6 +334,7 @@ function PlaceEtMarqueManageContent() {
 								ml-auto
 								inline-flex
 								h-10
+								w-10
 								shrink-0
 								items-center
 								justify-center
@@ -341,12 +342,14 @@ function PlaceEtMarqueManageContent() {
 								self-end
 								rounded-full
 								bg-asgreen
-								px-3.5
-								py-1.5
 								text-sm
 								font-semibold
 								text-white
 								hover:bg-asgreen/90
+								sm:h-auto
+								sm:w-auto
+								sm:px-3.5
+								sm:py-1.5
 							"
 							href={`/place-et-marque/products/new?vendorId=${encodeURIComponent(newProductVendorId)}`}
 							title={
@@ -362,7 +365,13 @@ function PlaceEtMarqueManageContent() {
 									shrink-0
 								"
 							/>
-							<span className="whitespace-nowrap">
+							<span
+								className="
+									hidden
+									whitespace-nowrap
+									sm:inline
+								"
+							>
 								New product
 							</span>
 						</a>
