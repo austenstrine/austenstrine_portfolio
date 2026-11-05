@@ -46,6 +46,8 @@ type CatalogSearchContextValue = {
 	headerDesktopExtrasEl: HTMLDivElement | null;
 	headerMobileExtrasEl: HTMLDivElement | null;
 	pageExtrasEl: HTMLDivElement | null;
+	pageTopBarHostEl: HTMLDivElement | null;
+	setPageTopBarHost: (el: HTMLDivElement | null) => void;
 	desktop: boolean;
 };
 
@@ -64,6 +66,7 @@ export function CatalogSearchProvider({ children }: { children: ReactNode }) {
 	const [headerDesktopExtrasEl, setHeaderDesktopExtras] = useState<HTMLDivElement | null>(null);
 	const [headerMobileExtrasEl, setHeaderMobileExtras] = useState<HTMLDivElement | null>(null);
 	const [pageExtrasEl, setPageExtras] = useState<HTMLDivElement | null>(null);
+	const [pageTopBarHostEl, setPageTopBarHost] = useState<HTMLDivElement | null>(null);
 	const [extrasHost, setExtrasHost] = useState<'page' | 'header'>(
 		() => (pathname === '/place-et-marque/search' ? 'page' : 'header'),
 	);
@@ -215,6 +218,8 @@ export function CatalogSearchProvider({ children }: { children: ReactNode }) {
 		headerDesktopExtrasEl,
 		headerMobileExtrasEl,
 		pageExtrasEl,
+		pageTopBarHostEl,
+		setPageTopBarHost,
 		desktop,
 	}), [
 		query,
@@ -230,6 +235,7 @@ export function CatalogSearchProvider({ children }: { children: ReactNode }) {
 		headerDesktopExtrasEl,
 		headerMobileExtrasEl,
 		pageExtrasEl,
+		pageTopBarHostEl,
 		desktop,
 	]);
 
@@ -329,4 +335,32 @@ export function SearchExtrasPortal({ children }: { children: ReactNode }) {
 		return content;
 	}
 	return createPortal(content, target);
+}
+
+/** Page-specific actions for the header row that replaces the category bar on seller pages. */
+export function PageTopBarPortal({ children }: { children: ReactNode }) {
+	const { pageTopBarHostEl } = useCatalogSearch();
+	if(!pageTopBarHostEl) {
+		return null;
+	}
+	return createPortal(
+		<div
+			aria-label="Page actions"
+			className="
+				mx-auto
+				flex
+				max-w-7xl
+				flex-wrap
+				items-center
+				gap-x-3
+				gap-y-2
+				px-gutter
+				py-2
+			"
+			role="region"
+		>
+			{children}
+		</div>,
+		pageTopBarHostEl,
+	);
 }

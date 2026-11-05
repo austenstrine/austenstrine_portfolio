@@ -9,6 +9,7 @@ import {
 } from '../../../lib/catalog-api';
 import { useSession } from '../../../lib/useSession';
 import { RequireAccess } from '../../../components/auth/RequireAccess';
+import { PageTopBarPortal } from '../../../components/catalog/CatalogSearchContext';
 import { ArrowLeftIcon } from '../../../components/icons/ArrowLeftIcon';
 import { ArrowRightIcon } from '../../../components/icons/ArrowRightIcon';
 
@@ -256,83 +257,31 @@ function PlaceEtMarqueManageContent() {
 				gap-6
 			"
 		>
-			<div>
-				<h1
-					className="
-						text-3xl
-						font-semibold
-						tracking-tight
-					"
-				>
-					Product management
-				</h1>
-				<p
-					className="
-						mt-2
-						max-w-2xl
-						text-slate-600
-					"
-				>
-					Inventory for vendors you can edit. Open a product to change price, qty, or full listing details.
-				</p>
-			</div>
-
-			<div
-				className="
-					flex
-					flex-wrap
-					items-end
-					gap-x-4
-					gap-y-3
-				"
-			>
-				{user
-					? (
-						<p
-							className="
-								text-sm
-								text-slate-600
-							"
-						>
-							Signed in as {user.email}
-						</p>
-					)
-					: null
-				}
-
+			<PageTopBarPortal>
 				{vendorsReady && vendors.length > 0
 					? (
 						<label
 							className="
-								min-w-[12rem]
+								min-w-[10rem]
 								flex-1
 								text-sm
 								sm:max-w-xs
 								sm:flex-none
 							"
 						>
-							<span
-								className="
-									mb-1
-									block
-									text-xs
-									font-semibold
-									uppercase
-									tracking-wide
-									text-slate-500
-								"
-							>
+							<span className="sr-only">
 								Vendor
 							</span>
 							<select
+								aria-label="Vendor"
 								className="
 									w-full
-									rounded-lg
+									rounded-full
 									border
 									border-slate-300
 									bg-white
 									px-3
-									py-2
+									py-1.5
 									text-sm
 								"
 								value={selectedVendorId}
@@ -354,7 +303,6 @@ function PlaceEtMarqueManageContent() {
 					)
 					: null
 				}
-
 				{vendorsReady && vendors.length === 0
 					? (
 						<p
@@ -368,18 +316,69 @@ function PlaceEtMarqueManageContent() {
 					)
 					: null
 				}
+				{newProductVendorId
+					? (
+						<a
+							className="
+								ml-auto
+								inline-flex
+								items-center
+								rounded-full
+								bg-asgreen
+								px-3.5
+								py-1.5
+								text-sm
+								font-semibold
+								text-white
+								hover:bg-asgreen/90
+							"
+							href={`/place-et-marque/products/new?vendorId=${encodeURIComponent(newProductVendorId)}`}
+							title={
+								selectedVendor
+									? undefined
+									: `Creates under ${newProductVendorName}`
+							}
+						>
+							New product
+						</a>
+					)
+					: null
+				}
+			</PageTopBarPortal>
 
-				<a
+			<div>
+				<h1
 					className="
-						text-sm
+						text-3xl
 						font-semibold
-						text-sky
-						hover:underline
+						tracking-tight
 					"
-					href="/place-et-marque/vendors"
 				>
-					Manage vendors
-				</a>
+					Product management
+				</h1>
+				<p
+					className="
+						mt-2
+						max-w-2xl
+						text-slate-600
+					"
+				>
+					Inventory for vendors you can edit. Open a product to change price, qty, or full listing details.
+				</p>
+				{user
+					? (
+						<p
+							className="
+								mt-3
+								text-sm
+								text-slate-600
+							"
+						>
+							Signed in as {user.email}
+						</p>
+					)
+					: null
+				}
 			</div>
 
 			<section
@@ -390,46 +389,9 @@ function PlaceEtMarqueManageContent() {
 					gap-3
 				"
 			>
-				<div
-					className="
-						flex
-						flex-wrap
-						items-center
-						justify-between
-						gap-3
-					"
-				>
-					<h2 className="text-lg font-semibold">
-						Your products
-					</h2>
-					{newProductVendorId
-						? (
-							<a
-								className="
-									inline-flex
-									items-center
-									rounded-full
-									bg-asgreen
-									px-3.5
-									py-2
-									text-sm
-									font-semibold
-									text-white
-									hover:bg-asgreen/90
-								"
-								href={`/place-et-marque/products/new?vendorId=${encodeURIComponent(newProductVendorId)}`}
-								title={
-									selectedVendor
-										? undefined
-										: `Creates under ${newProductVendorName}`
-								}
-							>
-								New product
-							</a>
-						)
-						: null
-					}
-				</div>
+				<h2 className="text-lg font-semibold">
+					Your products
+				</h2>
 				{!vendorsReady || loadingProducts
 					? (
 						<p className="text-sm text-slate-500">

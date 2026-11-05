@@ -19,94 +19,6 @@ const vendorToolLinks = [
 	{ href: '/place-et-marque/orders', label: 'Orders' },
 ];
 
-function sellerLinkActive(pathname: string, href: string) {
-	if(href === '/place-et-marque/vendors') {
-		return pathname === href || pathname.startsWith(`${href}/`);
-	}
-	if(href === '/place-et-marque/orders') {
-		return pathname === href || pathname.startsWith(`${href}/`);
-	}
-	if(href === '/place-et-marque/products/new') {
-		return pathname === href;
-	}
-	return pathname === href || pathname.startsWith(`${href}/`);
-}
-
-function CatalogSellerBar({ pathname }: { pathname: string }) {
-	const onManage = pathname === '/place-et-marque/manage'
-		|| pathname.startsWith('/place-et-marque/manage/');
-	const links = vendorToolLinks.filter((link) =>
-		!(
-			onManage
-			&& link.href === '/place-et-marque/products/new'
-		),
-	);
-
-	return (
-		<nav
-			aria-label="Seller tools"
-			className="
-				border-t
-				border-slate-100
-				bg-white
-			"
-		>
-			<div
-				className="
-					mx-auto
-					flex
-					max-w-7xl
-					flex-wrap
-					items-center
-					gap-x-1
-					gap-y-1
-					px-gutter
-					py-2
-					text-sm
-					font-semibold
-				"
-			>
-				{links.map((link) => {
-					const active = sellerLinkActive(pathname, link.href);
-					return (
-						<a
-							aria-current={active ? 'page' : undefined}
-							className={
-								active
-									? `
-										inline-flex
-										h-8
-										items-center
-										rounded-full
-										bg-asgreen/15
-										px-3
-										leading-none
-										text-asgreen
-									`
-									: `
-										inline-flex
-										h-8
-										items-center
-										rounded-full
-										px-3
-										leading-none
-										text-slate-600
-										hover:bg-frost
-										hover:text-ink
-									`
-							}
-							href={link.href}
-							key={link.href}
-						>
-							{link.label}
-						</a>
-					);
-				})}
-			</div>
-		</nav>
-	);
-}
-
 const vendorSetupLinks = [
 	{ href: '/place-et-marque/products/configure', label: 'Advanced product' },
 	{ href: '/place-et-marque/uoms', label: 'UOMs' },
@@ -399,6 +311,7 @@ export function CatalogHeader() {
 		headerMobileRef,
 		setHeaderDesktopExtras,
 		setHeaderMobileExtras,
+		setPageTopBarHost,
 	} = useCatalogSearch();
 	const { user, loading, signOut } = useSession();
 	const [cartCount, setCartCount] = useState(0);
@@ -648,8 +561,14 @@ export function CatalogHeader() {
 				</div>
 				{sellerChrome
 					? (
-						<CatalogSellerBar
-							pathname={pathname}
+						<div
+							className="
+								border-t
+								border-slate-100
+								bg-white
+								empty:hidden
+							"
+							ref={setPageTopBarHost}
 						/>
 					)
 					: showDepartmentBar
