@@ -225,6 +225,11 @@ export class CatalogController {
 		});
 	}
 
+	@Get('vendors/public/:vendorSlug')
+	getPublicVendor(@Param('vendorSlug') vendorSlug: string) {
+		return this.vendors.getPublicVendor(vendorSlug);
+	}
+
 	@UseGuards(JwtAuthGuard)
 	@Get('vendors/mine')
 	listMyVendors(@Req() req: AuthedRequest) {

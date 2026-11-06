@@ -9,6 +9,7 @@ import {
 	type CatalogSearchResult,
 	type CatalogTermFacet,
 } from '../../lib/catalog-api';
+import { vendorViewHref } from '../../lib/vendor-ref';
 import { ArrowLeftIcon } from '../icons/ArrowLeftIcon';
 import { ArrowRightIcon } from '../icons/ArrowRightIcon';
 import {
@@ -99,7 +100,14 @@ function pageItems(current: number, total: number) {
 	return items;
 }
 
-export function CatalogSearchExperience() {
+type CatalogSearchExperienceProps = {
+	/** When set, search stays scoped to this seller (buyer vendor storefront). */
+	lockedVendor?: { slug: string; name: string } | null;
+};
+
+export function CatalogSearchExperience({
+	lockedVendor = null,
+}: CatalogSearchExperienceProps = {}) {
 	const router = useRouter();
 	const pathname = usePathname();
 	const searchParams = useSearchParams();
@@ -117,13 +125,14 @@ export function CatalogSearchExperience() {
 	const {
 		q: committedQuery,
 		category,
-		vendor,
+		vendor: urlVendor,
 		sort,
 		page,
 		inStock,
 		manualValueIds,
 		omitValueIds,
 	} = committed;
+	const vendor = lockedVendor?.slug || urlVendor;
 
 	const [filtersOpen, setFiltersOpen] = useState(false);
 	const [expandedFacets, setExpandedFacets] = useState<string[]>([]);
@@ -143,11 +152,19 @@ export function CatalogSearchExperience() {
 	}, [category, committedQuery, setCommittedQuery, setQuery, syncCategory]);
 
 	const commit = (patch: Partial<SearchUrlState>) => {
-		const next = searchQueryString({
+		const merged: SearchUrlState = {
 			...committed,
 			...patch,
-		});
-		if(next === searchQueryString(committed)) {
+		};
+		if(lockedVendor) {
+			// Seller is path-scoped; keep it out of the query string.
+			merged.vendor = '';
+		}
+		const next = searchQueryString(merged);
+		const currentQuery = lockedVendor
+			? searchQueryString({ ...committed, vendor: '' })
+			: searchQueryString(committed);
+		if(next === currentQuery) {
 			return;
 		}
 		router.push(next ? `${pathname}?${next}` : pathname, { scroll: false });
@@ -214,11 +231,15 @@ export function CatalogSearchExperience() {
 	const rangeEnd = Math.min(page * PAGE_SIZE, total);
 	const selectedCategory = categories.find((row) => row.slug === category);
 	const catalogHeading = selectedCategory?.name
-		?? (committedQuery.trim() ? `Results for “${committedQuery.trim()}”` : null);
-	const vendorLabel = vendor ? titleCaseSlug(vendor) : '';
+		?? (committedQuery.trim()
+			? `Results for “${committedQuery.trim()}”`
+			: lockedVendor?.name
+				?? null);
+	const vendorLabel = lockedVendor?.name
+		?? (vendor ? titleCaseSlug(vendor) : '');
 	const clearableFilterCount = [
 		committedQuery.trim() ? 1 : 0,
-		vendor ? 1 : 0,
+		vendor && !lockedVendor ? 1 : 0,
 		inStock ? 1 : 0,
 		manualValueIds.length,
 		omitValueIds.length,
@@ -228,7 +249,7 @@ export function CatalogSearchExperience() {
 		setQuery('');
 		commit({
 			q: '',
-			vendor: '',
+			vendor: lockedVendor ? lockedVendor.slug : '',
 			inStock: false,
 			manualValueIds: [],
 			omitValueIds: [],
@@ -287,7 +308,7 @@ export function CatalogSearchExperience() {
 				</label>
 			</section>
 
-			{vendorFacets.length > 1 || vendor
+			{!lockedVendor && (vendorFacets.length > 1 || vendor)
 				? (
 					<section>
 						<h2 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">
@@ -311,10 +332,7 @@ export function CatalogSearchExperience() {
 									count={row.count}
 									active={vendor === row.slug}
 									onClick={() => {
-										commit({
-											vendor: row.slug,
-											page: 1,
-										});
+										router.push(vendorViewHref(row.slug));
 									}}
 								/>
 							))}
@@ -406,23 +424,64 @@ export function CatalogSearchExperience() {
 							</a>
 						</li>
 						<li aria-hidden="true">/</li>
-						<li>
-							{selectedCategory
-								? (
-									<button type="button" className="hover:text-ink" onClick={() => commit({ category: '', page: 1 })}>
-										Shop
-									</button>
-								)
-								: <span className="text-ink">Shop</span>}
-						</li>
-						{selectedCategory
+						{lockedVendor
 							? (
 								<>
-									<li aria-hidden="true">/</li>
-									<li className="text-ink">{selectedCategory.name}</li>
+									<li>
+										{selectedCategory || committedQuery.trim()
+											? (
+												<button
+													type="button"
+													className="hover:text-ink"
+													onClick={() => {
+														setQuery('');
+														commit({
+															q: '',
+															category: '',
+															page: 1,
+														});
+													}}
+												>
+													{lockedVendor.name}
+												</button>
+											)
+											: (
+												<span className="text-ink">
+													{lockedVendor.name}
+												</span>
+											)}
+									</li>
+									{selectedCategory
+										? (
+											<>
+												<li aria-hidden="true">/</li>
+												<li className="text-ink">{selectedCategory.name}</li>
+											</>
+										)
+										: null}
 								</>
 							)
-							: null}
+							: (
+								<>
+									<li>
+										{selectedCategory
+											? (
+												<button type="button" className="hover:text-ink" onClick={() => commit({ category: '', page: 1 })}>
+													Shop
+												</button>
+											)
+											: <span className="text-ink">Shop</span>}
+									</li>
+									{selectedCategory
+										? (
+											<>
+												<li aria-hidden="true">/</li>
+												<li className="text-ink">{selectedCategory.name}</li>
+											</>
+										)
+										: null}
+								</>
+							)}
 					</ol>
 				</nav>
 
@@ -443,10 +502,10 @@ export function CatalogSearchExperience() {
 					)
 					: null}
 
-				{vendor || appliedFilters.length > 0
+				{(!lockedVendor && vendor) || appliedFilters.length > 0
 					? (
 						<div className="mt-3 flex flex-wrap gap-2">
-							{vendor
+							{!lockedVendor && vendor
 								? (
 									<Chip onClick={() => commit({ vendor: '', page: 1 })}>
 										{vendorLabel}

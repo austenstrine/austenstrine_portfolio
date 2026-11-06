@@ -12,6 +12,7 @@ import {
 import { upsertCartLine } from '../../lib/checkout-api';
 import { ACCESS_REASONS, buildLoginUrl } from '../../lib/accessGate';
 import { useSession } from '../../lib/useSession';
+import { vendorViewHref } from '../../lib/vendor-ref';
 import { CatalogCover } from './CatalogCover';
 import { ProductCard } from './ProductCard';
 import { ProductQuickEdit } from './ProductQuickEdit';
@@ -185,7 +186,7 @@ export function ProductDetailClient({
 	const searchHref = product.category
 		? `/place-et-marque/search?category=${encodeURIComponent(product.category.slug)}`
 		: '/place-et-marque/search';
-	const vendorHref = `/place-et-marque/search?vendor=${encodeURIComponent(product.vendor.slug)}`;
+	const vendorHref = vendorViewHref(product.vendor.slug);
 	const highlightAttributes = useMemo(() => {
 		const rows: Array<{ label: string; value: string }> = [];
 		for(const attribute of product.attributes) {

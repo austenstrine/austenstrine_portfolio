@@ -90,6 +90,23 @@ export class VendorService {
 		}));
 	}
 
+	/** Public buyer storefront lookup by link name (or legacy UUID). */
+	async getPublicVendor(vendorRef: string) {
+		const vendor = await this.resolveVendorRecord(vendorRef);
+		if(!vendor) {
+			throw new NotFoundException('Vendor not found.');
+		}
+		const productCount = await this.prisma.catalogProduct.count({
+			where: { vendorId: vendor.id },
+		});
+		return {
+			id: vendor.id,
+			name: vendor.name,
+			slug: vendor.slug,
+			productCount,
+		};
+	}
+
 	/**
 	 * Resolve membership vendor by human-readable link name or legacy UUID.
 	 */

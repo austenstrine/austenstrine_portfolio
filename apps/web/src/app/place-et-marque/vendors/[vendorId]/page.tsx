@@ -1636,7 +1636,7 @@ function VendorDetailContent() {
 										transition
 										hover:bg-sky/5
 									"
-									href={`/place-et-marque/search?vendor=${encodeURIComponent(vendor.slug)}`}
+									href={`/place-et-marque/${encodeURIComponent(vendor.slug)}`}
 								>
 									<EyeIcon
 										className="
@@ -1646,7 +1646,7 @@ function VendorDetailContent() {
 										"
 									/>
 									<span className="min-w-0 flex-1 text-left">
-										View products
+										View storefront
 									</span>
 									<ArrowRightIcon
 										className="
