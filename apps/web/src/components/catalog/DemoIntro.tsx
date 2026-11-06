@@ -36,7 +36,7 @@ export function DemoIntro() {
 				"
 			>
 				Live inventory from multiple vendors, pack and piece units, and Stripe
-				checkout. This catalog is a working demo. Sign in to buy.
+				checkout. This catalog is a working demo.
 			</p>
 			<div
 				className="
