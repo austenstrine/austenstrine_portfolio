@@ -3,15 +3,15 @@
 	"tasks": [
 		{
 			"label": "port-broadcast: 6 tabs",
-			"detail": "Delegates to austenstrine/port-broadcast-bash via scripts/ wrappers (ports 4591\u20134596)",
+			"detail": "Cursor integrated hops (labels = stack names). Prefer Linux Ptyxis via scripts/port-broadcast-stack.conf for --title=<alias>.",
 			"dependsOrder": "parallel",
 			"dependsOn": [
-				"port-broadcast: tab 4591",
-				"port-broadcast: tab 4592",
-				"port-broadcast: tab 4593",
-				"port-broadcast: tab 4594",
-				"port-broadcast: tab 4595",
-				"port-broadcast: tab 4596"
+				"port-broadcast: rlog",
+				"port-broadcast: proxy",
+				"port-broadcast: cdn",
+				"port-broadcast: backend",
+				"port-broadcast: frontend",
+				"port-broadcast: crm"
 			],
 			"problemMatcher": []
 		},
@@ -53,9 +53,10 @@
 			}
 		},
 		{
-			"label": "port-broadcast: tab 4591",
+			"label": "port-broadcast: rlog",
+			"detail": "Cursor hop nc :4591 — global dssh rlog (not a dssh_targets container)",
 			"type": "shell",
-			"command": "echo '[port-broadcast] ready'; \"${workspaceFolder}/scripts/port-broadcast-shell\" -p 4591",
+			"command": "printf '\\033]0;rlog\\007'; echo '[port-broadcast] ready'; \"${workspaceFolder}/scripts/port-broadcast-shell\" -p 4591",
 			"isBackground": true,
 			"options": {
 				"cwd": "${workspaceFolder}",
@@ -77,7 +78,7 @@
 				"group": "port-broadcast"
 			},
 			"problemMatcher": {
-				"owner": "port-broadcast-4591",
+				"owner": "port-broadcast-rlog",
 				"pattern": {
 					"regexp": "^$"
 				},
@@ -89,9 +90,10 @@
 			}
 		},
 		{
-			"label": "port-broadcast: tab 4592",
+			"label": "port-broadcast: proxy",
+			"detail": "Cursor hop nc :4592 — dssh target proxy",
 			"type": "shell",
-			"command": "echo '[port-broadcast] ready'; \"${workspaceFolder}/scripts/port-broadcast-shell\" -p 4592",
+			"command": "printf '\\033]0;proxy\\007'; echo '[port-broadcast] ready'; \"${workspaceFolder}/scripts/port-broadcast-shell\" -p 4592",
 			"isBackground": true,
 			"options": {
 				"cwd": "${workspaceFolder}",
@@ -113,7 +115,7 @@
 				"group": "port-broadcast"
 			},
 			"problemMatcher": {
-				"owner": "port-broadcast-4592",
+				"owner": "port-broadcast-proxy",
 				"pattern": {
 					"regexp": "^$"
 				},
@@ -125,9 +127,10 @@
 			}
 		},
 		{
-			"label": "port-broadcast: tab 4593",
+			"label": "port-broadcast: cdn",
+			"detail": "Cursor hop nc :4593 — dssh target cdn",
 			"type": "shell",
-			"command": "echo '[port-broadcast] ready'; \"${workspaceFolder}/scripts/port-broadcast-shell\" -p 4593",
+			"command": "printf '\\033]0;cdn\\007'; echo '[port-broadcast] ready'; \"${workspaceFolder}/scripts/port-broadcast-shell\" -p 4593",
 			"isBackground": true,
 			"options": {
 				"cwd": "${workspaceFolder}",
@@ -149,7 +152,7 @@
 				"group": "port-broadcast"
 			},
 			"problemMatcher": {
-				"owner": "port-broadcast-4593",
+				"owner": "port-broadcast-cdn",
 				"pattern": {
 					"regexp": "^$"
 				},
@@ -161,9 +164,10 @@
 			}
 		},
 		{
-			"label": "port-broadcast: tab 4594",
+			"label": "port-broadcast: backend",
+			"detail": "Cursor hop nc :4594 — dssh target backend",
 			"type": "shell",
-			"command": "echo '[port-broadcast] ready'; \"${workspaceFolder}/scripts/port-broadcast-shell\" -p 4594",
+			"command": "printf '\\033]0;backend\\007'; echo '[port-broadcast] ready'; \"${workspaceFolder}/scripts/port-broadcast-shell\" -p 4594",
 			"isBackground": true,
 			"options": {
 				"cwd": "${workspaceFolder}",
@@ -185,7 +189,7 @@
 				"group": "port-broadcast"
 			},
 			"problemMatcher": {
-				"owner": "port-broadcast-4594",
+				"owner": "port-broadcast-backend",
 				"pattern": {
 					"regexp": "^$"
 				},
@@ -197,9 +201,10 @@
 			}
 		},
 		{
-			"label": "port-broadcast: tab 4595",
+			"label": "port-broadcast: frontend",
+			"detail": "Cursor hop nc :4595 — dssh target frontend",
 			"type": "shell",
-			"command": "echo '[port-broadcast] ready'; \"${workspaceFolder}/scripts/port-broadcast-shell\" -p 4595",
+			"command": "printf '\\033]0;frontend\\007'; echo '[port-broadcast] ready'; \"${workspaceFolder}/scripts/port-broadcast-shell\" -p 4595",
 			"isBackground": true,
 			"options": {
 				"cwd": "${workspaceFolder}",
@@ -221,7 +226,7 @@
 				"group": "port-broadcast"
 			},
 			"problemMatcher": {
-				"owner": "port-broadcast-4595",
+				"owner": "port-broadcast-frontend",
 				"pattern": {
 					"regexp": "^$"
 				},
@@ -233,9 +238,10 @@
 			}
 		},
 		{
-			"label": "port-broadcast: tab 4596",
+			"label": "port-broadcast: crm",
+			"detail": "Cursor hop nc :4596 — dssh target crm",
 			"type": "shell",
-			"command": "echo '[port-broadcast] ready'; \"${workspaceFolder}/scripts/port-broadcast-shell\" -p 4596",
+			"command": "printf '\\033]0;crm\\007'; echo '[port-broadcast] ready'; \"${workspaceFolder}/scripts/port-broadcast-shell\" -p 4596",
 			"isBackground": true,
 			"options": {
 				"cwd": "${workspaceFolder}",
@@ -257,7 +263,7 @@
 				"group": "port-broadcast"
 			},
 			"problemMatcher": {
-				"owner": "port-broadcast-4596",
+				"owner": "port-broadcast-crm",
 				"pattern": {
 					"regexp": "^$"
 				},

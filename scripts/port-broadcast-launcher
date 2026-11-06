@@ -1,13 +1,30 @@
 #!/usr/bin/env bash
 # Thin wrapper — canonical tool lives in austenstrine/port-broadcast-bash
 # https://github.com/austenstrine/port-broadcast-bash
+#
+# Stack tab titles need sibling support for --tab-alias / config alias.N
+# (master ≥ 798a37c). Refuse older checkouts so titles cannot silently fall
+# back to pb:<port>.
 set -euo pipefail
 HOME_DIR="${PORT_BROADCAST_HOME:-$HOME/Development/port-broadcast-bash}"
 TARGET="${HOME_DIR}/bin/port-broadcast-launcher"
+MIN_REV="${PORT_BROADCAST_MIN_REV:-798a37cbfe0f9f10dd796e4827ce5d4397951e39}"
 if [[ ! -x "$TARGET" ]]; then
 	echo "port-broadcast-launcher: missing $TARGET" >&2
 	echo "Clone https://github.com/austenstrine/port-broadcast-bash to ${HOME_DIR}" >&2
 	echo "Or set PORT_BROADCAST_HOME to that checkout." >&2
 	exit 1
+fi
+if ! grep -q -- '--tab-alias' "$TARGET" 2>/dev/null; then
+	echo "port-broadcast-launcher: sibling at ${HOME_DIR} lacks --tab-alias" >&2
+	echo "Update that checkout to master (≥ ${MIN_REV:0:7}) then retry." >&2
+	exit 1
+fi
+if [[ -d "${HOME_DIR}/.git" ]] && command -v git >/dev/null 2>&1; then
+	if ! git -C "$HOME_DIR" merge-base --is-ancestor "$MIN_REV" HEAD 2>/dev/null; then
+		echo "port-broadcast-launcher: sibling ${HOME_DIR} is older than ${MIN_REV:0:7}" >&2
+		echo "Run: git -C ${HOME_DIR} checkout master && git -C ${HOME_DIR} pull --ff-only" >&2
+		exit 1
+	fi
 fi
 exec "$TARGET" "$@"
