@@ -1,6 +1,10 @@
 import { redirect } from 'next/navigation';
 import { ApiUnavailable } from '../../../../../components/ApiUnavailable';
-import { getCatalogProductById } from '../../../../../lib/catalog-api';
+import { CatalogNotFound } from '../../../../../components/CatalogNotFound';
+import {
+	getCatalogProductById,
+	isCatalogNotFound,
+} from '../../../../../lib/catalog-api';
 import { productEditHref } from '../../../../../lib/vendor-ref';
 
 type LegacyEditRedirectProps = {
@@ -18,9 +22,17 @@ export default async function LegacyEditProductRedirectPage({
 		vendorSlug = product.vendor.slug;
 		productSlug = product.slug;
 	}
-	catch {
+	catch(error) {
+		if(isCatalogNotFound(error)) {
+			return (
+				<CatalogNotFound
+					title="Product not found"
+					detail="This edit link is missing its product, or the link is out of date."
+				/>
+			);
+		}
 		return (
-			<ApiUnavailable detail="This edit link loaded, but the product could not be found or the catalog API could not be reached." />
+			<ApiUnavailable detail="This edit link loaded, but the catalog API could not be reached." />
 		);
 	}
 

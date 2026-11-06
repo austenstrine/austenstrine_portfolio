@@ -2,9 +2,11 @@ import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { cache } from 'react';
 import { ApiUnavailable } from '../../../../components/ApiUnavailable';
+import { CatalogNotFound } from '../../../../components/CatalogNotFound';
 import { ProductDetailClient } from '../../../../components/catalog/ProductDetailClient';
 import {
 	getCatalogProduct,
+	isCatalogNotFound,
 	searchCatalogProducts,
 	type CatalogProductDetail,
 	type CatalogProductSummary,
@@ -76,7 +78,15 @@ export default async function ProductPage({ params }: ProductPageProps) {
 	try {
 		product = await loadProduct(vendorSlug, productSlug);
 	}
-	catch {
+	catch(error) {
+		if(isCatalogNotFound(error)) {
+			return (
+				<CatalogNotFound
+					title="Product not found"
+					detail="This product is not in the catalog, or the link is out of date."
+				/>
+			);
+		}
 		return (
 			<ApiUnavailable detail="This product page loaded, but the catalog API could not be reached." />
 		);
