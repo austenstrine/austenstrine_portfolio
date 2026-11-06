@@ -1,0 +1,193 @@
+#!/usr/bin/env bash
+# port-broadcast-shell — interactive PTY session + in-memory TCP output broadcast
+#
+# Runs a real TTY session in this terminal (via script(1) PTY). A side channel
+# streams the same session output to a TCP listen port. No disk log of the
+# session — pipes/sockets/memory only.
+#
+# Start (interactive shell):
+#   ./scripts/port-broadcast-shell
+#   ./scripts/port-broadcast-shell -p 4591
+#   PORT_BROADCAST_PORT=4591 ./scripts/port-broadcast-shell
+#
+# Start (one command in a PTY, then exit):
+#   ./scripts/port-broadcast-shell -- sh -c 'tty; echo hello; seq 3'
+#
+# Listen (another terminal / agent):
+#   nc 127.0.0.1 4591
+#   socat - TCP:127.0.0.1:4591
+#
+# Defaults: bind 127.0.0.1, port 4591.
+# Caveats: no auth; bind 0.0.0.0 only if you intend LAN exposure; multiple
+# listeners are supported (fan-out); late joiners see output from connect time
+# only (no replay); typescript control codes are included in the stream.
+
+set -euo pipefail
+
+BIND="${PORT_BROADCAST_BIND:-127.0.0.1}"
+PORT="${PORT_BROADCAST_PORT:-4591}"
+CMD=()
+
+usage() {
+	cat <<'EOF'
+Usage: port-broadcast-shell [-b bind] [-p port] [-- command [args...]]
+
+  Interactive PTY in this terminal; session output also broadcast on TCP.
+  No disk session log (memory/pipes/sockets only).
+
+Options:
+  -b, --bind ADDR   Listen address (default: 127.0.0.1, or PORT_BROADCAST_BIND)
+  -p, --port PORT   Listen port (default: 4591, or PORT_BROADCAST_PORT)
+  -h, --help        Show this help
+
+  -- command ...    Run command under the PTY instead of $SHELL
+
+Listen:
+  nc 127.0.0.1 4591
+  socat - TCP:127.0.0.1:4591
+
+Caveats: no authentication; prefer localhost bind; late clients get live
+tail only; stream includes terminal control sequences from the PTY.
+EOF
+}
+
+while [[ $# -gt 0 ]]; do
+	case "$1" in
+		-b|--bind)
+			BIND="${2:?missing bind address}"
+			shift 2
+			;;
+		-p|--port)
+			PORT="${2:?missing port}"
+			shift 2
+			;;
+		-h|--help)
+			usage
+			exit 0
+			;;
+		--)
+			shift
+			CMD=("$@")
+			break
+			;;
+		-*)
+			echo "port-broadcast-shell: unknown option: $1" >&2
+			usage >&2
+			exit 2
+			;;
+		*)
+			CMD=("$@")
+			break
+			;;
+	esac
+done
+
+if ! [[ "$PORT" =~ ^[0-9]+$ ]] || (( PORT < 1 || PORT > 65535 )); then
+	echo "port-broadcast-shell: invalid port: $PORT" >&2
+	exit 2
+fi
+
+if ! command -v script >/dev/null 2>&1; then
+	echo "port-broadcast-shell: script(1) required (bsdutils/util-linux)" >&2
+	exit 1
+fi
+
+if ! command -v python3 >/dev/null 2>&1; then
+	echo "port-broadcast-shell: python3 required for the in-memory TCP fan-out" >&2
+	exit 1
+fi
+
+# Side-channel broadcaster: always drain stdin (script --log-out) so the PTY
+# never blocks when nobody is listening; fan-out to current TCP clients.
+BROADCAST_PY=$(cat <<'PY'
+import selectors
+import socket
+import sys
+import threading
+
+bind, port = sys.argv[1], int(sys.argv[2])
+clients: set[socket.socket] = set()
+lock = threading.Lock()
+
+
+def accept_loop(server: socket.socket) -> None:
+	while True:
+		try:
+			conn, _addr = server.accept()
+		except OSError:
+			break
+		conn.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
+		with lock:
+			clients.add(conn)
+
+
+def broadcast(data: bytes) -> None:
+	dead: list[socket.socket] = []
+	with lock:
+		for conn in clients:
+			try:
+				conn.sendall(data)
+			except OSError:
+				dead.append(conn)
+		for conn in dead:
+			clients.discard(conn)
+			try:
+				conn.close()
+			except OSError:
+				pass
+
+
+def main() -> int:
+	server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+	server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+	server.bind((bind, port))
+	server.listen(32)
+	threading.Thread(target=accept_loop, args=(server,), daemon=True).start()
+
+	# Unbuffered binary drain of script(1) typescript — discard if no clients.
+	stdin = sys.stdin.buffer
+	sel = selectors.DefaultSelector()
+	sel.register(stdin, selectors.EVENT_READ)
+	try:
+		while True:
+			sel.select()
+			data = stdin.read(65536)
+			if not data:
+				break
+			broadcast(data)
+	finally:
+		sel.close()
+		with lock:
+			for conn in list(clients):
+				try:
+					conn.close()
+				except OSError:
+					pass
+			clients.clear()
+		try:
+			server.close()
+		except OSError:
+			pass
+	return 0
+
+
+if __name__ == "__main__":
+	raise SystemExit(main())
+PY
+)
+
+echo "port-broadcast-shell: PTY in this terminal; broadcast ${BIND}:${PORT} (nc ${BIND} ${PORT})" >&2
+
+# script(1) allocates a real PTY for the child — interactive input and
+# curses/TTY apps work. The typescript sink is a process substitution (no
+# disk log). -f flushes so listeners see output promptly.
+# Do NOT exec: bash must own the >(…) lifecycle or script never exits.
+if ((${#CMD[@]})); then
+	cmd_str=$(printf '%q ' "${CMD[@]}")
+	script -q -f -e -c "$cmd_str" \
+		>(python3 -u -c "$BROADCAST_PY" "$BIND" "$PORT")
+	exit $?
+fi
+
+script -q -f -e >(python3 -u -c "$BROADCAST_PY" "$BIND" "$PORT")
+exit $?
