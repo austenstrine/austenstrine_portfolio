@@ -21,6 +21,7 @@ import {
 	CatalogMenuSurface,
 	useCatalogFloatingMenu,
 } from './CatalogMenu';
+import { HeaderPortraitLink } from './HeaderPortraitLink';
 import { MarketplaceBrandLink } from './MarketplaceBrandLink';
 import { SellerModeChip } from './SellerModeChip';
 import { useCatalogSearch } from './CatalogSearchContext';
@@ -794,6 +795,7 @@ export function CatalogHeader() {
 						: 'translateY(0)',
 				}}
 			>
+				<HeaderPortraitLink />
 				<div
 					className="
 						mx-auto
