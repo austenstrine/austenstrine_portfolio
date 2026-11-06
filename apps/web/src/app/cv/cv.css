@@ -112,10 +112,10 @@ html:has(.cv-page) body {
 }
 
 .cv-page .cv-header {
-	/* 1px green rule; margin-bottom stands alone vs Summary (no collapse) */
-	border-bottom: 1px solid var(--asgreen);
-	padding-bottom: 0.85rem;
-	margin-bottom: 1.85rem;
+	/* Lighter 1px rule; large margin so Summary isn’t pinched against its own HR */
+	border-bottom: 1px solid color-mix(in srgb, var(--asgreen) 72%, #fff);
+	padding-bottom: 1rem;
+	margin-bottom: 2.5rem;
 }
 
 .cv-page .cv-header h1 {
@@ -230,8 +230,8 @@ html:has(.cv-page) body {
 	}
 
 	.cv-page .cv-header {
-		padding-bottom: 0.95rem;
-		margin-bottom: 1.75rem;
+		padding-bottom: 1.05rem;
+		margin-bottom: 2.35rem;
 	}
 }
 
@@ -250,9 +250,9 @@ html:has(.cv-page) body {
 	text-transform: uppercase;
 	letter-spacing: 1.2px;
 	color: #0d1b2a;
-	border-bottom: 1px solid #d0d5da;
-	padding-bottom: 0.35rem;
-	margin: 0 0 0.85rem;
+	border-bottom: 1px solid #d8dde2;
+	padding-bottom: 0.4rem;
+	margin: 0 0 0.9rem;
 }
 
 .cv-page .cv-summary p {
