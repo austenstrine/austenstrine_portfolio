@@ -242,6 +242,15 @@ model Vendor {
   id                         String    @id @default(uuid())
   slug                       String    @unique
   name                       String
+  /// Short buyer-facing line under the store name.
+  tagline                    String?
+  /// Longer self-description shown on the public storefront.
+  about                      String?
+  /// Freeform place label, e.g. "Portland, OR".
+  locationLabel              String?
+  contactEmail               String?
+  contactPhone               String?
+  websiteUrl                 String?
   /// Exactly one vendor may be the supervendor (category + global taxonomy admin).
   isSuperVendor              Boolean   @default(false)
   stripeConnectAccountId     String?

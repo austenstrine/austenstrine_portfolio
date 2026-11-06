@@ -103,10 +103,16 @@ function pageItems(current: number, total: number) {
 type CatalogSearchExperienceProps = {
 	/** When set, search stays scoped to this seller (buyer vendor storefront). */
 	lockedVendor?: { slug: string; name: string } | null;
+	/**
+	 * Storefront profile above owns seller identity chrome.
+	 * Hide the duplicate breadcrumb/H1; keep category and search headings.
+	 */
+	hideVendorIdentityChrome?: boolean;
 };
 
 export function CatalogSearchExperience({
 	lockedVendor = null,
+	hideVendorIdentityChrome = false,
 }: CatalogSearchExperienceProps = {}) {
 	const router = useRouter();
 	const pathname = usePathname();
@@ -233,8 +239,10 @@ export function CatalogSearchExperience({
 	const catalogHeading = selectedCategory?.name
 		?? (committedQuery.trim()
 			? `Results for “${committedQuery.trim()}”`
-			: lockedVendor?.name
-				?? null);
+			: hideVendorIdentityChrome
+				? 'Products'
+				: lockedVendor?.name
+					?? null);
 	const vendorLabel = lockedVendor?.name
 		?? (vendor ? titleCaseSlug(vendor) : '');
 	const clearableFilterCount = [
@@ -410,85 +418,94 @@ export function CatalogSearchExperience({
 		</div>
 	);
 
+	const headingTag = hideVendorIdentityChrome
+		? 'h2'
+		: 'h1';
+	const HeadingTag = headingTag;
+
 	return (
 		<div className="-mx-gutter min-w-0 max-w-full overflow-x-hidden px-gutter">
 			<div className="mx-auto min-w-0 max-w-full">
-				<nav className="text-[12px] text-slate-500" aria-label="Breadcrumb">
-					<ol className="flex flex-wrap items-center gap-2">
-						<li>
-							<a
-								className="hover:text-ink"
-								href="/place-et-marque"
-							>
-								Place et Marque
-							</a>
-						</li>
-						<li aria-hidden="true">/</li>
-						{lockedVendor
-							? (
-								<>
-									<li>
-										{selectedCategory || committedQuery.trim()
-											? (
-												<button
-													type="button"
-													className="hover:text-ink"
-													onClick={() => {
-														setQuery('');
-														commit({
-															q: '',
-															category: '',
-															page: 1,
-														});
-													}}
-												>
-													{lockedVendor.name}
-												</button>
-											)
-											: (
-												<span className="text-ink">
-													{lockedVendor.name}
-												</span>
-											)}
-									</li>
-									{selectedCategory
-										? (
-											<>
-												<li aria-hidden="true">/</li>
-												<li className="text-ink">{selectedCategory.name}</li>
-											</>
-										)
-										: null}
-								</>
-							)
-							: (
-								<>
-									<li>
-										{selectedCategory
-											? (
-												<button type="button" className="hover:text-ink" onClick={() => commit({ category: '', page: 1 })}>
-													Shop
-												</button>
-											)
-											: <span className="text-ink">Shop</span>}
-									</li>
-									{selectedCategory
-										? (
-											<>
-												<li aria-hidden="true">/</li>
-												<li className="text-ink">{selectedCategory.name}</li>
-											</>
-										)
-										: null}
-								</>
-							)}
-					</ol>
-				</nav>
+				{!hideVendorIdentityChrome
+					? (
+						<nav className="text-[12px] text-slate-500" aria-label="Breadcrumb">
+							<ol className="flex flex-wrap items-center gap-2">
+								<li>
+									<a
+										className="hover:text-ink"
+										href="/place-et-marque"
+									>
+										Place et Marque
+									</a>
+								</li>
+								<li aria-hidden="true">/</li>
+								{lockedVendor
+									? (
+										<>
+											<li>
+												{selectedCategory || committedQuery.trim()
+													? (
+														<button
+															type="button"
+															className="hover:text-ink"
+															onClick={() => {
+																setQuery('');
+																commit({
+																	q: '',
+																	category: '',
+																	page: 1,
+																});
+															}}
+														>
+															{lockedVendor.name}
+														</button>
+													)
+													: (
+														<span className="text-ink">
+															{lockedVendor.name}
+														</span>
+													)}
+											</li>
+											{selectedCategory
+												? (
+													<>
+														<li aria-hidden="true">/</li>
+														<li className="text-ink">{selectedCategory.name}</li>
+													</>
+												)
+												: null}
+										</>
+									)
+									: (
+										<>
+											<li>
+												{selectedCategory
+													? (
+														<button type="button" className="hover:text-ink" onClick={() => commit({ category: '', page: 1 })}>
+															Shop
+														</button>
+													)
+													: <span className="text-ink">Shop</span>}
+											</li>
+											{selectedCategory
+												? (
+													<>
+														<li aria-hidden="true">/</li>
+														<li className="text-ink">{selectedCategory.name}</li>
+													</>
+												)
+												: null}
+										</>
+									)}
+							</ol>
+						</nav>
+					)
+					: null}
 
 				{catalogHeading
 					? (
-						<div className="mt-5 min-w-0 max-w-full">
-							<h1
+						<div className={`${hideVendorIdentityChrome ? 'mt-0' : 'mt-5'} min-w-0 max-w-full`}>
+							<HeadingTag
 								className="
 									min-w-0
 									max-w-full
@@ -502,7 +519,7 @@ export function CatalogSearchExperience({
 								title={catalogHeading}
 							>
 								{catalogHeading}
-							</h1>
+							</HeadingTag>
 							<p className="mt-1 text-sm text-slate-600" aria-live="polite">
 								{loading && !hasLoaded
 									? 'Loading the catalog'
@@ -554,24 +571,28 @@ export function CatalogSearchExperience({
 					)
 					: null}
 
-				<p className="mt-6 flex flex-wrap gap-3 text-sm lg:mt-8">
-					<a
-						className="
-							rounded
-							font-semibold
-							text-sky
-							underline
-							underline-offset-2
-							focus:outline
-							focus:outline-2
-							focus:outline-offset-2
-							focus:outline-sky
-						"
-						href="#catalog-results"
-					>
-						Skip to results
-					</a>
-				</p>
+				{!hideVendorIdentityChrome
+					? (
+						<p className="mt-6 flex flex-wrap gap-3 text-sm lg:mt-8">
+							<a
+								className="
+									rounded
+									font-semibold
+									text-sky
+									underline
+									underline-offset-2
+									focus:outline
+									focus:outline-2
+									focus:outline-offset-2
+									focus:outline-sky
+								"
+								href="#catalog-results"
+							>
+								Skip to results
+							</a>
+						</p>
+					)
+					: null}
 
 				<div className="mt-3 grid gap-10 lg:grid-cols-[240px_minmax(0,1fr)]">
 					<aside

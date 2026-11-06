@@ -466,7 +466,16 @@ export function listPopularTags(params?: {
 	return catalogRequest(`/tags/popular${suffix}`);
 }
 
-export type VendorSummary = {
+export type VendorPublicProfileFields = {
+	tagline?: string | null;
+	about?: string | null;
+	locationLabel?: string | null;
+	contactEmail?: string | null;
+	contactPhone?: string | null;
+	websiteUrl?: string | null;
+};
+
+export type VendorSummary = VendorPublicProfileFields & {
 	id: string;
 	name: string;
 	slug: string;
@@ -513,6 +522,28 @@ export function listMyVendors(): Promise<VendorSummary[]> {
 export function getMyVendor(vendorId: string): Promise<VendorDetail> {
 	return catalogRequest<VendorDetail>(
 		`/vendors/mine/${encodeURIComponent(vendorId)}`,
+	);
+}
+
+export type UpdateVendorProfilePayload = {
+	tagline?: string | null;
+	about?: string | null;
+	locationLabel?: string | null;
+	contactEmail?: string | null;
+	contactPhone?: string | null;
+	websiteUrl?: string | null;
+};
+
+export function updateVendorProfile(
+	vendorId: string,
+	payload: UpdateVendorProfilePayload,
+): Promise<VendorSummary> {
+	return catalogRequest<VendorSummary>(
+		`/vendors/${encodeURIComponent(vendorId)}/profile`,
+		{
+			method: 'PATCH',
+			body: JSON.stringify(payload),
+		},
 	);
 }
 

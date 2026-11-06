@@ -1,7 +1,16 @@
 import { authedFetch } from './auth-api';
 import { CatalogApiError } from './catalog-api';
 
-export type PublicVendor = {
+export type VendorPublicProfile = {
+	tagline: string | null;
+	about: string | null;
+	locationLabel: string | null;
+	contactEmail: string | null;
+	contactPhone: string | null;
+	websiteUrl: string | null;
+};
+
+export type PublicVendor = VendorPublicProfile & {
 	id: string;
 	name: string;
 	slug: string;
