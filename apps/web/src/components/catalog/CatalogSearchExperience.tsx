@@ -9,6 +9,7 @@ import {
 	type CatalogSearchResult,
 	type CatalogTermFacet,
 } from '../../lib/catalog-api';
+import { vendorViewHref } from '../../lib/vendor-ref';
 import { ArrowLeftIcon } from '../icons/ArrowLeftIcon';
 import { ArrowRightIcon } from '../icons/ArrowRightIcon';
 import {
@@ -99,7 +100,20 @@ function pageItems(current: number, total: number) {
 	return items;
 }
 
-export function CatalogSearchExperience() {
+type CatalogSearchExperienceProps = {
+	/** When set, search stays scoped to this seller (buyer vendor storefront). */
+	lockedVendor?: { slug: string; name: string } | null;
+	/**
+	 * Storefront profile above owns seller identity chrome.
+	 * Hide the duplicate breadcrumb/H1; keep category and search headings.
+	 */
+	hideVendorIdentityChrome?: boolean;
+};
+
+export function CatalogSearchExperience({
+	lockedVendor = null,
+	hideVendorIdentityChrome = false,
+}: CatalogSearchExperienceProps = {}) {
 	const router = useRouter();
 	const pathname = usePathname();
 	const searchParams = useSearchParams();
@@ -117,13 +131,14 @@ export function CatalogSearchExperience() {
 	const {
 		q: committedQuery,
 		category,
-		vendor,
+		vendor: urlVendor,
 		sort,
 		page,
 		inStock,
 		manualValueIds,
 		omitValueIds,
 	} = committed;
+	const vendor = lockedVendor?.slug || urlVendor;
 
 	const [filtersOpen, setFiltersOpen] = useState(false);
 	const [expandedFacets, setExpandedFacets] = useState<string[]>([]);
@@ -143,11 +158,19 @@ export function CatalogSearchExperience() {
 	}, [category, committedQuery, setCommittedQuery, setQuery, syncCategory]);
 
 	const commit = (patch: Partial<SearchUrlState>) => {
-		const next = searchQueryString({
+		const merged: SearchUrlState = {
 			...committed,
 			...patch,
-		});
-		if(next === searchQueryString(committed)) {
+		};
+		if(lockedVendor) {
+			// Seller is path-scoped; keep it out of the query string.
+			merged.vendor = '';
+		}
+		const next = searchQueryString(merged);
+		const currentQuery = lockedVendor
+			? searchQueryString({ ...committed, vendor: '' })
+			: searchQueryString(committed);
+		if(next === currentQuery) {
 			return;
 		}
 		router.push(next ? `${pathname}?${next}` : pathname, { scroll: false });
@@ -214,11 +237,17 @@ export function CatalogSearchExperience() {
 	const rangeEnd = Math.min(page * PAGE_SIZE, total);
 	const selectedCategory = categories.find((row) => row.slug === category);
 	const catalogHeading = selectedCategory?.name
-		?? (committedQuery.trim() ? `Results for “${committedQuery.trim()}”` : null);
-	const vendorLabel = vendor ? titleCaseSlug(vendor) : '';
+		?? (committedQuery.trim()
+			? `Results for “${committedQuery.trim()}”`
+			: hideVendorIdentityChrome
+				? 'Products'
+				: lockedVendor?.name
+					?? null);
+	const vendorLabel = lockedVendor?.name
+		?? (vendor ? titleCaseSlug(vendor) : '');
 	const clearableFilterCount = [
 		committedQuery.trim() ? 1 : 0,
-		vendor ? 1 : 0,
+		vendor && !lockedVendor ? 1 : 0,
 		inStock ? 1 : 0,
 		manualValueIds.length,
 		omitValueIds.length,
@@ -228,7 +257,7 @@ export function CatalogSearchExperience() {
 		setQuery('');
 		commit({
 			q: '',
-			vendor: '',
+			vendor: lockedVendor ? lockedVendor.slug : '',
 			inStock: false,
 			manualValueIds: [],
 			omitValueIds: [],
@@ -287,7 +316,7 @@ export function CatalogSearchExperience() {
 				</label>
 			</section>
 
-			{vendorFacets.length > 1 || vendor
+			{!lockedVendor && (vendorFacets.length > 1 || vendor)
 				? (
 					<section>
 						<h2 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">
@@ -311,10 +340,7 @@ export function CatalogSearchExperience() {
 									count={row.count}
 									active={vendor === row.slug}
 									onClick={() => {
-										commit({
-											vendor: row.slug,
-											page: 1,
-										});
+										router.push(vendorViewHref(row.slug));
 									}}
 								/>
 							))}
@@ -392,46 +418,108 @@ export function CatalogSearchExperience() {
 		</div>
 	);
 
+	const headingTag = hideVendorIdentityChrome
+		? 'h2'
+		: 'h1';
+	const HeadingTag = headingTag;
+
 	return (
-		<div className="-mx-gutter px-gutter">
-			<div className="mx-auto">
-				<nav className="text-[12px] text-slate-500" aria-label="Breadcrumb">
-					<ol className="flex flex-wrap items-center gap-2">
-						<li>
-							<a
-								className="hover:text-ink"
-								href="/place-et-marque"
-							>
-								Place et Marque
-							</a>
-						</li>
-						<li aria-hidden="true">/</li>
-						<li>
-							{selectedCategory
-								? (
-									<button type="button" className="hover:text-ink" onClick={() => commit({ category: '', page: 1 })}>
-										Shop
-									</button>
-								)
-								: <span className="text-ink">Shop</span>}
-						</li>
-						{selectedCategory
-							? (
-								<>
-									<li aria-hidden="true">/</li>
-									<li className="text-ink">{selectedCategory.name}</li>
-								</>
-							)
-							: null}
-					</ol>
-				</nav>
+		<div className="-mx-gutter min-w-0 max-w-full overflow-x-hidden px-gutter">
+			<div className="mx-auto min-w-0 max-w-full">
+				{!hideVendorIdentityChrome
+					? (
+						<nav className="text-[12px] text-slate-500" aria-label="Breadcrumb">
+							<ol className="flex flex-wrap items-center gap-2">
+								<li>
+									<a
+										className="hover:text-ink"
+										href="/place-et-marque"
+									>
+										Place et Marque
+									</a>
+								</li>
+								<li aria-hidden="true">/</li>
+								{lockedVendor
+									? (
+										<>
+											<li>
+												{selectedCategory || committedQuery.trim()
+													? (
+														<button
+															type="button"
+															className="hover:text-ink"
+															onClick={() => {
+																setQuery('');
+																commit({
+																	q: '',
+																	category: '',
+																	page: 1,
+																});
+															}}
+														>
+															{lockedVendor.name}
+														</button>
+													)
+													: (
+														<span className="text-ink">
+															{lockedVendor.name}
+														</span>
+													)}
+											</li>
+											{selectedCategory
+												? (
+													<>
+														<li aria-hidden="true">/</li>
+														<li className="text-ink">{selectedCategory.name}</li>
+													</>
+												)
+												: null}
+										</>
+									)
+									: (
+										<>
+											<li>
+												{selectedCategory
+													? (
+														<button type="button" className="hover:text-ink" onClick={() => commit({ category: '', page: 1 })}>
+															Shop
+														</button>
+													)
+													: <span className="text-ink">Shop</span>}
+											</li>
+											{selectedCategory
+												? (
+													<>
+														<li aria-hidden="true">/</li>
+														<li className="text-ink">{selectedCategory.name}</li>
+													</>
+												)
+												: null}
+										</>
+									)}
+							</ol>
+						</nav>
+					)
+					: null}
 
 				{catalogHeading
 					? (
-						<div className="mt-5">
-							<h1 className="text-3xl font-semibold tracking-tight text-ink md:text-4xl">
+						<div className={`${hideVendorIdentityChrome ? 'mt-0' : 'mt-5'} min-w-0 max-w-full`}>
+							<HeadingTag
+								className="
+									min-w-0
+									max-w-full
+									truncate
+									text-3xl
+									font-semibold
+									tracking-tight
+									text-ink
+									md:text-4xl
+								"
+								title={catalogHeading}
+							>
 								{catalogHeading}
-							</h1>
+							</HeadingTag>
 							<p className="mt-1 text-sm text-slate-600" aria-live="polite">
 								{loading && !hasLoaded
 									? 'Loading the catalog'
@@ -443,10 +531,10 @@ export function CatalogSearchExperience() {
 					)
 					: null}
 
-				{vendor || appliedFilters.length > 0
+				{(!lockedVendor && vendor) || appliedFilters.length > 0
 					? (
 						<div className="mt-3 flex flex-wrap gap-2">
-							{vendor
+							{!lockedVendor && vendor
 								? (
 									<Chip onClick={() => commit({ vendor: '', page: 1 })}>
 										{vendorLabel}
@@ -483,7 +571,30 @@ export function CatalogSearchExperience() {
 					)
 					: null}
 
-				<div className="mt-8 grid gap-10 lg:grid-cols-[240px_minmax(0,1fr)]">
+				{!hideVendorIdentityChrome
+					? (
+						<p className="mt-6 flex flex-wrap gap-3 text-sm lg:mt-8">
+							<a
+								className="
+									rounded
+									font-semibold
+									text-sky
+									underline
+									underline-offset-2
+									focus:outline
+									focus:outline-2
+									focus:outline-offset-2
+									focus:outline-sky
+								"
+								href="#catalog-results"
+							>
+								Skip to results
+							</a>
+						</p>
+					)
+					: null}
+
+				<div className="mt-3 grid gap-10 lg:grid-cols-[240px_minmax(0,1fr)]">
 					<aside
 						className="
 							hidden
@@ -503,7 +614,11 @@ export function CatalogSearchExperience() {
 						{facetRail}
 					</aside>
 
-					<div aria-busy={loading}>
+					<div
+						aria-busy={loading}
+						id="catalog-results"
+						tabIndex={-1}
+					>
 						<div
 							className="
 								relative

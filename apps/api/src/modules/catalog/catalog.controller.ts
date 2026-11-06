@@ -38,6 +38,7 @@ import { CreateUomDto } from './dto/create-uom.dto';
 import { AcceptVendorInviteDto } from './dto/accept-vendor-invite.dto';
 import { CreateVendorAppPasswordDto } from './dto/create-vendor-app-password.dto';
 import { CreateVendorDto } from './dto/create-vendor.dto';
+import { UpdateVendorProfileDto } from './dto/update-vendor-profile.dto';
 import { CreateVendorInviteDto } from './dto/create-vendor-invite.dto';
 import { JoinDemoDto } from './dto/join-demo.dto';
 import { DeleteCatalogProductsDto } from './dto/delete-catalog-products.dto';
@@ -225,6 +226,11 @@ export class CatalogController {
 		});
 	}
 
+	@Get('vendors/public/:vendorSlug')
+	getPublicVendor(@Param('vendorSlug') vendorSlug: string) {
+		return this.vendors.getPublicVendor(vendorSlug);
+	}
+
 	@UseGuards(JwtAuthGuard)
 	@Get('vendors/mine')
 	listMyVendors(@Req() req: AuthedRequest) {
@@ -235,6 +241,16 @@ export class CatalogController {
 	@Get('vendors/mine/:vendorId')
 	getMyVendor(@Req() req: AuthedRequest, @Param('vendorId') vendorId: string) {
 		return this.vendors.getMyVendor(req.user!.id, vendorId);
+	}
+
+	@UseGuards(JwtAuthGuard)
+	@Patch('vendors/:vendorId/profile')
+	updateVendorProfile(
+		@Req() req: AuthedRequest,
+		@Param('vendorId') vendorId: string,
+		@Body() dto: UpdateVendorProfileDto,
+	) {
+		return this.vendors.updateVendorProfile(req.user!.id, vendorId, dto);
 	}
 
 	@UseGuards(JwtAuthGuard)

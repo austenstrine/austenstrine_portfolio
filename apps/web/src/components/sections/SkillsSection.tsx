@@ -35,9 +35,11 @@ export function SkillsSection() {
 				border
 				border-slate-200
 				bg-white
-				p-8
+				px-gutter
+				py-8
 				shadow-sm
 				sm:rounded-2xl
+				sm:p-8
 			"
 			id="skills"
 		>
@@ -65,7 +67,7 @@ export function SkillsSection() {
 							border
 							border-slate-200
 							bg-slate-50
-							p-5
+							p-inset
 						"
 						key={skill.title}
 					>

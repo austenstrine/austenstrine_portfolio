@@ -57,37 +57,10 @@ function RecommendationAttribution({
 
 function RecommendationQuote({
 	recommendation,
-	featured = false,
 }: {
 	recommendation: Recommendation;
-	featured?: boolean;
 }) {
 	const paragraphs = recommendation.text.split('\n').filter(Boolean);
-
-	if(featured) {
-		return (
-			<blockquote
-				className="
-					mt-4
-					space-y-3
-					border-l-2
-					border-sky/40
-					pl-4
-					text-base
-					leading-relaxed
-					text-slate-700
-				"
-			>
-				{
-					paragraphs.map((paragraph) => (
-						<p key={paragraph.slice(0, 48)}>
-							{paragraph}
-						</p>
-					))
-				}
-			</blockquote>
-		);
-	}
 
 	return (
 		<blockquote
@@ -97,7 +70,7 @@ function RecommendationQuote({
 				border-l-2
 				border-sky/40
 				pl-4
-				text-sm
+				text-base
 				leading-relaxed
 				text-slate-700
 			"
@@ -125,7 +98,7 @@ function FeaturedRecommendation({
 				border
 				border-slate-100
 				bg-frost/60
-				p-5
+				p-inset
 				md:col-span-2
 				md:p-6
 			"
@@ -172,7 +145,6 @@ function FeaturedRecommendation({
 						recommendation={recommendation}
 					/>
 					<RecommendationQuote
-						featured
 						recommendation={recommendation}
 					/>
 				</div>
@@ -193,7 +165,7 @@ function SupportingRecommendation({
 				border
 				border-slate-100
 				bg-frost/60
-				p-5
+				p-inset
 				md:p-6
 			"
 		>
@@ -253,9 +225,11 @@ export function AboutSection() {
 				border
 				border-slate-200
 				bg-white
-				p-8
+				px-gutter
+				py-8
 				shadow-sm
 				sm:rounded-2xl
+				sm:p-8
 			"
 			id="about"
 		>

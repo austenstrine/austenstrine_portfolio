@@ -11,6 +11,7 @@ import {
 	requestVendorLinkName,
 	revokeVendorAppPassword,
 	revokeVendorInvite,
+	updateVendorProfile,
 	type CreatedVendorAppPassword,
 	type VendorAppPassword,
 	type VendorDetail,
@@ -36,7 +37,7 @@ import { DocumentIcon } from '../../../../components/icons/DocumentIcon';
 import { EyeIcon } from '../../../../components/icons/EyeIcon';
 import { PlusIcon } from '../../../../components/icons/PlusIcon';
 import { useWidgetOpenState } from '../../../../hooks/useWidgetOpenState';
-import { productCreateHref } from '../../../../lib/vendor-ref';
+import { productCreateHref, vendorViewHref } from '../../../../lib/vendor-ref';
 
 function slugify(value: string): string {
 	return value
@@ -123,6 +124,16 @@ function VendorDetailContent() {
 	const [inviteMessage, setInviteMessage] = useState<string | null>(null);
 	const [inviteOpen, setInviteOpen] = useState(false);
 	const [membersOpen, setMembersOpen] = useWidgetOpenState('vendor.members', false);
+	const [profileOpen, setProfileOpen] = useWidgetOpenState('vendor.public-profile', true);
+	const [profileTagline, setProfileTagline] = useState('');
+	const [profileAbout, setProfileAbout] = useState('');
+	const [profileLocation, setProfileLocation] = useState('');
+	const [profileEmail, setProfileEmail] = useState('');
+	const [profilePhone, setProfilePhone] = useState('');
+	const [profileWebsite, setProfileWebsite] = useState('');
+	const [profileBusy, setProfileBusy] = useState(false);
+	const [profileError, setProfileError] = useState<string | null>(null);
+	const [profileMessage, setProfileMessage] = useState<string | null>(null);
 	const [payoutsOpen, setPayoutsOpen] = useWidgetOpenState('vendor.payouts', false);
 	const [shippingProfiles, setShippingProfiles] = useState<ShippingProfile[]>([]);
 	const [shippingBusy, setShippingBusy] = useState(false);
@@ -153,6 +164,12 @@ function VendorDetailContent() {
 			.then(async (detail) => {
 				setVendor(detail);
 				setLinkNameDraft(detail.slug);
+				setProfileTagline(detail.tagline ?? '');
+				setProfileAbout(detail.about ?? '');
+				setProfileLocation(detail.locationLabel ?? '');
+				setProfileEmail(detail.contactEmail ?? '');
+				setProfilePhone(detail.contactPhone ?? '');
+				setProfileWebsite(detail.websiteUrl ?? '');
 				if(detail.resolvedFromId && detail.slug !== vendorRef) {
 					const qs = searchParams.toString();
 					router.replace(
@@ -259,6 +276,53 @@ function VendorDetailContent() {
 		}
 		finally {
 			setLinkNameBusy(false);
+		}
+	}
+
+	async function onSavePublicProfile(event: FormEvent) {
+		event.preventDefault();
+		setProfileMessage(null);
+		if(!vendorId || !vendor) {
+			setProfileError('Organization is still loading. Try again in a moment.');
+			return;
+		}
+		setProfileBusy(true);
+		setProfileError(null);
+		try {
+			const updated = await updateVendorProfile(vendorId, {
+				tagline: profileTagline,
+				about: profileAbout,
+				locationLabel: profileLocation,
+				contactEmail: profileEmail,
+				contactPhone: profilePhone,
+				websiteUrl: profileWebsite,
+			});
+			setVendor({
+				...vendor,
+				tagline: updated.tagline ?? null,
+				about: updated.about ?? null,
+				locationLabel: updated.locationLabel ?? null,
+				contactEmail: updated.contactEmail ?? null,
+				contactPhone: updated.contactPhone ?? null,
+				websiteUrl: updated.websiteUrl ?? null,
+			});
+			setProfileTagline(updated.tagline ?? '');
+			setProfileAbout(updated.about ?? '');
+			setProfileLocation(updated.locationLabel ?? '');
+			setProfileEmail(updated.contactEmail ?? '');
+			setProfilePhone(updated.contactPhone ?? '');
+			setProfileWebsite(updated.websiteUrl ?? '');
+			setProfileMessage('Storefront profile saved.');
+		}
+		catch(saveError) {
+			setProfileError(
+				saveError instanceof Error
+					? saveError.message
+					: 'Could not save the storefront profile.',
+			);
+		}
+		finally {
+			setProfileBusy(false);
 		}
 	}
 
@@ -819,6 +883,253 @@ function VendorDetailContent() {
 									)
 							}
 						</div>
+
+						{(vendor.myRole === 'OWNER' || vendor.myRole === 'EDITOR')
+							? (
+								<CollapsibleWidget
+									widgetId="vendor.public-profile"
+									label="Public storefront"
+									id="public-storefront"
+									panelId="public-storefront-panel"
+									title="Public storefront"
+									expandLabel="Edit buyer-facing profile"
+									open={profileOpen}
+									onOpenChange={setProfileOpen}
+								>
+									<p
+										className="
+											mt-2
+											text-sm
+											text-slate-600
+										"
+									>
+										What buyers see at
+										{' '}
+										<a
+											className="
+												font-semibold
+												text-sky
+												underline-offset-2
+												hover:underline
+											"
+											href={vendorViewHref(vendor.slug)}
+										>
+											/place-et-marque/{vendor.slug}
+										</a>
+										. Leave a field blank to hide it.
+									</p>
+									<form
+										className="
+											mt-4
+											flex
+											flex-col
+											gap-3
+										"
+										noValidate
+										onSubmit={onSavePublicProfile}
+									>
+										<label className="block text-sm">
+											<span className="font-semibold">
+												Tagline
+											</span>
+											<input
+												className="
+													mt-1
+													w-full
+													rounded-lg
+													border
+													border-slate-300
+													px-3
+													py-2
+												"
+												maxLength={160}
+												onChange={(event) => {
+													setProfileTagline(event.target.value);
+													if(profileError) {
+														setProfileError(null);
+													}
+												}}
+												placeholder="Short line under your store name"
+												type="text"
+												value={profileTagline}
+											/>
+										</label>
+										<label className="block text-sm">
+											<span className="font-semibold">
+												About
+											</span>
+											<textarea
+												className="
+													mt-1
+													w-full
+													rounded-lg
+													border
+													border-slate-300
+													px-3
+													py-2
+												"
+												maxLength={5000}
+												onChange={(event) => {
+													setProfileAbout(event.target.value);
+													if(profileError) {
+														setProfileError(null);
+													}
+												}}
+												placeholder="Tell buyers who you are and what you sell"
+												rows={5}
+												value={profileAbout}
+											/>
+										</label>
+										<label className="block text-sm">
+											<span className="font-semibold">
+												Location
+											</span>
+											<input
+												className="
+													mt-1
+													w-full
+													rounded-lg
+													border
+													border-slate-300
+													px-3
+													py-2
+												"
+												maxLength={120}
+												onChange={(event) => {
+													setProfileLocation(event.target.value);
+													if(profileError) {
+														setProfileError(null);
+													}
+												}}
+												placeholder="City, region"
+												type="text"
+												value={profileLocation}
+											/>
+										</label>
+										<label className="block text-sm">
+											<span className="font-semibold">
+												Contact email
+											</span>
+											<input
+												autoComplete="email"
+												className="
+													mt-1
+													w-full
+													rounded-lg
+													border
+													border-slate-300
+													px-3
+													py-2
+												"
+												maxLength={254}
+												onChange={(event) => {
+													setProfileEmail(event.target.value);
+													if(profileError) {
+														setProfileError(null);
+													}
+												}}
+												placeholder="hello@example.com"
+												type="email"
+												value={profileEmail}
+											/>
+										</label>
+										<label className="block text-sm">
+											<span className="font-semibold">
+												Phone
+											</span>
+											<input
+												autoComplete="tel"
+												className="
+													mt-1
+													w-full
+													rounded-lg
+													border
+													border-slate-300
+													px-3
+													py-2
+												"
+												maxLength={40}
+												onChange={(event) => {
+													setProfilePhone(event.target.value);
+													if(profileError) {
+														setProfileError(null);
+													}
+												}}
+												placeholder="+1 (555) 555-0100"
+												type="tel"
+												value={profilePhone}
+											/>
+										</label>
+										<label className="block text-sm">
+											<span className="font-semibold">
+												Website
+											</span>
+											<input
+												className="
+													mt-1
+													w-full
+													rounded-lg
+													border
+													border-slate-300
+													px-3
+													py-2
+												"
+												maxLength={500}
+												onChange={(event) => {
+													setProfileWebsite(event.target.value);
+													if(profileError) {
+														setProfileError(null);
+													}
+												}}
+												placeholder="https://"
+												type="url"
+												value={profileWebsite}
+											/>
+										</label>
+										{profileError
+											? (
+												<p
+													className="text-sm text-red-700"
+													role="alert"
+												>
+													{profileError}
+												</p>
+											)
+											: null
+										}
+										{profileMessage
+											? (
+												<p className="text-sm text-asgreen">
+													{profileMessage}
+												</p>
+											)
+											: null
+										}
+										<button
+											className="
+												self-end
+												rounded-full
+												bg-sky
+												px-4
+												py-2.5
+												text-sm
+												font-semibold
+												text-white
+												disabled:opacity-60
+											"
+											disabled={profileBusy}
+											type="submit"
+										>
+											{profileBusy
+												? 'Saving…'
+												: 'Save storefront profile'
+											}
+										</button>
+									</form>
+								</CollapsibleWidget>
+							)
+							: null
+						}
 
 						<CollapsibleWidget
 							widgetId="vendor.members"
@@ -1636,7 +1947,7 @@ function VendorDetailContent() {
 										transition
 										hover:bg-sky/5
 									"
-									href={`/place-et-marque/search?vendor=${encodeURIComponent(vendor.slug)}`}
+									href={`/place-et-marque/${encodeURIComponent(vendor.slug)}`}
 								>
 									<EyeIcon
 										className="
@@ -1646,7 +1957,7 @@ function VendorDetailContent() {
 										"
 									/>
 									<span className="min-w-0 flex-1 text-left">
-										View products
+										View storefront
 									</span>
 									<ArrowRightIcon
 										className="

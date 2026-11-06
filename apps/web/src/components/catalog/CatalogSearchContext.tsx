@@ -14,6 +14,7 @@ import {
 } from 'react';
 import { createPortal } from 'react-dom';
 import { usePathname, useRouter } from 'next/navigation';
+import { pathIsBuyerVendorStorefront } from '../../lib/accessGate';
 import {
 	listCatalogCategories,
 	type CatalogCategoryRow,
@@ -22,6 +23,14 @@ import {
 	sortCategoryTree,
 	type CategoryTreeRow,
 } from '../../lib/category-tree';
+
+/** Search / category navigation stays on the current catalog surface when scoped. */
+function catalogSearchSurfacePath(pathname: string): string {
+	if(pathname === '/place-et-marque/search' || pathIsBuyerVendorStorefront(pathname)) {
+		return pathname;
+	}
+	return '/place-et-marque/search';
+}
 
 type CatalogSearchContextValue = {
 	query: string;
@@ -71,7 +80,12 @@ export function CatalogSearchProvider({ children }: { children: ReactNode }) {
 	const [sellerTopContextHostEl, setSellerTopContextHost] = useState<HTMLDivElement | null>(null);
 	const [pageBottomPaneHostEl, setPageBottomPaneHost] = useState<HTMLDivElement | null>(null);
 	const [extrasHost, setExtrasHost] = useState<'page' | 'header'>(
-		() => (pathname === '/place-et-marque/search' ? 'page' : 'header'),
+		() => (
+			pathname === '/place-et-marque/search'
+				|| pathIsBuyerVendorStorefront(pathname)
+				? 'page'
+				: 'header'
+		),
 	);
 	const [desktop, setDesktop] = useState(false);
 	const categoryTree = useMemo(() => sortCategoryTree(categories), [categories]);
@@ -83,7 +97,11 @@ export function CatalogSearchProvider({ children }: { children: ReactNode }) {
 	}, []);
 
 	useEffect(() => {
-		setExtrasHost(pathname === '/place-et-marque/search' ? 'page' : 'header');
+		setExtrasHost(
+			pathname === '/place-et-marque/search' || pathIsBuyerVendorStorefront(pathname)
+				? 'page'
+				: 'header',
+		);
 	}, [pathname]);
 
 	useEffect(() => {
@@ -95,8 +113,10 @@ export function CatalogSearchProvider({ children }: { children: ReactNode }) {
 	}, []);
 
 	useEffect(() => {
+		const scoped = pathname === '/place-et-marque/search'
+			|| pathIsBuyerVendorStorefront(pathname);
 		if(!pageDock) {
-			if(pathname !== '/place-et-marque/search') {
+			if(!scoped) {
 				setExtrasHost('header');
 			}
 			return;
@@ -124,8 +144,9 @@ export function CatalogSearchProvider({ children }: { children: ReactNode }) {
 
 	const applyCategory = useCallback((slug: string) => {
 		setCategoryState(slug);
-		const onSearch = pathname === '/place-et-marque/search';
-		const params = new URLSearchParams(onSearch ? window.location.search : '');
+		const surface = catalogSearchSurfacePath(pathname);
+		const stayOnSurface = surface === pathname;
+		const params = new URLSearchParams(stayOnSurface ? window.location.search : '');
 		const nextQuery = query.trim();
 		if(nextQuery) {
 			params.set('q', nextQuery);
@@ -140,10 +161,12 @@ export function CatalogSearchProvider({ children }: { children: ReactNode }) {
 			params.delete('category');
 		}
 		params.delete('page');
+		// Vendor storefront is path-scoped; never put vendor= in the query.
+		params.delete('vendor');
 		const next = params.toString();
 		const href = next
-			? `/place-et-marque/search?${next}`
-			: '/place-et-marque/search';
+			? `${surface}?${next}`
+			: surface;
 		if(`${window.location.pathname}${window.location.search}` === href) {
 			return;
 		}
@@ -152,8 +175,9 @@ export function CatalogSearchProvider({ children }: { children: ReactNode }) {
 
 	const submit = useCallback(() => {
 		const nextQuery = query.trim();
-		const onSearch = pathname === '/place-et-marque/search';
-		const params = new URLSearchParams(onSearch ? window.location.search : '');
+		const surface = catalogSearchSurfacePath(pathname);
+		const stayOnSurface = surface === pathname;
+		const params = new URLSearchParams(stayOnSurface ? window.location.search : '');
 		if(nextQuery) {
 			params.set('q', nextQuery);
 		}
@@ -166,13 +190,14 @@ export function CatalogSearchProvider({ children }: { children: ReactNode }) {
 		else {
 			params.delete('category');
 		}
-		if(onSearch) {
+		if(stayOnSurface) {
 			params.delete('page');
 		}
+		params.delete('vendor');
 		const next = params.toString();
 		const href = next
-			? `/place-et-marque/search?${next}`
-			: '/place-et-marque/search';
+			? `${surface}?${next}`
+			: surface;
 		if(`${window.location.pathname}${window.location.search}` === href) {
 			return;
 		}

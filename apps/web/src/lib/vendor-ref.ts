@@ -69,6 +69,11 @@ export function productViewHref(parts: ProductPathParts): string {
 	return encodeProductPath(parts);
 }
 
+/** Buyer-facing vendor storefront: /place-et-marque/<vendor> */
+export function vendorViewHref(vendorSlug: string): string {
+	return `/place-et-marque/${encodeURIComponent(vendorSlug.trim())}`;
+}
+
 /** Edit/configure under the same slug path as the public product page. */
 export function productEditHref(
 	parts: ProductPathParts,

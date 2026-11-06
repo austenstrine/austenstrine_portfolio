@@ -24,4 +24,4 @@ Do not override the user's current browser width unless you are explicitly testi
 
 ## Gutters
 
-Horizontal section padding uses `--gutter` (`clamp(0.75rem, 4vw, 2rem)`), exposed as Tailwind `gutter`. Do not pile `max-[399px]:px-*` classes for that job.
+Horizontal section padding uses `--gutter` (`clamp(0.75rem, 4vw, 2rem)`; `0.5rem` at micromobile `<=399`), exposed as Tailwind `gutter`. Card/panel chrome uses `--inset` (`1.25rem`; `0.75rem` at micromobile), exposed as Tailwind `inset` (`p-inset`). Do not pile `max-[399px]:px-*` classes for the section-gutter job; button `px-*` may step down one size at micromobile.

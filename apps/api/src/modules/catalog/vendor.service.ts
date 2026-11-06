@@ -7,6 +7,7 @@ import {
 import { VendorLinkNameRequestStatus, VendorMemberRole } from '@prisma/client';
 import { PrismaService } from '../../infra/prisma/prisma.service';
 import { CreateVendorDto } from './dto/create-vendor.dto';
+import { UpdateVendorProfileDto } from './dto/update-vendor-profile.dto';
 import { RequestVendorLinkNameDto } from './dto/request-vendor-link-name.dto';
 import { ReviewVendorLinkNameDto } from './dto/review-vendor-link-name.dto';
 import { VendorAccessService } from './vendor-access.service';
@@ -90,6 +91,85 @@ export class VendorService {
 		}));
 	}
 
+	/** Public buyer storefront lookup by link name (or legacy UUID). */
+	async getPublicVendor(vendorRef: string) {
+		const vendor = await this.resolveVendorRecord(vendorRef);
+		if(!vendor) {
+			throw new NotFoundException('Vendor not found.');
+		}
+		const productCount = await this.prisma.catalogProduct.count({
+			where: { vendorId: vendor.id },
+		});
+		return {
+			id: vendor.id,
+			name: vendor.name,
+			slug: vendor.slug,
+			productCount,
+			...this.toPublicProfile(vendor),
+		};
+	}
+
+	/** Seller edits for buyer-facing storefront fields. */
+	async updateVendorProfile(
+		userId: string,
+		vendorRef: string,
+		dto: UpdateVendorProfileDto,
+	) {
+		const vendor = await this.requireVendorMember(
+			userId,
+			vendorRef,
+			[VendorMemberRole.OWNER, VendorMemberRole.EDITOR],
+		);
+
+		const data: {
+			tagline?: string | null;
+			about?: string | null;
+			locationLabel?: string | null;
+			contactEmail?: string | null;
+			contactPhone?: string | null;
+			websiteUrl?: string | null;
+		} = {};
+
+		if('tagline' in dto) {
+			data.tagline = this.nullableTrim(dto.tagline, 160);
+		}
+		if('about' in dto) {
+			data.about = this.nullableTrim(dto.about, 5000);
+		}
+		if('locationLabel' in dto) {
+			data.locationLabel = this.nullableTrim(dto.locationLabel, 120);
+		}
+		if('contactEmail' in dto) {
+			const email = this.nullableTrim(dto.contactEmail, 254);
+			data.contactEmail = email
+				? email.toLowerCase()
+				: null;
+		}
+		if('contactPhone' in dto) {
+			data.contactPhone = this.nullableTrim(dto.contactPhone, 40);
+		}
+		if('websiteUrl' in dto) {
+			data.websiteUrl = this.nullableTrim(dto.websiteUrl, 500);
+		}
+
+		const updated = await this.prisma.vendor.update({
+			where: { id: vendor.id },
+			data,
+			include: {
+				members: {
+					where: { userId },
+					select: { role: true },
+				},
+				_count: { select: { products: true, members: true } },
+			},
+		});
+
+		return {
+			...this.toVendorSummary(updated),
+			...this.toPublicProfile(updated),
+		};
+	}
+
 	/**
 	 * Resolve membership vendor by human-readable link name or legacy UUID.
 	 */
@@ -145,6 +225,7 @@ export class VendorService {
 			productCount: membership.vendor._count.products,
 			memberCount: membership.vendor._count.members,
 			myRole: membership.role,
+			...this.toPublicProfile(membership.vendor),
 			members: membership.vendor.members.map((member) => ({
 				userId: member.user.id,
 				email: member.user.email,
@@ -352,8 +433,12 @@ export class VendorService {
 			throw new NotFoundException('Vendor not found, or you are not a member.');
 		}
 		if(!roles.includes(membership.role)) {
+			const needsOwnerOnly =
+				roles.length === 1 && roles[0] === VendorMemberRole.OWNER;
 			throw new ForbiddenException(
-				'Only an organization owner can change the name in the link.',
+				needsOwnerOnly
+					? 'Only an organization owner can change the name in the link.'
+					: 'You need edit access to update this organization.',
 			);
 		}
 		return vendor;
@@ -377,6 +462,35 @@ export class VendorService {
 			slug,
 			vendors.map((row) => row.slug),
 		);
+	}
+
+	private nullableTrim(value: string | null | undefined, max: number): string | null {
+		if(value === undefined || value === null) {
+			return null;
+		}
+		const trimmed = value.trim();
+		if(!trimmed) {
+			return null;
+		}
+		return trimmed.slice(0, max);
+	}
+
+	private toPublicProfile(vendor: {
+		tagline?: string | null;
+		about?: string | null;
+		locationLabel?: string | null;
+		contactEmail?: string | null;
+		contactPhone?: string | null;
+		websiteUrl?: string | null;
+	}) {
+		return {
+			tagline: vendor.tagline ?? null,
+			about: vendor.about ?? null,
+			locationLabel: vendor.locationLabel ?? null,
+			contactEmail: vendor.contactEmail ?? null,
+			contactPhone: vendor.contactPhone ?? null,
+			websiteUrl: vendor.websiteUrl ?? null,
+		};
 	}
 
 	private toVendorSummary(vendor: {

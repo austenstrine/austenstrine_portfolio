@@ -183,7 +183,7 @@ export default async function PlaceEtMarqueHomePage() {
 										text-ink
 										hover:border-ink/30
 									"
-									href={`/place-et-marque/search?vendor=${encodeURIComponent(row.slug)}`}
+									href={`/place-et-marque/${encodeURIComponent(row.slug)}`}
 									key={row.slug}
 								>
 									{titleCaseSlug(row.slug)}

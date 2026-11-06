@@ -92,6 +92,121 @@ function DateConnector({
 	);
 }
 
+/** Stem + spacer under the peek toggle; lives inside the fold so height animates. */
+function DateConnectorTail() {
+	return (
+		<div
+			aria-hidden="true"
+			className="relative"
+		>
+			<span
+				className="
+					absolute
+					bottom-0
+					right-[calc(1.25rem+1px)]
+					top-0
+					w-px
+					bg-slate-200
+					md:right-[calc(1.5rem+1px)]
+				"
+			/>
+			<div className="h-4" />
+		</div>
+	);
+}
+
+function PeekToggle({
+	expanded,
+	onClick,
+	range,
+	title,
+}: {
+	expanded: boolean;
+	onClick: () => void;
+	range: string;
+	title: string;
+}) {
+	return (
+		<button
+			aria-expanded={expanded}
+			aria-label={
+				expanded
+					? `Hide ${title}`
+					: `Peek ${title}`
+			}
+			className={
+				expanded
+					? `
+						mt-1.5
+						grid
+						h-4
+						w-full
+						grid-cols-[auto_minmax(0,1fr)_1px_calc(1.25rem+1px)]
+						items-center
+						text-left
+						text-sm
+						leading-none
+						text-slate-500
+						hover:text-slate-600
+						md:grid-cols-[auto_minmax(0,1fr)_1px_calc(1.5rem+1px)]
+					`
+					: `
+						mt-1.5
+						flex
+						h-4
+						w-full
+						items-center
+						justify-start
+						gap-1.5
+						text-sm
+						leading-none
+						text-slate-400
+						hover:text-slate-600
+					`
+			}
+			onClick={onClick}
+			type="button"
+		>
+			{expanded
+				? (
+					<>
+						<span
+							className="
+								col-start-1
+								pl-2
+								pr-2
+							"
+						>
+							{range}
+						</span>
+						<span
+							aria-hidden="true"
+							className="
+								col-start-2
+								col-end-4
+								h-px
+								bg-slate-200
+							"
+						/>
+					</>
+				)
+				: (
+					<>
+						<span className="font-medium">
+							{title}
+						</span>
+						<span aria-hidden="true">
+							·
+						</span>
+						<span>
+							{range}
+						</span>
+					</>
+				)}
+		</button>
+	);
+}
+
 function ExperienceRoleCard({
 	className = '',
 	role,
@@ -108,7 +223,7 @@ function ExperienceRoleCard({
 				border
 				border-slate-100
 				bg-frost/60
-				p-5
+				p-inset
 				md:p-6
 				${className}
 			`}
@@ -180,6 +295,7 @@ function ExperienceRoleCard({
 					text-sm
 					leading-relaxed
 					text-slate-700
+					max-[399px]:pl-4
 				"
 			>
 				{role.bullets.map((bullet) => (
@@ -487,6 +603,15 @@ export function ExperienceSection() {
 	function hidePeek(id: string) {
 		pinFromSticky(id);
 		setPeekedIds((current) => current.filter((row) => row !== id));
+	}
+
+	function togglePeek(id: string) {
+		if(peekedIds.includes(id)) {
+			hidePeek(id);
+			return;
+		}
+
+		peekRole(id);
 	}
 
 	const shownCount = professionalExperience.filter((role) => inScope(role.kind)).length;
@@ -840,6 +965,16 @@ export function ExperienceSection() {
 									)}
 							</div>
 							<div className="min-w-0 flex-1">
+								{!scoped
+									? (
+										<PeekToggle
+											expanded={expanded}
+											onClick={() => togglePeek(role.id)}
+											range={splitRoleDates(role.dates).range}
+											title={role.title}
+										/>
+									)
+									: null}
 								<div
 									aria-hidden={!expanded}
 									className={
@@ -849,75 +984,16 @@ export function ExperienceSection() {
 									}
 								>
 									<div className="timeline-fold-inner">
-										<DateConnector
-											range={splitRoleDates(role.dates).range}
-										/>
+										{scoped
+											? (
+												<DateConnector
+													range={splitRoleDates(role.dates).range}
+												/>
+											)
+											: (
+												<DateConnectorTail />
+											)}
 										<ExperienceRoleCard role={role} />
-									</div>
-								</div>
-								<div
-									aria-hidden={expanded}
-									className={
-										expanded
-											? 'timeline-fold'
-											: 'timeline-fold timeline-fold-open'
-									}
-								>
-									<div className="timeline-fold-inner">
-										<p
-											className="
-												mt-1.5
-												flex
-												h-4
-												items-center
-												justify-start
-												gap-1.5
-												text-sm
-												leading-none
-												text-slate-400
-												md:hidden
-											"
-										>
-											<span className="font-medium">
-												{role.title}
-											</span>
-											<span aria-hidden="true">
-												·
-											</span>
-											<span>
-												{splitRoleDates(role.dates).range}
-											</span>
-										</p>
-										<button
-											aria-label={`Peek ${role.title}`}
-											className="
-												mt-1.5
-												hidden
-												h-4
-												w-full
-												items-center
-												justify-start
-												gap-1.5
-												text-sm
-												leading-none
-												text-slate-400
-												hover:text-slate-600
-												md:flex
-											"
-											onClick={() => peekRole(role.id)}
-											tabIndex={expanded ? -1 : 0}
-											type="button"
-										>
-											<span className="font-medium">
-												{role.title}
-											</span>
-											<span aria-hidden="true">
-												·
-											</span>
-											<span>
-												{splitRoleDates(role.dates).range}
-											</span>
-										</button>
 									</div>
 								</div>
 							</div>
@@ -952,7 +1028,7 @@ export function ExperienceSection() {
 							border
 							border-slate-100
 							bg-frost/60
-							p-5
+							p-inset
 							md:p-6
 						"
 						key={`${entry.school}-${entry.dates}`}

@@ -106,10 +106,12 @@ export function ContactSection() {
 			className="
 				rounded-none
 				bg-sky
-				p-8
+				px-gutter
+				py-8
 				text-white
 				shadow-none
 				sm:rounded-2xl
+				sm:p-8
 				sm:shadow-xl
 			"
 			id="contact"

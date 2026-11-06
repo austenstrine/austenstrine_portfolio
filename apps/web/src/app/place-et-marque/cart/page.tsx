@@ -249,7 +249,7 @@ function CartContent() {
 												text-ink
 												hover:underline
 											"
-											href={`/place-et-marque/search?vendor=${encodeURIComponent(group.slug)}`}
+											href={`/place-et-marque/${encodeURIComponent(group.slug)}`}
 										>
 											{group.name}
 										</Link>

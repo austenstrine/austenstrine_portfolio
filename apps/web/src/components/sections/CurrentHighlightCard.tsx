@@ -38,7 +38,7 @@ export function CurrentHighlightCard({
 				duration-300
 				ease-out
 				${showWrapper
-					? '-mx-4'
+					? '-mx-gutter'
 					: 'mx-0'
 				}
 			`}
@@ -110,7 +110,7 @@ export function CurrentHighlightCard({
 					duration-300
 					ease-out
 					${showWrapper
-						? 'p-4'
+						? 'p-inset'
 						: 'p-0'
 					}
 				`}
@@ -223,6 +223,7 @@ export function CurrentHighlightCard({
 									border-white/20
 									bg-white/10
 									p-4
+									max-[399px]:p-2.5
 								"
 								id={body.stackId}
 							>
@@ -256,6 +257,7 @@ export function CurrentHighlightCard({
 													text-xs
 													font-medium
 													text-white
+													max-[399px]:px-2
 												"
 												key={item}
 											>
@@ -307,6 +309,7 @@ export function CurrentHighlightCard({
 														text-white
 														transition
 														hover:bg-white/10
+														max-[399px]:px-3
 													`
 													: `
 														rounded-full
@@ -319,6 +322,7 @@ export function CurrentHighlightCard({
 														transition
 														hover:-translate-y-0.5
 														hover:bg-frost
+														max-[399px]:px-3
 													`
 												)
 											}

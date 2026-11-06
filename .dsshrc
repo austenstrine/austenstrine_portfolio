@@ -82,7 +82,8 @@ backend_image=portfolio-api
 backend_name=portfolio-api
 backend_start_local="docker ps -q --filter ancestor=portfolio-api | xargs -r docker rm -f >/dev/null 2>&1 || true; docker compose --profile dashboards up -d postgres redis opensearch opensearch-dashboards"
 backend_start="npm run prisma:generate -w apps/api && npm run dev -w apps/api"
-backend_start_detached=1
+# start/restart detach by default in dssh; follow with `dssh logs backend`.
+# Set =0 only for intentional foreground attach (holds docker flock until exit).
 backend_migrate_local="docker compose up -d postgres"
 backend_migrate="npm run prisma:migrate -w apps/api -- && npm run prisma:seed -w apps/api"
 # start/restart preflight (dssh): detect exit 0 = in sync; non-zero → prompt → apply on y
@@ -103,7 +104,6 @@ frontend_service=web
 frontend_image=portfolio-web
 frontend_name=portfolio-web
 frontend_start="npm run dev -w apps/web"
-frontend_start_detached=1
 
 # Admin CRM Next.js app — portfolio-crm (dark side-nav; separate UX)
 crm=./apps/crm
@@ -111,7 +111,6 @@ crm_service=crm
 crm_image=portfolio-crm
 crm_name=portfolio-crm
 crm_start="npm run dev -w apps/crm"
-crm_start_detached=1
 
 # Local TLS + nginx. Live compose service is nginx → portfolio-proxy.
 proxy=./ops/nginx
@@ -125,7 +124,6 @@ proxy_user=root
 proxy_mount_node_modules=0
 proxy_start_local="./ops/nginx/init-local-tls.sh"
 proxy_start="nginx -c /app/nginx.conf -g 'daemon off;'"
-proxy_start_detached=1
 
 # Go CDN — github.com/austenstrine/golang-image-cdn via ops/cdn/ensure-source.sh
 # (init-local clones into ops/cdn/src). Live compose service cdn → portfolio-cdn.
@@ -139,5 +137,4 @@ cdn_context=./ops/cdn
 cdn_mount_node_modules=0
 cdn_start_local="./ops/cdn/init-local.sh"
 cdn_start=/usr/local/bin/cdn
-cdn_start_detached=1
 cdn_purge_local="./ops/cdn/purge.sh"

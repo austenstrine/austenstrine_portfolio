@@ -181,6 +181,20 @@ export type CatalogProductDetail = Omit<CatalogProductSummary, 'offerings'> & Pr
 	permissions: { canEdit: boolean };
 };
 
+export class CatalogApiError extends Error {
+	readonly status: number;
+
+	constructor(message: string, status: number) {
+		super(message);
+		this.name = 'CatalogApiError';
+		this.status = status;
+	}
+}
+
+export function isCatalogNotFound(error: unknown): boolean {
+	return error instanceof CatalogApiError && error.status === 404;
+}
+
 async function catalogRequest<T>(path: string, options: RequestInit = {}): Promise<T> {
 	const headers = new Headers(options.headers);
 	if(!(options.body instanceof FormData) && !headers.has('Content-Type')) {
@@ -195,7 +209,10 @@ async function catalogRequest<T>(path: string, options: RequestInit = {}): Promi
 	const body = await response.json().catch(() => null);
 	if(!response.ok) {
 		const message = body?.message ?? 'Catalog request failed.';
-		throw new Error(Array.isArray(message) ? message.join(' ') : message);
+		throw new CatalogApiError(
+			Array.isArray(message) ? message.join(' ') : message,
+			response.status,
+		);
 	}
 
 	return body as T;
@@ -449,7 +466,16 @@ export function listPopularTags(params?: {
 	return catalogRequest(`/tags/popular${suffix}`);
 }
 
-export type VendorSummary = {
+export type VendorPublicProfileFields = {
+	tagline?: string | null;
+	about?: string | null;
+	locationLabel?: string | null;
+	contactEmail?: string | null;
+	contactPhone?: string | null;
+	websiteUrl?: string | null;
+};
+
+export type VendorSummary = VendorPublicProfileFields & {
 	id: string;
 	name: string;
 	slug: string;
@@ -496,6 +522,28 @@ export function listMyVendors(): Promise<VendorSummary[]> {
 export function getMyVendor(vendorId: string): Promise<VendorDetail> {
 	return catalogRequest<VendorDetail>(
 		`/vendors/mine/${encodeURIComponent(vendorId)}`,
+	);
+}
+
+export type UpdateVendorProfilePayload = {
+	tagline?: string | null;
+	about?: string | null;
+	locationLabel?: string | null;
+	contactEmail?: string | null;
+	contactPhone?: string | null;
+	websiteUrl?: string | null;
+};
+
+export function updateVendorProfile(
+	vendorId: string,
+	payload: UpdateVendorProfilePayload,
+): Promise<VendorSummary> {
+	return catalogRequest<VendorSummary>(
+		`/vendors/${encodeURIComponent(vendorId)}/profile`,
+		{
+			method: 'PATCH',
+			body: JSON.stringify(payload),
+		},
 	);
 }
 

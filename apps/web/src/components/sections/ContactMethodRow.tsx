@@ -15,6 +15,30 @@ type ContactMethodRowProps = {
 	onCopied: () => void;
 };
 
+function mobileActionValue(href: string, copyValue: string): string {
+	if(href.startsWith('http://') || href.startsWith('https://')) {
+		try {
+			const url = new URL(href);
+			const path = url.pathname.replace(/\/$/, '');
+			const host = url.hostname.replace(/^www\./, '');
+			// LinkedIn alone uses the /in/... path form.
+			if(host === 'linkedin.com' || host.endsWith('.linkedin.com')) {
+				return path || copyValue;
+			}
+			if(path) {
+				return `${host}${path}`;
+			}
+			return host || copyValue;
+		}
+		catch {
+			return copyValue;
+		}
+	}
+
+	// Relative hrefs (e.g. CV): show hostname form from copyValue.
+	return copyValue;
+}
+
 export function ContactMethodRow({
 	rowId,
 	copyLabel,
@@ -32,6 +56,7 @@ export function ContactMethodRow({
 	const linkRel = isExternal
 		? 'noreferrer'
 		: undefined;
+	const actionValue = mobileActionValue(href, copyValue);
 
 	const onCopy = async () => {
 		try {
@@ -46,79 +71,134 @@ export function ContactMethodRow({
 	return (
 		<div
 			className="
-				grid
+				flex
+				min-w-0
+				w-full
 				items-stretch
 				gap-3
-				md:grid-cols-[minmax(0,1fr),minmax(0,1fr)]
 			"
 			id={rowId}
 		>
-			<div className="relative">
+			<div
+				className="
+					group
+					relative
+					w-[3.5rem]
+					shrink-0
+					self-stretch
+					md:w-auto
+					md:min-w-0
+					md:flex-1
+				"
+			>
+				{/*
+					Mobile chrome sits behind the content so padding/border/bg
+					do not inflate the chip past the LinkedIn content width.
+				*/}
+				<span
+					className="
+						pointer-events-none
+						absolute
+						inset-0
+						rounded-xl
+						border
+						border-white/20
+						bg-white/10
+						transition
+						group-hover:bg-white/20
+						md:hidden
+					"
+					aria-hidden="true"
+				/>
 				<button
 					className="
-						group
+						relative
 						inline-flex
-						max-w-full
+						h-full
+						w-full
+						flex-col
 						items-center
-						justify-start
-						gap-3
-						px-1
-						py-2
-						text-left
+						justify-center
+						gap-1.5
+						text-center
+						text-slate-100
 						transition
-						hover:opacity-90
+						hover:text-white
+						md:h-auto
+						md:w-auto
+						md:min-w-0
+						md:max-w-full
+						md:items-start
+						md:justify-start
+						md:gap-0
+						md:px-1
+						md:py-2
+						md:text-left
+						md:hover:opacity-90
 					"
 					type="button"
 					onClick={onCopy}
 					aria-label={`Copy ${copyLabel} to clipboard`}
 				>
-					<div className="min-w-0">
-						<p
-							className="
-								text-[11px]
-								font-semibold
-								uppercase
-								tracking-wide
-								leading-none
-								text-slate-300
-							"
-						>
-							{copyLabel}
-						</p>
-						<div
-							className="
-								flex
-								items-center
-								justify-between
-								gap-2
-							"
-						>
+					<p
+						className="
+							whitespace-nowrap
+							text-[11px]
+							font-semibold
+							uppercase
+							tracking-wide
+							leading-none
+							text-slate-300
+						"
+					>
+						{copyLabel}
+					</p>
+					<span
+						className="
+							shrink-0
+							text-slate-100
+							md:hidden
+						"
+						aria-hidden="true"
+					>
+						<CopyIcon />
+					</span>
+					<div
+						className="
+							hidden
+							min-w-0
+							items-center
+							justify-between
+							gap-2
+							md:flex
+						"
+					>
 						<p
 							className="
 								min-w-0
+								overflow-hidden
 								truncate
+								whitespace-nowrap
 								text-sm
 								text-slate-100
 							"
 						>
 							{copyValue}
 						</p>
-							<span
-								className="
-									shrink-0
-									text-slate-200
-									transition
-									opacity-100
-									md:opacity-0
-									md:group-hover:opacity-100
-									md:group-focus-visible:opacity-100
-									group-hover:text-white
-								"
-								aria-hidden="true"
-							>
-								<CopyIcon />
-							</span>
-						</div>
+						<span
+							className="
+								shrink-0
+								text-slate-200
+								opacity-0
+								transition
+								group-hover:opacity-100
+								group-hover:text-white
+								group-focus-visible:opacity-100
+							"
+							aria-hidden="true"
+						>
+							<CopyIcon />
+						</span>
 					</div>
 				</button>
 			</div>
@@ -127,6 +207,8 @@ export function ContactMethodRow({
 				className="
 					group
 					flex
+					min-w-0
+					flex-1
 					items-center
 					justify-between
 					rounded-xl
@@ -138,6 +220,7 @@ export function ContactMethodRow({
 					transition
 					hover:-translate-y-0.5
 					hover:bg-white/20
+					max-[399px]:px-2.5
 				"
 				href={href}
 				target={linkTarget}
@@ -146,30 +229,69 @@ export function ContactMethodRow({
 				<div
 					className="
 						flex
+						min-w-0
 						items-center
 						gap-3
+						md:justify-start
 					"
 				>
 					<span
 						className="
+							shrink-0
 							rounded-md
 							bg-white/15
 							p-2
+							max-[399px]:p-1.5
 						"
 					>
 						{icon}
 					</span>
-					<div>
-						<p className="font-semibold">
+					<div
+						className="
+							min-w-0
+							overflow-visible
+							text-left
+						"
+					>
+						<p
+							className="
+								truncate
+								whitespace-nowrap
+								font-semibold
+							"
+						>
 							{linkTitle}
 						</p>
-						<p className="text-sm text-slate-200">
+						<p
+							className="
+								overflow-visible
+								whitespace-nowrap
+								text-sm
+								text-slate-200
+								md:hidden
+							"
+						>
+							{actionValue}
+						</p>
+						<p
+							className="
+								hidden
+								overflow-hidden
+								truncate
+								whitespace-nowrap
+								text-sm
+								text-slate-200
+								md:block
+							"
+						>
 							{linkSummary}
 						</p>
 					</div>
 				</div>
 				<span
 					className="
+						ml-2
+						shrink-0
 						transition
 						group-hover:translate-x-0.5
 					"

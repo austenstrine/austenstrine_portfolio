@@ -21,6 +21,7 @@ import {
 	CatalogMenuSurface,
 	useCatalogFloatingMenu,
 } from './CatalogMenu';
+import { HeaderPortraitLink } from './HeaderPortraitLink';
 import { MarketplaceBrandLink } from './MarketplaceBrandLink';
 import { SellerModeChip } from './SellerModeChip';
 import { useCatalogSearch } from './CatalogSearchContext';
@@ -670,6 +671,8 @@ export function CatalogHeader() {
 	const [headerHidden, setHeaderHidden] = useState(false);
 	const lastScrollY = useRef(0);
 	const sellerChrome = pathUsesSellerChrome(pathname);
+	// Buyer chrome (incl. /place-et-marque/<vendor>) keeps the department bar.
+	// Search hides it — filters live on the page instead.
 	const showDepartmentBar =
 		!sellerChrome
 		&& categories.length > 0
@@ -792,6 +795,7 @@ export function CatalogHeader() {
 						: 'translateY(0)',
 				}}
 			>
+				<HeaderPortraitLink />
 				<div
 					className="
 						mx-auto
