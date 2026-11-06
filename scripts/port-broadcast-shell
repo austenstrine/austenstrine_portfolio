@@ -1,120 +1,13 @@
 #!/usr/bin/env bash
-# port-broadcast-shell — interactive PTY + cloned output over TCP
-#
-# Clones session output two ways:
-#   1) this terminal — real PTY via script(1) (interactive; curses/TTY apps work)
-#   2) TCP listen port — same bytes, for an agent/client to attach with nc/socat
-#
-# Memory/pipes/sockets only (no session log file). Uses bash + script + nc.
-#
-# Start (interactive shell):
-#   ./scripts/port-broadcast-shell
-#   ./scripts/port-broadcast-shell -p 4591
-#
-# Start (one command in a PTY, then exit):
-#   ./scripts/port-broadcast-shell -- sh -c 'tty; echo hello; seq 3'
-#
-# Listen (another terminal / agent) — TCP client:
-#   nc 127.0.0.1 4591
-#   socat - TCP:127.0.0.1:4591
-#
-# Defaults: bind 127.0.0.1, port 4591.
-# Caveats: no auth; prefer localhost; one listener at a time (v1); late joiners
-# see live output only; stream includes terminal control sequences; if nobody
-# is attached and the pipe buffer fills, the session can stall — attach nc first
-# for noisy sessions.
-
+# Thin wrapper — canonical tool lives in austenstrine/port-broadcast-bash
+# https://github.com/austenstrine/port-broadcast-bash
 set -euo pipefail
-
-BIND="${PORT_BROADCAST_BIND:-127.0.0.1}"
-PORT="${PORT_BROADCAST_PORT:-4591}"
-CMD=()
-
-usage() {
-	cat <<'EOF'
-Usage: port-broadcast-shell [-b bind] [-p port] [-- command [args...]]
-
-  Interactive PTY in this terminal; clone session output to a TCP port.
-  No disk session log (pipes/sockets only). bash + script(1) + nc.
-
-Options:
-  -b, --bind ADDR   Listen address (default: 127.0.0.1, or PORT_BROADCAST_BIND)
-  -p, --port PORT   Listen port (default: 4591, or PORT_BROADCAST_PORT)
-  -h, --help        Show this help
-
-  -- command ...    Run command under the PTY instead of $SHELL
-
-Listen (client):
-  nc 127.0.0.1 4591
-  socat - TCP:127.0.0.1:4591
-
-Caveats: no authentication; prefer localhost bind; one listener (v1); late
-clients get live tail only; attach a listener before heavy output.
-EOF
-}
-
-while [[ $# -gt 0 ]]; do
-	case "$1" in
-		-b|--bind)
-			BIND="${2:?missing bind address}"
-			shift 2
-			;;
-		-p|--port)
-			PORT="${2:?missing port}"
-			shift 2
-			;;
-		-h|--help)
-			usage
-			exit 0
-			;;
-		--)
-			shift
-			CMD=("$@")
-			break
-			;;
-		-*)
-			echo "port-broadcast-shell: unknown option: $1" >&2
-			usage >&2
-			exit 2
-			;;
-		*)
-			CMD=("$@")
-			break
-			;;
-	esac
-done
-
-if ! [[ "$PORT" =~ ^[0-9]+$ ]] || (( PORT < 1 || PORT > 65535 )); then
-	echo "port-broadcast-shell: invalid port: $PORT" >&2
-	exit 2
-fi
-
-if ! command -v script >/dev/null 2>&1; then
-	echo "port-broadcast-shell: script(1) required (bsdutils/util-linux)" >&2
+HOME_DIR="${PORT_BROADCAST_HOME:-$HOME/Development/port-broadcast-bash}"
+TARGET="${HOME_DIR}/bin/port-broadcast-shell"
+if [[ ! -x "$TARGET" ]]; then
+	echo "port-broadcast-shell: missing $TARGET" >&2
+	echo "Clone https://github.com/austenstrine/port-broadcast-bash to ${HOME_DIR}" >&2
+	echo "Or set PORT_BROADCAST_HOME to that checkout." >&2
 	exit 1
 fi
-
-if ! command -v nc >/dev/null 2>&1; then
-	echo "port-broadcast-shell: nc required (netcat-openbsd)" >&2
-	exit 1
-fi
-
-echo "port-broadcast-shell: PTY here; clone on ${BIND}:${PORT} -- attach with: nc ${BIND} ${PORT}" >&2
-
-# Clone sink: script(1) keeps a real PTY on this terminal and writes a copy of
-# the session stream into the process substitution (no disk file). That copy
-# is fed to nc -l; agents connect as TCP clients. Do not exec — bash must own
-# the >(…) lifecycle or script never exits cleanly.
-#
-# OpenBSD nc: -l listen, -n numeric, -s bind addr. No -k so stdin EOF (session
-# end) tears the listen side down with the PTY.
-clone_sink=(nc -l -n -s "$BIND" -p "$PORT")
-
-if ((${#CMD[@]})); then
-	cmd_str=$(printf '%q ' "${CMD[@]}")
-	script -q -f -e -c "$cmd_str" >("${clone_sink[@]}" >/dev/null)
-	exit $?
-fi
-
-script -q -f -e >("${clone_sink[@]}" >/dev/null)
-exit $?
+exec "$TARGET" "$@"

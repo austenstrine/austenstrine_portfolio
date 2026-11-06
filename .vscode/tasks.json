@@ -3,7 +3,7 @@
 	"tasks": [
 		{
 			"label": "port-broadcast: 6 tabs",
-			"detail": "One Cursor window, six integrated terminal tabs (ports 4591\u20134596)",
+			"detail": "Delegates to austenstrine/port-broadcast-bash via scripts/ wrappers (ports 4591\u20134596)",
 			"dependsOrder": "parallel",
 			"dependsOn": [
 				"port-broadcast: tab 4591",
@@ -17,7 +17,7 @@
 		},
 		{
 			"label": "port-broadcast: smoke",
-			"detail": "1-tab short-lived smoke on 4591 (Cursor integrated terminal)",
+			"detail": "1-tab smoke on 4591 via port-broadcast-bash wrapper (Cursor integrated terminal)",
 			"type": "shell",
 			"command": "echo '[port-broadcast] ready'; \"${workspaceFolder}/scripts/port-broadcast-shell\" -p 4591 -- bash -c \"echo SMOKE_OK; tty; sleep 45\"",
 			"isBackground": true,
