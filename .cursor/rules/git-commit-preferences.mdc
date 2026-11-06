@@ -1,0 +1,35 @@
+---
+description: Branching, commits, landing on development
+alwaysApply: true
+---
+
+# Git and commit preferences
+
+Keep in sync with `docs/git-commit-preferences.md`. Portfolio repo only — sibling tool remotes differ.
+
+## Branching
+
+- Never develop on `master`.
+- Feature branches: `feature/<user>/<target-merge-branch>/<feature-name>` (user often `als`).
+- Default integration: **`development`** (based on `master`).
+- Merge features → `development` **without feature PRs**.
+- When peers land on `development`, rebase/pull that tip onto the feature branch.
+- When stable: merge `development` → `master` (user-guided); then FF `development` to that master tip.
+- PRs mainly for `development` → `master`, guided by the user.
+- Do not modify `master` unless the user explicitly asks.
+- Always create a **local** branch so it shows in GitKraken (not remote-only).
+- Same-VM: `git worktree add`, not shared checkout in place.
+
+## Commits / landing
+
+- Clear, focused commits; match recent `git log` on `development`.
+- Local-first: prefer Austen’s machine checkout; after pushing `development`, sync his local checked-out `development`.
+- Do not open unnecessary feature PRs when prefs say merge to `development` directly.
+
+## PR text (when needed)
+
+Concrete, plain prose. No jargon padding; Project banned-prose list applies to PR bodies.
+
+## Sibling tools (not this repo)
+
+Helper remotes often use `master` and may land without review. Confirm with `git ls-remote`. Those prefs are **not** for this portfolio repo.
