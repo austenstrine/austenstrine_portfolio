@@ -411,8 +411,8 @@ export function CatalogSearchExperience({
 	);
 
 	return (
-		<div className="-mx-gutter px-gutter">
-			<div className="mx-auto">
+		<div className="-mx-gutter min-w-0 max-w-full overflow-x-hidden px-gutter">
+			<div className="mx-auto min-w-0 max-w-full">
 				<nav className="text-[12px] text-slate-500" aria-label="Breadcrumb">
 					<ol className="flex flex-wrap items-center gap-2">
 						<li>
@@ -487,8 +487,20 @@ export function CatalogSearchExperience({
 
 				{catalogHeading
 					? (
-						<div className="mt-5">
-							<h1 className="text-3xl font-semibold tracking-tight text-ink md:text-4xl">
+						<div className="mt-5 min-w-0 max-w-full">
+							<h1
+								className="
+									min-w-0
+									max-w-full
+									truncate
+									text-3xl
+									font-semibold
+									tracking-tight
+									text-ink
+									md:text-4xl
+								"
+								title={catalogHeading}
+							>
 								{catalogHeading}
 							</h1>
 							<p className="mt-1 text-sm text-slate-600" aria-live="polite">
@@ -542,7 +554,26 @@ export function CatalogSearchExperience({
 					)
 					: null}
 
-				<div className="mt-8 grid gap-10 lg:grid-cols-[240px_minmax(0,1fr)]">
+				<p className="mt-6 flex flex-wrap gap-3 text-sm lg:mt-8">
+					<a
+						className="
+							rounded
+							font-semibold
+							text-sky
+							underline
+							underline-offset-2
+							focus:outline
+							focus:outline-2
+							focus:outline-offset-2
+							focus:outline-sky
+						"
+						href="#catalog-results"
+					>
+						Skip to results
+					</a>
+				</p>
+
+				<div className="mt-3 grid gap-10 lg:grid-cols-[240px_minmax(0,1fr)]">
 					<aside
 						className="
 							hidden
@@ -562,7 +593,11 @@ export function CatalogSearchExperience({
 						{facetRail}
 					</aside>
 
-					<div aria-busy={loading}>
+					<div
+						aria-busy={loading}
+						id="catalog-results"
+						tabIndex={-1}
+					>
 						<div
 							className="
 								relative
