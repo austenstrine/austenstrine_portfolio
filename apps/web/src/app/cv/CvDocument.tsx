@@ -28,53 +28,65 @@ export function CvDocument() {
 					{SITE_HEADLINE}
 				</p>
 				<div className="cv-contact">
-					<p className="cv-contact-row">
-						<a href={`mailto:${SITE_EMAIL}`}>
-							{SITE_EMAIL}
-						</a>
-						<span
-							className="cv-sep"
-							aria-hidden="true"
-						>
-							·
-						</span>
-						<a href={SITE_PHONE_HREF}>
-							{SITE_PHONE}
-						</a>
-						<span
-							className="cv-sep"
-							aria-hidden="true"
-						>
-							·
-						</span>
-						<a href={SITE_URL}>
-							{siteHost}
-						</a>
-					</p>
-					<p className="cv-contact-row">
-						<a
-							href={SITE_LINKEDIN}
-							target="_blank"
-							rel="noopener noreferrer"
-						>
-							{linkedInPath}
-						</a>
-						<span
-							className="cv-sep"
-							aria-hidden="true"
-						>
-							·
-						</span>
-						<a
-							href={SITE_GITHUB}
-							target="_blank"
-							rel="noopener noreferrer"
-						>
-							{githubPath}
-						</a>
-					</p>
+					<ul className="cv-contact-list">
+						<li>
+							<a href={`mailto:${SITE_EMAIL}`}>
+								{SITE_EMAIL}
+							</a>
+						</li>
+						<li>
+							<a href={SITE_PHONE_HREF}>
+								{SITE_PHONE}
+							</a>
+						</li>
+						<li>
+							<a href={SITE_URL}>
+								{siteHost}
+							</a>
+						</li>
+					</ul>
+					<ul className="cv-contact-list">
+						<li>
+							<a
+								href={SITE_LINKEDIN}
+								target="_blank"
+								rel="noopener noreferrer"
+							>
+								{linkedInPath}
+							</a>
+						</li>
+						<li>
+							<a
+								href={SITE_GITHUB}
+								target="_blank"
+								rel="noopener noreferrer"
+							>
+								{githubPath}
+							</a>
+						</li>
+					</ul>
 					<p className="cv-location">
-						Parowan, UT · Murray Mon/Tue · relocating full-time December 2026
+						<span>
+							Parowan, UT
+						</span>
+						<span
+							className="cv-sep"
+							aria-hidden="true"
+						>
+							·
+						</span>
+						<span>
+							Murray Mon/Tue
+						</span>
+						<span
+							className="cv-sep"
+							aria-hidden="true"
+						>
+							·
+						</span>
+						<span>
+							relocating full-time December 2026
+						</span>
 					</p>
 				</div>
 			</header>
