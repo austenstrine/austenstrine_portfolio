@@ -6,13 +6,16 @@ const PORTFOLIO_HOME = 'https://austenstrine.dev/';
 
 /**
  * Fixed top-left 5×5 transparent hover hitbox (not a link / clickthrough).
- * Hovering the box or the portrait animates the image fully in; leaving both
- * animates it out. Clicking the portrait opens the portfolio site.
+ * While the hitbox or portrait is hovered, the hitbox expands to half the
+ * peek image size; on leave it shrinks back to 5×5. Hovering either surface
+ * animates the image fully in; leaving both animates it out. Clicking the
+ * portrait opens the portfolio site.
  */
 export function HeaderPortraitLink() {
 	return (
 		<div
 			className="
+				group/peek
 				pointer-events-none
 				fixed
 				left-0
@@ -24,13 +27,17 @@ export function HeaderPortraitLink() {
 			<div
 				aria-hidden
 				className="
-					peer/peek
 					pointer-events-auto
 					absolute
 					left-0
 					top-0
 					z-10
 					size-[5px]
+					transition-[width,height]
+					duration-300
+					ease-out
+					group-hover/peek:size-5
+					motion-reduce:transition-none
 				"
 			/>
 			<a
@@ -49,7 +56,7 @@ export function HeaderPortraitLink() {
 					ease-out
 					hover:translate-x-0
 					focus-visible:translate-x-0
-					peer-hover/peek:translate-x-0
+					group-hover/peek:translate-x-0
 					motion-reduce:transition-none
 				"
 				href={PORTFOLIO_HOME}
