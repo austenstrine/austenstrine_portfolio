@@ -46,7 +46,7 @@ export function MarketplaceFooter() {
 							text-slate-500
 						"
 					>
-						A live multi-vendor e-commerce demo by Austen Strine.
+						A live multi-vendor e-commerce demo.
 					</p>
 				</div>
 				<nav
