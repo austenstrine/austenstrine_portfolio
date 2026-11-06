@@ -228,7 +228,7 @@ export function CvDocument() {
 							Troubleshot Ubiquiti wireless ISP equipment at customer and tower levels; multi-brand router setup, PPPoE, IMAP/POP email, VoIP ATA.
 						</li>
 						<li>
-							Built an internal troubleshooting flow app (WISP-T) that reached beta. Available on GitHub.
+							Built an internal troubleshooting flow app (WISP-T) that reached beta.
 						</li>
 					</ul>
 				</div>
