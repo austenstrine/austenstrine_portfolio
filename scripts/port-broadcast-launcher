@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+# Thin wrapper — canonical tool lives in austenstrine/port-broadcast-bash
+# https://github.com/austenstrine/port-broadcast-bash
+set -euo pipefail
+HOME_DIR="${PORT_BROADCAST_HOME:-$HOME/Development/port-broadcast-bash}"
+TARGET="${HOME_DIR}/bin/port-broadcast-launcher"
+if [[ ! -x "$TARGET" ]]; then
+	echo "port-broadcast-launcher: missing $TARGET" >&2
+	echo "Clone https://github.com/austenstrine/port-broadcast-bash to ${HOME_DIR}" >&2
+	echo "Or set PORT_BROADCAST_HOME to that checkout." >&2
+	exit 1
+fi
+exec "$TARGET" "$@"
