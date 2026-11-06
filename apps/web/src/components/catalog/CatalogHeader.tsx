@@ -670,6 +670,8 @@ export function CatalogHeader() {
 	const [headerHidden, setHeaderHidden] = useState(false);
 	const lastScrollY = useRef(0);
 	const sellerChrome = pathUsesSellerChrome(pathname);
+	// Buyer chrome (incl. /place-et-marque/<vendor>) keeps the department bar.
+	// Search hides it — filters live on the page instead.
 	const showDepartmentBar =
 		!sellerChrome
 		&& categories.length > 0

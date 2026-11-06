@@ -51,6 +51,40 @@ export function safeNextPath(raw: string | null | undefined, fallback = '/'): st
 const PRODUCT_SLUG_EDITOR_PATH =
 	/^\/place-et-marque\/[^/]+\/[^/]+\/(edit|configure)$/;
 
+/** First path segment after /place-et-marque/ that is an app route, not a vendor slug. */
+const PLACE_ET_MARQUE_RESERVED_SEGMENTS = new Set([
+	'attributes',
+	'cart',
+	'categories',
+	'checkout',
+	'guide',
+	'invites',
+	'join-demo',
+	'manage',
+	'notifications',
+	'orders',
+	'preferences',
+	'products',
+	'search',
+	'uom-merges',
+	'uoms',
+	'vendors',
+]);
+
+/**
+ * Buyer vendor storefront: /place-et-marque/<vendorSlug>.
+ * Must stay on buyer chrome (cart, category bar, no Selling chip / bottom pane).
+ * Distinct from seller /place-et-marque/vendors/<id>.
+ */
+export function pathIsBuyerVendorStorefront(path: string): boolean {
+	const pathname = path.split('?')[0] ?? path;
+	const match = /^\/place-et-marque\/([^/]+)\/?$/.exec(pathname);
+	if(!match) {
+		return false;
+	}
+	return !PLACE_ET_MARQUE_RESERVED_SEGMENTS.has(match[1] ?? '');
+}
+
 export function pathRequiresVendor(path: string): boolean {
 	const pathname = path.split('?')[0] ?? path;
 	if(pathname === '/place-et-marque/vendors') {
@@ -68,9 +102,16 @@ export function pathRequiresVendor(path: string): boolean {
 	);
 }
 
-/** Seller chrome: hide category bar; top = site-wide context; bottom pane = page actions. */
+/**
+ * Seller chrome: hide category bar + cart; show Selling chip; bottom pane = page actions.
+ * Buyer storefronts (/place-et-marque/<slug>) and product detail stay on buyer chrome.
+ */
 export function pathUsesSellerChrome(path: string): boolean {
 	const pathname = path.split('?')[0] ?? path;
+	// Buyer vendor pages are never seller chrome — even for org members browsing.
+	if(pathIsBuyerVendorStorefront(pathname)) {
+		return false;
+	}
 	if(
 		pathname === '/place-et-marque/manage'
 		|| pathname === '/place-et-marque/vendors'
