@@ -84,7 +84,7 @@ export function CvDocument() {
 					Summary
 				</h2>
 				<p>
-					I&apos;m a Senior Product, Catalog, and Search Software Engineer with six and a half years of professional software work (November 2018–June 2025) developing several production e-commerce sites. I own problems end to end and partner well with product owners. Making the people around me faster matters as much as shipping.
+					I&apos;m a Senior Product, Catalog, and Search Software Engineer with six and a half years of professional software work (November 2018–June 2025) developing several production e-commerce sites. I own problems end to end and partner very well with product owners. I&apos;m a force stack multiplier in small teams, especially when I have leeway to move fast and drill deep.
 				</p>
 			</section>
 
