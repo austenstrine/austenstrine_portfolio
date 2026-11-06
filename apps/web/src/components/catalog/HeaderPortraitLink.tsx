@@ -5,51 +5,72 @@ import { SITE_NAME, SITE_OG_IMAGE } from '../../lib/site';
 const PORTFOLIO_HOME = 'https://austenstrine.dev/';
 
 /**
- * Top-left header peek: only 1px of Austen’s photo shows until hover/focus,
- * then the full portrait slides in. Click opens the portfolio site.
+ * Fixed top-left 5×5 transparent hover hitbox (not a link / clickthrough).
+ * Hovering the box or the portrait animates the image fully in; leaving both
+ * animates it out. Clicking the portrait opens the portfolio site.
  */
 export function HeaderPortraitLink() {
 	return (
-		<a
-			aria-label={`${SITE_NAME} — austenstrine.dev`}
+		<div
 			className="
-				group/portrait
-				absolute
+				pointer-events-none
+				fixed
 				left-0
 				top-0
 				z-40
-				flex
-				h-full
-				w-px
-				items-center
-				outline-none
 			"
-			href={PORTFOLIO_HOME}
-			rel="noopener noreferrer"
-			title={`${SITE_NAME} — austenstrine.dev`}
 		>
-			<CdnImg
-				alt=""
-				cdn={{ w: 80, h: 80, fit: 'cover', fm: 'webp' }}
+			{/* Hover-only hitbox — not a control; clicks are not navigational. */}
+			<div
+				aria-hidden
 				className="
+					peer/peek
+					pointer-events-auto
+					absolute
+					left-0
+					top-0
+					z-10
+					size-[5px]
+				"
+			/>
+			<a
+				aria-label={`${SITE_NAME} — austenstrine.dev`}
+				className="
+					pointer-events-auto
+					absolute
+					left-0
+					top-0
+					block
 					size-10
-					max-w-none
-					shrink-0
-					-translate-x-[calc(100%-1px)]
-					rounded-full
-					border
-					border-white/80
-					object-cover
-					shadow-sm
+					-translate-x-full
+					outline-none
 					transition-transform
 					duration-300
 					ease-out
-					group-hover/portrait:translate-x-0
-					group-focus-visible/portrait:translate-x-0
+					hover:translate-x-0
+					focus-visible:translate-x-0
+					peer-hover/peek:translate-x-0
 					motion-reduce:transition-none
 				"
-				src={SITE_OG_IMAGE}
-			/>
-		</a>
+				href={PORTFOLIO_HOME}
+				rel="noopener noreferrer"
+				title={`${SITE_NAME} — austenstrine.dev`}
+			>
+				<CdnImg
+					alt=""
+					cdn={{ w: 80, h: 80, fit: 'cover', fm: 'webp' }}
+					className="
+						size-10
+						max-w-none
+						rounded-full
+						border
+						border-white/80
+						object-cover
+						shadow-sm
+					"
+					src={SITE_OG_IMAGE}
+				/>
+			</a>
+		</div>
 	);
 }
