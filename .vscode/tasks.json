@@ -1,0 +1,272 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "port-broadcast: 6 tabs",
+			"detail": "One Cursor window, six integrated terminal tabs (ports 4591\u20134596)",
+			"dependsOrder": "parallel",
+			"dependsOn": [
+				"port-broadcast: tab 4591",
+				"port-broadcast: tab 4592",
+				"port-broadcast: tab 4593",
+				"port-broadcast: tab 4594",
+				"port-broadcast: tab 4595",
+				"port-broadcast: tab 4596"
+			],
+			"problemMatcher": []
+		},
+		{
+			"label": "port-broadcast: smoke",
+			"detail": "1-tab short-lived smoke on 4591 (Cursor integrated terminal)",
+			"type": "shell",
+			"command": "echo '[port-broadcast] ready'; \"${workspaceFolder}/scripts/port-broadcast-shell\" -p 4591 -- bash -c \"echo SMOKE_OK; tty; sleep 45\"",
+			"isBackground": true,
+			"options": {
+				"cwd": "${workspaceFolder}",
+				"shell": {
+					"executable": "bash",
+					"args": [
+						"-lc"
+					]
+				}
+			},
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": true,
+				"panel": "dedicated",
+				"showReuseMessage": false,
+				"clear": true,
+				"close": false,
+				"group": "port-broadcast"
+			},
+			"problemMatcher": {
+				"owner": "port-broadcast-smoke",
+				"pattern": {
+					"regexp": "^$"
+				},
+				"background": {
+					"activeOnStart": true,
+					"beginsPattern": "\\[port-broadcast\\] ready",
+					"endsPattern": "\\[port-broadcast\\] ready"
+				}
+			}
+		},
+		{
+			"label": "port-broadcast: tab 4591",
+			"type": "shell",
+			"command": "echo '[port-broadcast] ready'; \"${workspaceFolder}/scripts/port-broadcast-shell\" -p 4591",
+			"isBackground": true,
+			"options": {
+				"cwd": "${workspaceFolder}",
+				"shell": {
+					"executable": "bash",
+					"args": [
+						"-lc"
+					]
+				}
+			},
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": false,
+				"panel": "dedicated",
+				"showReuseMessage": false,
+				"clear": true,
+				"close": false,
+				"group": "port-broadcast"
+			},
+			"problemMatcher": {
+				"owner": "port-broadcast-4591",
+				"pattern": {
+					"regexp": "^$"
+				},
+				"background": {
+					"activeOnStart": true,
+					"beginsPattern": "\\[port-broadcast\\] ready",
+					"endsPattern": "\\[port-broadcast\\] ready"
+				}
+			}
+		},
+		{
+			"label": "port-broadcast: tab 4592",
+			"type": "shell",
+			"command": "echo '[port-broadcast] ready'; \"${workspaceFolder}/scripts/port-broadcast-shell\" -p 4592",
+			"isBackground": true,
+			"options": {
+				"cwd": "${workspaceFolder}",
+				"shell": {
+					"executable": "bash",
+					"args": [
+						"-lc"
+					]
+				}
+			},
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": false,
+				"panel": "dedicated",
+				"showReuseMessage": false,
+				"clear": true,
+				"close": false,
+				"group": "port-broadcast"
+			},
+			"problemMatcher": {
+				"owner": "port-broadcast-4592",
+				"pattern": {
+					"regexp": "^$"
+				},
+				"background": {
+					"activeOnStart": true,
+					"beginsPattern": "\\[port-broadcast\\] ready",
+					"endsPattern": "\\[port-broadcast\\] ready"
+				}
+			}
+		},
+		{
+			"label": "port-broadcast: tab 4593",
+			"type": "shell",
+			"command": "echo '[port-broadcast] ready'; \"${workspaceFolder}/scripts/port-broadcast-shell\" -p 4593",
+			"isBackground": true,
+			"options": {
+				"cwd": "${workspaceFolder}",
+				"shell": {
+					"executable": "bash",
+					"args": [
+						"-lc"
+					]
+				}
+			},
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": false,
+				"panel": "dedicated",
+				"showReuseMessage": false,
+				"clear": true,
+				"close": false,
+				"group": "port-broadcast"
+			},
+			"problemMatcher": {
+				"owner": "port-broadcast-4593",
+				"pattern": {
+					"regexp": "^$"
+				},
+				"background": {
+					"activeOnStart": true,
+					"beginsPattern": "\\[port-broadcast\\] ready",
+					"endsPattern": "\\[port-broadcast\\] ready"
+				}
+			}
+		},
+		{
+			"label": "port-broadcast: tab 4594",
+			"type": "shell",
+			"command": "echo '[port-broadcast] ready'; \"${workspaceFolder}/scripts/port-broadcast-shell\" -p 4594",
+			"isBackground": true,
+			"options": {
+				"cwd": "${workspaceFolder}",
+				"shell": {
+					"executable": "bash",
+					"args": [
+						"-lc"
+					]
+				}
+			},
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": false,
+				"panel": "dedicated",
+				"showReuseMessage": false,
+				"clear": true,
+				"close": false,
+				"group": "port-broadcast"
+			},
+			"problemMatcher": {
+				"owner": "port-broadcast-4594",
+				"pattern": {
+					"regexp": "^$"
+				},
+				"background": {
+					"activeOnStart": true,
+					"beginsPattern": "\\[port-broadcast\\] ready",
+					"endsPattern": "\\[port-broadcast\\] ready"
+				}
+			}
+		},
+		{
+			"label": "port-broadcast: tab 4595",
+			"type": "shell",
+			"command": "echo '[port-broadcast] ready'; \"${workspaceFolder}/scripts/port-broadcast-shell\" -p 4595",
+			"isBackground": true,
+			"options": {
+				"cwd": "${workspaceFolder}",
+				"shell": {
+					"executable": "bash",
+					"args": [
+						"-lc"
+					]
+				}
+			},
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": false,
+				"panel": "dedicated",
+				"showReuseMessage": false,
+				"clear": true,
+				"close": false,
+				"group": "port-broadcast"
+			},
+			"problemMatcher": {
+				"owner": "port-broadcast-4595",
+				"pattern": {
+					"regexp": "^$"
+				},
+				"background": {
+					"activeOnStart": true,
+					"beginsPattern": "\\[port-broadcast\\] ready",
+					"endsPattern": "\\[port-broadcast\\] ready"
+				}
+			}
+		},
+		{
+			"label": "port-broadcast: tab 4596",
+			"type": "shell",
+			"command": "echo '[port-broadcast] ready'; \"${workspaceFolder}/scripts/port-broadcast-shell\" -p 4596",
+			"isBackground": true,
+			"options": {
+				"cwd": "${workspaceFolder}",
+				"shell": {
+					"executable": "bash",
+					"args": [
+						"-lc"
+					]
+				}
+			},
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": false,
+				"panel": "dedicated",
+				"showReuseMessage": false,
+				"clear": true,
+				"close": false,
+				"group": "port-broadcast"
+			},
+			"problemMatcher": {
+				"owner": "port-broadcast-4596",
+				"pattern": {
+					"regexp": "^$"
+				},
+				"background": {
+					"activeOnStart": true,
+					"beginsPattern": "\\[port-broadcast\\] ready",
+					"endsPattern": "\\[port-broadcast\\] ready"
+				}
+			}
+		}
+	]
+}
