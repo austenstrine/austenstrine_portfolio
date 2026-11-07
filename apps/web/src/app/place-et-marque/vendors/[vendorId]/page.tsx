@@ -1325,6 +1325,7 @@ function VendorDetailContent() {
 													className="
 														inline-flex
 														w-fit
+														self-end
 														items-center
 														rounded-xl
 														bg-sky
@@ -1886,6 +1887,7 @@ function VendorDetailContent() {
 													flex
 													flex-wrap
 													items-end
+													justify-end
 													gap-3
 												"
 											>

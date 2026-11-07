@@ -110,6 +110,7 @@ function ResetPasswordForm() {
 
 				<button
 					className="
+						self-end
 						mt-2
 						rounded-full
 						bg-sky

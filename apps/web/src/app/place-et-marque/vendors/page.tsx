@@ -429,7 +429,7 @@ function VendorManageContent() {
 
 									<button
 										className="
-											self-start
+											self-end
 											rounded-full
 											bg-sky
 											px-4

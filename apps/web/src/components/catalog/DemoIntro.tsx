@@ -43,6 +43,7 @@ export function DemoIntro() {
 					mt-6
 					flex
 					flex-wrap
+					justify-end
 					gap-3
 				"
 			>

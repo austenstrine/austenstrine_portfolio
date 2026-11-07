@@ -103,6 +103,7 @@ export function HeroSection() {
 							mt-8
 							flex
 							flex-wrap
+							justify-end
 							gap-3
 						"
 					>

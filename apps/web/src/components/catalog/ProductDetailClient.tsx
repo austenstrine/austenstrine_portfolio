@@ -1058,30 +1058,37 @@ export function ProductDetailClient({
 								)
 								: null
 							}
-							<button
-								type="button"
-								disabled={deleteBusy}
-								onClick={() => void onDelete()}
+							<div
 								className="
 									mt-3
-									rounded-full
-									border
-									border-red-300
-									bg-white
-									px-4
-									py-2
-									text-sm
-									font-semibold
-									text-red-700
-									hover:border-red-500
-									disabled:opacity-60
+									flex
+									justify-end
 								"
 							>
-								{deleteBusy
-									? 'Deleting…'
-									: 'Delete product'
-								}
-							</button>
+								<button
+									type="button"
+									disabled={deleteBusy}
+									onClick={() => void onDelete()}
+									className="
+										rounded-full
+										border
+										border-red-300
+										bg-white
+										px-4
+										py-2
+										text-sm
+										font-semibold
+										text-red-700
+										hover:border-red-500
+										disabled:opacity-60
+									"
+								>
+									{deleteBusy
+										? 'Deleting…'
+										: 'Delete product'
+									}
+								</button>
+							</div>
 						</div>
 					</details>
 				)
