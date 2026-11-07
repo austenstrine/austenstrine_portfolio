@@ -160,7 +160,13 @@ function VendorOrdersPageContent() {
 	}
 
 	return (
-		<div className={ORDERS_LIST_SHELL_CLASSNAME}>
+		<div
+			className="
+				flex
+				flex-col
+				gap-6
+			"
+		>
 			<PageBottomPanePortal>
 				<label
 					className="
@@ -544,20 +550,24 @@ function VendorOrdersPageContent() {
 }
 
 export default function VendorOrdersPage() {
+	// Shell outside Suspense/RequireAccess so SSR + "Loading…" / "Checking
+	// access…" keep MarketplaceFooter below the fold (PEM-213 gate reject).
 	return (
-		<Suspense
-			fallback={
-				<p className="text-sm text-slate-500">
-					Loading…
-				</p>
-			}
-		>
-			<RequireAccess
-				vendorRequired
-				reasonKey="vendorOrders"
+		<div className={ORDERS_LIST_SHELL_CLASSNAME}>
+			<Suspense
+				fallback={
+					<p className="text-sm text-slate-500">
+						Loading…
+					</p>
+				}
 			>
-				<VendorOrdersPageContent />
-			</RequireAccess>
-		</Suspense>
+				<RequireAccess
+					vendorRequired
+					reasonKey="vendorOrders"
+				>
+					<VendorOrdersPageContent />
+				</RequireAccess>
+			</Suspense>
+		</div>
 	);
 }

@@ -84,7 +84,13 @@ function OrdersContent() {
 	}, [user]);
 
 	return (
-		<div className={ORDERS_LIST_SHELL_CLASSNAME}>
+		<div
+			className="
+				flex
+				flex-col
+				gap-6
+			"
+		>
 			<PageBottomPanePortal>
 				<label
 					className="
@@ -290,17 +296,21 @@ function OrdersContent() {
 }
 
 export default function OrdersClient() {
+	// Shell outside Suspense/RequireAccess so SSR + "Loading…" / "Checking
+	// access…" keep MarketplaceFooter below the fold (PEM-213 gate reject).
 	return (
-		<Suspense
-			fallback={
-				<p className="text-sm text-slate-500">
-					Loading…
-				</p>
-			}
-		>
-			<RequireAccess reasonKey="orders">
-				<OrdersContent />
-			</RequireAccess>
-		</Suspense>
+		<div className={ORDERS_LIST_SHELL_CLASSNAME}>
+			<Suspense
+				fallback={
+					<p className="text-sm text-slate-500">
+						Loading…
+					</p>
+				}
+			>
+				<RequireAccess reasonKey="orders">
+					<OrdersContent />
+				</RequireAccess>
+			</Suspense>
+		</div>
 	);
 }
