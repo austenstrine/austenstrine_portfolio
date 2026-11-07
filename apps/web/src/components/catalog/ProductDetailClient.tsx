@@ -2,9 +2,10 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
 	deleteCatalogProduct,
+	getCatalogProduct,
 	type CatalogOfferingDetail,
 	type CatalogProductDetail,
 	type CatalogProductSummary,
@@ -174,7 +175,7 @@ export function ProductDetailClient({
 	relatedProducts = [],
 }: ProductDetailClientProps) {
 	const router = useRouter();
-	const { user } = useSession();
+	const { user, loading: sessionLoading } = useSession();
 	const [product, setProduct] = useState(initialProduct);
 	const [deleteBusy, setDeleteBusy] = useState(false);
 	const [deleteError, setDeleteError] = useState<string | null>(null);
@@ -185,6 +186,35 @@ export function ProductDetailClient({
 	const [cartBusy, setCartBusy] = useState(false);
 	const [cartMessage, setCartMessage] = useState<string | null>(null);
 	const [cartError, setCartError] = useState<string | null>(null);
+
+	// SSR catalog fetch may omit canEdit when access_token was not forwarded;
+	// re-fetch once the browser session is known so seller chrome can appear.
+	useEffect(() => {
+		if(sessionLoading || !user || product.permissions.canEdit || deletedNotice) {
+			return;
+		}
+		let cancelled = false;
+		getCatalogProduct(product.vendor.slug, product.slug)
+			.then((next) => {
+				if(cancelled || !next.permissions.canEdit) {
+					return;
+				}
+				setProduct(next);
+			})
+			.catch(() => {
+				/* keep SSR payload */
+			});
+		return () => {
+			cancelled = true;
+		};
+	}, [
+		deletedNotice,
+		product.permissions.canEdit,
+		product.slug,
+		product.vendor.slug,
+		sessionLoading,
+		user,
+	]);
 
 	const canEdit = product.permissions.canEdit && !deletedNotice;
 	const edit = useInPlaceProductEdit({
