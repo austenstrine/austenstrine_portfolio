@@ -1,6 +1,13 @@
 'use client';
 
-import { useEffect, useId, useRef, useState } from 'react';
+import {
+	useCallback,
+	useEffect,
+	useId,
+	useRef,
+	useState,
+	type RefObject,
+} from 'react';
 import {
 	getCatalogProduct,
 	type CatalogProductDetail,
@@ -13,18 +20,54 @@ type ProductQuickEditDialogProps = {
 	product: CatalogProductSummary;
 	onClose: () => void;
 	onUpdated: (product: CatalogProductDetail) => void;
+	/** Pencil (or other control) that opened the dialog — focused on close. */
+	returnFocusRef?: RefObject<HTMLElement | null>;
 };
+
+const FOCUSABLE_SELECTOR = [
+	'a[href]',
+	'button:not([disabled])',
+	'input:not([disabled])',
+	'select:not([disabled])',
+	'textarea:not([disabled])',
+	'[tabindex]:not([tabindex="-1"])',
+].join(', ');
+
+function focusableIn(root: HTMLElement | null): HTMLElement[] {
+	if(!root) {
+		return [];
+	}
+	return [...root.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)].filter(
+		(node) => {
+			if(node.closest('[aria-hidden="true"]')) {
+				return false;
+			}
+			const style = window.getComputedStyle(node);
+			return style.visibility !== 'hidden' && style.display !== 'none';
+		},
+	);
+}
 
 export function ProductQuickEditDialog({
 	product,
 	onClose,
 	onUpdated,
+	returnFocusRef,
 }: ProductQuickEditDialogProps) {
 	const titleId = useId();
 	const panelRef = useRef<HTMLDivElement>(null);
+	const onCloseRef = useRef(onClose);
+	const returnFocusRefStable = useRef(returnFocusRef);
 	const [detail, setDetail] = useState<CatalogProductDetail | null>(null);
 	const [loadError, setLoadError] = useState<string | null>(null);
 	const [loading, setLoading] = useState(true);
+
+	onCloseRef.current = onClose;
+	returnFocusRefStable.current = returnFocusRef;
+
+	const requestClose = useCallback(() => {
+		onCloseRef.current();
+	}, []);
 
 	useEffect(() => {
 		let cancelled = false;
@@ -56,24 +99,86 @@ export function ProductQuickEditDialog({
 	}, [product.slug, product.vendor.slug]);
 
 	useEffect(() => {
-		const onKey = (event: KeyboardEvent) => {
-			if(event.key === 'Escape') {
-				event.preventDefault();
-				onClose();
-			}
-		};
-		window.addEventListener('keydown', onKey);
-		return () => window.removeEventListener('keydown', onKey);
-	}, [onClose]);
-
-	useEffect(() => {
 		const prior = document.body.style.overflow;
 		document.body.style.overflow = 'hidden';
-		panelRef.current?.focus();
-		return () => {
-			document.body.style.overflow = prior;
+
+		let focusAttempts = 0;
+		let focusFrame = 0;
+		const focusFirstControl = () => {
+			const items = focusableIn(panelRef.current);
+			if(items[0]) {
+				items[0].focus();
+				return;
+			}
+			panelRef.current?.focus();
+			focusAttempts += 1;
+			if(focusAttempts < 12) {
+				focusFrame = requestAnimationFrame(focusFirstControl);
+			}
 		};
-	}, []);
+		focusFrame = requestAnimationFrame(focusFirstControl);
+
+		const onKeyDown = (event: KeyboardEvent) => {
+			if(event.key === 'Escape') {
+				event.preventDefault();
+				requestClose();
+				return;
+			}
+
+			if(event.key !== 'Tab') {
+				return;
+			}
+
+			const items = focusableIn(panelRef.current);
+			if(items.length === 0) {
+				event.preventDefault();
+				panelRef.current?.focus();
+				return;
+			}
+
+			// Keep Tab inside the dialog (mirror CatalogMenu).
+			event.preventDefault();
+			const activeIndex = items.findIndex(
+				(item) => item === document.activeElement,
+			);
+			if(items.length === 1) {
+				items[0]?.focus();
+				return;
+			}
+			if(event.shiftKey) {
+				const next = activeIndex <= 0
+					? items.length - 1
+					: activeIndex - 1;
+				items[next]?.focus();
+				return;
+			}
+			const next = activeIndex < 0
+				? 0
+				: (activeIndex + 1) % items.length;
+			items[next]?.focus();
+		};
+
+		window.addEventListener('keydown', onKeyDown);
+		return () => {
+			cancelAnimationFrame(focusFrame);
+			window.removeEventListener('keydown', onKeyDown);
+			document.body.style.overflow = prior;
+			returnFocusRefStable.current?.current?.focus();
+		};
+	}, [requestClose]);
+
+	// When the form mounts after load, pull focus in if it left the panel.
+	useEffect(() => {
+		if(loading || !detail) {
+			return;
+		}
+		const active = document.activeElement;
+		if(active && panelRef.current?.contains(active)) {
+			return;
+		}
+		const items = focusableIn(panelRef.current);
+		(items[0] ?? panelRef.current)?.focus();
+	}, [detail, loading]);
 
 	return (
 		<div
@@ -90,15 +195,14 @@ export function ProductQuickEditDialog({
 			"
 			role="dialog"
 		>
-			<button
-				aria-label="Close"
+			<div
+				aria-hidden="true"
 				className="
 					absolute
 					inset-0
 					bg-ink/40
 				"
-				onClick={onClose}
-				type="button"
+				onClick={requestClose}
 			/>
 			<div
 				className="
@@ -174,7 +278,7 @@ export function ProductQuickEditDialog({
 							hover:border-sky
 							hover:text-sky
 						"
-						onClick={onClose}
+						onClick={requestClose}
 						type="button"
 					>
 						<CloseIcon className="h-3.5 w-3.5" />
@@ -203,7 +307,7 @@ export function ProductQuickEditDialog({
 								? (
 									<ProductQuickEdit
 										embedded
-										onDone={onClose}
+										onDone={requestClose}
 										onUpdated={onUpdated}
 										product={detail}
 									/>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type {
 	CatalogProductDetail,
 	CatalogProductSummary,
@@ -56,6 +56,7 @@ function applyDetailToSummary(
 
 export function ProductCard({ product }: { product: CatalogProductSummary }) {
 	const { canEditVendor } = useEditableVendors();
+	const editTriggerRef = useRef<HTMLButtonElement>(null);
 	const [display, setDisplay] = useState(product);
 	const [editing, setEditing] = useState(false);
 
@@ -128,6 +129,7 @@ export function ProductCard({ product }: { product: CatalogProductSummary }) {
 							event.stopPropagation();
 							setEditing(true);
 						}}
+						ref={editTriggerRef}
 						type="button"
 					>
 						<PencilIcon className="h-3.5 w-3.5" />
@@ -328,6 +330,7 @@ export function ProductCard({ product }: { product: CatalogProductSummary }) {
 							setDisplay(applyDetailToSummary(display, detail));
 						}}
 						product={display}
+						returnFocusRef={editTriggerRef}
 					/>
 				)
 				: null
