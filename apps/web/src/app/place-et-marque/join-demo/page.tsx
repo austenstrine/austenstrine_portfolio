@@ -7,7 +7,7 @@ import {
 	type DemoVendorInfo,
 } from '../../../lib/catalog-api';
 import {
-	ACCESS_REASONS,
+	accessReason,
 	buildLoginUrl,
 } from '../../../lib/accessGate';
 import { useSession } from '../../../lib/useSession';
@@ -21,6 +21,7 @@ export default function JoinDemoPage() {
 	const [error, setError] = useState<string | null>(null);
 	const [alreadyMemberMessage, setAlreadyMemberMessage] = useState<string | null>(null);
 	const [inviteSentMessage, setInviteSentMessage] = useState<string | null>(null);
+	const sellerWorkspaceHref = `/place-et-marque/vendors/${info?.vendorSlug ?? 'demo-supply'}`;
 
 	useEffect(() => {
 		getDemoVendorInfo()
@@ -50,13 +51,17 @@ export default function JoinDemoPage() {
 			const result = await joinDemoVendor(email.trim());
 			if(result.alreadyMember) {
 				setAlreadyMemberMessage(
-					`You're already on ${result.vendorName}. Sign in to open the seller workspace.`,
+					user
+						? `You're already on ${result.vendorName}. Open your seller workspace to continue.`
+						: `You're already on ${result.vendorName}. Sign in to open the seller workspace.`,
 				);
 				return;
 			}
 			if(result.mailSent) {
 				setInviteSentMessage(
-					`Invite sent to ${result.email}. Open the email link to create an account or sign in, then accept membership.`,
+					user
+						? `Invite sent to ${result.email}. Open the email link to accept membership.`
+						: `Invite sent to ${result.email}. Open the email link to create an account or sign in, then accept membership.`,
 				);
 				return;
 			}
@@ -78,8 +83,8 @@ export default function JoinDemoPage() {
 
 	const vendorName = info?.vendorName ?? 'Demo Supply Co.';
 	const signInHref = buildLoginUrl({
-		next: `/place-et-marque/vendors/${info?.vendorSlug ?? 'demo-supply'}`,
-		reason: ACCESS_REASONS.joinDemo,
+		next: sellerWorkspaceHref,
+		reason: accessReason('joinDemo', false),
 	});
 
 	return (
@@ -259,23 +264,46 @@ export default function JoinDemoPage() {
 								: 'Join demo'
 							}
 						</button>
-						<a
-							className="
-								rounded-full
-								border
-								border-slate-300
-								px-5
-								py-2.5
-								text-sm
-								font-semibold
-								text-ink
-								hover:border-sky
-								hover:text-sky
-							"
-							href={signInHref}
-						>
-							Sign in
-						</a>
+						{user
+							? (
+									<a
+										className="
+											rounded-full
+											border
+											border-slate-300
+											px-5
+											py-2.5
+											text-sm
+											font-semibold
+											text-ink
+											hover:border-sky
+											hover:text-sky
+										"
+										href={sellerWorkspaceHref}
+									>
+										Open seller workspace
+									</a>
+								)
+							: (
+									<a
+										className="
+											rounded-full
+											border
+											border-slate-300
+											px-5
+											py-2.5
+											text-sm
+											font-semibold
+											text-ink
+											hover:border-sky
+											hover:text-sky
+										"
+										href={signInHref}
+									>
+										Sign in
+									</a>
+								)
+						}
 					</div>
 				</form>
 			</section>

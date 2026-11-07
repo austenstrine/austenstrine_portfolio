@@ -11,7 +11,7 @@ import {
 	type CatalogProductSummary,
 } from '../../lib/catalog-api';
 import { upsertCartLine } from '../../lib/checkout-api';
-import { ACCESS_REASONS, buildLoginUrl } from '../../lib/accessGate';
+import { accessReason, buildLoginUrl } from '../../lib/accessGate';
 import { useSession } from '../../lib/useSession';
 import { vendorViewHref } from '../../lib/vendor-ref';
 import { CatalogCover } from './CatalogCover';
@@ -282,7 +282,7 @@ export function ProductDetailClient({
 			router.push(
 				buildLoginUrl({
 					next: window.location.pathname,
-					reason: ACCESS_REASONS.cart,
+					reason: accessReason('cart', false),
 				}),
 			);
 			return;

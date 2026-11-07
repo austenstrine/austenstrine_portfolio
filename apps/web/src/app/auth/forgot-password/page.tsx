@@ -6,9 +6,11 @@ import { AuthCard } from '../../../components/auth/AuthCard';
 import { ErrorText } from '../../../components/auth/ErrorText';
 import { FormField } from '../../../components/auth/FormField';
 import { AuthApiError, requestPasswordReset } from '../../../lib/auth-api';
+import { useSession } from '../../../lib/useSession';
 
 export default function ForgotPasswordPage() {
 	const router = useRouter();
+	const { user, loading: sessionLoading } = useSession();
 	const [email, setEmail] = useState('');
 	const [error, setError] = useState<string | null>(null);
 	const [submitting, setSubmitting] = useState(false);
@@ -50,19 +52,39 @@ export default function ForgotPasswordPage() {
 				title="Forgot password"
 				subtitle="Enter your email and we'll send a one-time code if an account exists. This also works if you only signed in with Google and never set a password."
 				footer={
-					<p>
-						Remembered it?{' '}
-						<a
-							className="
-								font-semibold
-								text-sky
-								hover:underline
-							"
-							href="/auth/login"
-						>
-							Sign in
-						</a>
-					</p>
+					sessionLoading
+						? null
+						: user
+							? (
+									<p>
+										Signed in as {user.email}.{' '}
+										<a
+											className="
+												font-semibold
+												text-sky
+												hover:underline
+											"
+											href="/auth/account"
+										>
+											Account
+										</a>
+									</p>
+								)
+							: (
+									<p>
+										Remembered it?{' '}
+										<a
+											className="
+												font-semibold
+												text-sky
+												hover:underline
+											"
+											href="/auth/login"
+										>
+											Sign in
+										</a>
+									</p>
+								)
 				}
 			>
 				<form

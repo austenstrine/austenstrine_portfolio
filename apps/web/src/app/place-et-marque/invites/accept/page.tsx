@@ -8,7 +8,7 @@ import {
 	type VendorInvitePeek,
 } from '../../../../lib/catalog-api';
 import {
-	ACCESS_REASONS,
+	accessReason,
 	buildLoginUrl,
 	buildRegisterUrl,
 	safeNextPath,
@@ -182,7 +182,7 @@ function AcceptInviteContent() {
 											"
 										>
 											<p className="text-sm text-slate-700">
-												{ACCESS_REASONS.invite}
+												{accessReason('invite', false)}
 											</p>
 											<div
 												className="
@@ -205,7 +205,7 @@ function AcceptInviteContent() {
 													"
 													href={buildLoginUrl({
 														next: acceptPath,
-														reason: ACCESS_REASONS.invite,
+														reason: accessReason('invite', false),
 													})}
 												>
 													Sign in
@@ -226,7 +226,7 @@ function AcceptInviteContent() {
 													href={(() => {
 														const base = buildRegisterUrl({
 															next: acceptPath,
-															reason: ACCESS_REASONS.invite,
+															reason: accessReason('invite', false),
 														});
 														const sep = base.includes('?')
 															? '&'
