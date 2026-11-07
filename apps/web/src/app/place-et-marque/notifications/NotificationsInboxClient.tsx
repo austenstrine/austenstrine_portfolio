@@ -135,6 +135,18 @@ function NotificationsInboxInner() {
 			});
 	}
 
+	function selectItem(item: NotificationDto) {
+		const nextId = item.id === activeId
+			? null
+			: item.id;
+		const nextUrl = nextId
+			? `${window.location.pathname}${window.location.search}#${encodeURIComponent(nextId)}`
+			: `${window.location.pathname}${window.location.search}`;
+		window.history.replaceState(null, '', nextUrl);
+		setActiveId(nextId);
+		markReadIfNeeded(item);
+	}
+
 	const unreadCount = items.filter((item) => !item.readAt).length;
 
 	return (
@@ -239,43 +251,68 @@ function NotificationsInboxInner() {
 								{items.map((item) => {
 									const isActive = item.id === activeId;
 									const unread = !item.readAt;
-									const rowClass = `
-										flex
-										w-full
-										items-start
-										gap-3
-										px-1
-										py-3
-										text-left
-										${isActive
-											? 'bg-sky/5 ring-2 ring-inset ring-sky/25'
-											: ''
-										}
-									`.trim();
-									const inner = (
-										<>
-											<span
-												aria-hidden="true"
-												className={
-													unread
-														? `
-															mt-2
-															size-2
-															shrink-0
-															rounded-full
-															bg-signal
-														`
-														: `
-															mt-2
-															size-2
-															shrink-0
-														`
+									const hasDetail = Boolean(item.body || item.href);
+									const showDetail = isActive && hasDetail;
+
+									return (
+										<li
+											className={
+												isActive
+													? 'bg-sky/5 ring-2 ring-inset ring-sky/25'
+													: undefined
+											}
+											id={`notification-${item.id}`}
+											key={item.id}
+										>
+											<button
+												aria-controls={
+													showDetail
+														? `notification-body-${item.id}`
+														: undefined
 												}
-											/>
-											<span className="min-w-0 flex-1">
+												aria-expanded={
+													hasDetail
+														? isActive
+														: undefined
+												}
+												className="
+													flex
+													w-full
+													items-start
+													gap-3
+													px-1
+													py-3
+													text-left
+													hover:bg-slate-50
+												"
+												onClick={() => {
+													selectItem(item);
+												}}
+												type="button"
+											>
+												<span
+													aria-hidden="true"
+													className={
+														unread
+															? `
+																mt-2
+																size-2
+																shrink-0
+																rounded-full
+																bg-signal
+															`
+															: `
+																mt-2
+																size-2
+																shrink-0
+															`
+													}
+												/>
 												<span
 													className="
 														flex
+														min-w-0
+														flex-1
 														flex-wrap
 														items-baseline
 														justify-between
@@ -310,94 +347,60 @@ function NotificationsInboxInner() {
 														{formatCreatedAt(item.createdAt)}
 													</time>
 												</span>
-												{item.body
-													? (
-														<span
-															className="
-																mt-1
-																block
-																text-sm
-																text-slate-600
-															"
-														>
-															{item.body}
-														</span>
-													)
-													: null
-												}
-											</span>
-											{item.href
+											</button>
+											{showDetail
 												? (
-													<ArrowRightIcon
+													<div
 														className="
-															mt-1.5
-															h-3.5
-															w-3.5
-															shrink-0
-															text-asgreen
+															space-y-2
+															pb-3
+															pl-6
+															pr-1
 														"
-													/>
+														id={`notification-body-${item.id}`}
+													>
+														{item.body
+															? (
+																<p
+																	className="
+																		text-sm
+																		text-slate-600
+																	"
+																>
+																	{item.body}
+																</p>
+															)
+															: null
+														}
+														{item.href
+															? (
+																<a
+																	className="
+																		inline-flex
+																		items-center
+																		gap-1.5
+																		text-sm
+																		font-semibold
+																		text-asgreen
+																		hover:underline
+																	"
+																	href={item.href}
+																>
+																	Open related
+																	<ArrowRightIcon
+																		className="
+																			h-3.5
+																			w-3.5
+																			shrink-0
+																		"
+																	/>
+																</a>
+															)
+															: null
+														}
+													</div>
 												)
 												: null
-											}
-										</>
-									);
-
-									return (
-										<li
-											id={`notification-${item.id}`}
-											key={item.id}
-										>
-											{item.href
-												? (
-													<a
-														aria-current={
-															isActive
-																? 'true'
-																: undefined
-														}
-														className={
-															`${rowClass} hover:bg-slate-50`
-														}
-														href={item.href}
-														onClick={() => {
-															markReadIfNeeded(item);
-														}}
-													>
-														{inner}
-													</a>
-												)
-												: unread
-													? (
-														<button
-															aria-current={
-																isActive
-																	? 'true'
-																	: undefined
-															}
-															className={
-																`${rowClass} hover:bg-slate-50`
-															}
-															onClick={() => {
-																markReadIfNeeded(item);
-															}}
-															type="button"
-														>
-															{inner}
-														</button>
-													)
-													: (
-														<article
-															aria-current={
-																isActive
-																	? 'true'
-																	: undefined
-															}
-															className={rowClass}
-														>
-															{inner}
-														</article>
-													)
 											}
 										</li>
 									);
