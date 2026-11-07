@@ -11,10 +11,13 @@ import {
 import { CatalogCover } from './CatalogCover';
 
 type ProductCardImageCarouselProps = {
-	href: string;
+	/** Omit when the image plane should not navigate (seller in-place edit). */
+	href?: string;
 	images: string[];
 	alt: string;
 	fallback: ReactNode;
+	/** Disable snap links; parent owns click targets. */
+	editable?: boolean;
 };
 
 export function ProductCardImageCarousel({
@@ -22,6 +25,7 @@ export function ProductCardImageCarousel({
 	images,
 	alt,
 	fallback,
+	editable = false,
 }: ProductCardImageCarouselProps) {
 	const scrollerRef = useRef<HTMLDivElement>(null);
 	const [active, setActive] = useState(0);
@@ -95,21 +99,15 @@ export function ProductCardImageCarousel({
 				onScroll={onScroll}
 				ref={scrollerRef}
 			>
-				{urls.map((src, index) => (
-					<a
-						key={`${src}-${index}`}
-						className="
-							relative
-							h-full
-							min-w-full
-							shrink-0
-							snap-start
-						"
-						aria-label={index === 0 ? alt : undefined}
-						draggable={false}
-						href={href}
-						tabIndex={index === 0 ? 0 : -1}
-					>
+				{urls.map((src, index) => {
+					const slideClassName = `
+						relative
+						h-full
+						min-w-full
+						shrink-0
+						snap-start
+					`;
+					const cover = (
 						<CatalogCover
 							className="
 								h-full
@@ -136,8 +134,32 @@ export function ProductCardImageCarousel({
 								)
 							}
 						/>
-					</a>
-				))}
+					);
+					if(editable || !href) {
+						return (
+							<div
+								key={`${src}-${index}`}
+								aria-label={index === 0 ? alt : undefined}
+								className={slideClassName}
+								tabIndex={index === 0 ? 0 : -1}
+							>
+								{cover}
+							</div>
+						);
+					}
+					return (
+						<a
+							key={`${src}-${index}`}
+							className={slideClassName}
+							aria-label={index === 0 ? alt : undefined}
+							draggable={false}
+							href={href}
+							tabIndex={index === 0 ? 0 : -1}
+						>
+							{cover}
+						</a>
+					);
+				})}
 			</div>
 			{multi
 				? (
