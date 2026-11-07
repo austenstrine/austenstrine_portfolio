@@ -75,54 +75,15 @@ function AccountForm() {
 	return (
 		<AuthCard
 			title="Account"
-			subtitle={
-				hasPassword
-					? 'Update the password you use with email sign-in.'
-					: 'You signed in with Google. Add a password if you also want to sign in with email.'
-			}
-			footer={
-				<p
-					className="
-						flex
-						flex-col
-						gap-2
-					"
-				>
-					<a
-						className="
-							font-semibold
-							text-sky
-							hover:underline
-						"
-						href="/place-et-marque/preferences"
-					>
-						Manage widget preferences
-					</a>
-					<a
-						className="
-							font-semibold
-							text-sky
-							hover:underline
-						"
-						href="/place-et-marque"
-					>
-						Back to Place et Marque
-					</a>
-				</p>
-			}
 		>
 			<p
 				className="
-					mb-4
+					mb-6
 					text-sm
-					text-slate-600
+					text-ink
 				"
 			>
-				Signed in as
-				{' '}
-				<span className="font-semibold text-ink">
-					{user.email}
-				</span>
+				{user.email}
 			</p>
 			<form
 				className="
@@ -154,7 +115,6 @@ function AccountForm() {
 					value={password}
 					onChange={setNewPassword}
 					autoComplete="new-password"
-					placeholder="At least 10 characters"
 				/>
 				<FormField
 					label={
@@ -174,16 +134,7 @@ function AccountForm() {
 				{success
 					? (
 						<p
-							className="
-								rounded-lg
-								border
-								border-emerald-200
-								bg-emerald-50
-								px-3
-								py-2
-								text-sm
-								text-emerald-800
-							"
+							className="text-sm text-slate-600"
 							role="status"
 						>
 							{success}
