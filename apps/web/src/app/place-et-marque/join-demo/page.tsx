@@ -1,6 +1,5 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
 import { FormEvent, useEffect, useState } from 'react';
 import {
 	getDemoVendorInfo,
@@ -14,7 +13,6 @@ import {
 import { useSession } from '../../../lib/useSession';
 
 export default function JoinDemoPage() {
-	const router = useRouter();
 	const { user, loading: sessionLoading } = useSession();
 	const [info, setInfo] = useState<DemoVendorInfo | null>(null);
 	const [infoError, setInfoError] = useState<string | null>(null);
@@ -22,6 +20,7 @@ export default function JoinDemoPage() {
 	const [busy, setBusy] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 	const [alreadyMemberMessage, setAlreadyMemberMessage] = useState<string | null>(null);
+	const [inviteSentMessage, setInviteSentMessage] = useState<string | null>(null);
 
 	useEffect(() => {
 		getDemoVendorInfo()
@@ -46,6 +45,7 @@ export default function JoinDemoPage() {
 		setBusy(true);
 		setError(null);
 		setAlreadyMemberMessage(null);
+		setInviteSentMessage(null);
 		try {
 			const result = await joinDemoVendor(email.trim());
 			if(result.alreadyMember) {
@@ -54,10 +54,15 @@ export default function JoinDemoPage() {
 				);
 				return;
 			}
-			if(!result.acceptPath) {
-				throw new Error('Invite was created but no accept link came back.');
+			if(result.mailSent) {
+				setInviteSentMessage(
+					`Invite sent to ${result.email}. Open the email link to create an account or sign in, then accept membership.`,
+				);
+				return;
 			}
-			router.push(result.acceptPath);
+			setError(
+				`Invite was prepared for ${result.email}, but email could not be sent. Check mail configuration and try again — the accept link is never returned in the page response.`,
+			);
 		}
 		catch(joinError) {
 			setError(
@@ -160,7 +165,7 @@ export default function JoinDemoPage() {
 						text-slate-600
 					"
 				>
-					Enter the email you want to register with. We create a normal
+					Enter the email you want to register with. We email a normal
 					organization invite for that address — same path a real vendor would
 					use — then you create an account (or sign in) and accept membership.
 				</p>
@@ -224,6 +229,15 @@ export default function JoinDemoPage() {
 						? (
 								<p className="text-sm text-amber-800">
 									{alreadyMemberMessage}
+								</p>
+							)
+						: null
+					}
+
+					{inviteSentMessage
+						? (
+								<p className="text-sm text-asgreen">
+									{inviteSentMessage}
 								</p>
 							)
 						: null

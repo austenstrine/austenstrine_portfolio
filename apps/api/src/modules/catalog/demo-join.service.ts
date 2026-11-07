@@ -42,6 +42,9 @@ export class DemoJoinService {
 	/**
 	 * Mint (or reuse) a real VendorInvite into the seeded demo vendor.
 	 * Visitors then register / sign in and accept via the normal invite path.
+	 *
+	 * The raw invite token is never returned to the client — delivery is email
+	 * only. Accept remains single-use via VendorInvite.acceptedAt.
 	 */
 	async joinDemo(emailRaw: string) {
 		const email = emailRaw.trim().toLowerCase();
@@ -66,8 +69,7 @@ export class DemoJoinService {
 				vendorSlug: vendor.slug,
 				role: existingMember.role,
 				email,
-				token: null,
-				acceptPath: null,
+				mailSent: false,
 				expiresAt: null,
 			};
 		}
@@ -82,23 +84,47 @@ export class DemoJoinService {
 			},
 			orderBy: { createdAt: 'desc' },
 		});
+
+		let token: string;
+		let expiresAt: Date;
 		if(pending) {
-			return this.toJoinResult(vendor, pending.token, pending.expiresAt, email);
+			token = pending.token;
+			expiresAt = pending.expiresAt;
+		}
+		else {
+			token = randomBytes(32).toString('hex');
+			expiresAt = new Date(Date.now() + INVITE_TTL_MS);
+			await this.prisma.vendorInvite.create({
+				data: {
+					vendorId: vendor.id,
+					email,
+					role: DEMO_JOIN_ROLE,
+					token,
+					invitedByUserId: owner.id,
+					expiresAt,
+				},
+			});
 		}
 
-		const token = randomBytes(32).toString('hex');
-		const expiresAt = new Date(Date.now() + INVITE_TTL_MS);
-		await this.prisma.vendorInvite.create({
-			data: {
-				vendorId: vendor.id,
-				email,
-				role: DEMO_JOIN_ROLE,
-				token,
-				invitedByUserId: owner.id,
-				expiresAt,
-			},
-		});
+		const mailSent = await this.sendInviteMail(vendor, email, token);
 
+		return {
+			alreadyMember: false as const,
+			vendorId: vendor.id,
+			vendorName: vendor.name,
+			vendorSlug: vendor.slug,
+			role: DEMO_JOIN_ROLE,
+			email,
+			mailSent,
+			expiresAt,
+		};
+	}
+
+	private async sendInviteMail(
+		vendor: { name: string },
+		email: string,
+		token: string,
+	): Promise<boolean> {
 		const webUrl = process.env.WEB_URL ?? 'http://localhost:3000';
 		const acceptUrl = `${webUrl}/place-et-marque/invites/accept?token=${encodeURIComponent(token)}`;
 
@@ -119,31 +145,12 @@ export class DemoJoinService {
 					<p>This link expires in 14 days. If you did not expect this, you can ignore this email.</p>
 				`,
 			});
+			return true;
 		}
 		catch {
-			// Local mail may be unset; the accept URL still works from the response.
+			// Do not fall back to returning the raw token in the API body.
+			return false;
 		}
-
-		return this.toJoinResult(vendor, token, expiresAt, email);
-	}
-
-	private toJoinResult(
-		vendor: { id: string; name: string; slug: string },
-		token: string,
-		expiresAt: Date,
-		email: string,
-	) {
-		return {
-			alreadyMember: false as const,
-			vendorId: vendor.id,
-			vendorName: vendor.name,
-			vendorSlug: vendor.slug,
-			role: DEMO_JOIN_ROLE,
-			email,
-			token,
-			acceptPath: `/place-et-marque/invites/accept?token=${encodeURIComponent(token)}`,
-			expiresAt,
-		};
 	}
 
 	private demoVendorSeed(): DemoVendorSeed {

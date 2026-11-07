@@ -649,8 +649,8 @@ export type JoinDemoResult = {
 	vendorSlug: string;
 	role: 'EDITOR' | 'VIEWER' | 'OWNER';
 	email: string;
-	token: string | null;
-	acceptPath: string | null;
+	/** Invite accept token is email-only; never returned in the API body. */
+	mailSent: boolean;
 	expiresAt: string | null;
 };
 
