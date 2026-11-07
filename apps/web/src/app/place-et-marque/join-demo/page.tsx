@@ -124,7 +124,7 @@ export default function JoinDemoPage() {
 					"
 				>
 					{info?.description
-						?? 'Join Demo Supply Co. as a seller teammate. Explore products, orders, members, and payouts.'
+						?? 'Join Demo Supply Co. as an Editor. Explore products, orders, and members.'
 					}
 				</p>
 			</div>

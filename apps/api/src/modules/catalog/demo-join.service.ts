@@ -35,7 +35,7 @@ export class DemoJoinService {
 			vendorSlug: vendor.slug,
 			role: DEMO_JOIN_ROLE,
 			description:
-				'Join Demo Supply Co. as a seller teammate. Explore products, orders, members, and payouts.',
+				'Join Demo Supply Co. as an Editor. Explore products, orders, and members.',
 		};
 	}
 

@@ -19,11 +19,20 @@ import { CloseIcon } from '../icons/CloseIcon';
 import { PlusIcon } from '../icons/PlusIcon';
 import { TrashIcon } from '../icons/TrashIcon';
 
+export type VendorMembersChange = {
+	members: VendorDetail['members'];
+	/** Present when the signed-in user's own role changed. */
+	myRole?: VendorDetail['myRole'];
+	/** True when the signed-in user removed themselves. */
+	leftOrganization?: boolean;
+};
+
 type Props = {
 	vendor: VendorDetail;
+	viewerUserId?: string | null;
 	invites: VendorInviteSummary[];
 	onInvitesChange: (invites: VendorInviteSummary[]) => void;
-	onMembersChange: (members: VendorDetail['members']) => void;
+	onMembersChange: (next: VendorMembersChange) => void;
 };
 
 function RoleMark({ allowed }: { allowed: boolean }) {
@@ -45,6 +54,7 @@ function RoleMark({ allowed }: { allowed: boolean }) {
 
 export function VendorMembersPanel({
 	vendor,
+	viewerUserId,
 	invites,
 	onInvitesChange,
 	onMembersChange,
@@ -64,17 +74,29 @@ export function VendorMembersPanel({
 		onInvitesChange(await listVendorInvites(vendor.id));
 	};
 
+	const emitMembers = (
+		members: VendorDetail['members'],
+		extra?: Omit<VendorMembersChange, 'members'>,
+	) => {
+		onMembersChange({ members, ...extra });
+	};
+
 	const patchMember = (
 		userId: string,
 		next: Partial<VendorDetail['members'][number]>,
 	) => {
-		onMembersChange(
-			vendor.members.map((member) =>
-				member.userId === userId
-					? { ...member, ...next }
-					: member,
-			),
+		const members = vendor.members.map((member) =>
+			member.userId === userId
+				? { ...member, ...next }
+				: member,
 		);
+		const selfRole =
+			viewerUserId
+			&& userId === viewerUserId
+			&& next.role
+				? { myRole: next.role }
+				: undefined;
+		emitMembers(members, selfRole);
 	};
 
 	return (
@@ -133,7 +155,9 @@ export function VendorMembersPanel({
 						?? member.role;
 					const busy = memberBusyId === member.userId;
 					const isSoleOwner = member.role === 'OWNER' && ownerCount <= 1;
-					const canEditRow = canManageMembers && !isSoleOwner;
+					// Role select is EDITOR↔VIEWER only — no Owner demote without a promote path.
+					const canEditRow = canManageMembers
+						&& (member.role === 'EDITOR' || member.role === 'VIEWER');
 					const canRemoveRow = canManageMembers && !isSoleOwner;
 
 					return (
@@ -208,14 +232,6 @@ export function VendorMembersPanel({
 														.finally(() => setMemberBusyId(null));
 												}}
 											>
-												{member.role === 'OWNER'
-													? (
-															<option value="OWNER" disabled>
-																Owner
-															</option>
-														)
-													: null
-												}
 												<option value="EDITOR">
 													Editor
 												</option>
@@ -256,11 +272,15 @@ export function VendorMembersPanel({
 													setMemberError(null);
 													removeVendorMember(vendor.id, member.userId)
 														.then(() => {
-															onMembersChange(
-																vendor.members.filter(
-																	(row) => row.userId !== member.userId,
-																),
+															const members = vendor.members.filter(
+																(row) => row.userId !== member.userId,
 															);
+															emitMembers(members, {
+																leftOrganization: Boolean(
+																	viewerUserId
+																	&& member.userId === viewerUserId,
+																),
+															});
 														})
 														.catch((err) => {
 															setMemberError(

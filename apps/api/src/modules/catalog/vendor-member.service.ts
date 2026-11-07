@@ -43,8 +43,15 @@ export class VendorMemberService {
 			throw new NotFoundException('Member not found.');
 		}
 
+		// Owners stay owners until removed (or a future promote path). No demote via role change.
 		if(membership.role === VendorMemberRole.OWNER) {
-			await this.assertNotLastOwner(vendorId);
+			throw new BadRequestException(
+				'Owner role cannot be changed. Remove the member instead, or keep them as Owner.',
+			);
+		}
+
+		if(membership.role === role) {
+			return this.toMemberSummary(membership);
 		}
 
 		const updated = await this.prisma.vendorMember.update({
