@@ -13,12 +13,21 @@ import { upsertCartLine } from '../../lib/checkout-api';
 import { ACCESS_REASONS, buildLoginUrl } from '../../lib/accessGate';
 import { useSession } from '../../lib/useSession';
 import { vendorViewHref } from '../../lib/vendor-ref';
-import { CloseIcon } from '../icons/CloseIcon';
-import { PencilIcon } from '../icons/PencilIcon';
 import { CatalogCover } from './CatalogCover';
+import {
+	InPlaceCategorySelect,
+	InPlaceDescriptionInput,
+	InPlaceError,
+	InPlaceFullEditLink,
+	InPlaceImageActions,
+	InPlacePriceInput,
+	InPlaceQtyInput,
+	InPlaceTitleInput,
+	InPlaceUomSelect,
+	useInPlaceProductEdit,
+} from './InPlaceProductFields';
 import { ProductCard } from './ProductCard';
 import { ProductMobileStickyCta } from './ProductMobileStickyCta';
-import { ProductQuickEdit } from './ProductQuickEdit';
 import { TermHint } from './TermHint';
 import { CompoundQtyField } from './CompoundQtyField';
 import { formatAvailableQty } from '../../lib/uom-qty';
@@ -167,7 +176,6 @@ export function ProductDetailClient({
 	const router = useRouter();
 	const { user } = useSession();
 	const [product, setProduct] = useState(initialProduct);
-	const [editing, setEditing] = useState(false);
 	const [deleteBusy, setDeleteBusy] = useState(false);
 	const [deleteError, setDeleteError] = useState<string | null>(null);
 	const [deletedNotice, setDeletedNotice] = useState<string | null>(null);
@@ -177,6 +185,29 @@ export function ProductDetailClient({
 	const [cartBusy, setCartBusy] = useState(false);
 	const [cartMessage, setCartMessage] = useState<string | null>(null);
 	const [cartError, setCartError] = useState<string | null>(null);
+
+	const canEdit = product.permissions.canEdit && !deletedNotice;
+	const edit = useInPlaceProductEdit({
+		enabled: canEdit,
+		offeringId: selectedOfferingId,
+		onUpdated: (next) => {
+			setProduct(next);
+			const stillThere = next.offerings.some(
+				(row) => row.id === selectedOfferingId,
+			);
+			if(!stillThere) {
+				setSelectedOfferingId(firstBuyableId(next));
+			}
+			setActiveImage((index) => {
+				const count = next.imageUrls?.length ?? 0;
+				if(count === 0) {
+					return 0;
+				}
+				return Math.min(index, count - 1);
+			});
+		},
+		product,
+	});
 
 	const selectedOffering = product.offerings.find((offering) => offering.id === selectedOfferingId);
 	const stock = stockCopy(selectedOffering);
@@ -198,6 +229,9 @@ export function ProductDetailClient({
 		}
 		return rows.slice(0, 6);
 	}, [product.attributes]);
+	const editQty = Number(edit.qtyOnHand);
+	const editInStock = Number.isFinite(editQty) && editQty > 0;
+	const editLow = editInStock && editQty < 5;
 
 	function selectOffering(id: string) {
 		setSelectedOfferingId(id);
@@ -267,18 +301,88 @@ export function ProductDetailClient({
 		? (
 			<div className="flex flex-col gap-5">
 				<div>
-					<p className={`text-sm font-semibold ${stock.tone}`}>
-						{stock.status}
-					</p>
-					<p className="mt-2 text-3xl font-semibold tabular-nums tracking-tight text-ink">
-						{formatPrice(selectedOffering.priceCents, selectedOffering.currency)}
-						<span className="ml-2 text-base font-medium text-slate-500">
-							/ {selectedOffering.uom.code}
-						</span>
-					</p>
-					{stock.detail
-						? <p className="mt-1 text-sm text-slate-500">{stock.detail}</p>
-						: null}
+					{canEdit
+						? (
+							<>
+								<div
+									className={
+										editLow
+											? 'flex flex-wrap items-baseline gap-2 text-sm font-semibold text-amber-800'
+											: editInStock
+												? 'flex flex-wrap items-baseline gap-2 text-sm font-semibold text-asgreen'
+												: 'flex flex-wrap items-baseline gap-2 text-sm font-semibold text-signal'
+									}
+								>
+									<InPlaceQtyInput
+										className="
+											w-[4.75rem]
+											tabular-nums
+										"
+										edit={edit}
+									/>
+									<span>
+										{editInStock
+											? editLow
+												? 'Low stock'
+												: 'In stock'
+											: 'Currently unavailable'
+										}
+									</span>
+								</div>
+								<div
+									className="
+										mt-2
+										flex
+										flex-wrap
+										items-baseline
+										gap-2
+									"
+								>
+									<InPlacePriceInput
+										className="
+											w-[8.5rem]
+											text-3xl
+											font-semibold
+											tabular-nums
+											tracking-tight
+											text-ink
+										"
+										edit={edit}
+									/>
+									<InPlaceUomSelect
+										className="
+											w-auto
+											max-w-[6rem]
+											text-base
+											font-medium
+											text-slate-500
+										"
+										edit={edit}
+									/>
+								</div>
+								<InPlaceError
+									className="mt-2"
+									error={edit.error}
+								/>
+							</>
+						)
+						: (
+							<>
+								<p className={`text-sm font-semibold ${stock.tone}`}>
+									{stock.status}
+								</p>
+								<p className="mt-2 text-3xl font-semibold tabular-nums tracking-tight text-ink">
+									{formatPrice(selectedOffering.priceCents, selectedOffering.currency)}
+									<span className="ml-2 text-base font-medium text-slate-500">
+										/ {selectedOffering.uom.code}
+									</span>
+								</p>
+								{stock.detail
+									? <p className="mt-1 text-sm text-slate-500">{stock.detail}</p>
+									: null}
+							</>
+						)
+					}
 				</div>
 
 				{product.offerings.length > 1
@@ -512,81 +616,79 @@ export function ProductDetailClient({
 					</Link>
 					{selectedOffering?.sku || product.sku ? ` · ${selectedOffering?.sku || product.sku}` : ''}
 				</p>
-				<div
-					className="
-						mt-2
-						flex
-						max-w-3xl
-						items-start
-						gap-3
-					"
-				>
-					<h1
-						className="
-							min-w-0
-							flex-1
-							text-3xl
-							font-semibold
-							tracking-tight
-							text-ink
-							md:text-4xl
-						"
-					>
-						{product.title}
-					</h1>
-					{product.permissions.canEdit && !deletedNotice
-						? (
-							<button
-								aria-expanded={editing}
-								aria-label={
-									editing
-										? 'Close edit'
-										: `Edit ${product.title}`
-								}
-								className="
-									mt-1
-									inline-flex
-									h-9
-									w-9
-									shrink-0
-									items-center
-									justify-center
-									rounded-full
-									border
-									border-slate-300
-									bg-white
-									text-ink
-									hover:border-sky
-									hover:text-sky
-								"
-								onClick={() => setEditing((wasOpen) => !wasOpen)}
-								type="button"
-							>
-								{editing
-									? (
-										<CloseIcon className="h-3.5 w-3.5" />
-									)
-									: (
-										<PencilIcon className="h-3.5 w-3.5" />
-									)
-								}
-							</button>
-						)
-						: null
-					}
-				</div>
-				{editing && product.permissions.canEdit && !deletedNotice
+				{canEdit
 					? (
-						<div className="mt-5 max-w-2xl">
-							<ProductQuickEdit
-								onDone={() => setEditing(false)}
-								onUpdated={setProduct}
-								product={product}
+						<div className="mt-2 max-w-3xl">
+							<InPlaceCategorySelect
+								className="
+									max-w-md
+									text-[11px]
+									font-semibold
+									uppercase
+									tracking-[0.16em]
+									text-slate-500
+								"
+								edit={edit}
+							/>
+							<div
+								className="
+									mt-2
+									flex
+									flex-wrap
+									items-start
+									justify-between
+									gap-3
+								"
+							>
+								<InPlaceTitleInput
+									className="
+										min-w-0
+										flex-1
+										text-3xl
+										font-semibold
+										tracking-tight
+										text-ink
+										md:text-4xl
+									"
+									edit={edit}
+								/>
+								<InPlaceFullEditLink
+									className="mt-2 shrink-0"
+									product={product}
+								/>
+							</div>
+							<InPlaceDescriptionInput
+								className="
+									mt-3
+									max-w-2xl
+									text-sm
+									leading-6
+									text-slate-600
+								"
+								edit={edit}
+								rows={4}
+							/>
+							<InPlaceError
+								className="mt-2"
+								error={edit.error}
 							/>
 						</div>
 					)
 					: (
 						<>
+							<h1
+								className="
+									mt-2
+									max-w-3xl
+									text-3xl
+									font-semibold
+									tracking-tight
+									text-ink
+									md:text-4xl
+								"
+							>
+								{product.title}
+							</h1>
 							{product.description
 								? (
 									<p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">
@@ -594,37 +696,37 @@ export function ProductDetailClient({
 									</p>
 								)
 								: null}
-							{highlightAttributes.length > 0
-								? (
-									<dl className="mt-5 flex flex-wrap gap-x-8 gap-y-3">
-										{highlightAttributes.map((attribute) => (
-											<div key={attribute.label}>
-												<dt className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">
-													{attribute.label}
-												</dt>
-												<dd className="mt-0.5 text-sm font-medium text-ink">{attribute.value}</dd>
-											</div>
-										))}
-									</dl>
-								)
-								: null}
-							{(product.tags?.length ?? 0) > 0
-								? (
-									<div className="mt-4 flex flex-wrap gap-2">
-										{product.tags?.map((tag) => (
-											<span
-												key={tag}
-												className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-semibold text-slate-600"
-											>
-												{tag.replace(/[-_]+/g, ' ')}
-											</span>
-										))}
-									</div>
-								)
-								: null}
 						</>
 					)
 				}
+				{highlightAttributes.length > 0
+					? (
+						<dl className="mt-5 flex flex-wrap gap-x-8 gap-y-3">
+							{highlightAttributes.map((attribute) => (
+								<div key={attribute.label}>
+									<dt className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+										{attribute.label}
+									</dt>
+									<dd className="mt-0.5 text-sm font-medium text-ink">{attribute.value}</dd>
+								</div>
+							))}
+						</dl>
+					)
+					: null}
+				{(product.tags?.length ?? 0) > 0
+					? (
+						<div className="mt-4 flex flex-wrap gap-2">
+							{product.tags?.map((tag) => (
+								<span
+									key={tag}
+									className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-semibold text-slate-600"
+								>
+									{tag.replace(/[-_]+/g, ' ')}
+								</span>
+							))}
+						</div>
+					)
+					: null}
 			</div>
 
 			<div className="grid gap-10 lg:grid-cols-[minmax(0,1.15fr)_minmax(20rem,0.85fr)] lg:items-start">
@@ -679,9 +781,27 @@ export function ProductDetailClient({
 									</>
 								)}
 							/>
-							{activeSrc && !stock.inStock
+							{canEdit
+								? (
+									<InPlaceImageActions
+										coverIndex={Math.min(
+											activeImage,
+											Math.max(gallery.length - 1, 0),
+										)}
+										edit={edit}
+									/>
+								)
+								: null}
+							{activeSrc && !stock.inStock && !canEdit
 								? (
 									<span className="absolute right-4 top-4 rounded-full bg-white/90 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-ink">
+										Sold out
+									</span>
+								)
+								: null}
+							{activeSrc && !stock.inStock && canEdit
+								? (
+									<span className="absolute left-4 top-4 z-20 rounded-full bg-white/90 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-ink">
 										Sold out
 									</span>
 								)
