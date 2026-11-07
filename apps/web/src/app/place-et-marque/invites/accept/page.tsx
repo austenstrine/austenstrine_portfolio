@@ -188,6 +188,7 @@ function AcceptInviteContent() {
 												className="
 													flex
 													flex-wrap
+													justify-end
 													gap-3
 												"
 											>
@@ -258,7 +259,7 @@ function AcceptInviteContent() {
 												: (
 														<button
 															className="
-																self-start
+																self-end
 																rounded-full
 																bg-sky
 																px-4

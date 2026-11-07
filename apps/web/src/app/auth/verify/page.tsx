@@ -87,6 +87,7 @@ function VerifyLoginForm() {
 
 				<button
 					className="
+						self-end
 						mt-2
 						rounded-full
 						bg-sky

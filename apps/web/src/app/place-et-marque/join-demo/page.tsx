@@ -235,6 +235,7 @@ export default function JoinDemoPage() {
 							mt-1
 							flex
 							flex-wrap
+							justify-end
 							gap-3
 						"
 					>

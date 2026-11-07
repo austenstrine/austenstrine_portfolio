@@ -162,7 +162,20 @@ export function CatalogImageField({
 				type="button"
 				disabled={!canAdd || busy}
 				onClick={() => inputRef.current?.click()}
-				className="self-start rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-ink hover:border-sky disabled:opacity-50"
+				className="
+					self-end
+					rounded-full
+					border
+					border-slate-300
+					bg-white
+					px-4
+					py-2
+					text-sm
+					font-semibold
+					text-ink
+					hover:border-sky
+					disabled:opacity-50
+				"
 			>
 				{busy ? 'Uploading…' : value.length ? 'Add image' : 'Upload image'}
 			</button>

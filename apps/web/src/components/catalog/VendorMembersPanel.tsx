@@ -503,6 +503,7 @@ export function VendorMembersPanel({
 													</label>
 													<button
 														className="
+															self-end
 															rounded-full
 															bg-sky
 															px-4
