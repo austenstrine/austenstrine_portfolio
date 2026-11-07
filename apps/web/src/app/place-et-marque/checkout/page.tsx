@@ -21,8 +21,10 @@ import { useSession } from '../../../lib/useSession';
 import { RequireAccess } from '../../../components/auth/RequireAccess';
 
 function PaymentForm({
+	amountLabel,
 	onError,
 }: {
+	amountLabel: string;
 	onError: (message: string) => void;
 }) {
 	const stripe = useStripe();
@@ -68,6 +70,7 @@ function PaymentForm({
 			<PaymentElement />
 			<button
 				className="
+					self-end
 					rounded-full
 					bg-sky
 					px-4
@@ -77,16 +80,33 @@ function PaymentForm({
 					text-white
 					hover:bg-sky/90
 					disabled:opacity-60
+					max-lg:mr-14
 				"
 				type="submit"
 				disabled={!stripe || submitting}
 			>
 				{submitting
-					? 'Processing…'
-					: 'Pay now'
+					? 'Working…'
+					: `Pay ${amountLabel}`
 				}
 			</button>
 		</form>
+	);
+}
+
+function addressReady(address: {
+	name: string;
+	line1: string;
+	city: string;
+	region: string;
+	postal: string;
+}) {
+	return (
+		address.name.trim().length > 0
+		&& address.line1.trim().length > 0
+		&& address.city.trim().length > 0
+		&& address.region.trim().length > 0
+		&& address.postal.trim().length > 0
 	);
 }
 
@@ -150,8 +170,34 @@ function CheckoutContent() {
 		}, 0);
 	}, [preview, rateByGroup]);
 
-	async function onStartPayment() {
+	const vendorGroupCounts = useMemo(() => {
+		const counts = new Map<string, number>();
 		if(!preview) {
+			return counts;
+		}
+		for(const group of preview.groups) {
+			counts.set(group.vendorId, (counts.get(group.vendorId) ?? 0) + 1);
+		}
+		return counts;
+	}, [preview]);
+
+	const ratesReady = useMemo(() => {
+		if(!preview || preview.groups.length === 0) {
+			return false;
+		}
+		return preview.groups.every((group) => Boolean(rateByGroup[group.groupKey]));
+	}, [preview, rateByGroup]);
+
+	const canContinue = Boolean(
+		preview
+		&& preview.groups.length > 0
+		&& addressReady(address)
+		&& ratesReady
+		&& !busy,
+	);
+
+	async function onStartPayment() {
+		if(!preview || preview.groups.length === 0 || !addressReady(address) || !ratesReady) {
 			return;
 		}
 		setBusy(true);
@@ -187,6 +233,12 @@ function CheckoutContent() {
 		}
 	}
 
+	const cartEmpty = Boolean(preview && preview.groups.length === 0);
+	const amountLabel = formatMoney(
+		totalCents || ((preview?.merchandiseCents ?? 0) + shippingCents),
+		preview?.currency,
+	);
+
 	return (
 		<div
 			className="
@@ -195,26 +247,15 @@ function CheckoutContent() {
 				gap-6
 			"
 		>
-			<div>
-				<h1
-					className="
-						text-3xl
-						font-semibold
-						tracking-tight
-					"
-				>
-					Checkout
-				</h1>
-				<p
-					className="
-						mt-2
-						text-sm
-						text-slate-600
-					"
-				>
-					One payment covers every shipment group in your cart.
-				</p>
-			</div>
+			<h1
+				className="
+					text-3xl
+					font-semibold
+					tracking-tight
+				"
+			>
+				Checkout
+			</h1>
 
 			{sessionLoading
 				? (
@@ -234,7 +275,46 @@ function CheckoutContent() {
 				: null
 			}
 
-			{user && preview
+			{user && cartEmpty
+				? (
+					<div
+						className="
+							rounded-2xl
+							border
+							border-dashed
+							border-slate-300
+							bg-white
+							px-6
+							py-16
+							text-center
+						"
+					>
+						<p className="text-xl font-semibold text-ink">
+							Your cart is empty
+						</p>
+						<Link
+							className="
+								mt-6
+								inline-flex
+								rounded-full
+								bg-sky
+								px-5
+								py-2.5
+								text-sm
+								font-semibold
+								text-white
+								hover:bg-sky/90
+							"
+							href="/place-et-marque/cart"
+						>
+							Back to cart
+						</Link>
+					</div>
+				)
+				: null
+			}
+
+			{user && preview && preview.groups.length > 0
 				? (
 					<>
 						<section
@@ -301,104 +381,106 @@ function CheckoutContent() {
 							</div>
 						</section>
 
-						{preview.groups.map((group) => (
-							<section
-								className="
-									rounded-2xl
-									border
-									border-slate-200
-									bg-white
-									p-5
-								"
-								key={group.groupKey}
-							>
-								<h2 className="text-lg font-semibold">
-									{group.vendorName} · {group.shippingProfileName}
-								</h2>
-								{group.shipsSeparately
-									? (
-										<p
+						{preview.groups.map((group) => {
+							const showProfile =
+								(vendorGroupCounts.get(group.vendorId) ?? 0) > 1
+								|| group.shipsSeparately;
+							return (
+								<section
+									className="
+										rounded-2xl
+										border
+										border-slate-200
+										bg-white
+										p-5
+									"
+									key={group.groupKey}
+								>
+									<h2 className="text-lg font-semibold">
+										{group.vendorName}
+									</h2>
+									{showProfile && group.shippingProfileName
+										? (
+											<p
+												className="
+													mt-1
+													text-sm
+													text-slate-600
+												"
+											>
+												{group.shippingProfileName}
+											</p>
+										)
+										: null
+									}
+									<ul
+										className="
+											mt-3
+											flex
+											flex-col
+											gap-2
+											text-sm
+										"
+									>
+										{group.lines.map((line) => (
+											<li
+												className="
+													flex
+													justify-between
+													gap-3
+												"
+												key={line.offeringId}
+											>
+												<span>
+													{line.title} × {line.quantity}
+												</span>
+												<span>
+													{formatMoney(line.lineTotalCents, group.currency)}
+												</span>
+											</li>
+										))}
+									</ul>
+									<label
+										className="
+											mt-4
+											block
+											text-sm
+										"
+									>
+										<span className="font-semibold">
+											Shipping
+										</span>
+										<select
 											className="
 												mt-1
-												text-xs
-												font-semibold
-												uppercase
-												tracking-wide
-												text-amber-800
+												w-full
+												rounded-lg
+												border
+												border-slate-300
+												px-3
+												py-2
 											"
+											value={rateByGroup[group.groupKey] ?? ''}
+											onChange={(event) =>
+												setRateByGroup((prev) => ({
+													...prev,
+													[group.groupKey]: event.target.value,
+												}))
+											}
 										>
-											Ships separately
-										</p>
-									)
-									: null
-								}
-								<ul
-									className="
-										mt-3
-										flex
-										flex-col
-										gap-2
-										text-sm
-									"
-								>
-									{group.lines.map((line) => (
-										<li
-											className="
-												flex
-												justify-between
-												gap-3
-											"
-											key={line.offeringId}
-										>
-											<span>
-												{line.title} × {line.quantity}
-											</span>
-											<span>
-												{formatMoney(line.lineTotalCents, group.currency)}
-											</span>
-										</li>
-									))}
-								</ul>
-								<label
-									className="
-										mt-4
-										block
-										text-sm
-									"
-								>
-									<span className="font-semibold">
-										Shipping rate
-									</span>
-									<select
-										className="
-											mt-1
-											w-full
-											rounded-lg
-											border
-											border-slate-300
-											px-3
-											py-2
-										"
-										value={rateByGroup[group.groupKey] ?? ''}
-										onChange={(event) =>
-											setRateByGroup((prev) => ({
-												...prev,
-												[group.groupKey]: event.target.value,
-											}))
-										}
-									>
-										{group.rates.map((rate) => (
-											<option
-												key={rate.id}
-												value={rate.id}
-											>
-												{rate.label} · {formatMoney(rate.amountCents)}
-											</option>
-										))}
-									</select>
-								</label>
-							</section>
-						))}
+											{group.rates.map((rate) => (
+												<option
+													key={rate.id}
+													value={rate.id}
+												>
+													{rate.label} · {formatMoney(rate.amountCents)}
+												</option>
+											))}
+										</select>
+									</label>
+								</section>
+							);
+						})}
 
 						<div
 							className="
@@ -407,6 +489,7 @@ function CheckoutContent() {
 								items-center
 								justify-between
 								gap-3
+								max-lg:pr-14
 							"
 						>
 							<p className="text-lg font-semibold">
@@ -431,20 +514,16 @@ function CheckoutContent() {
 											disabled:opacity-60
 										"
 										type="button"
-										disabled={busy || preview.groups.length === 0}
+										disabled={!canContinue}
 										onClick={() => void onStartPayment()}
 									>
 										{busy
-											? 'Reserving…'
+											? 'Working…'
 											: 'Continue to payment'
 										}
 									</button>
 								)
-								: (
-									<p className="text-sm text-slate-600">
-										Charging {formatMoney(totalCents)}
-									</p>
-								)
+								: null
 							}
 						</div>
 
@@ -467,6 +546,7 @@ function CheckoutContent() {
 										options={{ clientSecret }}
 									>
 										<PaymentForm
+											amountLabel={amountLabel}
 											onError={(message) => setError(message || null)}
 										/>
 									</Elements>
