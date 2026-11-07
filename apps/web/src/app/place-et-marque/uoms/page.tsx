@@ -9,8 +9,50 @@ import {
 	type VendorSummary,
 } from '../../../lib/catalog-api';
 import { RequireAccess } from '../../../components/auth/RequireAccess';
+import { SellerTopContextPortal } from '../../../components/catalog/CatalogSearchContext';
 import { TermHint } from '../../../components/catalog/TermHint';
 import { useSession } from '../../../lib/useSession';
+
+const fieldClassName = `
+	mt-1
+	w-full
+	rounded-lg
+	border
+	border-slate-300
+	px-3
+	py-2
+	text-sm
+`;
+
+function UomRow({ uom }: { uom: UnitOfMeasure }) {
+	return (
+		<li
+			className="
+				flex
+				flex-col
+				gap-0.5
+				px-1
+				py-3
+			"
+		>
+			<p className="font-semibold text-ink">
+				{uom.code}
+				<span className="font-normal text-slate-600">
+					{' '}· {uom.label}
+				</span>
+			</p>
+			<p className="text-sm text-slate-600">
+				{uom.dimensionKey}
+				{' · '}
+				{uom.factorToReference}
+				{(uom.aliases?.length ?? 0) > 0
+					? ` · ${uom.aliases?.join(', ')}`
+					: null
+				}
+			</p>
+		</li>
+	);
+}
 
 function UomManagePageContent() {
 	const { user } = useSession();
@@ -127,15 +169,78 @@ function UomManagePageContent() {
 				gap-8
 			"
 		>
-			<div>
+			<SellerTopContextPortal>
+				{vendors.length > 0
+					? (
+							<label
+								className="
+									flex
+									min-w-[12rem]
+									max-w-full
+									flex-1
+									flex-col
+									gap-0.5
+									sm:max-w-sm
+									sm:flex-none
+								"
+							>
+								<span
+									className="
+										text-[11px]
+										font-medium
+										leading-tight
+										text-slate-500
+									"
+								>
+									Vendor:
+								</span>
+								<select
+									className="
+										w-full
+										rounded-full
+										border
+										border-slate-300
+										bg-white
+										px-3
+										py-1.5
+										text-sm
+									"
+									value={vendorId}
+									onChange={(event) => setVendorId(event.target.value)}
+								>
+									{vendors.map((vendor) => (
+										<option
+											key={vendor.id}
+											value={vendor.id}
+										>
+											{vendor.name}
+										</option>
+									))}
+								</select>
+							</label>
+						)
+					: null
+				}
+			</SellerTopContextPortal>
+
+			<div
+				className="
+					flex
+					flex-wrap
+					items-center
+					justify-between
+					gap-3
+				"
+			>
 				<h1
 					className="
 						flex
 						items-center
 						gap-2
-						text-3xl
+						text-2xl
 						font-semibold
 						tracking-tight
+						text-ink
 					"
 				>
 					Units of measure
@@ -143,84 +248,24 @@ function UomManagePageContent() {
 						termId="uom"
 					/>
 				</h1>
-				<p
-					className="
-						mt-2
-						max-w-2xl
-						text-slate-600
-					"
-				>
-					Globals are shared across Place et Marque and edited in the admin CRM. Each vendor can also
-					define their own UOMs with aliases (for example ft, foot, and &apos;). Matching names across
-					vendors trigger an automerge review email.
-				</p>
+				{user && globals.length + mine.length > 0
+					? (
+							<p className="text-sm text-slate-500">
+								{globals.length + mine.length}
+								{' '}
+								unit
+								{globals.length + mine.length === 1 ? '' : 's'}
+							</p>
+						)
+					: null
+				}
 			</div>
-
-			{user
-				? (
-						<p className="text-sm text-slate-600">
-							Signed in as {user.email}
-						</p>
-					)
-				: null
-			}
-
-			{vendors.length > 1
-				? (
-						<label
-							className="
-								block
-								max-w-md
-								text-sm
-							"
-						>
-							<span className="font-semibold">
-								Vendor
-							</span>
-							<select
-								className="
-									mt-1
-									w-full
-									rounded-lg
-									border
-									border-slate-300
-									px-3
-									py-2
-								"
-								value={vendorId}
-								onChange={(event) => setVendorId(event.target.value)}
-							>
-								{vendors.map((vendor) => (
-									<option
-										key={vendor.id}
-										value={vendor.id}
-									>
-										{vendor.name}
-									</option>
-								))}
-							</select>
-						</label>
-					)
-				: null
-			}
 
 			{vendorId
 				? (
-						<section
-							className="
-								rounded-2xl
-								border
-								border-slate-200
-								bg-white
-								p-5
-							"
-						>
-							<h2 className="text-lg font-semibold">
-								Create UOM
-							</h2>
+						<section>
 							<form
 								className="
-									mt-4
 									grid
 									gap-4
 									md:grid-cols-2
@@ -232,46 +277,20 @@ function UomManagePageContent() {
 										Name / code
 									</span>
 									<input
-										className="
-											mt-1
-											w-full
-											rounded-lg
-											border
-											border-slate-300
-											px-3
-											py-2
-										"
+										className={fieldClassName}
 										value={code}
 										onChange={(event) => setCode(event.target.value)}
 										required
 										maxLength={40}
 										placeholder="ft"
 									/>
-									<span
-										className="
-											mt-1
-											block
-											text-xs
-											text-slate-500
-										"
-									>
-										Case-sensitive. Matching names/aliases across vendors may trigger a merge review.
-									</span>
 								</label>
 								<label className="block text-sm">
 									<span className="font-semibold">
 										Label
 									</span>
 									<input
-										className="
-											mt-1
-											w-full
-											rounded-lg
-											border
-											border-slate-300
-											px-3
-											py-2
-										"
+										className={fieldClassName}
 										value={label}
 										onChange={(event) => setLabel(event.target.value)}
 										required
@@ -284,15 +303,7 @@ function UomManagePageContent() {
 										Dimension
 									</span>
 									<input
-										className="
-											mt-1
-											w-full
-											rounded-lg
-											border
-											border-slate-300
-											px-3
-											py-2
-										"
+										className={fieldClassName}
 										value={dimensionKey}
 										onChange={(event) => setDimensionKey(event.target.value)}
 										required
@@ -304,15 +315,7 @@ function UomManagePageContent() {
 										Factor to reference
 									</span>
 									<input
-										className="
-											mt-1
-											w-full
-											rounded-lg
-											border
-											border-slate-300
-											px-3
-											py-2
-										"
+										className={fieldClassName}
 										value={factorToReference}
 										onChange={(event) => setFactorToReference(event.target.value)}
 										required
@@ -369,7 +372,8 @@ function UomManagePageContent() {
 											value={aliasDraft}
 											onChange={(event) => setAliasDraft(event.target.value)}
 											onKeyDown={onAliasKeyDown}
-											placeholder="Type alias and press Enter"
+											placeholder="Alias"
+											aria-label="Add alias"
 										/>
 									</div>
 								</div>
@@ -387,27 +391,34 @@ function UomManagePageContent() {
 										)
 									: null
 								}
-								<button
+								<div
 									className="
-										self-start
-										rounded-full
-										bg-sky
-										px-4
-										py-2.5
-										text-sm
-										font-semibold
-										text-white
-										hover:bg-sky/90
-										disabled:opacity-60
+										flex
+										justify-end
+										md:col-span-2
 									"
-									type="submit"
-									disabled={submitting || !vendorId}
 								>
-									{submitting
-										? 'Creating…'
-										: 'Create UOM'
-									}
-								</button>
+									<button
+										className="
+											rounded-full
+											bg-sky
+											px-4
+											py-2.5
+											text-sm
+											font-semibold
+											text-white
+											hover:bg-sky/90
+											disabled:opacity-60
+										"
+										type="submit"
+										disabled={submitting || !vendorId}
+									>
+										{submitting
+											? 'Creating…'
+											: 'Create UOM'
+										}
+									</button>
+								</div>
 							</form>
 						</section>
 					)
@@ -418,11 +429,11 @@ function UomManagePageContent() {
 				className="
 					flex
 					flex-col
-					gap-3
+					gap-2
 				"
 			>
-				<h2 className="text-lg font-semibold">
-					Global units
+				<h2 className="text-lg font-semibold text-ink">
+					Global
 				</h2>
 				{loading
 					? (
@@ -440,92 +451,66 @@ function UomManagePageContent() {
 						)
 					: null
 				}
-				{globals.map((uom) => (
-					<div
-						className="
-							rounded-xl
-							border
-							border-slate-200
-							bg-white
-							p-4
-						"
-						key={uom.id}
-					>
-						<p className="font-semibold">
-							{uom.code} · {uom.label}
-						</p>
-						<p className="text-sm text-slate-600">
-							{uom.dimensionKey} · factor {uom.factorToReference}
-						</p>
-						{(uom.aliases?.length ?? 0) > 0
-							? (
-									<p
-										className="
-											mt-1
-											text-xs
-											text-slate-500
-										"
-									>
-										Aliases: {uom.aliases?.join(', ')}
-									</p>
-								)
-							: null
-						}
-					</div>
-				))}
+				{globals.length > 0
+					? (
+							<ul
+								className="
+									divide-y
+									divide-slate-200
+									border-y
+									border-slate-200
+								"
+							>
+								{globals.map((uom) => (
+									<UomRow
+										key={uom.id}
+										uom={uom}
+									/>
+								))}
+							</ul>
+						)
+					: null
+				}
 			</section>
 
 			<section
 				className="
 					flex
 					flex-col
-					gap-3
+					gap-2
 				"
 			>
-				<h2 className="text-lg font-semibold">
-					Your vendor units
+				<h2 className="text-lg font-semibold text-ink">
+					This vendor
 				</h2>
 				{!loading && mine.length === 0
 					? (
 							<p className="text-sm text-slate-500">
-								No vendor-specific units yet. Create one above.
+								No vendor units yet.
 							</p>
 						)
 					: null
 				}
-				{mine.map((uom) => (
-					<div
-						className="
-							rounded-xl
-							border
-							border-slate-200
-							bg-white
-							p-4
-						"
-						key={uom.id}
-					>
-						<p className="font-semibold">
-							{uom.code} · {uom.label}
-						</p>
-						<p className="text-sm text-slate-600">
-							{uom.dimensionKey} · factor {uom.factorToReference}
-						</p>
-						{(uom.aliases?.length ?? 0) > 0
-							? (
-									<p
-										className="
-											mt-1
-											text-xs
-											text-slate-500
-										"
-									>
-										Aliases: {uom.aliases?.join(', ')}
-									</p>
-								)
-							: null
-						}
-					</div>
-				))}
+				{mine.length > 0
+					? (
+							<ul
+								className="
+									divide-y
+									divide-slate-200
+									border-y
+									border-slate-200
+								"
+							>
+								{mine.map((uom) => (
+									<UomRow
+										key={uom.id}
+										uom={uom}
+									/>
+								))}
+							</ul>
+						)
+					: null
+				}
 			</section>
 		</div>
 	);
