@@ -151,16 +151,6 @@ export default function CategoriesAdminPage() {
 				>
 					Categories
 				</h1>
-				<p
-					className="
-						mt-3
-						text-sm
-						text-mist/75
-					"
-				>
-					Create and edit Place et Marque browse categories. Sellers can still
-					request new ones from the storefront.
-				</p>
 
 				{error
 					? (
@@ -195,18 +185,8 @@ export default function CategoriesAdminPage() {
 						py-4
 					"
 				>
-					<h2
-						className="
-							text-lg
-							font-semibold
-							text-white
-						"
-					>
-						Create category
-					</h2>
 					<form
 						className="
-							mt-4
 							flex
 							flex-col
 							gap-4
@@ -270,12 +250,11 @@ export default function CategoriesAdminPage() {
 								required
 								minLength={2}
 								maxLength={80}
-								placeholder="wire-and-cable"
 							/>
 						</label>
 						<label className="block text-sm">
 							<span className="font-medium text-mist">
-								Parent (optional)
+								Parent
 							</span>
 							<select
 								className="
@@ -308,7 +287,7 @@ export default function CategoriesAdminPage() {
 						</label>
 						<label className="block text-sm">
 							<span className="font-medium text-mist">
-								Image (optional)
+								Image
 							</span>
 							<input
 								type="file"
@@ -358,7 +337,7 @@ export default function CategoriesAdminPage() {
 							type="submit"
 							disabled={submitting}
 							className="
-								self-start
+								self-end
 								rounded-lg
 								bg-glow
 								px-4
@@ -371,7 +350,7 @@ export default function CategoriesAdminPage() {
 						>
 							{submitting
 								? 'Creating…'
-								: 'Create category'
+								: 'Create'
 							}
 						</button>
 					</form>
@@ -385,19 +364,10 @@ export default function CategoriesAdminPage() {
 						gap-4
 					"
 				>
-					<h2
-						className="
-							text-lg
-							font-semibold
-							text-white
-						"
-					>
-						All categories
-					</h2>
 					{loading
 						? (
 								<p className="text-sm text-mist/60">
-									Loading categories…
+									Loading…
 								</p>
 							)
 						: null
@@ -462,6 +432,7 @@ export default function CategoriesAdminPage() {
 										mt-3
 										flex
 										flex-wrap
+										justify-end
 										gap-2
 									"
 								>

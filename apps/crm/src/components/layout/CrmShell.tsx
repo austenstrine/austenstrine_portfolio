@@ -18,7 +18,7 @@ const NAV = [
 	{ href: '/link-names', label: 'Link names', Icon: LinkNameIcon },
 	{ href: '/categories', label: 'Categories', Icon: CategoryIcon },
 	{ href: '/uoms', label: 'Units', Icon: UomIcon },
-	{ href: '/uom-merges', label: 'UOM approvals', Icon: UomIcon },
+	{ href: '/uom-merges', label: 'Unit merges', Icon: UomIcon },
 ] as const;
 
 type Props = {

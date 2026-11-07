@@ -104,17 +104,8 @@ export default function LinkNamesPage() {
 						text-white
 					"
 				>
-					Link name requests
+					Link names
 				</h1>
-				<p
-					className="
-						mt-3
-						text-sm
-						text-mist/75
-					"
-				>
-					Approve or deny sellers who want a different name in their organization link.
-				</p>
 
 				{error
 					? (
@@ -147,7 +138,7 @@ export default function LinkNamesPage() {
 									text-mist/60
 								"
 							>
-								Loading requests…
+								Loading…
 							</p>
 						)
 					: null
@@ -162,8 +153,7 @@ export default function LinkNamesPage() {
 									text-mist/60
 								"
 							>
-								No pending requests. When a seller asks to change the name in their
-								organization link, Approve and Deny show up here.
+								No pending requests.
 							</p>
 						)
 					: null
@@ -220,7 +210,7 @@ export default function LinkNamesPage() {
 												text-mist/60
 											"
 										>
-											Note: {request.requesterNote}
+											{request.requesterNote}
 										</p>
 									)
 								: null
@@ -243,7 +233,7 @@ export default function LinkNamesPage() {
 												"
 											>
 												<span className="font-medium text-mist">
-													Reason for the seller
+													Reason
 												</span>
 												<textarea
 													className="
@@ -261,35 +251,16 @@ export default function LinkNamesPage() {
 													rows={3}
 													value={denyReason}
 													onChange={(event) => setDenyReason(event.target.value)}
-													placeholder="Too similar to another seller’s name in the link."
 												/>
 											</label>
 											<div
 												className="
 													flex
 													flex-wrap
+													justify-end
 													gap-2
 												"
 											>
-												<button
-													type="button"
-													className="
-														rounded-lg
-														bg-warn
-														px-4
-														py-2
-														text-sm
-														font-semibold
-														text-rail
-														disabled:opacity-60
-													"
-													disabled={busyId === request.id}
-													onClick={() => {
-														void onDenySubmit(request.id);
-													}}
-												>
-													Confirm deny
-												</button>
 												<button
 													type="button"
 													className="
@@ -309,6 +280,25 @@ export default function LinkNamesPage() {
 												>
 													Cancel
 												</button>
+												<button
+													type="button"
+													className="
+														rounded-lg
+														bg-warn
+														px-4
+														py-2
+														text-sm
+														font-semibold
+														text-rail
+														disabled:opacity-60
+													"
+													disabled={busyId === request.id}
+													onClick={() => {
+														void onDenySubmit(request.id);
+													}}
+												>
+													Confirm deny
+												</button>
 											</div>
 										</div>
 									)
@@ -318,28 +308,10 @@ export default function LinkNamesPage() {
 												mt-4
 												flex
 												flex-wrap
+												justify-end
 												gap-2
 											"
 										>
-											<button
-												type="button"
-												className="
-													rounded-lg
-													bg-glow
-													px-4
-													py-2
-													text-sm
-													font-semibold
-													text-rail
-													disabled:opacity-60
-												"
-												disabled={busyId === request.id}
-												onClick={() => {
-													void onApprove(request.id);
-												}}
-											>
-												Approve
-											</button>
 											<button
 												type="button"
 												className="
@@ -361,6 +333,25 @@ export default function LinkNamesPage() {
 												}}
 											>
 												Deny
+											</button>
+											<button
+												type="button"
+												className="
+													rounded-lg
+													bg-glow
+													px-4
+													py-2
+													text-sm
+													font-semibold
+													text-rail
+													disabled:opacity-60
+												"
+												disabled={busyId === request.id}
+												onClick={() => {
+													void onApprove(request.id);
+												}}
+											>
+												Approve
 											</button>
 										</div>
 									)

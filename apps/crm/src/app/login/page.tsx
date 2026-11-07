@@ -90,16 +90,6 @@ function LoginForm() {
 				>
 					Sign in
 				</h1>
-				<p
-					className="
-						mt-2
-						text-sm
-						text-mist/70
-					"
-				>
-					Admin sign-in uses the same account as the platform. A one-time code is emailed
-					each time.
-				</p>
 
 				<form
 					className="
