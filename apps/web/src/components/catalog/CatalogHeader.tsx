@@ -893,73 +893,53 @@ export function CatalogHeader() {
 									</a>
 								)
 							}
-							{/*
-								Reserve the larger AccountMenu footprint (max-w
-								9rem / sm:14rem) while session probes so authed
-								first paint does not widen the nav. Guest Sign in
-								is smaller and sits in the same end-aligned slot.
-							*/}
-							<span
-								className="
-									inline-flex
-									min-h-9
-									min-w-[9rem]
-									items-center
-									justify-end
-									sm:min-w-[14rem]
-								"
-							>
-								{loading
+							{loading
+								? (
+									<span
+										aria-hidden
+										className="
+											invisible
+											inline-flex
+											min-h-9
+											items-center
+											gap-1
+											text-sm
+											font-semibold
+										"
+									>
+										<span>Account</span>
+										<CaretDownIcon
+											className={sectionCaretClass(false)}
+										/>
+									</span>
+								)
+								: user
 									? (
-										<span
-											aria-hidden
-											className="
-												invisible
-												inline-flex
-												max-w-[9rem]
-												items-center
-												gap-1
-												text-sm
-												font-semibold
-												sm:max-w-[14rem]
-											"
-										>
-											<span className="truncate">
-												account@example.com
-											</span>
-											<CaretDownIcon
-												className={sectionCaretClass(false)}
-											/>
-										</span>
+										<AccountMenu
+											email={user.email}
+											onSignOut={() => {
+												void signOut().then(() => {
+													window.location.reload();
+												});
+											}}
+										/>
 									)
-									: user
-										? (
-											<AccountMenu
-												email={user.email}
-												onSignOut={() => {
-													void signOut().then(() => {
-														window.location.reload();
-													});
-												}}
-											/>
-										)
-										: (
-											<a
-												className="
-													rounded-full
-													bg-asgreen
-													px-3.5
-													py-2
-													text-white
-													hover:bg-asgreen/90
-												"
-												href="/auth/login"
-											>
-												Sign in
-											</a>
-										)
-								}
-							</span>
+									: (
+										<a
+											className="
+												rounded-full
+												bg-asgreen
+												px-3.5
+												py-2
+												text-white
+												hover:bg-asgreen/90
+											"
+											href="/auth/login"
+										>
+											Sign in
+										</a>
+									)
+							}
 						</nav>
 					</div>
 					<div className="md:hidden">
