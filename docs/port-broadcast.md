@@ -15,16 +15,34 @@ Pinned minimum for stack tab titles: **`798a37c`** (`--tab-alias` / config `alia
   - `proxy` / `cdn` / `backend` / `frontend` / `crm` = `dssh_targets`
 - Optional Cursor tasks in `.vscode/tasks.json` — **integrated-terminal hops** with the same names; preferred multi-tab UI is still the Linux Ptyxis launcher above
 
-## Prefer Ptyxis stack (Linux Terminal)
+## Prefer `dssh launch` (Linux Terminal)
+
+Consumer `.dsshrc` wires `dssh_launch_local=./scripts/dssh-launch` (generic dssh
+global-action hook — no portfolio paths in the dssh tool). That refreshes the
+agent port map, then runs the same 6-tab launcher as below.
 
 ```bash
 # Sync sibling if needed
 git -C ~/Development/port-broadcast-bash checkout master && git -C ~/Development/port-broadcast-bash pull --ff-only
 
+dssh launch                 # preferred stack bring-up
+dssh launch --dry-run       # map + launcher dry-run (no GUI)
+dssh launch --map-only      # refresh map only
+
+# Equivalent hand call:
 ./scripts/port-broadcast-launcher --dry-run --config ./scripts/port-broadcast-stack.conf --confirm
 ./scripts/port-broadcast-launcher --config ./scripts/port-broadcast-stack.conf --confirm
 nc 127.0.0.1 4591   # rlog hop
 ```
+
+### Port map (after launch)
+
+| Path | Notes |
+|------|--------|
+| Place et Marque Project store `internal/port-broadcast-stack-map.md` | Preferred peek for later agents (writable under agent-stores `bc-70187aca…`) |
+| `ops/diagnostics/port-broadcast-stack-map.md` | Local copy (gitignored with other diagnostics) |
+
+Includes hop ports 4591–4596, container names (`portfolio-*`), and key URLs so a later agent can `nc` a hop if a tab crashes.
 
 ## Cursor Tasks (fallback hops only)
 

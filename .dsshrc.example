@@ -20,6 +20,8 @@
 # dssh_live_migrate_service=api
 # dssh_live_migrate_cmd='npx prisma migrate deploy --schema apps/api/prisma/schema.prisma'
 # dssh_publish_local=./ops/deploy/live.sh
+# Local 6-tab stack (port-broadcast): `dssh launch` → scripts/dssh-launch
+# dssh_launch_local=./scripts/dssh-launch
 # dssh_env_backup_relpath=ops/tooling/env-backup.sh
 #
 # Optional backend start/restart migration preflight (requires dssh with

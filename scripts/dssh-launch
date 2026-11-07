@@ -1,0 +1,236 @@
+#!/usr/bin/env bash
+# dssh launch — Place et Marque local stack via port-broadcast (6 Ptyxis tabs).
+#
+# Wired from consumer .dsshrc as dssh_launch_local (generic dssh global-action hook).
+# Always refreshes the agent-readable port map, then launches (or reports already-up).
+#
+# Usage:
+#   dssh launch
+#   dssh launch --dry-run
+#   dssh launch --map-only
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+CONFIG="${DSSH_LAUNCH_CONFIG:-$ROOT/scripts/port-broadcast-stack.conf}"
+LAUNCHER="${DSSH_LAUNCH_WRAPPER:-$ROOT/scripts/port-broadcast-launcher}"
+MAP_LOCAL="${DSSH_LAUNCH_MAP_LOCAL:-$ROOT/ops/diagnostics/port-broadcast-stack-map.md}"
+# Place et Marque Project store (bc-70187aca…) — preferred peek path for later agents.
+MAP_PROJECT="${DSSH_LAUNCH_MAP_PROJECT:-$HOME/.local/state/cursor/agent-stores/cursor_agent_stores/bc-70187aca-1131-4491-acb5-3330346280f4/files/internal/port-broadcast-stack-map.md}"
+
+BIND=127.0.0.1
+BASE_PORT=4591
+TABS=6
+declare -a ALIASES=(rlog proxy cdn backend frontend crm)
+declare -a TAB_CMDS=()
+
+DRY_RUN=0
+MAP_ONLY=0
+EXTRA=()
+
+usage() {
+	cat <<'EOF'
+Usage: dssh launch [--dry-run] [--map-only] [--confirm|-y] […]
+
+  Bring up the Place et Marque local stack the same way as
+  scripts/port-broadcast-launcher + scripts/port-broadcast-stack.conf:
+  6 Terminal tabs (rlog, proxy, cdn, backend, frontend, crm) with
+  restart+logs / rlog up+logs, detached containers per dssh prefs.
+
+  Always writes the port map (Project store when writable, plus
+  ops/diagnostics/port-broadcast-stack-map.md), then launches unless
+  hops are already listening or --map-only / --dry-run.
+
+Options:
+  --dry-run     Write map; pass --dry-run to the launcher (no GUI)
+  --map-only    Write map only; do not invoke the launcher
+  --confirm|-y  Accepted (launch already confirms); forwarded if present
+  -h, --help    Show this help
+EOF
+}
+
+die() {
+	echo "dssh-launch: $*" >&2
+	exit 1
+}
+
+port_listening() {
+	local port="$1"
+	ss -ltn "( sport = :$port )" 2>/dev/null | grep -q ":${port} "
+}
+
+load_stack_conf() {
+	[[ -f "$CONFIG" ]] || die "missing stack config: $CONFIG"
+	local line key val idx
+	TAB_CMDS=()
+	while IFS= read -r line || [[ -n "$line" ]]; do
+		line="${line%%#*}"
+		line="${line#"${line%%[![:space:]]*}"}"
+		line="${line%"${line##*[![:space:]]}"}"
+		[[ -z "$line" ]] && continue
+		key="${line%%=*}"
+		val="${line#*=}"
+		case "$key" in
+			tabs) TABS="$val" ;;
+			base-port|base_port) BASE_PORT="$val" ;;
+			bind) BIND="$val" ;;
+			alias.*)
+				idx="${key#alias.}"
+				if [[ "$idx" =~ ^[1-9][0-9]*$ ]] && (( idx >= 1 && idx <= 64 )); then
+					ALIASES[$((idx - 1))]="$val"
+				fi
+				;;
+			tab.*)
+				idx="${key#tab.}"
+				if [[ "$idx" =~ ^[1-9][0-9]*$ ]] && (( idx >= 1 && idx <= 64 )); then
+					TAB_CMDS[$((idx - 1))]="$val"
+				fi
+				;;
+		esac
+	done < "$CONFIG"
+	# Ensure alias array length matches tabs (fill gaps with pb:N).
+	local i
+	for ((i = 0; i < TABS; i++)); do
+		if [[ -z "${ALIASES[$i]:-}" ]]; then
+			ALIASES[$i]="pb:$((BASE_PORT + i))"
+		fi
+	done
+}
+
+write_map() {
+	local ts out dir target
+	ts="$(date -Iseconds 2>/dev/null || date)"
+	out=$(cat <<EOF
+# Place et Marque local stack — port-broadcast map
+# Generated: ${ts}
+# Via: dssh launch
+# Config: ${CONFIG}
+# Launcher: ${LAUNCHER} --config ${CONFIG} --confirm
+
+| Tab | Alias | Hop | Attach | Container | Key URL / notes |
+|-----|-------|-----|--------|-----------|-----------------|
+| 1 | ${ALIASES[0]:-rlog} | $((BASE_PORT + 0)) | \`nc ${BIND} $((BASE_PORT + 0))\` | (host rlog sampler) | \`./dssh rlog up; ./dssh logs rlog\` |
+| 2 | ${ALIASES[1]:-proxy} | $((BASE_PORT + 1)) | \`nc ${BIND} $((BASE_PORT + 1))\` | portfolio-proxy | http://127.0.0.1/ → https://local.austenstrine.dev/ |
+| 3 | ${ALIASES[2]:-cdn} | $((BASE_PORT + 2)) | \`nc ${BIND} $((BASE_PORT + 2))\` | portfolio-cdn | http://127.0.0.1:8088 |
+| 4 | ${ALIASES[3]:-backend} | $((BASE_PORT + 3)) | \`nc ${BIND} $((BASE_PORT + 3))\` | portfolio-api | http://127.0.0.1:4000/api/health · Swagger /api/docs |
+| 5 | ${ALIASES[4]:-frontend} | $((BASE_PORT + 4)) | \`nc ${BIND} $((BASE_PORT + 4))\` | portfolio-web | http://127.0.0.1:3000 · https://local.austenstrine.dev/ |
+| 6 | ${ALIASES[5]:-crm} | $((BASE_PORT + 5)) | \`nc ${BIND} $((BASE_PORT + 5))\` | portfolio-crm | http://127.0.0.1:3001 · https://crm.local.austenstrine.dev/ |
+
+Bind: ${BIND}  Hops: ${BASE_PORT}–$((BASE_PORT + TABS - 1))
+
+## App containers
+
+| Service | Container | Status check |
+|---------|-----------|--------------|
+| backend | portfolio-api | http://127.0.0.1:4000/api/health |
+| frontend | portfolio-web | http://127.0.0.1:3000 |
+| crm | portfolio-crm | http://127.0.0.1:3001 |
+| cdn | portfolio-cdn | http://127.0.0.1:8088 |
+| proxy | portfolio-proxy | http://127.0.0.1/ (TLS via local init) |
+
+## Infra (compose)
+
+| Service | Ports |
+|---------|-------|
+| postgres | 5432 |
+| redis | 6379 |
+| opensearch | 9200, 9600 |
+| opensearch-dashboards | 5601 |
+
+## Recover a crashed tab
+
+Logs live in the Terminal hop tabs (not this file). Re-attach:
+\`\`\`bash
+nc ${BIND} <hop-port>
+\`\`\`
+Or restart one target in a new hop / Cursor terminal:
+\`\`\`bash
+cd ${ROOT} && ./dssh <target> restart; ./dssh logs <target>
+\`\`\`
+
+Tab commands (from stack conf):
+EOF
+)
+	local i
+	for ((i = 0; i < TABS; i++)); do
+		out+=$'\n'"- ${ALIASES[$i]} (:$((BASE_PORT + i))): ${TAB_CMDS[$i]:-(interactive)}"
+	done
+
+	for target in "$MAP_PROJECT" "$MAP_LOCAL"; do
+		dir="$(dirname "$target")"
+		if mkdir -p "$dir" 2>/dev/null && [[ -w "$dir" || -w "$target" ]]; then
+			printf '%s\n' "$out" >"$target"
+			echo "dssh-launch: wrote map → $target" >&2
+		else
+			echo "dssh-launch: skip unwritable map path: $target" >&2
+		fi
+	done
+}
+
+hops_already_up() {
+	local i port
+	for ((i = 0; i < TABS; i++)); do
+		port=$((BASE_PORT + i))
+		port_listening "$port" || return 1
+	done
+	return 0
+}
+
+while [[ $# -gt 0 ]]; do
+	case "$1" in
+		-h|--help)
+			usage
+			exit 0
+			;;
+		--dry-run)
+			DRY_RUN=1
+			EXTRA+=(--dry-run)
+			shift
+			;;
+		--map-only)
+			MAP_ONLY=1
+			shift
+			;;
+		--confirm|-y)
+			# Launch already confirms; accept so `dssh launch --confirm` is harmless.
+			EXTRA+=(--confirm)
+			shift
+			;;
+		--)
+			shift
+			EXTRA+=("$@")
+			break
+			;;
+		*)
+			EXTRA+=("$1")
+			shift
+			;;
+	esac
+done
+
+[[ -x "$LAUNCHER" ]] || die "missing launcher wrapper: $LAUNCHER"
+load_stack_conf
+write_map
+
+if [[ "$MAP_ONLY" == "1" ]]; then
+	echo "dssh-launch: map-only; not launching Terminal tabs." >&2
+	exit 0
+fi
+
+if [[ "$DRY_RUN" != "1" ]] && hops_already_up; then
+	echo "dssh-launch: hops ${BASE_PORT}–$((BASE_PORT + TABS - 1)) already listening; map refreshed, skipping relaunch." >&2
+	echo "dssh-launch: attach with: nc ${BIND} ${BASE_PORT}  # … through $((BASE_PORT + TABS - 1))" >&2
+	exit 0
+fi
+
+# Real GUI launch always needs --confirm (port-broadcast safety). Add if missing.
+has_confirm=0
+for arg in "${EXTRA[@]+"${EXTRA[@]}"}"; do
+	case "$arg" in
+		--confirm|-y) has_confirm=1 ;;
+	esac
+done
+if [[ "$DRY_RUN" != "1" && "$has_confirm" != "1" ]]; then
+	EXTRA+=(--confirm)
+fi
+
+exec "$LAUNCHER" --config "$CONFIG" "${EXTRA[@]+"${EXTRA[@]}"}"
