@@ -40,3 +40,6 @@ docker-compose.override.yml
 # Local env backups from port-recovery / tooling
 .env.bak-*
 apps/api/.env.bak-*
+
+# Graphify local knowledge graph (generated; rebuild with graphify extract . --code-only)
+graphify-out/

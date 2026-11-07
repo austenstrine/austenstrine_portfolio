@@ -1,0 +1,10 @@
+{
+	"mcpServers": {
+		"graphify": {
+			"command": "graphify-mcp",
+			"args": [
+				"/home/austen-loren-strine/Development/austenstrine_portfolio/graphify-out/graph.json"
+			]
+		}
+	}
+}
