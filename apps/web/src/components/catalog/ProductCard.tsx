@@ -1,7 +1,16 @@
-import type { CatalogProductSummary } from '../../lib/catalog-api';
+'use client';
+
+import { useEffect, useState } from 'react';
+import type {
+	CatalogProductDetail,
+	CatalogProductSummary,
+} from '../../lib/catalog-api';
 import { formatAvailableQty } from '../../lib/uom-qty';
 import { productViewHref } from '../../lib/vendor-ref';
+import { PencilIcon } from '../icons/PencilIcon';
+import { useEditableVendors } from './EditableVendorsProvider';
 import { ProductCardImageCarousel } from './ProductCardImageCarousel';
+import { ProductQuickEditDialog } from './ProductQuickEditDialog';
 
 function formatPrice(cents: number) {
 	return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(cents / 100);
@@ -18,13 +27,49 @@ function initials(name: string) {
 	return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
 }
 
+function applyDetailToSummary(
+	summary: CatalogProductSummary,
+	detail: CatalogProductDetail,
+): CatalogProductSummary {
+	const primary = detail.offerings[0];
+	return {
+		...summary,
+		title: detail.title,
+		description: detail.description,
+		tags: detail.tags,
+		slug: detail.slug,
+		primaryPriceCents: primary?.priceCents ?? summary.primaryPriceCents,
+		primaryUom: primary?.uom.code ?? summary.primaryUom,
+		availableQty: primary?.availableQty ?? summary.availableQty,
+		offerings: detail.offerings.map((offering) => ({
+			id: offering.id,
+			sku: offering.sku,
+			offeringKey: offering.offeringKey,
+			role: offering.role,
+			priceCents: offering.priceCents,
+			uom: offering.uom.code,
+			omitFromAvailability: offering.uom.omitFromAvailability,
+			availableQty: offering.availableQty,
+		})),
+	};
+}
+
 export function ProductCard({ product }: { product: CatalogProductSummary }) {
-	const prices = product.offerings.map((row) => row.priceCents);
-	const min = prices.length ? Math.min(...prices) : product.primaryPriceCents;
-	const max = prices.length ? Math.max(...prices) : product.primaryPriceCents;
-	const stocked = product.offerings.find((row) => Number(row.availableQty) > 0);
-	const qty = Number(stocked?.availableQty ?? product.availableQty);
-	const uom = stocked?.uom ?? product.primaryUom;
+	const { canEditVendor } = useEditableVendors();
+	const [display, setDisplay] = useState(product);
+	const [editing, setEditing] = useState(false);
+
+	useEffect(() => {
+		setDisplay(product);
+	}, [product]);
+
+	const canEdit = canEditVendor(display.vendor.id);
+	const prices = display.offerings.map((row) => row.priceCents);
+	const min = prices.length ? Math.min(...prices) : display.primaryPriceCents;
+	const max = prices.length ? Math.max(...prices) : display.primaryPriceCents;
+	const stocked = display.offerings.find((row) => Number(row.availableQty) > 0);
+	const qty = Number(stocked?.availableQty ?? display.availableQty);
+	const uom = stocked?.uom ?? display.primaryUom;
 	const qtyCopy = formatAvailableQty(
 		String(qty),
 		uom,
@@ -33,14 +78,15 @@ export function ProductCard({ product }: { product: CatalogProductSummary }) {
 	const inStock = Number.isFinite(qty) && qty > 0;
 	const low = inStock && qty < 5;
 	const href = productViewHref({
-		vendorSlug: product.vendor.slug,
-		productSlug: product.slug,
+		vendorSlug: display.vendor.slug,
+		productSlug: display.slug,
 	});
 
 	return (
 		<article
 			className="
 				group
+				relative
 				flex
 				h-full
 				flex-col
@@ -54,6 +100,41 @@ export function ProductCard({ product }: { product: CatalogProductSummary }) {
 				hover:shadow-[0_8px_24px_rgba(13,27,42,0.08)]
 			"
 		>
+			{canEdit
+				? (
+					<button
+						aria-label={`Edit ${display.title}`}
+						className="
+							absolute
+							right-3
+							top-3
+							z-30
+							inline-flex
+							h-9
+							w-9
+							items-center
+							justify-center
+							rounded-full
+							border
+							border-slate-300
+							bg-white/95
+							text-ink
+							shadow-sm
+							hover:border-sky
+							hover:text-sky
+						"
+						onClick={(event) => {
+							event.preventDefault();
+							event.stopPropagation();
+							setEditing(true);
+						}}
+						type="button"
+					>
+						<PencilIcon className="h-3.5 w-3.5" />
+					</button>
+				)
+				: null
+			}
 			<div
 				className="
 					relative
@@ -64,8 +145,8 @@ export function ProductCard({ product }: { product: CatalogProductSummary }) {
 			>
 				<ProductCardImageCarousel
 					href={href}
-					images={product.imageUrls ?? []}
-					alt={product.title}
+					images={display.imageUrls ?? []}
+					alt={display.title}
 					fallback={
 						(
 							<div
@@ -87,7 +168,7 @@ export function ProductCard({ product }: { product: CatalogProductSummary }) {
 										text-ink/55
 									"
 								>
-									{product.vendor.name}
+									{display.vendor.name}
 								</p>
 								<p
 									className="
@@ -97,7 +178,7 @@ export function ProductCard({ product }: { product: CatalogProductSummary }) {
 									"
 									style={{ fontSize: '2.35rem', lineHeight: 0.9 }}
 								>
-									{initials(product.vendor.name)}
+									{initials(display.vendor.name)}
 								</p>
 							</div>
 						)
@@ -107,21 +188,39 @@ export function ProductCard({ product }: { product: CatalogProductSummary }) {
 					? null
 					: (
 						<span
-							className="
-								absolute
-								right-3
-								top-3
-								z-20
-								rounded-full
-								bg-white/95
-								px-2
-								py-0.5
-								text-[10px]
-								font-semibold
-								uppercase
-								tracking-wide
-								text-ink
-							"
+							className={
+								canEdit
+									? `
+										absolute
+										left-3
+										top-3
+										z-20
+										rounded-full
+										bg-white/95
+										px-2
+										py-0.5
+										text-[10px]
+										font-semibold
+										uppercase
+										tracking-wide
+										text-ink
+									`
+									: `
+										absolute
+										right-3
+										top-3
+										z-20
+										rounded-full
+										bg-white/95
+										px-2
+										py-0.5
+										text-[10px]
+										font-semibold
+										uppercase
+										tracking-wide
+										text-ink
+									`
+							}
 						>
 							Sold out
 						</span>
@@ -149,7 +248,7 @@ export function ProductCard({ product }: { product: CatalogProductSummary }) {
 						text-slate-500
 					"
 				>
-					{product.category?.name ?? 'Uncategorized'}
+					{display.category?.name ?? 'Uncategorized'}
 				</p>
 				<h2
 					className="
@@ -164,7 +263,7 @@ export function ProductCard({ product }: { product: CatalogProductSummary }) {
 						group-hover:underline-offset-4
 					"
 				>
-					{product.title}
+					{display.title}
 				</h2>
 				<p
 					className="
@@ -172,7 +271,7 @@ export function ProductCard({ product }: { product: CatalogProductSummary }) {
 						text-slate-500
 					"
 				>
-					Sold by {product.vendor.name}
+					Sold by {display.vendor.name}
 				</p>
 				<div className="mt-auto pt-2">
 					<p
@@ -221,6 +320,18 @@ export function ProductCard({ product }: { product: CatalogProductSummary }) {
 					</p>
 				</div>
 			</a>
+			{editing
+				? (
+					<ProductQuickEditDialog
+						onClose={() => setEditing(false)}
+						onUpdated={(detail) => {
+							setDisplay(applyDetailToSummary(display, detail));
+						}}
+						product={display}
+					/>
+				)
+				: null
+			}
 		</article>
 	);
 }

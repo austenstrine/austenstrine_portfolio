@@ -13,6 +13,8 @@ import { upsertCartLine } from '../../lib/checkout-api';
 import { ACCESS_REASONS, buildLoginUrl } from '../../lib/accessGate';
 import { useSession } from '../../lib/useSession';
 import { vendorViewHref } from '../../lib/vendor-ref';
+import { CloseIcon } from '../icons/CloseIcon';
+import { PencilIcon } from '../icons/PencilIcon';
 import { CatalogCover } from './CatalogCover';
 import { ProductCard } from './ProductCard';
 import { ProductMobileStickyCta } from './ProductMobileStickyCta';
@@ -165,6 +167,7 @@ export function ProductDetailClient({
 	const router = useRouter();
 	const { user } = useSession();
 	const [product, setProduct] = useState(initialProduct);
+	const [editing, setEditing] = useState(false);
 	const [deleteBusy, setDeleteBusy] = useState(false);
 	const [deleteError, setDeleteError] = useState<string | null>(null);
 	const [deletedNotice, setDeletedNotice] = useState<string | null>(null);
@@ -509,44 +512,119 @@ export function ProductDetailClient({
 					</Link>
 					{selectedOffering?.sku || product.sku ? ` · ${selectedOffering?.sku || product.sku}` : ''}
 				</p>
-				<h1 className="mt-2 max-w-3xl text-3xl font-semibold tracking-tight text-ink md:text-4xl">
-					{product.title}
-				</h1>
-				{product.description
+				<div
+					className="
+						mt-2
+						flex
+						max-w-3xl
+						items-start
+						gap-3
+					"
+				>
+					<h1
+						className="
+							min-w-0
+							flex-1
+							text-3xl
+							font-semibold
+							tracking-tight
+							text-ink
+							md:text-4xl
+						"
+					>
+						{product.title}
+					</h1>
+					{product.permissions.canEdit && !deletedNotice
+						? (
+							<button
+								aria-expanded={editing}
+								aria-label={
+									editing
+										? 'Close edit'
+										: `Edit ${product.title}`
+								}
+								className="
+									mt-1
+									inline-flex
+									h-9
+									w-9
+									shrink-0
+									items-center
+									justify-center
+									rounded-full
+									border
+									border-slate-300
+									bg-white
+									text-ink
+									hover:border-sky
+									hover:text-sky
+								"
+								onClick={() => setEditing((wasOpen) => !wasOpen)}
+								type="button"
+							>
+								{editing
+									? (
+										<CloseIcon className="h-3.5 w-3.5" />
+									)
+									: (
+										<PencilIcon className="h-3.5 w-3.5" />
+									)
+								}
+							</button>
+						)
+						: null
+					}
+				</div>
+				{editing && product.permissions.canEdit && !deletedNotice
 					? (
-						<p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">
-							{product.description}
-						</p>
-					)
-					: null}
-				{highlightAttributes.length > 0
-					? (
-						<dl className="mt-5 flex flex-wrap gap-x-8 gap-y-3">
-							{highlightAttributes.map((attribute) => (
-								<div key={attribute.label}>
-									<dt className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">
-										{attribute.label}
-									</dt>
-									<dd className="mt-0.5 text-sm font-medium text-ink">{attribute.value}</dd>
-								</div>
-							))}
-						</dl>
-					)
-					: null}
-				{(product.tags?.length ?? 0) > 0
-					? (
-						<div className="mt-4 flex flex-wrap gap-2">
-							{product.tags?.map((tag) => (
-								<span
-									key={tag}
-									className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-semibold text-slate-600"
-								>
-									{tag.replace(/[-_]+/g, ' ')}
-								</span>
-							))}
+						<div className="mt-5 max-w-2xl">
+							<ProductQuickEdit
+								onDone={() => setEditing(false)}
+								onUpdated={setProduct}
+								product={product}
+							/>
 						</div>
 					)
-					: null}
+					: (
+						<>
+							{product.description
+								? (
+									<p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">
+										{product.description}
+									</p>
+								)
+								: null}
+							{highlightAttributes.length > 0
+								? (
+									<dl className="mt-5 flex flex-wrap gap-x-8 gap-y-3">
+										{highlightAttributes.map((attribute) => (
+											<div key={attribute.label}>
+												<dt className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+													{attribute.label}
+												</dt>
+												<dd className="mt-0.5 text-sm font-medium text-ink">{attribute.value}</dd>
+											</div>
+										))}
+									</dl>
+								)
+								: null}
+							{(product.tags?.length ?? 0) > 0
+								? (
+									<div className="mt-4 flex flex-wrap gap-2">
+										{product.tags?.map((tag) => (
+											<span
+												key={tag}
+												className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-semibold text-slate-600"
+											>
+												{tag.replace(/[-_]+/g, ' ')}
+											</span>
+										))}
+									</div>
+								)
+								: null}
+						</>
+					)
+				}
 			</div>
 
 			<div className="grid gap-10 lg:grid-cols-[minmax(0,1.15fr)_minmax(20rem,0.85fr)] lg:items-start">
@@ -829,28 +907,61 @@ export function ProductDetailClient({
 
 			{product.permissions.canEdit && !deletedNotice
 				? (
-					<details className="rounded-2xl border border-slate-200 bg-white p-5">
-						<summary className="cursor-pointer text-sm font-semibold text-ink">
-							Vendor tools
+					<details
+						className="
+							rounded-2xl
+							border
+							border-slate-200
+							bg-white
+							p-5
+						"
+					>
+						<summary
+							className="
+								cursor-pointer
+								text-sm
+								font-semibold
+								text-red-700
+							"
+						>
+							Delete
 						</summary>
-						<div className="mt-5 flex flex-col gap-4">
-							<ProductQuickEdit product={product} onUpdated={setProduct} />
-							<div className="rounded-xl border border-red-100 bg-red-50 p-4">
-								<p className="text-sm text-red-900">
-									Deleting archives the product out of live indexes, emails owners a CSV of what was removed, and auto-prunes that archive after 6 months.
-								</p>
-								{deleteError
-									? <p className="mt-2 text-sm text-red-700">{deleteError}</p>
-									: null}
-								<button
-									type="button"
-									disabled={deleteBusy}
-									onClick={() => void onDelete()}
-									className="mt-3 rounded-full border border-red-300 bg-white px-4 py-2 text-sm font-semibold text-red-700 hover:border-red-500 disabled:opacity-60"
-								>
-									{deleteBusy ? 'Deleting…' : 'Delete product'}
-								</button>
-							</div>
+						<div className="mt-4">
+							<p className="text-sm text-slate-600">
+								Archives the listing, emails owners a CSV, and prunes the archive after 6 months.
+							</p>
+							{deleteError
+								? (
+									<p className="mt-2 text-sm text-red-700">
+										{deleteError}
+									</p>
+								)
+								: null
+							}
+							<button
+								type="button"
+								disabled={deleteBusy}
+								onClick={() => void onDelete()}
+								className="
+									mt-3
+									rounded-full
+									border
+									border-red-300
+									bg-white
+									px-4
+									py-2
+									text-sm
+									font-semibold
+									text-red-700
+									hover:border-red-500
+									disabled:opacity-60
+								"
+							>
+								{deleteBusy
+									? 'Deleting…'
+									: 'Delete product'
+								}
+							</button>
 						</div>
 					</details>
 				)
