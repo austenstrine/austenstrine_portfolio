@@ -1,8 +1,8 @@
 'use client';
 
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Suspense, useState, type FormEvent } from 'react';
-import { AuthApiError, loginUser } from '../../lib/auth-api';
+import { Suspense, useEffect, useState, type FormEvent } from 'react';
+import { AuthApiError, loginUser, probeCurrentUser } from '../../lib/auth-api';
 
 function safeNext(raw: string | null): string {
 	if(!raw || !raw.startsWith('/') || raw.startsWith('//')) {
@@ -20,6 +20,25 @@ function LoginForm() {
 	const [password, setPassword] = useState('');
 	const [error, setError] = useState<string | null>(null);
 	const [submitting, setSubmitting] = useState(false);
+	const [checkingSession, setCheckingSession] = useState(true);
+
+	useEffect(() => {
+		let cancelled = false;
+		void (async () => {
+			const probe = await probeCurrentUser();
+			if(cancelled) {
+				return;
+			}
+			if(probe.status === 'ok') {
+				router.replace(nextPath);
+				return;
+			}
+			setCheckingSession(false);
+		})();
+		return () => {
+			cancelled = true;
+		};
+	}, [nextPath, router]);
 
 	const onSubmit = async (event: FormEvent) => {
 		event.preventDefault();
@@ -44,6 +63,20 @@ function LoginForm() {
 			setSubmitting(false);
 		}
 	};
+
+	if(checkingSession) {
+		return (
+			<p
+				className="
+					p-8
+					text-sm
+					text-mist/60
+				"
+			>
+				Checking session…
+			</p>
+		);
+	}
 
 	return (
 		<div

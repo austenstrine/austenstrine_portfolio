@@ -3,32 +3,107 @@ import { listMyVendors } from './catalog-api';
 export const AUTH_NEXT_COOKIE = 'auth_next';
 export const AUTH_REASON_COOKIE = 'auth_reason';
 
+type AccessReasonCopy = {
+	/** Guest / no session — login redirect and guest CTAs. */
+	guest: string;
+	/** Signed in but still gated (usually needs a vendor org). */
+	signedIn: string;
+};
+
+/**
+ * Gate copy is session-aware: never show guest “Sign in…” language when a
+ * session already exists (Linear/Notes-style). Use `accessReason()`.
+ */
 export const ACCESS_REASONS = {
-	products:
-		'Before you add or edit products, let’s get you signed in and connected to a vendor!',
-	manage:
-		'Before you manage a catalog, let’s get you signed in and connected to a vendor!',
-	vendors:
-		'Sign in to create a vendor organization or accept an invite from an existing one.',
-	vendorDetail:
-		'Sign in to view and manage this vendor organization.',
-	import:
-		'Before you import products, let’s get you signed in and connected to a vendor!',
-	vendorOrders:
-		'Sign in to manage vendor orders.',
-	cart: 'Sign in to use your cart.',
-	checkout: 'Sign in to complete checkout.',
-	orders: 'Sign in to view your orders.',
-	uoms: 'Sign in to create units of measure.',
-	attributes: 'Sign in to manage product attributes.',
-	categories: 'Sign in to work with categories.',
-	invite: 'Sign in or create an account to accept this vendor invite.',
-	joinDemo:
-		'Create an account with the email you used for the demo invite, then accept membership in Demo Supply Co.',
-	account: 'Sign in to manage your account.',
-} as const;
+	products: {
+		guest:
+			'Before you add or edit products, let’s get you signed in and connected to a vendor!',
+		signedIn:
+			'Join or create a vendor organization before you add or edit products.',
+	},
+	manage: {
+		guest:
+			'Before you manage a catalog, let’s get you signed in and connected to a vendor!',
+		signedIn:
+			'Join or create a vendor organization before you manage a catalog.',
+	},
+	vendors: {
+		guest:
+			'Sign in to create a vendor organization or accept an invite from an existing one.',
+		signedIn:
+			'Create a vendor organization or accept an invite from an existing one.',
+	},
+	vendorDetail: {
+		guest: 'Sign in to view and manage this vendor organization.',
+		signedIn: 'Join this vendor organization to view and manage it.',
+	},
+	import: {
+		guest:
+			'Before you import products, let’s get you signed in and connected to a vendor!',
+		signedIn:
+			'Join or create a vendor organization before you import products.',
+	},
+	vendorOrders: {
+		guest: 'Sign in to manage vendor orders.',
+		signedIn: 'Join or create a vendor organization to manage vendor orders.',
+	},
+	cart: {
+		guest: 'Sign in to use your cart.',
+		signedIn: 'Your session is ready — continue to your cart.',
+	},
+	checkout: {
+		guest: 'Sign in to complete checkout.',
+		signedIn: 'Your session is ready — continue to checkout.',
+	},
+	orders: {
+		guest: 'Sign in to view your orders.',
+		signedIn: 'Your session is ready — continue to your orders.',
+	},
+	uoms: {
+		guest: 'Sign in to create units of measure.',
+		signedIn: 'Join or create a vendor organization to create units of measure.',
+	},
+	attributes: {
+		guest: 'Sign in to manage product attributes.',
+		signedIn:
+			'Join or create a vendor organization to manage product attributes.',
+	},
+	categories: {
+		guest: 'Sign in to work with categories.',
+		signedIn: 'Join or create a vendor organization to work with categories.',
+	},
+	invite: {
+		guest: 'Sign in or create an account to accept this vendor invite.',
+		signedIn: 'Accept this invite with the account that matches the invite email.',
+	},
+	joinDemo: {
+		guest:
+			'Create an account with the email you used for the demo invite, then accept membership in Demo Supply Co.',
+		signedIn:
+			'Open your seller workspace, or join Demo Supply Co. with this account.',
+	},
+	account: {
+		guest: 'Sign in to manage your account.',
+		signedIn: 'Continue to your account.',
+	},
+	notifications: {
+		guest: 'Sign in to view your notifications.',
+		signedIn: 'Continue to your notifications.',
+	},
+} as const satisfies Record<string, AccessReasonCopy>;
 
 export type AccessReasonKey = keyof typeof ACCESS_REASONS;
+
+/** Pick guest vs signed-in gate copy for RequireAccess and auth CTAs. */
+export function accessReason(
+	key: AccessReasonKey,
+	signedIn: boolean,
+): string {
+	const copy = ACCESS_REASONS[key];
+	return signedIn
+		? copy.signedIn
+		: copy.guest;
+}
 
 const VENDOR_REQUIRED_PREFIXES = [
 	'/place-et-marque/products/new',
@@ -38,6 +113,7 @@ const VENDOR_REQUIRED_PREFIXES = [
 	'/place-et-marque/vendors/',
 	'/place-et-marque/uoms',
 	'/place-et-marque/attributes',
+	'/place-et-marque/categories',
 ] as const;
 
 export function safeNextPath(raw: string | null | undefined, fallback = '/'): string {
@@ -180,9 +256,12 @@ export function buildRegisterUrl(options: {
 	return query ? `/auth/register?${query}` : '/auth/register';
 }
 
-export function buildVendorGateUrl(next?: string): string {
+export function buildVendorGateUrl(next?: string, reason?: string): string {
 	const safe = safeNextPath(next ?? null, '/place-et-marque');
 	const params = new URLSearchParams({ next: safe });
+	if(reason) {
+		params.set('reason', reason);
+	}
 	return `/place-et-marque/vendors?${params.toString()}`;
 }
 

@@ -412,8 +412,7 @@ function NotificationsInboxInner() {
 export default function NotificationsInboxClient() {
 	return (
 		<RequireAccess
-			reason="Sign in to view your notifications."
-			reasonKey="account"
+			reasonKey="notifications"
 		>
 			<Suspense
 				fallback={

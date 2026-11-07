@@ -13,12 +13,17 @@ import {
 	safeNextPath,
 	stashAuthRedirect,
 } from '../../../lib/accessGate';
+import { useRedirectIfAuthenticated } from '../../../lib/useRedirectIfAuthenticated';
+
 
 function RegisterForm() {
 	const router = useRouter();
 	const searchParams = useSearchParams();
 	const nextPath = safeNextPath(searchParams.get('next'));
 	const reason = searchParams.get('reason');
+	const { loading: sessionLoading, redirecting } = useRedirectIfAuthenticated(
+		nextPath,
+	);
 	const [email, setEmail] = useState(() => {
 		const raw = searchParams.get('email')?.trim() ?? '';
 		return raw.includes('@')
@@ -29,6 +34,14 @@ function RegisterForm() {
 	const [confirmPassword, setConfirmPassword] = useState('');
 	const [error, setError] = useState<string | null>(null);
 	const [submitting, setSubmitting] = useState(false);
+
+	if(sessionLoading || redirecting) {
+		return (
+			<p className="text-sm text-slate-500">
+				Checking session…
+			</p>
+		);
+	}
 
 	const onSubmit = async (event: FormEvent) => {
 		event.preventDefault();
