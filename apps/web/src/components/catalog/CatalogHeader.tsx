@@ -409,14 +409,13 @@ function AccountMenu({
 													</p>
 												)
 												: notifications.length === 0
-													? (
-														<p className="text-xs text-slate-500">
-															{unreadCount > 0
-																? 'Loading…'
-																: 'No unread notifications.'
-															}
-														</p>
-													)
+													? unreadCount > 0
+														? (
+															<p className="text-xs text-slate-500">
+																Loading…
+															</p>
+														)
+														: null
 													: (
 														<ul
 															className="
@@ -455,22 +454,6 @@ function AccountMenu({
 																		>
 																			{item.title}
 																		</span>
-																		{item.body
-																			? (
-																				<span
-																					className="
-																						mt-0.5
-																						block
-																						truncate
-																						text-xs
-																						text-slate-500
-																					"
-																				>
-																					{item.body}
-																				</span>
-																			)
-																			: null
-																		}
 																	</a>
 																</li>
 															))}
