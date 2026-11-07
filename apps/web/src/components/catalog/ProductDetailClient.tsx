@@ -15,6 +15,7 @@ import { useSession } from '../../lib/useSession';
 import { vendorViewHref } from '../../lib/vendor-ref';
 import { CatalogCover } from './CatalogCover';
 import { ProductCard } from './ProductCard';
+import { ProductMobileStickyCta } from './ProductMobileStickyCta';
 import { ProductQuickEdit } from './ProductQuickEdit';
 import { TermHint } from './TermHint';
 import { CompoundQtyField } from './CompoundQtyField';
@@ -875,38 +876,15 @@ export function ProductDetailClient({
 
 			{selectedOffering && !deletedNotice
 				? (
-					<div className="fixed inset-x-0 bottom-0 z-30 border-t border-slate-200 bg-white/95 p-3 backdrop-blur lg:hidden">
-						<div className="mx-auto flex max-w-6xl items-center gap-3 px-3">
-							<div className="min-w-0 flex-1">
-								<p className="truncate text-sm font-semibold tabular-nums text-ink">
-									{formatPrice(selectedOffering.priceCents, selectedOffering.currency)}
-									<span className="ml-1 text-xs font-medium text-slate-500">/ {selectedOffering.uom.code}</span>
-								</p>
-								<p className={`truncate text-xs ${stock.tone}`}>{stock.status}</p>
-							</div>
-							<button
-								type="button"
-								disabled={cartBusy || !stock.inStock}
-								onClick={() => void onAddToCart()}
-								className="
-									rounded-full
-									bg-asgreen
-									px-5
-									py-2.5
-									text-sm
-									font-semibold
-									text-white
-									disabled:opacity-40
-								"
-							>
-								{cartBusy
-									? 'Adding…'
-									: stock.inStock
-										? 'Add to cart'
-										: 'Unavailable'}
-							</button>
-						</div>
-					</div>
+					<ProductMobileStickyCta
+						priceLabel={formatPrice(selectedOffering.priceCents, selectedOffering.currency)}
+						uomCode={selectedOffering.uom.code}
+						stockStatus={stock.status}
+						stockTone={stock.tone}
+						cartBusy={cartBusy}
+						inStock={stock.inStock}
+						onAddToCart={() => void onAddToCart()}
+					/>
 				)
 				: null}
 		</div>

@@ -30,7 +30,7 @@ export function JumpToTop() {
 			aria-label="Back to top"
 			className="
 				fixed
-				bottom-[calc(max(12px,var(--gutter)-12px)+var(--seller-bottom-pane-stack,0px))]
+				bottom-[calc(max(12px,var(--gutter)-12px)+var(--seller-bottom-pane-stack,0px)+var(--product-sticky-cta-stack,0px))]
 				right-[max(12px,calc(var(--gutter)-12px))]
 				z-40
 				inline-flex
