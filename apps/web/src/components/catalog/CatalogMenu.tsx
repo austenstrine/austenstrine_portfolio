@@ -15,6 +15,37 @@ export type CatalogMenuBox = {
 	width: number;
 };
 
+const menuRowActiveClass = `
+	flex
+	w-full
+	items-center
+	justify-between
+	gap-3
+	rounded-full
+	bg-asgreen/15
+	px-3.5
+	py-2
+	text-left
+	text-sm
+	font-semibold
+	text-asgreen
+`;
+
+const menuRowIdleClass = `
+	flex
+	w-full
+	items-center
+	justify-between
+	gap-3
+	rounded-full
+	px-3.5
+	py-2
+	text-left
+	text-sm
+	text-ink
+	hover:bg-frost
+`;
+
 export function CatalogMenuRow({
 	active = false,
 	children,
@@ -26,37 +57,9 @@ export function CatalogMenuRow({
 }) {
 	return (
 		<button
-			className={
-				active
-					? `
-						flex
-						w-full
-						items-center
-						justify-between
-						gap-3
-						rounded-full
-						bg-asgreen/15
-						px-3.5
-						py-2
-						text-left
-						text-sm
-						font-semibold
-						text-asgreen
-					`
-					: `
-						flex
-						w-full
-						items-center
-						justify-between
-						gap-3
-						rounded-full
-						px-3.5
-						py-2
-						text-left
-						text-sm
-						text-ink
-						hover:bg-frost
-					`
+			className={active
+				? menuRowActiveClass
+				: menuRowIdleClass
 			}
 			onClick={onClick}
 			role="menuitem"
@@ -64,6 +67,32 @@ export function CatalogMenuRow({
 		>
 			{children}
 		</button>
+	);
+}
+
+export function CatalogMenuLink({
+	active = false,
+	children,
+	href,
+	onClick,
+}: {
+	active?: boolean;
+	children: ReactNode;
+	href: string;
+	onClick?: () => void;
+}) {
+	return (
+		<a
+			className={active
+				? menuRowActiveClass
+				: menuRowIdleClass
+			}
+			href={href}
+			onClick={onClick}
+			role="menuitem"
+		>
+			{children}
+		</a>
 	);
 }
 
