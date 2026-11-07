@@ -21,6 +21,9 @@
 
 body {
   @apply bg-frost text-ink antialiased;
+  /* Clears fixed site top banners (dust / backend-down). CatalogHeader
+     spacer is header-only; banner height lives here so homepage/auth clear too. */
+  padding-top: var(--site-top-banner-h, 0px);
 }
 
 .main-grid {
