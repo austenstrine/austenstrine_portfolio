@@ -505,30 +505,35 @@ export class AuthService {
 		purpose: EmailOtpPurpose,
 		code: string,
 	): Promise<void> {
-		const otp = await this.prisma.emailOtp.findFirst({
-			where: { userId, purpose, consumedAt: null },
-			orderBy: { createdAt: 'desc' },
-		});
-
-		if(!otp || otp.expiresAt < new Date()) {
-			throw new BadRequestException('Invalid or expired code.');
-		}
-
-		if(otp.attempts >= MAX_OTP_ATTEMPTS) {
-			throw new BadRequestException('Too many attempts. Request a new code.');
-		}
-
-		if(!this.security.compareOtpHash(code, otp.codeHash)) {
-			await this.prisma.emailOtp.update({
-				where: { id: otp.id },
-				data: { attempts: { increment: 1 } },
+		await this.prisma.$transaction(async (tx) => {
+			const otp = await tx.emailOtp.findFirst({
+				where: { userId, purpose, consumedAt: null },
+				orderBy: { createdAt: 'desc' },
 			});
-			throw new BadRequestException('Invalid or expired code.');
-		}
 
-		await this.prisma.emailOtp.update({
-			where: { id: otp.id },
-			data: { consumedAt: new Date() },
+			if(!otp || otp.expiresAt < new Date()) {
+				throw new BadRequestException('Invalid or expired code.');
+			}
+
+			if(otp.attempts >= MAX_OTP_ATTEMPTS) {
+				throw new BadRequestException('Too many attempts. Request a new code.');
+			}
+
+			if(!this.security.compareOtpHash(code, otp.codeHash)) {
+				await tx.emailOtp.update({
+					where: { id: otp.id },
+					data: { attempts: { increment: 1 } },
+				});
+				throw new BadRequestException('Invalid or expired code.');
+			}
+
+			const consumed = await tx.emailOtp.updateMany({
+				where: { id: otp.id, consumedAt: null },
+				data: { consumedAt: new Date() },
+			});
+			if(consumed.count === 0) {
+				throw new BadRequestException('Invalid or expired code.');
+			}
 		});
 	}
 
