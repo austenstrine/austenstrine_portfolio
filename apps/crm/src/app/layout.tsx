@@ -3,7 +3,7 @@ import './globals.css';
 
 export const metadata: Metadata = {
 	title: 'CRM · austenstrine',
-	description: 'Admin CRM for Place et Marque platform operations.',
+	description: 'CRM',
 };
 
 export default function RootLayout({

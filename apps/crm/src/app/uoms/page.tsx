@@ -1,7 +1,6 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState, type FormEvent, type KeyboardEvent } from 'react';
-import Link from 'next/link';
 import { CrmShell } from '../../components/layout/CrmShell';
 import { AuthApiError } from '../../lib/auth-api';
 import {
@@ -115,39 +114,8 @@ export default function UomsAdminPage() {
 						text-white
 					"
 				>
-					Units of measure
+					Units
 				</h1>
-				<p
-					className="
-						mt-3
-						text-sm
-						text-mist/75
-					"
-				>
-					Manage global units shared across Place et Marque. Vendor units stay
-					on the storefront; cross-vendor name collisions email merge links here.
-				</p>
-				<p
-					className="
-						mt-2
-						text-sm
-						text-mist/60
-					"
-				>
-					Open a merge email link, or go to{' '}
-					<Link
-						href="/uom-merges"
-						className="
-							text-glow
-							underline-offset-2
-							hover:underline
-						"
-					>
-						UOM approvals
-					</Link>
-					{' '}
-					with a token.
-				</p>
 
 				{error
 					? (
@@ -182,18 +150,8 @@ export default function UomsAdminPage() {
 						py-4
 					"
 				>
-					<h2
-						className="
-							text-lg
-							font-semibold
-							text-white
-						"
-					>
-						Create global unit
-					</h2>
 					<form
 						className="
-							mt-4
 							grid
 							gap-4
 							md:grid-cols-2
@@ -204,7 +162,7 @@ export default function UomsAdminPage() {
 					>
 						<label className="block text-sm">
 							<span className="font-medium text-mist">
-								Name / code
+								Code
 							</span>
 							<input
 								className="
@@ -223,7 +181,6 @@ export default function UomsAdminPage() {
 								onChange={(event) => setCode(event.target.value)}
 								required
 								maxLength={40}
-								placeholder="ft"
 							/>
 						</label>
 						<label className="block text-sm">
@@ -247,7 +204,6 @@ export default function UomsAdminPage() {
 								onChange={(event) => setLabel(event.target.value)}
 								required
 								maxLength={80}
-								placeholder="Foot"
 							/>
 						</label>
 						<label className="block text-sm">
@@ -275,7 +231,7 @@ export default function UomsAdminPage() {
 						</label>
 						<label className="block text-sm">
 							<span className="font-medium text-mist">
-								Factor to reference
+								Times the base unit
 							</span>
 							<input
 								className="
@@ -323,7 +279,7 @@ export default function UomsAdminPage() {
 										key={alias}
 										type="button"
 										className="
-											rounded-full
+											rounded-lg
 											border
 											border-line
 											px-2.5
@@ -356,14 +312,13 @@ export default function UomsAdminPage() {
 								onChange={(event) => setAliasDraft(event.target.value)}
 								onKeyDown={onAliasKeyDown}
 								onBlur={() => addAlias(aliasDraft)}
-								placeholder="Type alias and press Enter"
 							/>
 						</div>
 						<button
 							type="submit"
 							disabled={submitting}
 							className="
-								self-start
+								justify-self-end
 								rounded-lg
 								bg-glow
 								px-4
@@ -377,7 +332,7 @@ export default function UomsAdminPage() {
 						>
 							{submitting
 								? 'Creating…'
-								: 'Create global unit'
+								: 'Create'
 							}
 						</button>
 					</form>
@@ -391,19 +346,10 @@ export default function UomsAdminPage() {
 						gap-3
 					"
 				>
-					<h2
-						className="
-							text-lg
-							font-semibold
-							text-white
-						"
-					>
-						Global units
-					</h2>
 					{loading
 						? (
 								<p className="text-sm text-mist/60">
-									Loading units…
+									Loading…
 								</p>
 							)
 						: null
@@ -411,7 +357,7 @@ export default function UomsAdminPage() {
 					{!loading && globals.length === 0 && !error
 						? (
 								<p className="text-sm text-mist/60">
-									No global units yet.
+									No units yet.
 								</p>
 							)
 						: null
@@ -445,7 +391,7 @@ export default function UomsAdminPage() {
 										text-mist/65
 									"
 								>
-									{uom.dimensionKey} · factor {uom.factorToReference}
+									{uom.dimensionKey} · ×{uom.factorToReference}
 								</p>
 								{(uom.aliases?.length ?? 0) > 0
 									? (
@@ -456,7 +402,7 @@ export default function UomsAdminPage() {
 													text-mist/50
 												"
 											>
-												Aliases: {uom.aliases.join(', ')}
+												{uom.aliases.join(', ')}
 											</p>
 										)
 									: null

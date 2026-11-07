@@ -54,34 +54,19 @@ function UomMergeContent() {
 					text-white
 				"
 			>
-				UOM approvals
+				Unit merges
 			</h1>
-			<p
-				className="
-					mt-3
-					text-sm
-					text-mist/75
-				"
-			>
-				Confirm or skip cross-vendor unit merges from the automerge email links.
-			</p>
 
 			{!token
 				? (
 						<p
 							className="
 								mt-8
-								rounded-xl
-								border
-								border-line
-								bg-panel/70
-								px-5
-								py-4
 								text-sm
-								text-mist/70
+								text-mist/60
 							"
 						>
-							Open a merge link from email to apply a decision. Global units live on{' '}
+							No merge open.{' '}
 							<Link
 								href="/uoms"
 								className="
@@ -90,9 +75,8 @@ function UomMergeContent() {
 									hover:underline
 								"
 							>
-								Units of measure
+								Units
 							</Link>
-							.
 						</p>
 					)
 				: null
@@ -107,7 +91,7 @@ function UomMergeContent() {
 								text-mist/60
 							"
 						>
-							Applying decision…
+							Applying…
 						</p>
 					)
 				: null
@@ -159,7 +143,13 @@ function UomMergeContent() {
 
 			{token && !loading
 				? (
-						<p className="mt-6 text-sm">
+						<p
+							className="
+								mt-6
+								text-right
+								text-sm
+							"
+						>
 							<Link
 								href="/uoms"
 								className="
@@ -168,7 +158,7 @@ function UomMergeContent() {
 									hover:underline
 								"
 							>
-								Back to units of measure
+								Units
 							</Link>
 						</p>
 					)
