@@ -106,7 +106,7 @@ describe('VendorMemberService', () => {
 		).rejects.toBeInstanceOf(BadRequestException);
 	});
 
-	it('blocks demoting the last owner', async () => {
+	it('rejects demoting an owner via role change', async () => {
 		const { service } = buildService({
 			target: {
 				id: 'mem_owner',
@@ -114,7 +114,7 @@ describe('VendorMemberService', () => {
 				userId: 'user_owner',
 				email: 'owner@example.com',
 			},
-			ownerCount: 1,
+			ownerCount: 2,
 		});
 		await expect(
 			service.updateMemberRole(
@@ -135,6 +135,21 @@ describe('VendorMemberService', () => {
 		);
 		expect(result.message).toBe('Member removed.');
 		expect(prisma.vendorMember.delete).toHaveBeenCalled();
+	});
+
+	it('blocks removing the last owner', async () => {
+		const { service } = buildService({
+			target: {
+				id: 'mem_owner',
+				role: VendorMemberRole.OWNER,
+				userId: 'user_owner',
+				email: 'owner@example.com',
+			},
+			ownerCount: 1,
+		});
+		await expect(
+			service.removeMember('actor', 'vendor_1', 'user_owner'),
+		).rejects.toBeInstanceOf(BadRequestException);
 	});
 
 	it('404s when member is missing', async () => {

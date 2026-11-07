@@ -1136,15 +1136,23 @@ function VendorDetailContent() {
 						>
 							<VendorMembersPanel
 								vendor={vendor}
+								viewerUserId={user?.id}
 								invites={invites}
 								onInvitesChange={setInvites}
-								onMembersChange={(members) => {
+								onMembersChange={({ members, myRole, leftOrganization }) => {
+									if(leftOrganization) {
+										router.push('/place-et-marque/vendors');
+										return;
+									}
 									setVendor((prev) =>
 										prev
 											? {
 													...prev,
 													members,
 													memberCount: members.length,
+													...(myRole
+														? { myRole }
+														: {}),
 												}
 											: prev,
 									);
