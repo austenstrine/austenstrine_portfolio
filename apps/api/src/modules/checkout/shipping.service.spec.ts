@@ -199,6 +199,127 @@ describe('ShippingService residuals (PEM-206)', () => {
 		});
 	});
 
+	describe('upsertProfile FREIGHT flag invariants (PEM-211)', () => {
+		it('forces shipsSeparately + ON_SHIPMENT even when upsert asks otherwise', async () => {
+			const prisma = buildPrisma();
+			const vendorAccess = buildVendorAccess();
+
+			prisma.shippingProfile.upsert.mockResolvedValue({
+				id: 'fr_1',
+				vendorId: 'v1',
+				code: 'FREIGHT',
+				shipsSeparately: true,
+				payoutTrigger: PayoutTrigger.ON_SHIPMENT,
+			});
+			prisma.shippingProfile.findUniqueOrThrow.mockResolvedValue({
+				id: 'fr_1',
+				vendorId: 'v1',
+				code: 'FREIGHT',
+				shipsSeparately: true,
+				payoutTrigger: PayoutTrigger.ON_SHIPMENT,
+				rates: [],
+			});
+
+			const service = new ShippingService(
+				prisma as never,
+				vendorAccess as never,
+			);
+
+			await service.upsertProfile('user_1', 'v1', {
+				code: 'FREIGHT',
+				name: 'Freight',
+				shipsSeparately: false,
+				payoutTrigger: PayoutTrigger.ON_PAYMENT,
+			});
+
+			expect(prisma.shippingProfile.upsert).toHaveBeenCalledWith({
+				where: {
+					vendorId_code: { vendorId: 'v1', code: 'FREIGHT' },
+				},
+				create: {
+					vendorId: 'v1',
+					code: 'FREIGHT',
+					name: 'Freight',
+					shipsSeparately: true,
+					payoutTrigger: PayoutTrigger.ON_SHIPMENT,
+				},
+				update: {
+					name: 'Freight',
+					shipsSeparately: true,
+					payoutTrigger: PayoutTrigger.ON_SHIPMENT,
+				},
+			});
+		});
+
+		it('keeps ensure + upsert FREIGHT flags aligned after a conflicting upsert', async () => {
+			const prisma = buildPrisma();
+			const vendorAccess = buildVendorAccess();
+
+			prisma.shippingProfile.upsert.mockResolvedValue({
+				id: 'fr_1',
+				vendorId: 'v1',
+				code: 'FREIGHT',
+				shipsSeparately: true,
+				payoutTrigger: PayoutTrigger.ON_SHIPMENT,
+			});
+			prisma.shippingProfile.findUniqueOrThrow.mockResolvedValue({
+				id: 'fr_1',
+				code: 'FREIGHT',
+				shipsSeparately: true,
+				payoutTrigger: PayoutTrigger.ON_SHIPMENT,
+				rates: [{ id: 'r_pallet', label: 'Freight pallet', amountCents: 14900 }],
+			});
+
+			const service = new ShippingService(
+				prisma as never,
+				vendorAccess as never,
+			);
+
+			await service.upsertProfile('user_1', 'v1', {
+				code: 'freight',
+				name: 'Freight',
+				shipsSeparately: false,
+				payoutTrigger: PayoutTrigger.ON_PAYMENT,
+			});
+
+			const upsertArgs = prisma.shippingProfile.upsert.mock.calls[0][0];
+			expect(upsertArgs.create.shipsSeparately).toBe(true);
+			expect(upsertArgs.create.payoutTrigger).toBe(
+				PayoutTrigger.ON_SHIPMENT,
+			);
+			expect(upsertArgs.update.shipsSeparately).toBe(true);
+			expect(upsertArgs.update.payoutTrigger).toBe(
+				PayoutTrigger.ON_SHIPMENT,
+			);
+
+			prisma.shippingProfile.findUnique
+				.mockResolvedValueOnce({
+					id: 'std_1',
+					vendorId: 'v1',
+					code: 'STANDARD',
+					rates: [{ id: 'r_ground', label: 'Ground', amountCents: 999 }],
+				})
+				.mockResolvedValueOnce({
+					id: 'fr_1',
+					vendorId: 'v1',
+					code: 'FREIGHT',
+					shipsSeparately: true,
+					payoutTrigger: PayoutTrigger.ON_SHIPMENT,
+					rates: [
+						{
+							id: 'r_pallet',
+							label: 'Freight pallet',
+							amountCents: 14900,
+						},
+					],
+				});
+
+			await service.ensureVendorDefaults('v1');
+
+			expect(prisma.shippingProfile.update).not.toHaveBeenCalled();
+		});
+	});
+
 	describe('upsertProfile rate replace-set', () => {
 		it('rejects foreign rate.id with BadRequestException (no silent drop)', async () => {
 			const prisma = buildPrisma();

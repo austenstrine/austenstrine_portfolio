@@ -7,6 +7,33 @@ import { PayoutTrigger } from '@prisma/client';
 import { PrismaService } from '../../infra/prisma/prisma.service';
 import { VendorAccessService } from '../catalog/vendor-access.service';
 
+/** FREIGHT code carries fixed payout/separate-ship semantics; ensure + upsert must agree. */
+const FREIGHT_SHIPS_SEPARATELY = true;
+const FREIGHT_PAYOUT_TRIGGER = PayoutTrigger.ON_SHIPMENT;
+
+function resolveProfileFlags(
+	code: string,
+	input: {
+		shipsSeparately?: boolean;
+		payoutTrigger?: PayoutTrigger;
+	},
+): { shipsSeparately: boolean; payoutTrigger: PayoutTrigger } {
+	if(code === 'FREIGHT') {
+		return {
+			shipsSeparately: FREIGHT_SHIPS_SEPARATELY,
+			payoutTrigger: FREIGHT_PAYOUT_TRIGGER,
+		};
+	}
+
+	const shipsSeparately = input.shipsSeparately ?? false;
+	const payoutTrigger =
+		input.payoutTrigger ??
+		(shipsSeparately
+			? PayoutTrigger.ON_SHIPMENT
+			: PayoutTrigger.ON_PAYMENT);
+	return { shipsSeparately, payoutTrigger };
+}
+
 @Injectable()
 export class ShippingService {
 	constructor(
@@ -67,8 +94,8 @@ export class ShippingService {
 					vendorId,
 					code: 'FREIGHT',
 					name: 'Freight',
-					shipsSeparately: true,
-					payoutTrigger: PayoutTrigger.ON_SHIPMENT,
+					shipsSeparately: FREIGHT_SHIPS_SEPARATELY,
+					payoutTrigger: FREIGHT_PAYOUT_TRIGGER,
 					rates: {
 						create: {
 							label: 'Freight pallet',
@@ -81,14 +108,14 @@ export class ShippingService {
 		}
 		else {
 			if(
-				freight.payoutTrigger !== PayoutTrigger.ON_SHIPMENT ||
-				!freight.shipsSeparately
+				freight.payoutTrigger !== FREIGHT_PAYOUT_TRIGGER ||
+				freight.shipsSeparately !== FREIGHT_SHIPS_SEPARATELY
 			) {
 				freight = await this.prisma.shippingProfile.update({
 					where: { id: freight.id },
 					data: {
-						shipsSeparately: true,
-						payoutTrigger: PayoutTrigger.ON_SHIPMENT,
+						shipsSeparately: FREIGHT_SHIPS_SEPARATELY,
+						payoutTrigger: FREIGHT_PAYOUT_TRIGGER,
 					},
 					include: { rates: true },
 				});
@@ -141,13 +168,7 @@ export class ShippingService {
 	) {
 		await this.vendorAccess.assertCanEditVendor(userId, vendorId);
 		const code = input.code.trim().toUpperCase();
-		const shipsSeparately =
-			input.shipsSeparately ?? (code === 'FREIGHT' ? true : false);
-		const payoutTrigger =
-			input.payoutTrigger ??
-			(shipsSeparately || code === 'FREIGHT'
-				? PayoutTrigger.ON_SHIPMENT
-				: PayoutTrigger.ON_PAYMENT);
+		const { shipsSeparately, payoutTrigger } = resolveProfileFlags(code, input);
 
 		const profile = await this.prisma.shippingProfile.upsert({
 			where: {
