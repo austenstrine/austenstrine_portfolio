@@ -146,6 +146,7 @@ function VerifyForm() {
 						type="submit"
 						disabled={submitting || !pendingToken}
 						className="
+							self-end
 							rounded-lg
 							bg-glow
 							px-4

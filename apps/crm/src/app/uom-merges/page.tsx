@@ -1,13 +1,14 @@
 'use client';
 
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';
 import { CrmShell } from '../../components/layout/CrmShell';
 import { AuthApiError } from '../../lib/auth-api';
 import { applyUomMerge } from '../../lib/crm-api';
 
 function UomMergeContent() {
+	const router = useRouter();
 	const searchParams = useSearchParams();
 	const token = searchParams.get('token')?.trim() ?? '';
 	const [message, setMessage] = useState<string | null>(null);
@@ -16,9 +17,7 @@ function UomMergeContent() {
 
 	useEffect(() => {
 		if(!token) {
-			setLoading(false);
-			setError(null);
-			setMessage(null);
+			router.replace('/uoms');
 			return;
 		}
 
@@ -37,7 +36,15 @@ function UomMergeContent() {
 				);
 			})
 			.finally(() => setLoading(false));
-	}, [token]);
+	}, [router, token]);
+
+	if(!token) {
+		return (
+			<p className="text-sm text-mist/60">
+				Loading…
+			</p>
+		);
+	}
 
 	return (
 		<div
@@ -56,31 +63,6 @@ function UomMergeContent() {
 			>
 				Unit merges
 			</h1>
-
-			{!token
-				? (
-						<p
-							className="
-								mt-8
-								text-sm
-								text-mist/60
-							"
-						>
-							No merge open.{' '}
-							<Link
-								href="/uoms"
-								className="
-									text-glow
-									underline-offset-2
-									hover:underline
-								"
-							>
-								Units
-							</Link>
-						</p>
-					)
-				: null
-			}
 
 			{loading
 				? (
@@ -141,7 +123,7 @@ function UomMergeContent() {
 				: null
 			}
 
-			{token && !loading
+			{!loading
 				? (
 						<p
 							className="

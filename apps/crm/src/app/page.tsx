@@ -7,7 +7,6 @@ const TOOLS = [
 	{ href: '/link-names', title: 'Link names' },
 	{ href: '/categories', title: 'Categories' },
 	{ href: '/uoms', title: 'Units' },
-	{ href: '/uom-merges', title: 'Unit merges' },
 ] as const;
 
 export default function CrmHomePage() {

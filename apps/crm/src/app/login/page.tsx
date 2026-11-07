@@ -167,6 +167,7 @@ function LoginForm() {
 						disabled={submitting}
 						className="
 							mt-1
+							self-end
 							rounded-lg
 							bg-glow
 							px-4
