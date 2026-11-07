@@ -224,54 +224,12 @@ export class RefundService {
 			order.payout?.stripeTransferReversalId ?? null;
 
 		try {
-			if(
-				order.payout &&
-				order.payout.status === VendorPayoutStatus.TRANSFERRED
-			) {
-				const transferId =
-					order.payout.stripeTransferId ?? order.stripeTransferId;
-				if(!transferId) {
-					throw new Error(
-						'Vendor payout was transferred but no Stripe transfer id is stored.',
-					);
-				}
-				if(!stripeTransferReversalId) {
-					const reversal = await this.stripe.reverseTransfer({
-						transferId,
-						amountCents: vendorReversalCents,
-						orderId: order.id,
-						refundId: refundRow.id,
-					});
-					stripeTransferReversalId = reversal.id;
-					await this.prisma.vendorPayout.update({
-						where: { id: order.payout.id },
-						data: {
-							status: VendorPayoutStatus.REVERSED,
-							stripeTransferReversalId,
-							reversedAt: new Date(),
-							lastError: null,
-						},
-					});
-				}
-			}
-			else if(order.payout) {
-				const cancellable: VendorPayoutStatus[] = [
-					VendorPayoutStatus.PENDING,
-					VendorPayoutStatus.READY,
-					VendorPayoutStatus.FAILED,
-					VendorPayoutStatus.SKIPPED,
-				];
-				if(cancellable.includes(order.payout.status)) {
-					await this.prisma.vendorPayout.update({
-						where: { id: order.payout.id },
-						data: {
-							status: VendorPayoutStatus.CANCELLED,
-							lastError: null,
-						},
-					});
-				}
-			}
-
+			// Stripe order: buyer refund first, then vendor transfer reverse.
+			// Reversing before createRefund left payout REVERSED when refund threw
+			// (vendor clawed back, buyer unpaid). Refund and transfer reversal are
+			// independent Stripe calls; refund-first keeps clawback from succeeding
+			// without a buyer refund. If reverse fails after refund, buyer refund
+			// still completes and payout stays consistent for ops retry.
 			const stripeRefund = await this.stripe.createRefund({
 				paymentIntentId,
 				amountCents: buyerRefundCents,
@@ -284,6 +242,78 @@ export class RefundService {
 			});
 			stripeRefundId = stripeRefund.id;
 
+			let clawbackWarning: string | null = null;
+			try {
+				if(
+					order.payout &&
+					order.payout.status === VendorPayoutStatus.TRANSFERRED
+				) {
+					const transferId =
+						order.payout.stripeTransferId ?? order.stripeTransferId;
+					if(!transferId) {
+						throw new Error(
+							'Vendor payout was transferred but no Stripe transfer id is stored.',
+						);
+					}
+					if(!stripeTransferReversalId) {
+						const reversal = await this.stripe.reverseTransfer({
+							transferId,
+							amountCents: vendorReversalCents,
+							orderId: order.id,
+							refundId: refundRow.id,
+						});
+						stripeTransferReversalId = reversal.id;
+						await this.prisma.vendorPayout.update({
+							where: { id: order.payout.id },
+							data: {
+								status: VendorPayoutStatus.REVERSED,
+								stripeTransferReversalId,
+								reversedAt: new Date(),
+								lastError: null,
+							},
+						});
+					}
+				}
+				else if(order.payout) {
+					const cancellable: VendorPayoutStatus[] = [
+						VendorPayoutStatus.PENDING,
+						VendorPayoutStatus.READY,
+						VendorPayoutStatus.FAILED,
+						VendorPayoutStatus.SKIPPED,
+					];
+					if(cancellable.includes(order.payout.status)) {
+						await this.prisma.vendorPayout.update({
+							where: { id: order.payout.id },
+							data: {
+								status: VendorPayoutStatus.CANCELLED,
+								lastError: null,
+							},
+						});
+					}
+				}
+			}
+			catch(clawbackError) {
+				clawbackWarning =
+					clawbackError instanceof Error
+						? clawbackError.message
+						: 'Vendor clawback failed after buyer refund.';
+				this.logger.error(
+					`Buyer refund ${stripeRefundId} succeeded for order ${order.id} but vendor clawback failed: ${clawbackWarning}`,
+					clawbackError as Error,
+				);
+				if(
+					order.payout &&
+					order.payout.status === VendorPayoutStatus.TRANSFERRED
+				) {
+					await this.prisma.vendorPayout.update({
+						where: { id: order.payout.id },
+						data: {
+							lastError: clawbackWarning.slice(0, 1000),
+						},
+					});
+				}
+			}
+
 			await this.inventory.restockClaimsForOrder(order.id);
 
 			const now = new Date();
@@ -295,7 +325,9 @@ export class RefundService {
 						stripeRefundId,
 						stripeTransferReversalId,
 						succeededAt: now,
-						lastError: null,
+						lastError: clawbackWarning
+							? clawbackWarning.slice(0, 1000)
+							: null,
 					},
 				});
 				await tx.placeEtMarqueOrder.update({
