@@ -13,13 +13,19 @@ type StripeCall = 'createRefund' | 'reverseTransfer';
 function buildOrder(overrides?: {
 	payoutStatus?: VendorPayoutStatus;
 	stripeTransferReversalId?: string | null;
+	status?: PlaceEtMarqueOrderStatus;
+	refunds?: Array<{
+		id: string;
+		status: OrderRefundStatus;
+		stripeRefundId: string | null;
+	}>;
 }) {
 	const payoutStatus =
 		overrides?.payoutStatus ?? VendorPayoutStatus.TRANSFERRED;
 	return {
 		id: 'ord_1',
 		orderRef: 'ord_1',
-		status: PlaceEtMarqueOrderStatus.SHIPPED,
+		status: overrides?.status ?? PlaceEtMarqueOrderStatus.SHIPPED,
 		buyerId: 'buyer_1',
 		vendorId: 'vendor_1',
 		checkoutId: 'chk_1',
@@ -44,7 +50,11 @@ function buildOrder(overrides?: {
 			stripeTransferReversalId:
 				overrides?.stripeTransferReversalId ?? null,
 		},
-		refunds: [] as Array<{ id: string; status: OrderRefundStatus }>,
+		refunds: overrides?.refunds ?? ([] as Array<{
+			id: string;
+			status: OrderRefundStatus;
+			stripeRefundId: string | null;
+		}>),
 	};
 }
 
@@ -253,5 +263,114 @@ describe('RefundService clawback ordering', () => {
 				lastError: expect.stringMatching(/stripe reverse boom/i),
 			}),
 		);
+	});
+
+	it('marks SUCCEEDED (not FAILED) when restock throws after createRefund', async () => {
+		inventory.restockClaimsForOrder.mockRejectedValue(
+			new Error('restock boom'),
+		);
+
+		const result = await service.refundAsVendor(
+			'user_1',
+			'vendor_1',
+			'ord_1',
+		);
+
+		expect(callOrder).toEqual(['createRefund', 'reverseTransfer']);
+		expect(result.status).toBe(OrderRefundStatus.SUCCEEDED);
+		expect(result.stripeRefundId).toBe('re_1');
+		expect(result.lastError).toMatch(/restock boom/i);
+		expect(
+			refundUpdates.some(
+				(row) => row.status === OrderRefundStatus.FAILED,
+			),
+		).toBe(false);
+	});
+
+	it('blocks a second attempt after reverse-fail SUCCEEDED without another createRefund', async () => {
+		stripe.reverseTransfer.mockImplementation(async () => {
+			callOrder.push('reverseTransfer');
+			throw new Error('stripe reverse boom');
+		});
+
+		await service.refundAsVendor('user_1', 'vendor_1', 'ord_1');
+		expect(stripe.createRefund).toHaveBeenCalledTimes(1);
+
+		prisma.placeEtMarqueOrder.findFirst.mockResolvedValue(
+			buildOrder({
+				status: PlaceEtMarqueOrderStatus.REFUNDED,
+				payoutStatus: VendorPayoutStatus.TRANSFERRED,
+				refunds: [
+					{
+						id: 'refund_1',
+						status: OrderRefundStatus.SUCCEEDED,
+						stripeRefundId: 're_1',
+					},
+				],
+			}),
+		);
+
+		await expect(
+			service.refundAsVendor('user_1', 'vendor_1', 'ord_1'),
+		).rejects.toBeInstanceOf(BadRequestException);
+		expect(stripe.createRefund).toHaveBeenCalledTimes(1);
+	});
+
+	it('blocks retry when prior FAILED row already has stripeRefundId', async () => {
+		prisma.placeEtMarqueOrder.findFirst.mockResolvedValue(
+			buildOrder({
+				refunds: [
+					{
+						id: 'refund_old',
+						status: OrderRefundStatus.FAILED,
+						stripeRefundId: 're_prior',
+					},
+				],
+			}),
+		);
+
+		await expect(
+			service.refundAsVendor('user_1', 'vendor_1', 'ord_1'),
+		).rejects.toThrow(/already recorded|double-refund/i);
+		expect(stripe.createRefund).not.toHaveBeenCalled();
+		expect(prisma.orderRefund.create).not.toHaveBeenCalled();
+	});
+
+	it('does not call createRefund again after createRefund+txn failure leaves SUCCEEDED with stripe id', async () => {
+		prisma.$transaction
+			.mockRejectedValueOnce(new Error('txn boom'))
+			.mockImplementation(async (fn) =>
+				fn({
+					orderRefund: prisma.orderRefund,
+					placeEtMarqueOrder: prisma.placeEtMarqueOrder,
+					checkout: prisma.checkout,
+				}),
+			);
+
+		await expect(
+			service.refundAsVendor('user_1', 'vendor_1', 'ord_1'),
+		).rejects.toBeInstanceOf(BadRequestException);
+
+		expect(stripe.createRefund).toHaveBeenCalledTimes(1);
+		expect(refundRow.status).toBe(OrderRefundStatus.SUCCEEDED);
+		expect(refundRow.stripeRefundId).toBe('re_1');
+
+		prisma.placeEtMarqueOrder.findFirst.mockResolvedValue(
+			buildOrder({
+				status: PlaceEtMarqueOrderStatus.REFUNDED,
+				refunds: [
+					{
+						id: 'refund_1',
+						status: OrderRefundStatus.SUCCEEDED,
+						stripeRefundId: 're_1',
+					},
+				],
+			}),
+		);
+
+		await expect(
+			service.refundAsVendor('user_1', 'vendor_1', 'ord_1'),
+		).rejects.toBeInstanceOf(BadRequestException);
+		expect(stripe.createRefund).toHaveBeenCalledTimes(1);
 	});
 });
