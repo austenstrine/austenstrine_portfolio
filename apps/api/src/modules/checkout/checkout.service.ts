@@ -8,6 +8,7 @@ import {
 } from '@nestjs/common';
 import {
 	CheckoutStatus,
+	InventoryClaimStatus,
 	PlaceEtMarqueOrderStatus,
 	PayoutTrigger,
 } from '@prisma/client';
@@ -263,11 +264,7 @@ export class CheckoutService implements OnModuleInit, OnModuleDestroy {
 					select: { availableQty: true },
 				});
 				if(!available || available.availableQty.lt(line.quantity)) {
-					await this.releaseCheckoutHolds(checkout.id);
-					await this.prisma.checkout.update({
-						where: { id: checkout.id },
-						data: { status: CheckoutStatus.FAILED },
-					});
+					await this.failCheckout(checkout.id);
 					throw new BadRequestException(
 						`Insufficient stock for ${line.titleSnapshot}.`,
 					);
@@ -535,12 +532,37 @@ export class CheckoutService implements OnModuleInit, OnModuleDestroy {
 
 	async expireStaleCheckouts() {
 		const now = new Date();
-		const stale = await this.prisma.checkout.findMany({
+		const awaiting = await this.prisma.checkout.findMany({
 			where: {
 				status: CheckoutStatus.AWAITING_PAYMENT,
 				expiresAt: { lt: now },
 			},
 			select: { id: true },
+		});
+		const staleOpenWithClaims = await this.prisma.checkout.findMany({
+			where: {
+				status: CheckoutStatus.OPEN,
+				expiresAt: { lt: now },
+				orders: {
+					some: {
+						claims: {
+							some: {
+								status: InventoryClaimStatus.PENDING,
+							},
+						},
+					},
+				},
+			},
+			select: { id: true },
+		});
+
+		const seen = new Set<string>();
+		const stale = [...awaiting, ...staleOpenWithClaims].filter((row) => {
+			if(seen.has(row.id)) {
+				return false;
+			}
+			seen.add(row.id);
+			return true;
 		});
 
 		for(const row of stale) {
@@ -564,6 +586,12 @@ export class CheckoutService implements OnModuleInit, OnModuleDestroy {
 		if(checkout.status === CheckoutStatus.PAID) {
 			return;
 		}
+		if(checkout.status !== CheckoutStatus.AWAITING_PAYMENT) {
+			this.logger.warn(
+				`Ignoring pay finalize for checkout ${checkoutId} in status ${checkout.status}`,
+			);
+			return;
+		}
 
 		await this.prisma.checkout.update({
 			where: { id: checkoutId },
@@ -571,7 +599,10 @@ export class CheckoutService implements OnModuleInit, OnModuleDestroy {
 		});
 
 		const orders = await this.prisma.placeEtMarqueOrder.findMany({
-			where: { checkoutId },
+			where: {
+				checkoutId,
+				status: PlaceEtMarqueOrderStatus.HOLD,
+			},
 		});
 
 		for(const order of orders) {
@@ -602,6 +633,10 @@ export class CheckoutService implements OnModuleInit, OnModuleDestroy {
 			checkout.status === CheckoutStatus.FAILED
 		) {
 			return;
+		}
+
+		if(checkout.stripePaymentIntentId) {
+			await this.stripe.cancelPaymentIntent(checkout.stripePaymentIntentId);
 		}
 
 		await this.releaseCheckoutHolds(checkoutId);
