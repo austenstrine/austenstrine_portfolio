@@ -1035,7 +1035,8 @@ function FacetRow({
 	);
 }
 
-function ProductGridSkeleton() {
+/** Match ProductCard chrome so skeleton→grid does not jump vertically. */
+export function ProductGridSkeleton() {
 	return (
 		<div
 			className="
@@ -1049,6 +1050,9 @@ function ProductGridSkeleton() {
 			{Array.from({ length: 9 }).map((_, index) => (
 				<div
 					className="
+						flex
+						h-full
+						flex-col
 						overflow-hidden
 						rounded-2xl
 						border
@@ -1061,14 +1065,21 @@ function ProductGridSkeleton() {
 					<div
 						className="
 							flex
+							flex-1
 							flex-col
-							gap-2
-							p-3
+							gap-1
+							px-3
+							pb-4
+							pt-3
 						"
 					>
 						<div className="h-3 w-24 animate-pulse rounded bg-slate-200" />
-						<div className="h-5 w-full animate-pulse rounded bg-slate-200" />
-						<div className="h-4 w-20 animate-pulse rounded bg-slate-200" />
+						<div className="min-h-[2.5rem] w-full animate-pulse rounded bg-slate-200" />
+						<div className="h-3 w-28 animate-pulse rounded bg-slate-200" />
+						<div className="mt-auto space-y-1 pt-2">
+							<div className="h-5 w-24 animate-pulse rounded bg-slate-200" />
+							<div className="h-3 w-32 animate-pulse rounded bg-slate-200" />
+						</div>
 					</div>
 				</div>
 			))}

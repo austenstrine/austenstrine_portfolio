@@ -75,7 +75,9 @@ export function HeaderPortraitLink() {
 						object-cover
 						shadow-sm
 					"
+					height={40}
 					src={SITE_OG_IMAGE}
+					width={40}
 				/>
 			</a>
 		</div>

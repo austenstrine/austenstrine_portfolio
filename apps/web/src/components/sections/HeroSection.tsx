@@ -47,6 +47,8 @@ export function HeroSection() {
 					src="/pp1_sq_sm.jpg"
 					cdn={{ w: 416, h: 416, fit: 'cover', fm: 'webp' }}
 					alt="Austen Strine"
+					width={208}
+					height={208}
 				/>
 				<div>
 					<p
