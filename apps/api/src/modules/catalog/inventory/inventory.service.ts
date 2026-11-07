@@ -280,30 +280,53 @@ export class InventoryService {
 		});
 
 		const pending = claims.filter((row) => row.status === InventoryClaimStatus.PENDING);
+		let fulfilled = 0;
+
 		for(const claim of pending) {
-			await this.prisma.$transaction(async (tx) => {
-				await tx.inventoryClaim.update({
-					where: { id: claim.id },
+			const didFulfill = await this.prisma.$transaction(async (tx) => {
+				const cas = await tx.inventoryClaim.updateMany({
+					where: {
+						id: claim.id,
+						status: InventoryClaimStatus.PENDING,
+					},
 					data: { status: InventoryClaimStatus.FULFILLED },
 				});
+
+				if(cas.count !== 1) {
+					return false;
+				}
 
 				const offering = await tx.productOffering.findUnique({
 					where: { id: claim.offeringId },
 				});
 				if(offering?.tracksOwnQty) {
-					const next = offering.qtyOnHand.sub(claim.quantity);
-					await tx.productOffering.update({
-						where: { id: offering.id },
+					const qtyUpdate = await tx.productOffering.updateMany({
+						where: {
+							id: offering.id,
+							qtyOnHand: { gte: claim.quantity },
+						},
 						data: {
-							qtyOnHand: next.lt(0) ? zero : next,
+							qtyOnHand: { decrement: claim.quantity },
 						},
 					});
+
+					if(qtyUpdate.count !== 1) {
+						throw new BadRequestException(
+							'Insufficient inventory to fulfill claim.',
+						);
+					}
 				}
+
+				return true;
 			});
-			await this.refreshOfferingProduct(claim.offeringId);
+
+			if(didFulfill) {
+				fulfilled += 1;
+				await this.refreshOfferingProduct(claim.offeringId);
+			}
 		}
 
-		return { fulfilled: pending.length };
+		return { fulfilled };
 	}
 
 	/** Restock fulfilled claims and release any still-pending holds for a refunded order. */
@@ -322,18 +345,30 @@ export class InventoryService {
 
 		for(const claim of claims) {
 			if(claim.status === InventoryClaimStatus.PENDING) {
-				await this.prisma.inventoryClaim.update({
-					where: { id: claim.id },
+				const cas = await this.prisma.inventoryClaim.updateMany({
+					where: {
+						id: claim.id,
+						status: InventoryClaimStatus.PENDING,
+					},
 					data: { status: InventoryClaimStatus.RELEASED },
 				});
-				released += 1;
+				if(cas.count === 1) {
+					released += 1;
+				}
 			}
 			else if(claim.status === InventoryClaimStatus.FULFILLED) {
-				await this.prisma.$transaction(async (tx) => {
-					await tx.inventoryClaim.update({
-						where: { id: claim.id },
+				const didRestock = await this.prisma.$transaction(async (tx) => {
+					const cas = await tx.inventoryClaim.updateMany({
+						where: {
+							id: claim.id,
+							status: InventoryClaimStatus.FULFILLED,
+						},
 						data: { status: InventoryClaimStatus.RELEASED },
 					});
+
+					if(cas.count !== 1) {
+						return false;
+					}
 
 					const offering = await tx.productOffering.findUnique({
 						where: { id: claim.offeringId },
@@ -346,8 +381,13 @@ export class InventoryService {
 							},
 						});
 					}
+
+					return true;
 				});
-				restocked += 1;
+
+				if(didRestock) {
+					restocked += 1;
+				}
 			}
 
 			await this.refreshOfferingProduct(claim.offeringId);
@@ -578,10 +618,20 @@ export class InventoryService {
 				const parentsToConsume = partial.gt(0) ? fullParents.add(1) : fullParents;
 
 				if(parentsToConsume.gt(0)) {
-					await this.prisma.productOffering.update({
-						where: { id: parentOfferingId },
+					const decremented = await this.prisma.productOffering.updateMany({
+						where: {
+							id: parentOfferingId,
+							qtyOnHand: { gte: parentsToConsume },
+						},
 						data: { qtyOnHand: { decrement: parentsToConsume } },
 					});
+					// Floor at zero when concurrent trims race past the pre-check.
+					if(decremented.count !== 1) {
+						await this.prisma.productOffering.updateMany({
+							where: { id: parentOfferingId },
+							data: { qtyOnHand: zero },
+						});
+					}
 				}
 
 				if(partial.gt(0)) {
