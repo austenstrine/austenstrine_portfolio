@@ -15,16 +15,25 @@ import { accessReason, buildLoginUrl } from '../../lib/accessGate';
 import { useSession } from '../../lib/useSession';
 import { vendorViewHref } from '../../lib/vendor-ref';
 import { CatalogCover } from './CatalogCover';
-import { useEditableVendors } from './EditableVendorsProvider';
 import {
+	fieldEditOpen,
+	inPlaceFieldKey,
+	productEditOpen,
+	useEditableVendors,
+	type InPlaceFieldName,
+} from './EditableVendorsProvider';
+import {
+	InPlaceActivateHint,
 	InPlaceCategorySelect,
 	InPlaceDescriptionInput,
 	InPlaceEditToggle,
 	InPlaceError,
+	InPlaceFieldSaveButton,
 	InPlaceFullEditLink,
 	InPlaceImageActions,
 	InPlacePriceInput,
 	InPlaceQtyInput,
+	InPlaceSaveControls,
 	InPlaceTitleInput,
 	InPlaceUomSelect,
 	useInPlaceProductEdit,
@@ -218,11 +227,45 @@ export function ProductDetailClient({
 		user,
 	]);
 
-	const { inPlaceEditActive, setInPlaceEditActive } = useEditableVendors();
+	const {
+		editTier,
+		setEditTier,
+		activeCardId,
+		activeFieldKey,
+		setActiveCardId,
+		setActiveFieldKey,
+	} = useEditableVendors();
 	const canEdit = product.permissions.canEdit && !deletedNotice;
-	const editing = canEdit && inPlaceEditActive;
+	const tierActive = canEdit && editTier !== 'off';
+	const bulkEditing = tierActive
+		&& (
+			editTier === 'page'
+			|| (
+				editTier === 'card'
+				&& productEditOpen(editTier, product.id, activeCardId, activeFieldKey)
+			)
+		);
+	const elementMode = tierActive && editTier === 'element';
+	const fieldIsOpen = (field: InPlaceFieldName) =>
+		canEdit && fieldEditOpen(
+			editTier,
+			product.id,
+			field,
+			activeCardId,
+			activeFieldKey,
+		);
+	const activateField = (field: InPlaceFieldName) => {
+		setActiveFieldKey(inPlaceFieldKey(product.id, field));
+	};
+
+	useEffect(() => {
+		if(canEdit && editTier === 'card') {
+			setActiveCardId(product.id);
+		}
+	}, [canEdit, editTier, product.id, setActiveCardId]);
+
 	const edit = useInPlaceProductEdit({
-		enabled: editing,
+		enabled: tierActive,
 		offeringId: selectedOfferingId,
 		onUpdated: (next) => {
 			setProduct(next);
@@ -331,69 +374,150 @@ export function ProductDetailClient({
 		}
 	}
 
+	const qtyEditing = bulkEditing || fieldIsOpen('qty');
+	const priceEditing = bulkEditing || fieldIsOpen('price') || fieldIsOpen('uom');
 	const buyBox = selectedOffering && !deletedNotice
 		? (
 			<div className="flex flex-col gap-5">
 				<div>
-					{editing
+					{qtyEditing || priceEditing
 						? (
 							<>
-								<div
-									className={
-										editLow
-											? 'flex flex-wrap items-baseline gap-2 text-sm font-semibold text-amber-800'
-											: editInStock
-												? 'flex flex-wrap items-baseline gap-2 text-sm font-semibold text-asgreen'
-												: 'flex flex-wrap items-baseline gap-2 text-sm font-semibold text-signal'
-									}
-								>
-									<InPlaceQtyInput
-										className="
-											w-[4.75rem]
-											tabular-nums
-										"
-										edit={edit}
-									/>
-									<span>
-										{editInStock
-											? editLow
-												? 'Low stock'
-												: 'In stock'
-											: 'Currently unavailable'
-										}
-									</span>
-								</div>
-								<div
-									className="
-										mt-2
-										flex
-										flex-wrap
-										items-baseline
-										gap-2
-									"
-								>
-									<InPlacePriceInput
-										className="
-											w-[8.5rem]
-											text-3xl
-											font-semibold
-											tabular-nums
-											tracking-tight
-											text-ink
-										"
-										edit={edit}
-									/>
-									<InPlaceUomSelect
-										className="
-											w-auto
-											max-w-[6rem]
-											text-base
-											font-medium
-											text-slate-500
-										"
-										edit={edit}
-									/>
-								</div>
+								{qtyEditing
+									? (
+										<>
+											<div
+												className={
+													editLow
+														? 'flex flex-wrap items-baseline gap-2 text-sm font-semibold text-amber-800'
+														: editInStock
+															? 'flex flex-wrap items-baseline gap-2 text-sm font-semibold text-asgreen'
+															: 'flex flex-wrap items-baseline gap-2 text-sm font-semibold text-signal'
+												}
+											>
+												<InPlaceQtyInput
+													className="
+														w-[4.75rem]
+														tabular-nums
+													"
+													edit={edit}
+												/>
+												<span>
+													{editInStock
+														? editLow
+															? 'Low stock'
+															: 'In stock'
+														: 'Currently unavailable'
+													}
+												</span>
+											</div>
+											{elementMode
+												? (
+													<InPlaceFieldSaveButton
+														className="mt-1"
+														edit={edit}
+														field="qty"
+													/>
+												)
+												: null
+											}
+										</>
+									)
+									: elementMode
+										? (
+											<InPlaceActivateHint
+												label="Edit quantity"
+												onActivate={() => activateField('qty')}
+											>
+												<p className={`text-sm font-semibold ${stock.tone}`}>
+													{stock.status}
+												</p>
+											</InPlaceActivateHint>
+										)
+										: (
+											<p className={`text-sm font-semibold ${stock.tone}`}>
+												{stock.status}
+											</p>
+										)
+								}
+								{priceEditing
+									? (
+										<>
+											<div
+												className="
+													mt-2
+													flex
+													flex-wrap
+													items-baseline
+													gap-2
+												"
+											>
+												<InPlacePriceInput
+													className="
+														w-[8.5rem]
+														text-3xl
+														font-semibold
+														tabular-nums
+														tracking-tight
+														text-ink
+													"
+													edit={edit}
+												/>
+												<InPlaceUomSelect
+													className="
+														w-auto
+														max-w-[6rem]
+														text-base
+														font-medium
+														text-slate-500
+													"
+													edit={edit}
+												/>
+											</div>
+											{elementMode
+												? (
+													<div className="mt-1 flex flex-wrap gap-2">
+														<InPlaceFieldSaveButton
+															edit={edit}
+															field="price"
+														/>
+														<InPlaceFieldSaveButton
+															edit={edit}
+															field="uom"
+														/>
+													</div>
+												)
+												: null
+											}
+										</>
+									)
+									: elementMode
+										? (
+											<InPlaceActivateHint
+												label="Edit price"
+												onActivate={() => activateField('price')}
+											>
+												<p className="mt-2 text-3xl font-semibold tabular-nums tracking-tight text-ink">
+													{formatPrice(selectedOffering.priceCents, selectedOffering.currency)}
+													<span className="ml-2 text-base font-medium text-slate-500">
+														/ {selectedOffering.uom.code}
+													</span>
+												</p>
+											</InPlaceActivateHint>
+										)
+										: (
+											<p className="mt-2 text-3xl font-semibold tabular-nums tracking-tight text-ink">
+												{formatPrice(selectedOffering.priceCents, selectedOffering.currency)}
+												<span className="ml-2 text-base font-medium text-slate-500">
+													/ {selectedOffering.uom.code}
+												</span>
+											</p>
+										)
+								}
+								{!qtyEditing && !priceEditing && stock.detail
+									? <p className="mt-1 text-sm text-slate-500">{stock.detail}</p>
+									: null
+								}
 								<InPlaceError
 									className="mt-2"
 									error={edit.error}
@@ -402,15 +526,46 @@ export function ProductDetailClient({
 						)
 						: (
 							<>
-								<p className={`text-sm font-semibold ${stock.tone}`}>
-									{stock.status}
-								</p>
-								<p className="mt-2 text-3xl font-semibold tabular-nums tracking-tight text-ink">
-									{formatPrice(selectedOffering.priceCents, selectedOffering.currency)}
-									<span className="ml-2 text-base font-medium text-slate-500">
-										/ {selectedOffering.uom.code}
-									</span>
-								</p>
+								{elementMode
+									? (
+										<InPlaceActivateHint
+											label="Edit quantity"
+											onActivate={() => activateField('qty')}
+										>
+											<p className={`text-sm font-semibold ${stock.tone}`}>
+												{stock.status}
+											</p>
+										</InPlaceActivateHint>
+									)
+									: (
+										<p className={`text-sm font-semibold ${stock.tone}`}>
+											{stock.status}
+										</p>
+									)
+								}
+								{elementMode
+									? (
+										<InPlaceActivateHint
+											label="Edit price"
+											onActivate={() => activateField('price')}
+										>
+											<p className="mt-2 text-3xl font-semibold tabular-nums tracking-tight text-ink">
+												{formatPrice(selectedOffering.priceCents, selectedOffering.currency)}
+												<span className="ml-2 text-base font-medium text-slate-500">
+													/ {selectedOffering.uom.code}
+												</span>
+											</p>
+										</InPlaceActivateHint>
+									)
+									: (
+										<p className="mt-2 text-3xl font-semibold tabular-nums tracking-tight text-ink">
+											{formatPrice(selectedOffering.priceCents, selectedOffering.currency)}
+											<span className="ml-2 text-base font-medium text-slate-500">
+												/ {selectedOffering.uom.code}
+											</span>
+										</p>
+									)
+								}
 								{stock.detail
 									? <p className="mt-1 text-sm text-slate-500">{stock.detail}</p>
 									: null}
@@ -650,42 +805,129 @@ export function ProductDetailClient({
 					</Link>
 					{selectedOffering?.sku || product.sku ? ` · ${selectedOffering?.sku || product.sku}` : ''}
 				</p>
-				{editing
-					? (
-						<div className="mt-2 max-w-3xl">
-							<InPlaceCategorySelect
-								className="
-									max-w-md
-									text-[11px]
-									font-semibold
-									uppercase
-									tracking-[0.16em]
-									text-slate-500
-								"
-								edit={edit}
-							/>
-							<div
-								className="
-									mt-2
-									flex
-									flex-wrap
-									items-start
-									justify-between
-									gap-3
-								"
-							>
-								<InPlaceTitleInput
+				<div className="mt-2 max-w-3xl">
+					{bulkEditing || fieldIsOpen('category')
+						? (
+							<>
+								<InPlaceCategorySelect
 									className="
-										min-w-0
-										flex-1
-										text-3xl
+										max-w-md
+										text-[11px]
 										font-semibold
-										tracking-tight
-										text-ink
-										md:text-4xl
+										uppercase
+										tracking-[0.16em]
+										text-slate-500
 									"
 									edit={edit}
 								/>
+								{elementMode
+									? (
+										<InPlaceFieldSaveButton
+											className="mt-1"
+											edit={edit}
+											field="category"
+										/>
+									)
+									: null
+								}
+							</>
+						)
+						: elementMode
+							? (
+								<InPlaceActivateHint
+									label="Edit category"
+									onActivate={() => activateField('category')}
+								>
+									<p
+										className="
+											text-[11px]
+											font-semibold
+											uppercase
+											tracking-[0.16em]
+											text-slate-500
+										"
+									>
+										{product.category?.name ?? 'Uncategorized'}
+									</p>
+								</InPlaceActivateHint>
+							)
+							: null
+					}
+					<div
+						className="
+							mt-2
+							flex
+							flex-wrap
+							items-start
+							justify-between
+							gap-3
+						"
+					>
+						{bulkEditing || fieldIsOpen('title')
+							? (
+								<div className="min-w-0 flex-1">
+									<InPlaceTitleInput
+										className="
+											w-full
+											text-3xl
+											font-semibold
+											tracking-tight
+											text-ink
+											md:text-4xl
+										"
+										edit={edit}
+									/>
+									{elementMode
+										? (
+											<InPlaceFieldSaveButton
+												className="mt-1"
+												edit={edit}
+												field="title"
+											/>
+										)
+										: null
+									}
+								</div>
+							)
+							: elementMode
+								? (
+									<InPlaceActivateHint
+										label="Edit title"
+										onActivate={() => activateField('title')}
+									>
+										<h1
+											className="
+												min-w-0
+												flex-1
+												text-3xl
+												font-semibold
+												tracking-tight
+												text-ink
+												md:text-4xl
+											"
+										>
+											{product.title}
+										</h1>
+									</InPlaceActivateHint>
+								)
+								: (
+									<h1
+										className="
+											min-w-0
+											flex-1
+											text-3xl
+											font-semibold
+											tracking-tight
+											text-ink
+											md:text-4xl
+										"
+									>
+										{product.title}
+									</h1>
+								)
+						}
+						{canEdit
+							? (
 								<div
 									className="
 										mt-2
@@ -697,87 +939,89 @@ export function ProductDetailClient({
 									"
 								>
 									<InPlaceEditToggle
-										active={inPlaceEditActive}
-										onChange={setInPlaceEditActive}
+										onChange={setEditTier}
+										tier={editTier}
 									/>
 									<InPlaceFullEditLink product={product} />
 								</div>
-							</div>
-							<InPlaceDescriptionInput
-								className="
-									mt-3
-									max-w-2xl
-									text-sm
-									leading-6
-									text-slate-600
-								"
-								edit={edit}
-								rows={4}
-							/>
-							<InPlaceError
-								className="mt-2"
-								error={edit.error}
-							/>
-						</div>
-					)
-					: (
-						<>
-							<div
-								className="
-									mt-2
-									flex
-									max-w-3xl
-									flex-wrap
-									items-start
-									justify-between
-									gap-3
-								"
-							>
-								<h1
+							)
+							: null
+						}
+					</div>
+					{bulkEditing || fieldIsOpen('description')
+						? (
+							<>
+								<InPlaceDescriptionInput
 									className="
-										min-w-0
-										flex-1
-										text-3xl
-										font-semibold
-										tracking-tight
-										text-ink
-										md:text-4xl
+										mt-3
+										max-w-2xl
+										text-sm
+										leading-6
+										text-slate-600
 									"
-								>
-									{product.title}
-								</h1>
-								{canEdit
+									edit={edit}
+									rows={4}
+								/>
+								{elementMode
 									? (
-										<div
-											className="
-												mt-2
-												flex
-												shrink-0
-												flex-wrap
-												items-center
-												gap-3
-											"
-										>
-											<InPlaceEditToggle
-												active={inPlaceEditActive}
-												onChange={setInPlaceEditActive}
-											/>
-											<InPlaceFullEditLink product={product} />
-										</div>
+										<InPlaceFieldSaveButton
+											className="mt-1"
+											edit={edit}
+											field="description"
+										/>
 									)
 									: null
 								}
-							</div>
-							{product.description
+							</>
+						)
+						: elementMode
+							? (
+								<InPlaceActivateHint
+									label="Edit description"
+									onActivate={() => activateField('description')}
+								>
+									<p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">
+										{product.description || 'Add a description'}
+									</p>
+								</InPlaceActivateHint>
+							)
+							: product.description
 								? (
 									<p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">
 										{product.description}
 									</p>
 								)
-								: null}
-						</>
-					)
-				}
+								: null
+					}
+					{bulkEditing
+						? (
+							<>
+								<InPlaceError
+									className="mt-2"
+									error={edit.error}
+								/>
+								{editTier === 'card'
+									? (
+										<InPlaceSaveControls
+											className="mt-3"
+											dirty={edit.dirty}
+											onDiscard={() => {
+												edit.discard();
+											}}
+											onSave={() => {
+												void edit.saveAll();
+											}}
+											saving={edit.saving}
+											scope="card"
+										/>
+									)
+									: null
+								}
+							</>
+						)
+						: null
+					}
+				</div>
 				{highlightAttributes.length > 0
 					? (
 						<dl className="mt-5 flex flex-wrap gap-x-8 gap-y-3">
@@ -860,7 +1104,7 @@ export function ProductDetailClient({
 									</>
 								)}
 							/>
-							{editing
+							{bulkEditing || fieldIsOpen('images')
 								? (
 									<InPlaceImageActions
 										coverIndex={Math.min(
@@ -870,15 +1114,31 @@ export function ProductDetailClient({
 										edit={edit}
 									/>
 								)
-								: null}
-							{activeSrc && !stock.inStock && !editing
+								: elementMode
+									? (
+										<button
+											aria-label="Edit images"
+											className="
+												absolute
+												inset-0
+												z-10
+												cursor-pointer
+												bg-transparent
+											"
+											onClick={() => activateField('images')}
+											type="button"
+										/>
+									)
+									: null
+							}
+							{activeSrc && !stock.inStock && !(bulkEditing || fieldIsOpen('images'))
 								? (
 									<span className="absolute right-4 top-4 rounded-full bg-white/90 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-ink">
 										Sold out
 									</span>
 								)
 								: null}
-							{activeSrc && !stock.inStock && editing
+							{activeSrc && !stock.inStock && (bulkEditing || fieldIsOpen('images'))
 								? (
 									<span className="absolute left-4 top-4 z-20 rounded-full bg-white/90 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-ink">
 										Sold out
@@ -1104,7 +1364,7 @@ export function ProductDetailClient({
 				)
 				: null}
 
-			{editing
+			{bulkEditing
 				? (
 					<details
 						className="

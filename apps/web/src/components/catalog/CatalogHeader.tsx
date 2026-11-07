@@ -76,9 +76,9 @@ export function CatalogHeader() {
 	const { user, loading, signOut } = useSession();
 	const {
 		editableVendorIds,
-		inPlaceEditActive,
+		editTier,
 		ready: editableVendorsReady,
-		setInPlaceEditActive,
+		setEditTier,
 	} = useEditableVendors();
 	const [cartCount, setCartCount] = useState(0);
 	const [headerHeight, setHeaderHeight] = useState(0);
@@ -272,9 +272,9 @@ export function CatalogHeader() {
 						{showInPlaceEditToggle
 							? (
 								<InPlaceEditToggle
-									active={inPlaceEditActive}
 									className="hidden shrink-0 md:inline-flex"
-									onChange={setInPlaceEditActive}
+									onChange={setEditTier}
+									tier={editTier}
 								/>
 							)
 							: null
@@ -408,9 +408,9 @@ export function CatalogHeader() {
 							{showInPlaceEditToggle
 								? (
 									<InPlaceEditToggle
-										active={inPlaceEditActive}
 										className="shrink-0"
-										onChange={setInPlaceEditActive}
+										onChange={setEditTier}
+										tier={editTier}
 									/>
 								)
 								: null
