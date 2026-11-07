@@ -31,6 +31,8 @@ export function CatalogCover({
 			src={src}
 			alt={alt}
 			className={className}
+			width={width}
+			height={height}
 			cdn={{ w: width, h: height, fit: 'cover', q: 72 }}
 			onError={() => setFailed(true)}
 		/>

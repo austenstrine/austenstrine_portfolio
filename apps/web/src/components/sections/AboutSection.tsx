@@ -137,6 +137,8 @@ function FeaturedRecommendation({
 						alt={recommendation.name}
 						src={recommendation.image}
 						cdn={{ w: 224, h: 224, fit: 'cover', fm: 'webp' }}
+						width={112}
+						height={112}
 					/>
 				</a>
 
@@ -199,6 +201,8 @@ function SupportingRecommendation({
 						alt={recommendation.name}
 						src={recommendation.image}
 						cdn={{ w: 160, h: 160, fit: 'cover', fm: 'webp' }}
+						width={80}
+						height={80}
 					/>
 				</a>
 

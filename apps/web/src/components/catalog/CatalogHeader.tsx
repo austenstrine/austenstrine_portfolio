@@ -639,6 +639,7 @@ export function CatalogHeader() {
 	const {
 		applyCategory,
 		categories,
+		categoriesReady,
 		category,
 		extrasHost,
 		headerDesktopRef,
@@ -656,10 +657,18 @@ export function CatalogHeader() {
 	const sellerChrome = pathUsesSellerChrome(pathname);
 	// Buyer chrome (incl. /place-et-marque/<vendor>) keeps the department bar.
 	// Search hides it — filters live on the page instead.
-	const showDepartmentBar =
+	const wantDepartmentBar =
 		!sellerChrome
-		&& categories.length > 0
 		&& pathname !== '/place-et-marque/search';
+	const showDepartmentBar =
+		wantDepartmentBar
+		&& categories.length > 0;
+	// Hold the bar's height while categories load so the late insert does not
+	// shove main content. Collapse only after a settled empty fetch.
+	const reserveDepartmentBar =
+		wantDepartmentBar
+		&& !showDepartmentBar
+		&& !categoriesReady;
 	const headerRef = useRef<HTMLElement>(null);
 
 	useLayoutEffect(() => {
@@ -866,35 +875,63 @@ export function CatalogHeader() {
 									</a>
 								)
 							}
-							{loading
-								? null
-								: user
+							{/*
+								Reserve Sign-in footprint while session probes so
+								auth chrome does not pop in and shift the header.
+							*/}
+							<span
+								className="
+									inline-flex
+									min-h-9
+									min-w-[5.75rem]
+									items-center
+									justify-end
+								"
+							>
+								{loading
 									? (
-										<AccountMenu
-											email={user.email}
-											onSignOut={() => {
-												void signOut().then(() => {
-													window.location.reload();
-												});
-											}}
-										/>
-									)
-									: (
-										<a
+										<span
+											aria-hidden
 											className="
+												invisible
 												rounded-full
-												bg-asgreen
 												px-3.5
 												py-2
-												text-white
-												hover:bg-asgreen/90
+												text-sm
+												font-semibold
 											"
-											href="/auth/login"
 										>
 											Sign in
-										</a>
+										</span>
 									)
-							}
+									: user
+										? (
+											<AccountMenu
+												email={user.email}
+												onSignOut={() => {
+													void signOut().then(() => {
+														window.location.reload();
+													});
+												}}
+											/>
+										)
+										: (
+											<a
+												className="
+													rounded-full
+													bg-asgreen
+													px-3.5
+													py-2
+													text-white
+													hover:bg-asgreen/90
+												"
+												href="/auth/login"
+											>
+												Sign in
+											</a>
+										)
+								}
+							</span>
 						</nav>
 					</div>
 					<div className="md:hidden">
@@ -925,7 +962,21 @@ export function CatalogHeader() {
 								onChoose={applyCategory}
 							/>
 						)
-						: null
+						: reserveDepartmentBar
+							? (
+								<div
+									aria-hidden
+									className="
+										hidden
+										h-12
+										border-t
+										border-slate-100
+										bg-white
+										md:block
+									"
+								/>
+							)
+							: null
 				}
 			</header>
 		</>

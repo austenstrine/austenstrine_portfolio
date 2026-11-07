@@ -43,6 +43,8 @@ type CatalogSearchContextValue = {
 	syncCategory: (slug: string) => void;
 	applyCategory: (slug: string) => void;
 	categories: CatalogCategoryRow[];
+	/** False until the first categories fetch settles (success or failure). */
+	categoriesReady: boolean;
 	categoryTree: CategoryTreeRow<CatalogCategoryRow>[];
 	categoryOptions: CategoryTreeRow<CatalogCategoryRow>[];
 	headerDesktopRef: RefObject<HTMLInputElement | null>;
@@ -71,6 +73,7 @@ export function CatalogSearchProvider({ children }: { children: ReactNode }) {
 	const [committedQuery, setCommittedQuery] = useState('');
 	const [category, setCategoryState] = useState('');
 	const [categories, setCategories] = useState<CatalogCategoryRow[]>([]);
+	const [categoriesReady, setCategoriesReady] = useState(false);
 	const headerDesktopRef = useRef<HTMLInputElement>(null);
 	const headerMobileRef = useRef<HTMLInputElement>(null);
 	const [pageDock, setPageDock] = useState<HTMLElement | null>(null);
@@ -93,7 +96,8 @@ export function CatalogSearchProvider({ children }: { children: ReactNode }) {
 	useEffect(() => {
 		listCatalogCategories()
 			.then((rows) => setCategories(rows))
-			.catch(() => undefined);
+			.catch(() => undefined)
+			.finally(() => setCategoriesReady(true));
 	}, []);
 
 	useEffect(() => {
@@ -234,6 +238,7 @@ export function CatalogSearchProvider({ children }: { children: ReactNode }) {
 		syncCategory,
 		applyCategory,
 		categories,
+		categoriesReady,
 		categoryTree,
 		categoryOptions: categoryTree,
 		headerDesktopRef,
@@ -260,6 +265,7 @@ export function CatalogSearchProvider({ children }: { children: ReactNode }) {
 		syncCategory,
 		applyCategory,
 		categories,
+		categoriesReady,
 		categoryTree,
 		extrasHost,
 		headerDesktopExtrasEl,

@@ -98,6 +98,8 @@ export function CatalogImageField({
 									alt=""
 									className="aspect-[5/3] w-full object-cover"
 									cdn={{ w: 480, h: 288, fit: 'cover', q: 70 }}
+									width={480}
+									height={288}
 								/>
 								<div className="flex items-center justify-between gap-1 px-2 py-1.5">
 									{max > 1

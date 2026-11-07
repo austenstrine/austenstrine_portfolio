@@ -42,9 +42,15 @@ export function BackendDownBanner() {
 		return null;
 	}
 
+	// Fixed overlay — do not insert into document flow after the health probe
+	// or the late paint shoves the whole page (CLS).
 	return (
 		<div
 			className="
+				fixed
+				inset-x-0
+				top-0
+				z-50
 				border-b
 				border-amber-300
 				bg-amber-50

@@ -1,5 +1,14 @@
 import type { Metadata } from 'next';
+import { IBM_Plex_Sans } from 'next/font/google';
 import './globals.css';
+
+const ibmPlexSans = IBM_Plex_Sans({
+	subsets: ['latin'],
+	weight: ['400', '500', '600', '700'],
+	display: 'swap',
+	adjustFontFallback: true,
+	variable: '--font-ibm-plex-sans',
+});
 
 export const metadata: Metadata = {
 	title: 'CRM · austenstrine',
@@ -12,23 +21,11 @@ export default function RootLayout({
 	children: React.ReactNode;
 }) {
 	return (
-		<html lang="en">
-			<head>
-				<link
-					rel="preconnect"
-					href="https://fonts.googleapis.com"
-				/>
-				<link
-					rel="preconnect"
-					href="https://fonts.gstatic.com"
-					crossOrigin="anonymous"
-				/>
-				<link
-					href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap"
-					rel="stylesheet"
-				/>
-			</head>
-			<body>
+		<html
+			className={ibmPlexSans.variable}
+			lang="en"
+		>
+			<body className="font-sans">
 				{children}
 			</body>
 		</html>
