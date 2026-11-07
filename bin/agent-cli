@@ -475,7 +475,7 @@ const out={
   integrationBranch: "development",
   defaultBranch: "master",
   rule: "Run ./bin/agent-cli orient first; prefer subcommands over re-reading files.",
-  coord: "Assume async peers; agent-coord claim before contested edits (./bin/agent-coord or ~/.local/bin/agent-coord).",
+  coord: "Optional same-checkout claims via agent-coord when peers may touch the same paths; skip when alone (./bin/agent-coord or ~/.local/bin/agent-coord).",
   sameVm: "git worktree add before edits; do not edit shared /agent/repos checkouts in place",
   branching: "feature/<user>/development/<name> → merge to development (no PR); master only when asked",
   layout: run("layout"),
@@ -495,7 +495,7 @@ orient — austenstrine_portfolio
   Branches: integrate on development (based on master); features feature/<user>/development/<name>.
   Same-VM: git worktree before edits (do not mutate shared checkouts in place).
   Prefer: ./bin/agent-cli <cmd> over re-reading files / guessing npm or dssh.
-  Coord first when editing: assume async peers; agent-coord claim before contested edits.
+  Coord when useful: same-checkout peer contention → agent-coord claim; skip when alone.
 
 EOF
   cmd_layout
