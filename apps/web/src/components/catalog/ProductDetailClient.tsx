@@ -2,9 +2,10 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
 	deleteCatalogProduct,
+	getCatalogProduct,
 	type CatalogOfferingDetail,
 	type CatalogProductDetail,
 	type CatalogProductSummary,
@@ -14,9 +15,11 @@ import { ACCESS_REASONS, buildLoginUrl } from '../../lib/accessGate';
 import { useSession } from '../../lib/useSession';
 import { vendorViewHref } from '../../lib/vendor-ref';
 import { CatalogCover } from './CatalogCover';
+import { useEditableVendors } from './EditableVendorsProvider';
 import {
 	InPlaceCategorySelect,
 	InPlaceDescriptionInput,
+	InPlaceEditToggle,
 	InPlaceError,
 	InPlaceFullEditLink,
 	InPlaceImageActions,
@@ -174,7 +177,7 @@ export function ProductDetailClient({
 	relatedProducts = [],
 }: ProductDetailClientProps) {
 	const router = useRouter();
-	const { user } = useSession();
+	const { user, loading: sessionLoading } = useSession();
 	const [product, setProduct] = useState(initialProduct);
 	const [deleteBusy, setDeleteBusy] = useState(false);
 	const [deleteError, setDeleteError] = useState<string | null>(null);
@@ -186,9 +189,40 @@ export function ProductDetailClient({
 	const [cartMessage, setCartMessage] = useState<string | null>(null);
 	const [cartError, setCartError] = useState<string | null>(null);
 
+	// SSR catalog fetch may omit canEdit when access_token was not forwarded;
+	// re-fetch once the browser session is known so seller chrome can appear.
+	useEffect(() => {
+		if(sessionLoading || !user || product.permissions.canEdit || deletedNotice) {
+			return;
+		}
+		let cancelled = false;
+		getCatalogProduct(product.vendor.slug, product.slug)
+			.then((next) => {
+				if(cancelled || !next.permissions.canEdit) {
+					return;
+				}
+				setProduct(next);
+			})
+			.catch(() => {
+				/* keep SSR payload */
+			});
+		return () => {
+			cancelled = true;
+		};
+	}, [
+		deletedNotice,
+		product.permissions.canEdit,
+		product.slug,
+		product.vendor.slug,
+		sessionLoading,
+		user,
+	]);
+
+	const { inPlaceEditActive, setInPlaceEditActive } = useEditableVendors();
 	const canEdit = product.permissions.canEdit && !deletedNotice;
+	const editing = canEdit && inPlaceEditActive;
 	const edit = useInPlaceProductEdit({
-		enabled: canEdit,
+		enabled: editing,
 		offeringId: selectedOfferingId,
 		onUpdated: (next) => {
 			setProduct(next);
@@ -301,7 +335,7 @@ export function ProductDetailClient({
 		? (
 			<div className="flex flex-col gap-5">
 				<div>
-					{canEdit
+					{editing
 						? (
 							<>
 								<div
@@ -616,7 +650,7 @@ export function ProductDetailClient({
 					</Link>
 					{selectedOffering?.sku || product.sku ? ` · ${selectedOffering?.sku || product.sku}` : ''}
 				</p>
-				{canEdit
+				{editing
 					? (
 						<div className="mt-2 max-w-3xl">
 							<InPlaceCategorySelect
@@ -652,10 +686,22 @@ export function ProductDetailClient({
 									"
 									edit={edit}
 								/>
-								<InPlaceFullEditLink
-									className="mt-2 shrink-0"
-									product={product}
-								/>
+								<div
+									className="
+										mt-2
+										flex
+										shrink-0
+										flex-wrap
+										items-center
+										gap-3
+									"
+								>
+									<InPlaceEditToggle
+										active={inPlaceEditActive}
+										onChange={setInPlaceEditActive}
+									/>
+									<InPlaceFullEditLink product={product} />
+								</div>
 							</div>
 							<InPlaceDescriptionInput
 								className="
@@ -676,19 +722,52 @@ export function ProductDetailClient({
 					)
 					: (
 						<>
-							<h1
+							<div
 								className="
 									mt-2
+									flex
 									max-w-3xl
-									text-3xl
-									font-semibold
-									tracking-tight
-									text-ink
-									md:text-4xl
+									flex-wrap
+									items-start
+									justify-between
+									gap-3
 								"
 							>
-								{product.title}
-							</h1>
+								<h1
+									className="
+										min-w-0
+										flex-1
+										text-3xl
+										font-semibold
+										tracking-tight
+										text-ink
+										md:text-4xl
+									"
+								>
+									{product.title}
+								</h1>
+								{canEdit
+									? (
+										<div
+											className="
+												mt-2
+												flex
+												shrink-0
+												flex-wrap
+												items-center
+												gap-3
+											"
+										>
+											<InPlaceEditToggle
+												active={inPlaceEditActive}
+												onChange={setInPlaceEditActive}
+											/>
+											<InPlaceFullEditLink product={product} />
+										</div>
+									)
+									: null
+								}
+							</div>
 							{product.description
 								? (
 									<p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">
@@ -781,7 +860,7 @@ export function ProductDetailClient({
 									</>
 								)}
 							/>
-							{canEdit
+							{editing
 								? (
 									<InPlaceImageActions
 										coverIndex={Math.min(
@@ -792,14 +871,14 @@ export function ProductDetailClient({
 									/>
 								)
 								: null}
-							{activeSrc && !stock.inStock && !canEdit
+							{activeSrc && !stock.inStock && !editing
 								? (
 									<span className="absolute right-4 top-4 rounded-full bg-white/90 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-ink">
 										Sold out
 									</span>
 								)
 								: null}
-							{activeSrc && !stock.inStock && canEdit
+							{activeSrc && !stock.inStock && editing
 								? (
 									<span className="absolute left-4 top-4 z-20 rounded-full bg-white/90 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-ink">
 										Sold out
@@ -1025,7 +1104,7 @@ export function ProductDetailClient({
 				)
 				: null}
 
-			{product.permissions.canEdit && !deletedNotice
+			{editing
 				? (
 					<details
 						className="

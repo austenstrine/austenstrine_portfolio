@@ -48,6 +48,9 @@ function errorMessageFromBody(body: unknown): string {
 	return rawMessage ?? 'Something went wrong. Please try again.';
 }
 
+const ACCESS_COOKIE = 'access_token';
+const REFRESH_COOKIE = 'refresh_token';
+
 function requestHeaders(options: RequestInit): Headers {
 	const headers = new Headers(options.headers);
 	if(options.body instanceof FormData) {
@@ -60,12 +63,49 @@ function requestHeaders(options: RequestInit): Headers {
 	return headers;
 }
 
+/**
+ * Next SSR fetch does not attach the browser Cookie jar — and local SSR talks
+ * to the API on loopback — so access_token must be copied from the incoming
+ * request. Without this, catalog product SSR returns permissions.canEdit:false
+ * for signed-in sellers (PEM-236).
+ */
+async function serverSessionCookieHeader(): Promise<string | undefined> {
+	if(typeof window !== 'undefined') {
+		return undefined;
+	}
+	try {
+		const { cookies } = await import('next/headers');
+		const jar = cookies();
+		const parts: string[] = [];
+		const access = jar.get(ACCESS_COOKIE)?.value;
+		if(access) {
+			parts.push(`${ACCESS_COOKIE}=${access}`);
+		}
+		// Usually absent on page navigations (cookie path /api/auth).
+		const refresh = jar.get(REFRESH_COOKIE)?.value;
+		if(refresh) {
+			parts.push(`${REFRESH_COOKIE}=${refresh}`);
+		}
+		return parts.length > 0 ? parts.join('; ') : undefined;
+	}
+	catch {
+		return undefined;
+	}
+}
+
 async function rawRequest(path: string, options: RequestInit = {}): Promise<Response> {
+	const headers = requestHeaders(options);
+	if(typeof window === 'undefined' && !headers.has('Cookie')) {
+		const cookie = await serverSessionCookieHeader();
+		if(cookie) {
+			headers.set('Cookie', cookie);
+		}
+	}
 	return fetch(`${API_BASE_URL}${path}`, {
 		...options,
 		credentials: 'include',
 		signal: apiTimeoutSignal(options.signal),
-		headers: requestHeaders(options),
+		headers,
 	});
 }
 
