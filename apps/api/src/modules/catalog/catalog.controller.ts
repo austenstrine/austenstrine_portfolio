@@ -17,6 +17,7 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiTags } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { CatalogImportSource } from '@prisma/client';
 import type { Request, Response } from 'express';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -360,6 +361,7 @@ export class CatalogController {
 		return this.demoJoin.getDemoInfo();
 	}
 
+	@Throttle({ default: { limit: 5, ttl: 60_000 } })
 	@Post('demo/join')
 	joinDemo(@Body() dto: JoinDemoDto) {
 		return this.demoJoin.joinDemo(dto.email);
