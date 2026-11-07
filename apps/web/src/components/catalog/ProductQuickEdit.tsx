@@ -1,20 +1,42 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
 	updateCatalogProduct,
 	type CatalogProductDetail,
 } from '../../lib/catalog-api';
 import { centsToDollars, dollarsToCents } from '../../lib/catalog-product-form';
 import { productEditHref } from '../../lib/vendor-ref';
+import { PencilIcon } from '../icons/PencilIcon';
 import { ProductTagField } from './ProductTagField';
 
 type ProductQuickEditProps = {
 	product: CatalogProductDetail;
 	onUpdated: (product: CatalogProductDetail) => void;
+	/** Optional close control for dialog / expandable shells. */
+	onDone?: () => void;
+	/** Drop outer card chrome when a parent already frames the panel. */
+	embedded?: boolean;
 };
 
-export function ProductQuickEdit({ product, onUpdated }: ProductQuickEditProps) {
+const fieldClassName = `
+	mt-1
+	w-full
+	rounded-lg
+	border
+	border-slate-300
+	px-3
+	py-2
+	text-sm
+	text-ink
+`;
+
+export function ProductQuickEdit({
+	product,
+	onUpdated,
+	onDone,
+	embedded = false,
+}: ProductQuickEditProps) {
 	const primaryOffering = product.offerings[0] ?? null;
 	const [title, setTitle] = useState(product.title);
 	const [description, setDescription] = useState(product.description ?? '');
@@ -25,6 +47,16 @@ export function ProductQuickEdit({ product, onUpdated }: ProductQuickEditProps) 
 	const [qtyOnHand, setQtyOnHand] = useState(primaryOffering?.qtyOnHand ?? '0');
 	const [saving, setSaving] = useState(false);
 	const [error, setError] = useState<string | null>(null);
+
+	useEffect(() => {
+		const nextPrimary = product.offerings[0] ?? null;
+		setTitle(product.title);
+		setDescription(product.description ?? '');
+		setTags(product.tags ?? []);
+		setPrice(nextPrimary ? centsToDollars(nextPrimary.priceCents) : '');
+		setQtyOnHand(nextPrimary?.qtyOnHand ?? '0');
+		setError(null);
+	}, [product]);
 
 	const onSave = async () => {
 		setSaving(true);
@@ -48,6 +80,7 @@ export function ProductQuickEdit({ product, onUpdated }: ProductQuickEditProps) 
 				})),
 			});
 			onUpdated(updated);
+			onDone?.();
 		}
 		catch(saveError) {
 			setError(saveError instanceof Error ? saveError.message : 'Save failed.');
@@ -57,36 +90,22 @@ export function ProductQuickEdit({ product, onUpdated }: ProductQuickEditProps) 
 		}
 	};
 
-	return (
-		<section
-			className="
-				rounded-2xl
-				border
-				border-slate-200
-				bg-white
-				p-5
-			"
-		>
+	const body = (
+		<>
 			<div
 				className="
 					flex
 					flex-wrap
 					items-center
-					justify-between
+					justify-end
 					gap-2
 				"
 			>
-				<h2
-					className="
-						text-sm
-						font-semibold
-						text-ink
-					"
-				>
-					Quick edit
-				</h2>
 				<a
 					className="
+						inline-flex
+						items-center
+						gap-1.5
 						text-xs
 						font-semibold
 						text-sky
@@ -97,31 +116,24 @@ export function ProductQuickEdit({ product, onUpdated }: ProductQuickEditProps) 
 						productSlug: product.slug,
 					})}
 				>
+					<PencilIcon className="h-3.5 w-3.5 shrink-0" />
 					Full edit
 				</a>
 			</div>
 			<div
 				className="
-					mt-4
+					mt-3
 					flex
 					flex-col
 					gap-3
 				"
 			>
-				<label className="text-sm">
+				<label className="text-sm text-ink">
 					<span className="font-semibold">
 						Title
 					</span>
 					<input
-						className="
-							mt-1
-							w-full
-							rounded-lg
-							border
-							border-slate-300
-							px-3
-							py-2
-						"
+						className={fieldClassName}
 						value={title}
 						onChange={(event) => setTitle(event.target.value)}
 					/>
@@ -129,7 +141,7 @@ export function ProductQuickEdit({ product, onUpdated }: ProductQuickEditProps) 
 				{primaryOffering
 					? (
 						<div className="grid gap-3 sm:grid-cols-2">
-							<label className="text-sm">
+							<label className="text-sm text-ink">
 								<span className="font-semibold">
 									Price
 									{primaryOffering.uom?.code
@@ -138,33 +150,19 @@ export function ProductQuickEdit({ product, onUpdated }: ProductQuickEditProps) 
 									}
 								</span>
 								<input
-									className="
-										mt-1
-										w-full
-										rounded-lg
-										border
-										border-slate-300
-										px-3
-										py-2
-									"
+									className={fieldClassName}
+									inputMode="decimal"
 									value={price}
 									onChange={(event) => setPrice(event.target.value)}
 								/>
 							</label>
-							<label className="text-sm">
+							<label className="text-sm text-ink">
 								<span className="font-semibold">
-									Qty on hand
+									Qty
 								</span>
 								<input
-									className="
-										mt-1
-										w-full
-										rounded-lg
-										border
-										border-slate-300
-										px-3
-										py-2
-									"
+									className={fieldClassName}
+									inputMode="decimal"
 									value={qtyOnHand}
 									onChange={(event) => setQtyOnHand(event.target.value)}
 								/>
@@ -173,23 +171,15 @@ export function ProductQuickEdit({ product, onUpdated }: ProductQuickEditProps) 
 					)
 					: null
 				}
-				<label className="text-sm">
+				<label className="text-sm text-ink">
 					<span className="font-semibold">
 						Description
 					</span>
 					<textarea
-						className="
-							mt-1
-							w-full
-							rounded-lg
-							border
-							border-slate-300
-							px-3
-							py-2
-						"
+						className={fieldClassName}
 						value={description}
 						onChange={(event) => setDescription(event.target.value)}
-						rows={4}
+						rows={3}
 					/>
 				</label>
 				<ProductTagField
@@ -205,29 +195,88 @@ export function ProductQuickEdit({ product, onUpdated }: ProductQuickEditProps) 
 					)
 					: null
 				}
-				<button
+				<div
 					className="
-						self-start
-						rounded-full
-						bg-sky
-						px-4
-						py-2
-						text-sm
-						font-semibold
-						text-white
-						hover:bg-sky/90
-						disabled:opacity-60
+						flex
+						flex-wrap
+						items-center
+						gap-2
+						pt-1
 					"
-					type="button"
-					onClick={onSave}
-					disabled={saving}
 				>
-					{saving
-						? 'Saving…'
-						: 'Save changes'
+					<button
+						className="
+							rounded-full
+							bg-sky
+							px-4
+							py-2
+							text-sm
+							font-semibold
+							text-white
+							hover:bg-sky/90
+							disabled:opacity-60
+						"
+						type="button"
+						onClick={() => {
+							void onSave();
+						}}
+						disabled={saving}
+					>
+						{saving
+							? 'Saving…'
+							: 'Save'
+						}
+					</button>
+					{onDone
+						? (
+							<button
+								className="
+									rounded-full
+									border
+									border-slate-300
+									bg-white
+									px-4
+									py-2
+									text-sm
+									font-semibold
+									text-ink
+									hover:border-sky
+									hover:text-sky
+									disabled:opacity-60
+								"
+								type="button"
+								onClick={onDone}
+								disabled={saving}
+							>
+								Done
+							</button>
+						)
+						: null
 					}
-				</button>
+				</div>
 			</div>
+		</>
+	);
+
+	if(embedded) {
+		return (
+			<div>
+				{body}
+			</div>
+		);
+	}
+
+	return (
+		<section
+			className="
+				rounded-2xl
+				border
+				border-slate-200
+				bg-white
+				p-5
+			"
+		>
+			{body}
 		</section>
 	);
 }
