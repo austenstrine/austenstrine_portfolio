@@ -9,7 +9,7 @@ import {
 import { loadStripe, type Stripe } from '@stripe/stripe-js';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Suspense, useEffect, useMemo, useState } from 'react';
+import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import {
 	createCheckoutSession,
 	formatMoney,
@@ -19,6 +19,21 @@ import {
 } from '../../../lib/checkout-api';
 import { useSession } from '../../../lib/useSession';
 import { RequireAccess } from '../../../components/auth/RequireAccess';
+
+const REQUIRED_ADDRESS_FIELDS = [
+	['name', 'Name'],
+	['line1', 'Address'],
+	['city', 'City'],
+	['region', 'State / region'],
+	['postal', 'Postal'],
+] as const;
+
+const OPTIONAL_ADDRESS_FIELDS = [
+	['line2', 'Address 2'],
+	['country', 'Country'],
+] as const;
+
+type RequiredAddressKey = (typeof REQUIRED_ADDRESS_FIELDS)[number][0];
 
 function PaymentForm({
 	amountLabel,
@@ -94,20 +109,13 @@ function PaymentForm({
 	);
 }
 
-function addressReady(address: {
-	name: string;
-	line1: string;
-	city: string;
-	region: string;
-	postal: string;
-}) {
-	return (
-		address.name.trim().length > 0
-		&& address.line1.trim().length > 0
-		&& address.city.trim().length > 0
-		&& address.region.trim().length > 0
-		&& address.postal.trim().length > 0
-	);
+function firstEmptyRequired(address: Record<RequiredAddressKey, string>): RequiredAddressKey | null {
+	for(const [key] of REQUIRED_ADDRESS_FIELDS) {
+		if(address[key].trim().length === 0) {
+			return key;
+		}
+	}
+	return null;
 }
 
 function CheckoutContent() {
@@ -128,7 +136,9 @@ function CheckoutContent() {
 	const [publishableKey, setPublishableKey] = useState('');
 	const [totalCents, setTotalCents] = useState(0);
 	const [error, setError] = useState<string | null>(null);
+	const [fieldError, setFieldError] = useState<RequiredAddressKey | null>(null);
 	const [busy, setBusy] = useState(false);
+	const fieldRefs = useRef<Partial<Record<RequiredAddressKey, HTMLInputElement | null>>>({});
 
 	useEffect(() => {
 		if(!user) {
@@ -188,20 +198,29 @@ function CheckoutContent() {
 		return preview.groups.every((group) => Boolean(rateByGroup[group.groupKey]));
 	}, [preview, rateByGroup]);
 
-	const canContinue = Boolean(
-		preview
-		&& preview.groups.length > 0
-		&& addressReady(address)
-		&& ratesReady
-		&& !busy,
-	);
-
 	async function onStartPayment() {
-		if(!preview || preview.groups.length === 0 || !addressReady(address) || !ratesReady) {
+		if(!preview || preview.groups.length === 0) {
 			return;
 		}
+
+		const missing = firstEmptyRequired(address);
+		if(missing) {
+			setFieldError(missing);
+			setError(null);
+			const target = fieldRefs.current[missing];
+			target?.focus();
+			target?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+			return;
+		}
+
+		if(!ratesReady) {
+			setError('Choose shipping for each seller.');
+			return;
+		}
+
 		setBusy(true);
 		setError(null);
+		setFieldError(null);
 		try {
 			const session = await createCheckoutSession({
 				address,
@@ -337,25 +356,87 @@ function CheckoutContent() {
 									md:grid-cols-2
 								"
 							>
-								{(
-									[
-										['name', 'Name'],
-										['line1', 'Address'],
-										['line2', 'Address 2'],
-										['city', 'City'],
-										['region', 'State / region'],
-										['postal', 'Postal'],
-										['country', 'Country'],
-									] as const
-								).map(([key, label]) => (
+								{REQUIRED_ADDRESS_FIELDS.map(([key, label]) => {
+									const invalid = fieldError === key;
+									return (
+										<label
+											className="
+												block
+												text-sm
+											"
+											key={key}
+										>
+											<span className="font-semibold">
+												{label}
+											</span>
+											<input
+												ref={(node) => {
+													fieldRefs.current[key] = node;
+												}}
+												aria-invalid={invalid
+													? true
+													: undefined
+												}
+												aria-required="true"
+												className={
+													invalid
+														? `
+															mt-1
+															w-full
+															rounded-lg
+															border
+															border-red-600
+															px-3
+															py-2
+														`
+														: `
+															mt-1
+															w-full
+															rounded-lg
+															border
+															border-slate-300
+															px-3
+															py-2
+														`
+												}
+												required
+												value={address[key]}
+												onChange={(event) => {
+													const value = event.target.value;
+													setAddress((prev) => ({
+														...prev,
+														[key]: value,
+													}));
+													if(fieldError === key && value.trim().length > 0) {
+														setFieldError(null);
+													}
+												}}
+											/>
+										</label>
+									);
+								})}
+							</div>
+							<div
+								className="
+									mt-3
+									grid
+									gap-3
+									border-t
+									border-slate-100
+									pt-3
+									md:grid-cols-2
+								"
+							>
+								{OPTIONAL_ADDRESS_FIELDS.map(([key, label]) => (
 									<label
 										className="
 											block
 											text-sm
+											text-slate-600
 										"
 										key={key}
 									>
-										<span className="font-semibold">
+										<span className="font-medium">
 											{label}
 										</span>
 										<input
@@ -364,9 +445,11 @@ function CheckoutContent() {
 												w-full
 												rounded-lg
 												border
-												border-slate-300
+												border-slate-200
+												bg-slate-50
 												px-3
 												py-2
+												text-ink
 											"
 											value={address[key]}
 											onChange={(event) =>
@@ -385,6 +468,10 @@ function CheckoutContent() {
 							const showProfile =
 								(vendorGroupCounts.get(group.vendorId) ?? 0) > 1
 								|| group.shipsSeparately;
+							const heading =
+								showProfile && group.shippingProfileName
+									? `${group.vendorName} · ${group.shippingProfileName}`
+									: group.vendorName;
 							return (
 								<section
 									className="
@@ -397,22 +484,8 @@ function CheckoutContent() {
 									key={group.groupKey}
 								>
 									<h2 className="text-lg font-semibold">
-										{group.vendorName}
+										{heading}
 									</h2>
-									{showProfile && group.shippingProfileName
-										? (
-											<p
-												className="
-													mt-1
-													text-sm
-													text-slate-600
-												"
-											>
-												{group.shippingProfileName}
-											</p>
-										)
-										: null
-									}
 									<ul
 										className="
 											mt-3
@@ -514,7 +587,7 @@ function CheckoutContent() {
 											disabled:opacity-60
 										"
 										type="button"
-										disabled={!canContinue}
+										disabled={busy}
 										onClick={() => void onStartPayment()}
 									>
 										{busy
