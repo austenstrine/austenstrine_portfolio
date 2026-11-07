@@ -35,7 +35,7 @@ export class DemoJoinService {
 			vendorSlug: vendor.slug,
 			role: DEMO_JOIN_ROLE,
 			description:
-				'Place et Marque is a live multi-vendor catalog: packs, pieces, search, and Stripe checkout. Join Demo Supply Co. as a seller teammate and explore products, orders, members, and payouts with seeded data.',
+				'Join Demo Supply Co. as a seller teammate. Explore products, orders, members, and payouts.',
 		};
 	}
 

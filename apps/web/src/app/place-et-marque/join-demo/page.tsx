@@ -124,7 +124,7 @@ export default function JoinDemoPage() {
 					"
 				>
 					{info?.description
-						?? 'A live multi-vendor catalog with packs, pieces, search, and Stripe checkout. Join as a seller teammate on the seeded demo vendor.'
+						?? 'Join Demo Supply Co. as a seller teammate. Explore products, orders, members, and payouts.'
 					}
 				</p>
 			</div>
@@ -157,19 +157,6 @@ export default function JoinDemoPage() {
 				>
 					Join {vendorName}
 				</h2>
-				<p
-					className="
-						mt-2
-						text-sm
-						leading-relaxed
-						text-slate-600
-					"
-				>
-					Enter the email you want to register with. We email a normal
-					organization invite for that address — same path a real vendor would
-					use — then you create an account (or sign in) and accept membership.
-				</p>
-
 				<form
 					className="
 						mt-5
