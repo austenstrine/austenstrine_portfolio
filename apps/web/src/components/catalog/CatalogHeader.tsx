@@ -24,6 +24,7 @@ import {
 import { HeaderPortraitLink } from './HeaderPortraitLink';
 import { MarketplaceBrandLink } from './MarketplaceBrandLink';
 import { SellerModeChip } from './SellerModeChip';
+import { syncSiteTopBanners } from '../../lib/site-top-banners';
 import { useCatalogSearch } from './CatalogSearchContext';
 import { CatalogSearchField } from './CatalogSearchField';
 
@@ -672,21 +673,35 @@ export function CatalogHeader() {
 	const headerRef = useRef<HTMLElement>(null);
 
 	useLayoutEffect(() => {
-		const banner = document.querySelector('[data-maintenance-banner]');
 		const syncBanner = () => {
-			setBannerOffset(
-				banner instanceof HTMLElement
-					? banner.offsetHeight
-					: 0,
-			);
+			setBannerOffset(syncSiteTopBanners());
 		};
 		syncBanner();
-		if(!(banner instanceof HTMLElement)) {
-			return;
-		}
-		const observer = new ResizeObserver(syncBanner);
-		observer.observe(banner);
-		return () => observer.disconnect();
+		const resizeObserver = new ResizeObserver(syncBanner);
+		const observeAll = () => {
+			resizeObserver.disconnect();
+			document
+				.querySelectorAll('[data-maintenance-banner]')
+				.forEach((node) => {
+					if(node instanceof HTMLElement) {
+						resizeObserver.observe(node);
+					}
+				});
+		};
+		observeAll();
+		// BackendDown mounts after /health — catch late inserts.
+		const mutationObserver = new MutationObserver(() => {
+			observeAll();
+			syncBanner();
+		});
+		mutationObserver.observe(document.body, {
+			childList: true,
+			subtree: true,
+		});
+		return () => {
+			resizeObserver.disconnect();
+			mutationObserver.disconnect();
+		};
 	}, []);
 
 	useLayoutEffect(() => {
@@ -697,6 +712,9 @@ export function CatalogHeader() {
 		const sync = () => {
 			const height = header.offsetHeight;
 			setHeaderHeight(height);
+			// Sticky filters use viewport top — include banner band. Body
+			// padding-top already clears banners for in-flow content; spacer
+			// below is headerHeight only.
 			document.documentElement.style.setProperty(
 				'--catalog-header-h',
 				`${headerHidden ? 0 : height + bannerOffset}px`,
@@ -759,7 +777,7 @@ export function CatalogHeader() {
 				}
 				style={
 					headerHeight > 0
-						? { height: headerHeight + bannerOffset }
+						? { height: headerHeight }
 						: undefined
 				}
 			/>
@@ -876,16 +894,19 @@ export function CatalogHeader() {
 								)
 							}
 							{/*
-								Reserve Sign-in footprint while session probes so
-								auth chrome does not pop in and shift the header.
+								Reserve the larger AccountMenu footprint (max-w
+								9rem / sm:14rem) while session probes so authed
+								first paint does not widen the nav. Guest Sign in
+								is smaller and sits in the same end-aligned slot.
 							*/}
 							<span
 								className="
 									inline-flex
 									min-h-9
-									min-w-[5.75rem]
+									min-w-[9rem]
 									items-center
 									justify-end
+									sm:min-w-[14rem]
 								"
 							>
 								{loading
@@ -894,14 +915,21 @@ export function CatalogHeader() {
 											aria-hidden
 											className="
 												invisible
-												rounded-full
-												px-3.5
-												py-2
+												inline-flex
+												max-w-[9rem]
+												items-center
+												gap-1
 												text-sm
 												font-semibold
+												sm:max-w-[14rem]
 											"
 										>
-											Sign in
+											<span className="truncate">
+												account@example.com
+											</span>
+											<CaretDownIcon
+												className={sectionCaretClass(false)}
+											/>
 										</span>
 									)
 									: user

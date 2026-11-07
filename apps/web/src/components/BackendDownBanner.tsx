@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useLayoutEffect, useState } from 'react';
 import { API_BASE_URL } from '../lib/api';
+import { syncSiteTopBanners } from '../lib/site-top-banners';
 import { apiTimeoutSignal } from '../lib/timed-fetch';
 
 async function backendReachable(): Promise<boolean> {
@@ -17,6 +18,12 @@ async function backendReachable(): Promise<boolean> {
 	}
 }
 
+/**
+ * Joins the same fixed top-banner stack as PardonOurDustBanner
+ * (`data-maintenance-banner` + CatalogHeader offset / `--site-top-banner-h`).
+ * Same z-band as dust (z-40) — stacked by `top`, never over sticky catalog
+ * chrome (z-30) or smothering dust copy.
+ */
 export function BackendDownBanner() {
 	const [down, setDown] = useState(false);
 
@@ -38,19 +45,27 @@ export function BackendDownBanner() {
 		};
 	}, []);
 
+	useLayoutEffect(() => {
+		syncSiteTopBanners();
+		return () => {
+			// After unmount / hide, remeasure remaining banners (e.g. dust).
+			queueMicrotask(() => {
+				syncSiteTopBanners();
+			});
+		};
+	}, [down]);
+
 	if(!down) {
 		return null;
 	}
 
-	// Fixed overlay — do not insert into document flow after the health probe
-	// or the late paint shoves the whole page (CLS).
 	return (
 		<div
 			className="
 				fixed
 				inset-x-0
 				top-0
-				z-50
+				z-40
 				border-b
 				border-amber-300
 				bg-amber-50
@@ -61,6 +76,7 @@ export function BackendDownBanner() {
 				font-medium
 				text-amber-950
 			"
+			data-maintenance-banner=""
 			role="status"
 		>
 			We&apos;re currently down. The site is up, but the API could not be reached. Try again in a moment.
