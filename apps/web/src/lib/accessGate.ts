@@ -135,6 +135,19 @@ export function pathUsesSellerChrome(path: string): boolean {
 	return PRODUCT_SLUG_EDITOR_PATH.test(pathname);
 }
 
+/**
+ * Buyer + seller order *lists* mount frost filter controls into the bottom
+ * pane. Reserve pane geometry on these paths so empty:hidden cannot late-show
+ * the FOOTER-attributed chrome (order detail has no pane portal).
+ */
+export function pathReservesOrdersListBottomPane(path: string): boolean {
+	const pathname = path.split('?')[0] ?? path;
+	if(pathname === '/place-et-marque/orders') {
+		return true;
+	}
+	return /^\/place-et-marque\/vendors\/[^/]+\/orders\/?$/.test(pathname);
+}
+
 export function buildLoginUrl(options: {
 	next?: string;
 	reason?: string;

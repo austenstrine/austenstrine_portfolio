@@ -2,13 +2,25 @@
 
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
-import { pathUsesSellerChrome } from '../../lib/accessGate';
+import {
+	pathReservesOrdersListBottomPane,
+	pathUsesSellerChrome,
+} from '../../lib/accessGate';
 import { useCatalogSearch } from './CatalogSearchContext';
 
 const STACK_VAR = '--seller-bottom-pane-stack';
 const STACK_GAP_PX = 8;
 const PANE_SCROLL_DELTA = 8;
 const PANE_SHOW_TOP = 16;
+/** Matches orders filter labels + controls (+ pane pad) before portal fill. */
+const ORDERS_PANE_RESERVE_CLASSNAME = `
+	min-h-[4.75rem]
+	empty:pointer-events-none
+	empty:border-transparent
+	empty:bg-transparent
+	empty:shadow-none
+	empty:backdrop-blur-none
+`;
 
 /**
  * Compact right-aligned lightly frosted bottom pane for page-specific seller
@@ -29,6 +41,7 @@ export function SellerPageActionPane() {
 	const lastScrollY = useRef(0);
 	const [paneHidden, setPaneHidden] = useState(false);
 	const sellerChrome = pathUsesSellerChrome(pathname);
+	const reserveOrdersPane = pathReservesOrdersListBottomPane(pathname);
 
 	useEffect(() => {
 		if(!sellerChrome) {
@@ -103,7 +116,7 @@ export function SellerPageActionPane() {
 			host.removeEventListener('transitionend', sync);
 			document.documentElement.style.removeProperty(STACK_VAR);
 		};
-	}, [paneHidden, sellerChrome]);
+	}, [paneHidden, reserveOrdersPane, sellerChrome]);
 
 	useEffect(() => {
 		return () => {
@@ -117,27 +130,32 @@ export function SellerPageActionPane() {
 
 	return (
 		<div
-			className="
-				pointer-events-auto
-				fixed
-				bottom-0
-				right-0
-				z-30
-				max-w-[min(100%,52rem)]
-				rounded-tl-2xl
-				border
-				border-b-0
-				border-r-0
-				border-slate-200/40
-				bg-white/25
-				shadow-[0_4px_24px_rgba(13,27,42,0.06)]
-				backdrop-blur-[2px]
-				transition-transform
-				duration-200
-				ease-out
-				empty:hidden
-				motion-reduce:transition-none
-			"
+			className={
+				`
+					pointer-events-auto
+					fixed
+					bottom-0
+					right-0
+					z-30
+					max-w-[min(100%,52rem)]
+					rounded-tl-2xl
+					border
+					border-b-0
+					border-r-0
+					border-slate-200/40
+					bg-white/25
+					shadow-[0_4px_24px_rgba(13,27,42,0.06)]
+					backdrop-blur-[2px]
+					transition-transform
+					duration-200
+					ease-out
+					motion-reduce:transition-none
+					${reserveOrdersPane
+						? ORDERS_PANE_RESERVE_CLASSNAME
+						: 'empty:hidden'
+					}
+				`
+			}
 			data-hidden={paneHidden ? 'true' : 'false'}
 			onFocusCapture={() => setPaneHidden(false)}
 			ref={(el) => {

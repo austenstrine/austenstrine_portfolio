@@ -25,6 +25,7 @@ import { OrderMoneySummary } from '../../../../../components/orders/OrderMoneySu
 import { OrderSupportCode } from '../../../../../components/orders/OrderSupportCode';
 import {
 	ORDER_STATUS_FILTERS,
+	ORDERS_LIST_SHELL_CLASSNAME,
 	countOrdersNeedingShip,
 	displayOrderStatus,
 	filterOrders,
@@ -159,13 +160,7 @@ function VendorOrdersPageContent() {
 	}
 
 	return (
-		<div
-			className="
-				flex
-				flex-col
-				gap-6
-			"
-		>
+		<div className={ORDERS_LIST_SHELL_CLASSNAME}>
 			<PageBottomPanePortal>
 				<label
 					className="

@@ -19,6 +19,7 @@ import { PageBottomPanePortal } from '../../../components/catalog/CatalogSearchC
 import { OrderMoneySummary } from '../../../components/orders/OrderMoneySummary';
 import {
 	ORDER_STATUS_FILTERS,
+	ORDERS_LIST_SHELL_CLASSNAME,
 	displayOrderStatus,
 	filterOrders,
 	type OrderStatusFilter,
@@ -83,13 +84,7 @@ function OrdersContent() {
 	}, [user]);
 
 	return (
-		<div
-			className="
-				flex
-				flex-col
-				gap-6
-			"
-		>
+		<div className={ORDERS_LIST_SHELL_CLASSNAME}>
 			<PageBottomPanePortal>
 				<label
 					className="
