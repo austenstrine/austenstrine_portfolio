@@ -5,6 +5,7 @@ import {
 	useRef,
 	useState,
 	type KeyboardEvent,
+	type ReactNode,
 } from 'react';
 import {
 	getCatalogProduct,
@@ -29,6 +30,11 @@ import { productEditHref } from '../../lib/vendor-ref';
 import { PencilIcon } from '../icons/PencilIcon';
 import { PlusIcon } from '../icons/PlusIcon';
 import { TrashIcon } from '../icons/TrashIcon';
+import {
+	type InPlaceEditTier,
+	type InPlaceFieldName,
+	useEditableVendors,
+} from './EditableVendorsProvider';
 
 export type InPlaceLookups = {
 	categories: CatalogCategoryRow[];
@@ -42,23 +48,27 @@ export type InPlaceProductEditState = {
 	saving: boolean;
 	imageBusy: boolean;
 	error: string | null;
+	dirty: boolean;
+	dirtyFields: ReadonlySet<InPlaceFieldName>;
 	title: string;
 	setTitle: (value: string) => void;
 	description: string;
 	setDescription: (value: string) => void;
 	categoryId: string;
+	setCategoryId: (value: string) => void;
 	price: string;
 	setPrice: (value: string) => void;
 	uomId: string;
+	setUomId: (value: string) => void;
 	qtyOnHand: string;
 	setQtyOnHand: (value: string) => void;
 	offeringId: string | null;
-	saveTitle: () => void;
-	saveDescription: () => void;
-	saveCategory: (nextId: string) => void;
-	savePrice: () => void;
-	saveUom: (nextId: string) => void;
-	saveQty: () => void;
+	/** Save every dirty field on this product (card / page registry). */
+	saveAll: () => Promise<void>;
+	/** Save one field (element tier). */
+	saveField: (field: InPlaceFieldName) => Promise<void>;
+	discard: () => void;
+	discardField: (field: InPlaceFieldName) => void;
 	replaceCoverImage: (file: File) => Promise<void>;
 	addImage: (file: File) => Promise<void>;
 	removeImageAt: (index: number) => void;
@@ -73,6 +83,8 @@ type UseInPlaceProductEditOptions = {
 	offeringId?: string | null;
 	/** Skip network work for buyers / deleted listings. */
 	enabled?: boolean;
+	/** Register with page-level save when enabled (default true). */
+	registerWithPage?: boolean;
 };
 
 function isDetail(
@@ -82,12 +94,65 @@ function isDetail(
 		&& Boolean((product as CatalogProductDetail).permissions);
 }
 
+function computeDirtyFields(args: {
+	detail: CatalogProductDetail | null;
+	lookups: InPlaceLookups | null;
+	title: string;
+	description: string;
+	categoryId: string;
+	price: string;
+	uomId: string;
+	qtyOnHand: string;
+	offeringId: string | null;
+}): Set<InPlaceFieldName> {
+	const dirty = new Set<InPlaceFieldName>();
+	const { detail, lookups } = args;
+	if(!detail) {
+		return dirty;
+	}
+	if(args.title.trim() !== detail.title) {
+		dirty.add('title');
+	}
+	if(args.description !== (detail.description ?? '')) {
+		dirty.add('description');
+	}
+	const currentCategoryId = categoryIdForSlug(
+		lookups?.categories ?? [],
+		detail.category?.slug,
+	);
+	if(args.categoryId !== currentCategoryId) {
+		dirty.add('category');
+	}
+	const offering = detail.offerings.find((row) => row.id === args.offeringId)
+		?? detail.offerings[0]
+		?? null;
+	if(offering) {
+		const cents = dollarsToCents(args.price);
+		if(cents !== offering.priceCents) {
+			dirty.add('price');
+		}
+		const currentUomId = uomIdForCode(lookups?.uoms ?? [], offering.uom.code);
+		if(args.uomId && args.uomId !== currentUomId) {
+			dirty.add('uom');
+		}
+		if((args.qtyOnHand || '0') !== (offering.qtyOnHand || '0')) {
+			dirty.add('qty');
+		}
+	}
+	return dirty;
+}
+
 export function useInPlaceProductEdit({
 	product,
 	onUpdated,
 	offeringId,
 	enabled = true,
+	registerWithPage = true,
 }: UseInPlaceProductEditOptions): InPlaceProductEditState {
+	const {
+		registerEditor,
+		unregisterEditor,
+	} = useEditableVendors();
 	const [detail, setDetail] = useState<CatalogProductDetail | null>(
 		() => (isDetail(product) ? product : null),
 	);
@@ -108,6 +173,8 @@ export function useInPlaceProductEdit({
 	const [activeOfferingId, setActiveOfferingId] = useState<string | null>(
 		offeringId ?? null,
 	);
+	const saveAllRef = useRef<() => Promise<void>>(async () => undefined);
+	const discardRef = useRef<() => void>(() => undefined);
 
 	useEffect(() => {
 		if(offeringId) {
@@ -199,6 +266,18 @@ export function useInPlaceProductEdit({
 		?? detail?.offerings[0]?.id
 		?? null;
 	const ready = Boolean(detail && lookups);
+	const dirtyFields = computeDirtyFields({
+		detail,
+		lookups,
+		title,
+		description,
+		categoryId,
+		price,
+		uomId,
+		qtyOnHand,
+		offeringId: offeringIdResolved,
+	});
+	const dirty = dirtyFields.size > 0;
 
 	const pushDetail = (next: CatalogProductDetail) => {
 		setDetail(next);
@@ -235,89 +314,164 @@ export function useInPlaceProductEdit({
 					? saveError.message
 					: 'Save failed.',
 			);
+			throw saveError;
 		}
 		finally {
 			setSaving(false);
 		}
 	};
 
-	const saveTitle = () => {
-		const next = title.trim();
-		if(!next || next === detail?.title) {
-			setTitle(detail?.title ?? product.title);
-			return;
+	const buildPatchForFields = (fields: Iterable<InPlaceFieldName>) => {
+		const wanted = new Set(fields);
+		const payload: Parameters<typeof updateCatalogProduct>[1] = {};
+		const offeringPatch: {
+			id: string;
+			priceCents?: number;
+			uomId?: string;
+			qtyOnHand?: string;
+		} | null = offeringIdResolved
+			? { id: offeringIdResolved }
+			: null;
+
+		if(wanted.has('title')) {
+			const next = title.trim();
+			if(next) {
+				payload.title = next;
+			}
 		}
-		void savePatch({ title: next });
+		if(wanted.has('description')) {
+			payload.description = description;
+		}
+		if(wanted.has('category')) {
+			payload.categoryId = categoryId || null;
+		}
+		if(offeringPatch) {
+			if(wanted.has('price')) {
+				offeringPatch.priceCents = dollarsToCents(price);
+			}
+			if(wanted.has('uom') && uomId) {
+				offeringPatch.uomId = uomId;
+			}
+			if(wanted.has('qty')) {
+				offeringPatch.qtyOnHand = qtyOnHand || '0';
+			}
+			if(
+				offeringPatch.priceCents != null
+				|| offeringPatch.uomId
+				|| offeringPatch.qtyOnHand != null
+			) {
+				payload.offerings = [offeringPatch];
+			}
+		}
+		return payload;
 	};
 
-	const saveDescription = () => {
-		const next = description;
-		if(next === (detail?.description ?? '')) {
+	const saveAll = async () => {
+		if(!dirty || !detail) {
 			return;
 		}
-		void savePatch({ description: next });
+		const payload = buildPatchForFields(dirtyFields);
+		if(Object.keys(payload).length === 0) {
+			return;
+		}
+		await savePatch(payload);
 	};
 
-	const saveCategory = (nextId: string) => {
-		setCategoryId(nextId);
-		const currentId = categoryIdForSlug(
-			lookups?.categories ?? [],
-			detail?.category?.slug,
-		);
-		if(nextId === currentId) {
+	const saveField = async (field: InPlaceFieldName) => {
+		if(field === 'images' || !dirtyFields.has(field)) {
 			return;
 		}
-		void savePatch({ categoryId: nextId || null });
+		const payload = buildPatchForFields([field]);
+		if(Object.keys(payload).length === 0) {
+			return;
+		}
+		await savePatch(payload);
 	};
 
-	const savePrice = () => {
-		if(!offeringIdResolved) {
+	const discard = () => {
+		if(!detail) {
+			setTitle(product.title);
+			setDescription(product.description ?? '');
+			setPrice(
+				product.primaryPriceCents != null
+					? centsToDollars(product.primaryPriceCents)
+					: '',
+			);
+			setQtyOnHand(product.availableQty);
+			setError(null);
 			return;
 		}
-		const cents = dollarsToCents(price);
-		const current = detail?.offerings.find(
+		if(!lookups) {
+			return;
+		}
+		const offering = detail.offerings.find(
 			(row) => row.id === offeringIdResolved,
-		)?.priceCents;
-		if(current != null && cents === current) {
-			setPrice(centsToDollars(current));
-			return;
-		}
-		void savePatch({
-			offerings: [{ id: offeringIdResolved, priceCents: cents }],
-		});
+		) ?? detail.offerings[0] ?? null;
+		setTitle(detail.title);
+		setDescription(detail.description ?? '');
+		setCategoryId(categoryIdForSlug(lookups.categories, detail.category?.slug));
+		setPrice(offering ? centsToDollars(offering.priceCents) : '');
+		setUomId(uomIdForCode(lookups.uoms, offering?.uom.code));
+		setQtyOnHand(offering?.qtyOnHand ?? detail.availableQty);
+		setError(null);
 	};
 
-	const saveUom = (nextId: string) => {
-		if(!offeringIdResolved) {
+	const discardField = (field: InPlaceFieldName) => {
+		if(!detail) {
+			discard();
 			return;
 		}
-		setUomId(nextId);
-		const currentCode = detail?.offerings.find(
+		const offering = detail.offerings.find(
 			(row) => row.id === offeringIdResolved,
-		)?.uom.code;
-		const nextCode = lookups?.uoms.find((row) => row.id === nextId)?.code;
-		if(!nextId || !nextCode || nextCode === currentCode) {
-			return;
+		) ?? detail.offerings[0] ?? null;
+		if(field === 'title') {
+			setTitle(detail.title);
 		}
-		void savePatch({
-			offerings: [{ id: offeringIdResolved, uomId: nextId }],
-		});
+		else if(field === 'description') {
+			setDescription(detail.description ?? '');
+		}
+		else if(field === 'category') {
+			setCategoryId(
+				categoryIdForSlug(lookups?.categories ?? [], detail.category?.slug),
+			);
+		}
+		else if(field === 'price') {
+			setPrice(offering ? centsToDollars(offering.priceCents) : '');
+		}
+		else if(field === 'uom') {
+			setUomId(uomIdForCode(lookups?.uoms ?? [], offering?.uom.code));
+		}
+		else if(field === 'qty') {
+			setQtyOnHand(offering?.qtyOnHand ?? detail.availableQty);
+		}
+		setError(null);
 	};
 
-	const saveQty = () => {
-		if(!offeringIdResolved) {
+	saveAllRef.current = saveAll;
+	discardRef.current = discard;
+
+	useEffect(() => {
+		if(!enabled || !registerWithPage) {
+			unregisterEditor(product.id);
 			return;
 		}
-		const current = detail?.offerings.find(
-			(row) => row.id === offeringIdResolved,
-		)?.qtyOnHand;
-		if((qtyOnHand || '0') === (current || '0')) {
-			return;
-		}
-		void savePatch({
-			offerings: [{ id: offeringIdResolved, qtyOnHand: qtyOnHand || '0' }],
+		registerEditor({
+			productId: product.id,
+			dirty,
+			save: () => saveAllRef.current(),
+			discard: () => discardRef.current(),
 		});
-	};
+		return () => {
+			unregisterEditor(product.id);
+		};
+	}, [
+		dirty,
+		enabled,
+		product.id,
+		registerEditor,
+		registerWithPage,
+		unregisterEditor,
+	]);
 
 	const writeImages = async (nextUrls: string[]) => {
 		if(!detail) {
@@ -398,23 +552,25 @@ export function useInPlaceProductEdit({
 		saving,
 		imageBusy,
 		error,
+		dirty,
+		dirtyFields,
 		title,
 		setTitle,
 		description,
 		setDescription,
 		categoryId,
+		setCategoryId,
 		price,
 		setPrice,
 		uomId,
+		setUomId,
 		qtyOnHand,
 		setQtyOnHand,
 		offeringId: offeringIdResolved,
-		saveTitle,
-		saveDescription,
-		saveCategory,
-		savePrice,
-		saveUom,
-		saveQty,
+		saveAll,
+		saveField,
+		discard,
+		discardField,
 		replaceCoverImage,
 		addImage,
 		removeImageAt,
@@ -422,19 +578,11 @@ export function useInPlaceProductEdit({
 	};
 }
 
-function onCommitKey(
+function onEnterBlur(
 	event: KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>,
-	onCommit: () => void,
-	onCancel: () => void,
 ) {
 	if(event.key === 'Enter' && event.currentTarget.tagName !== 'TEXTAREA') {
 		event.preventDefault();
-		event.currentTarget.blur();
-		onCommit();
-	}
-	else if(event.key === 'Escape') {
-		event.preventDefault();
-		onCancel();
 		event.currentTarget.blur();
 	}
 }
@@ -465,7 +613,7 @@ export function InPlaceCategorySelect({
 			`}
 			disabled={!edit.ready || edit.saving}
 			onChange={(event) => {
-				edit.saveCategory(event.target.value);
+				edit.setCategoryId(event.target.value);
 			}}
 			onClick={stop}
 			value={edit.categoryId}
@@ -503,15 +651,16 @@ export function InPlaceTitleInput({
 			`}
 			disabled={!edit.ready || edit.saving}
 			id={id}
-			onBlur={edit.saveTitle}
 			onChange={(event) => edit.setTitle(event.target.value)}
 			onClick={stop}
 			onKeyDown={(event) => {
-				onCommitKey(
-					event,
-					edit.saveTitle,
-					() => edit.setTitle(edit.detail?.title ?? edit.title),
-				);
+				if(event.key === 'Escape') {
+					event.preventDefault();
+					edit.setTitle(edit.detail?.title ?? edit.title);
+					event.currentTarget.blur();
+					return;
+				}
+				onEnterBlur(event);
 			}}
 			value={edit.title}
 		/>
@@ -536,7 +685,6 @@ export function InPlaceDescriptionInput({
 				${className}
 			`}
 			disabled={!edit.ready || edit.saving}
-			onBlur={edit.saveDescription}
 			onChange={(event) => edit.setDescription(event.target.value)}
 			onClick={stop}
 			onKeyDown={(event) => {
@@ -568,24 +716,23 @@ export function InPlacePriceInput({
 			`}
 			disabled={!edit.ready || edit.saving || !edit.offeringId}
 			inputMode="decimal"
-			onBlur={edit.savePrice}
 			onChange={(event) => edit.setPrice(event.target.value)}
 			onClick={stop}
 			onKeyDown={(event) => {
-				onCommitKey(
-					event,
-					edit.savePrice,
-					() => {
-						const current = edit.detail?.offerings.find(
-							(row) => row.id === edit.offeringId,
-						)?.priceCents;
-						edit.setPrice(
-							current != null
-								? centsToDollars(current)
-								: '',
-						);
-					},
-				);
+				if(event.key === 'Escape') {
+					event.preventDefault();
+					const current = edit.detail?.offerings.find(
+						(row) => row.id === edit.offeringId,
+					)?.priceCents;
+					edit.setPrice(
+						current != null
+							? centsToDollars(current)
+							: '',
+					);
+					event.currentTarget.blur();
+					return;
+				}
+				onEnterBlur(event);
 			}}
 			value={edit.price}
 		/>
@@ -622,7 +769,7 @@ export function InPlaceUomSelect({
 			`}
 			disabled={!edit.ready || edit.saving || !edit.offeringId}
 			onChange={(event) => {
-				edit.saveUom(event.target.value);
+				edit.setUomId(event.target.value);
 			}}
 			onClick={stop}
 			value={edit.uomId}
@@ -655,20 +802,19 @@ export function InPlaceQtyInput({
 			`}
 			disabled={!edit.ready || edit.saving || !edit.offeringId}
 			inputMode="decimal"
-			onBlur={edit.saveQty}
 			onChange={(event) => edit.setQtyOnHand(event.target.value)}
 			onClick={stop}
 			onKeyDown={(event) => {
-				onCommitKey(
-					event,
-					edit.saveQty,
-					() => {
-						const current = edit.detail?.offerings.find(
-							(row) => row.id === edit.offeringId,
-						)?.qtyOnHand;
-						edit.setQtyOnHand(current ?? edit.qtyOnHand);
-					},
-				);
+				if(event.key === 'Escape') {
+					event.preventDefault();
+					const current = edit.detail?.offerings.find(
+						(row) => row.id === edit.offeringId,
+					)?.qtyOnHand;
+					edit.setQtyOnHand(current ?? edit.qtyOnHand);
+					event.currentTarget.blur();
+					return;
+				}
+				onEnterBlur(event);
 			}}
 			value={edit.qtyOnHand}
 		/>
@@ -845,46 +991,358 @@ export function InPlaceFullEditLink({
 	);
 }
 
-/** Opt into / out of field-level listing & PDP edits (off by default). */
+const TIER_OPTIONS: Array<{
+	tier: Exclude<InPlaceEditTier, 'off'>;
+	label: string;
+	hint: string;
+}> = [
+	{ tier: 'page', label: 'Page', hint: 'All fields on this page' },
+	{ tier: 'card', label: 'Card', hint: 'One product card at a time' },
+	{ tier: 'element', label: 'Field', hint: 'One field at a time' },
+];
+
+/** Opt into tiered in-place edits (off by default). */
 export function InPlaceEditToggle({
-	active,
+	tier,
 	onChange,
 	className = '',
 }: {
-	active: boolean;
-	onChange: (active: boolean) => void;
+	tier: InPlaceEditTier;
+	onChange: (tier: InPlaceEditTier) => void;
 	className?: string;
 }) {
+	const [open, setOpen] = useState(false);
+	const active = tier !== 'off';
+	const activeLabel = TIER_OPTIONS.find((row) => row.tier === tier)?.label;
+
 	return (
-		<button
-			aria-pressed={active}
-			className={
-				`
+		<div
+			className={`
+				relative
+				inline-flex
+				${className}
+			`}
+		>
+			<button
+				aria-expanded={open}
+				aria-haspopup="menu"
+				aria-pressed={active}
+				className={
+					`
+						inline-flex
+						items-center
+						gap-1.5
+						rounded-full
+						border
+						px-3
+						py-1.5
+						text-xs
+						font-semibold
+						transition
+						${active
+							? 'border-asgreen/40 bg-asgreen/10 text-asgreen'
+							: 'border-slate-300 bg-white text-ink hover:border-sky hover:text-sky'
+						}
+					`
+				}
+				onClick={() => setOpen((value) => !value)}
+				type="button"
+			>
+				<PencilIcon className="h-3.5 w-3.5 shrink-0" />
+				{active
+					? `Edit · ${activeLabel}`
+					: 'Edit'
+				}
+			</button>
+			{open
+				? (
+					<div
+						className="
+							absolute
+							right-0
+							top-full
+							z-40
+							mt-1.5
+							min-w-[12.5rem]
+							rounded-xl
+							border
+							border-slate-200
+							bg-white
+							p-1.5
+							shadow-[0_12px_28px_rgba(13,27,42,0.12)]
+						"
+						role="menu"
+					>
+						{TIER_OPTIONS.map((option) => (
+							<button
+								aria-checked={tier === option.tier}
+								className={
+									`
+										flex
+										w-full
+										flex-col
+										items-start
+										rounded-lg
+										px-2.5
+										py-2
+										text-left
+										${tier === option.tier
+											? 'bg-asgreen/10 text-asgreen'
+											: 'text-ink hover:bg-frost'
+										}
+									`
+								}
+								key={option.tier}
+								onClick={() => {
+									onChange(option.tier);
+									setOpen(false);
+								}}
+								role="menuitemradio"
+								type="button"
+							>
+								<span className="text-xs font-semibold">
+									{option.label}
+								</span>
+								<span className="text-[11px] font-medium text-slate-500">
+									{option.hint}
+								</span>
+							</button>
+						))}
+						<button
+							className="
+								mt-0.5
+								flex
+								w-full
+								items-center
+								rounded-lg
+								px-2.5
+								py-2
+								text-left
+								text-xs
+								font-semibold
+								text-slate-600
+								hover:bg-frost
+							"
+							onClick={() => {
+								onChange('off');
+								setOpen(false);
+							}}
+							role="menuitem"
+							type="button"
+						>
+							Done
+						</button>
+					</div>
+				)
+				: null
+			}
+		</div>
+	);
+}
+
+export function InPlaceSaveControls({
+	scope,
+	dirty,
+	saving,
+	onSave,
+	onDiscard,
+	className = '',
+}: {
+	scope: 'page' | 'card' | 'field';
+	dirty: boolean;
+	saving: boolean;
+	onSave: () => void;
+	onDiscard: () => void;
+	className?: string;
+}) {
+	if(!dirty && !saving) {
+		return null;
+	}
+	const label = scope === 'page'
+		? 'Save page'
+		: scope === 'card'
+			? 'Save card'
+			: 'Save field';
+	return (
+		<div
+			className={`
+				flex
+				flex-wrap
+				items-center
+				gap-2
+				${className}
+			`}
+		>
+			<button
+				className="
 					inline-flex
 					items-center
-					gap-1.5
 					rounded-full
-					border
+					bg-asgreen
 					px-3
 					py-1.5
 					text-xs
 					font-semibold
-					transition
-					${active
-						? 'border-asgreen/40 bg-asgreen/10 text-asgreen'
-						: 'border-slate-300 bg-white text-ink hover:border-sky hover:text-sky'
-					}
-					${className}
-				`
-			}
-			onClick={() => onChange(!active)}
+					text-white
+					hover:bg-asgreen/90
+					disabled:opacity-50
+				"
+				disabled={!dirty || saving}
+				onClick={onSave}
+				type="button"
+			>
+				{saving
+					? 'Saving…'
+					: label
+				}
+			</button>
+			<button
+				className="
+					inline-flex
+					items-center
+					rounded-full
+					border
+					border-slate-300
+					bg-white
+					px-3
+					py-1.5
+					text-xs
+					font-semibold
+					text-ink
+					hover:border-sky
+					hover:text-sky
+					disabled:opacity-50
+				"
+				disabled={saving || !dirty}
+				onClick={onDiscard}
+				type="button"
+			>
+				Discard
+			</button>
+		</div>
+	);
+}
+
+export function InPlacePageSaveBar() {
+	const {
+		editTier,
+		pageDirty,
+		savingPage,
+		savePage,
+		discardPage,
+	} = useEditableVendors();
+	if(editTier !== 'page' || (!pageDirty && !savingPage)) {
+		return null;
+	}
+	return (
+		<div
+			className="
+				pointer-events-none
+				fixed
+				inset-x-0
+				bottom-0
+				z-40
+				flex
+				justify-center
+				px-gutter
+				pb-4
+			"
+		>
+			<div
+				className="
+					pointer-events-auto
+					flex
+					flex-wrap
+					items-center
+					gap-3
+					rounded-2xl
+					border
+					border-slate-200
+					bg-white/95
+					px-4
+					py-3
+					shadow-[0_12px_32px_rgba(13,27,42,0.14)]
+					backdrop-blur
+				"
+			>
+				<p className="text-xs font-semibold text-ink">
+					Unsaved edits on this page
+				</p>
+				<InPlaceSaveControls
+					dirty={pageDirty}
+					onDiscard={discardPage}
+					onSave={() => {
+						void savePage();
+					}}
+					saving={savingPage}
+					scope="page"
+				/>
+			</div>
+		</div>
+	);
+}
+
+export function InPlaceFieldSaveButton({
+	edit,
+	field,
+	className = '',
+}: {
+	edit: InPlaceProductEditState;
+	field: InPlaceFieldName;
+	className?: string;
+}) {
+	const dirty = edit.dirtyFields.has(field);
+	if(!dirty) {
+		return null;
+	}
+	return (
+		<InPlaceSaveControls
+			className={className}
+			dirty={dirty}
+			onDiscard={() => {
+				edit.discardField(field);
+			}}
+			onSave={() => {
+				void edit.saveField(field);
+			}}
+			saving={edit.saving}
+			scope="field"
+		/>
+	);
+}
+
+export function InPlaceActivateHint({
+	children,
+	onActivate,
+	label,
+}: {
+	children: ReactNode;
+	onActivate: () => void;
+	label: string;
+}) {
+	return (
+		<button
+			aria-label={label}
+			className="
+				block
+				w-full
+				rounded-sm
+				border
+				border-transparent
+				bg-transparent
+				p-0
+				text-left
+				hover:border-dashed
+				hover:border-slate-300
+			"
+			onClick={(event) => {
+				event.preventDefault();
+				event.stopPropagation();
+				onActivate();
+			}}
 			type="button"
 		>
-			<PencilIcon className="h-3.5 w-3.5 shrink-0" />
-			{active
-				? 'Done editing'
-				: 'Edit mode'
-			}
+			{children}
 		</button>
 	);
 }

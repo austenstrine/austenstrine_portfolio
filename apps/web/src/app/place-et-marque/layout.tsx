@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import { CatalogHeader } from '../../components/catalog/CatalogHeader';
 import { CatalogSearchProvider } from '../../components/catalog/CatalogSearchContext';
 import { EditableVendorsProvider } from '../../components/catalog/EditableVendorsProvider';
+import { InPlacePageSaveBar } from '../../components/catalog/InPlaceProductFields';
 import { JumpToTop } from '../../components/catalog/JumpToTop';
 import { MarketplaceFooter } from '../../components/catalog/MarketplaceFooter';
 import { PardonOurDustBanner } from '../../components/catalog/PardonOurDustBanner';
@@ -51,6 +52,7 @@ export default function PlaceEtMarqueLayout({ children }: { children: ReactNode 
 						>
 							{children}
 						</main>
+						<InPlacePageSaveBar />
 						<MarketplaceFooter />
 					</WidgetPrefsProvider>
 				</EditableVendorsProvider>
