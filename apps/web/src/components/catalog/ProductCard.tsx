@@ -8,6 +8,7 @@ import { useEditableVendors } from './EditableVendorsProvider';
 import {
 	InPlaceCategorySelect,
 	InPlaceError,
+	InPlaceFullEditLink,
 	InPlaceImageActions,
 	InPlacePriceInput,
 	InPlaceQtyInput,
@@ -436,26 +437,36 @@ function SellerProductCard({
 					className="mt-2"
 					error={edit.error}
 				/>
-				<a
+				<div
 					className="
 						mt-2
-						self-start
-						text-[12px]
-						font-semibold
-						text-slate-500
-						hover:text-sky
+						flex
+						flex-wrap
+						items-center
+						gap-3
 					"
-					href={href}
 				>
-					Open
-				</a>
+					<a
+						className="
+							self-start
+							text-[12px]
+							font-semibold
+							text-slate-500
+							hover:text-sky
+						"
+						href={href}
+					>
+						Open
+					</a>
+					<InPlaceFullEditLink product={display} />
+				</div>
 			</div>
 		</article>
 	);
 }
 
 export function ProductCard({ product }: { product: CatalogProductSummary }) {
-	const { canEditVendor } = useEditableVendors();
+	const { canEditVendor, inPlaceEditActive } = useEditableVendors();
 	const [display, setDisplay] = useState(product);
 
 	useEffect(() => {
@@ -464,7 +475,7 @@ export function ProductCard({ product }: { product: CatalogProductSummary }) {
 
 	const canEdit = canEditVendor(display.vendor.id);
 
-	if(canEdit) {
+	if(canEdit && inPlaceEditActive) {
 		return (
 			<SellerProductCard
 				onUpdated={setDisplay}

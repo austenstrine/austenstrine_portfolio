@@ -845,6 +845,50 @@ export function InPlaceFullEditLink({
 	);
 }
 
+/** Opt into / out of field-level listing & PDP edits (off by default). */
+export function InPlaceEditToggle({
+	active,
+	onChange,
+	className = '',
+}: {
+	active: boolean;
+	onChange: (active: boolean) => void;
+	className?: string;
+}) {
+	return (
+		<button
+			aria-pressed={active}
+			className={
+				`
+					inline-flex
+					items-center
+					gap-1.5
+					rounded-full
+					border
+					px-3
+					py-1.5
+					text-xs
+					font-semibold
+					transition
+					${active
+						? 'border-asgreen/40 bg-asgreen/10 text-asgreen'
+						: 'border-slate-300 bg-white text-ink hover:border-sky hover:text-sky'
+					}
+					${className}
+				`
+			}
+			onClick={() => onChange(!active)}
+			type="button"
+		>
+			<PencilIcon className="h-3.5 w-3.5 shrink-0" />
+			{active
+				? 'Done editing'
+				: 'Edit mode'
+			}
+		</button>
+	);
+}
+
 export function InPlaceError({
 	error,
 	className = '',

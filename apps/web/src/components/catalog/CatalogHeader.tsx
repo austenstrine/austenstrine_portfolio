@@ -9,7 +9,9 @@ import { CaretDownIcon } from '../icons/CaretDownIcon';
 import { CartIcon } from '../icons/CartIcon';
 import { AccountMenu } from './AccountMenu';
 import { CatalogCategoryBar } from './CatalogCategoryBar';
+import { useEditableVendors } from './EditableVendorsProvider';
 import { HeaderPortraitLink } from './HeaderPortraitLink';
+import { InPlaceEditToggle } from './InPlaceProductFields';
 import { MarketplaceBrandLink } from './MarketplaceBrandLink';
 import { SellerModeChip } from './SellerModeChip';
 import { syncSiteTopBanners } from '../../lib/site-top-banners';
@@ -72,12 +74,21 @@ export function CatalogHeader() {
 		setSellerTopContextHost,
 	} = useCatalogSearch();
 	const { user, loading, signOut } = useSession();
+	const {
+		editableVendorIds,
+		inPlaceEditActive,
+		ready: editableVendorsReady,
+		setInPlaceEditActive,
+	} = useEditableVendors();
 	const [cartCount, setCartCount] = useState(0);
 	const [headerHeight, setHeaderHeight] = useState(0);
 	const [bannerOffset, setBannerOffset] = useState(0);
 	const [headerHidden, setHeaderHidden] = useState(false);
 	const lastScrollY = useRef(0);
 	const sellerChrome = pathUsesSellerChrome(pathname);
+	const showInPlaceEditToggle = !sellerChrome
+		&& editableVendorsReady
+		&& editableVendorIds.size > 0;
 	// Buyer chrome (incl. /place-et-marque/<vendor>) keeps the department bar.
 	// Search hides it — filters live on the page instead.
 	const wantDepartmentBar =
@@ -258,6 +269,16 @@ export function CatalogHeader() {
 								setExtras={setHeaderDesktopExtras}
 							/>
 						</div>
+						{showInPlaceEditToggle
+							? (
+								<InPlaceEditToggle
+									active={inPlaceEditActive}
+									className="hidden shrink-0 md:inline-flex"
+									onChange={setInPlaceEditActive}
+								/>
+							)
+							: null
+						}
 						<nav
 							className="
 								ml-auto
@@ -370,11 +391,31 @@ export function CatalogHeader() {
 						</nav>
 					</div>
 					<div className="md:hidden">
-						<HeaderSearch
-							inputId="store-search-mobile"
-							inputRef={headerMobileRef}
-							setExtras={setHeaderMobileExtras}
-						/>
+						<div
+							className="
+								flex
+								min-w-0
+								flex-wrap
+								items-center
+								gap-2
+							"
+						>
+							<HeaderSearch
+								inputId="store-search-mobile"
+								inputRef={headerMobileRef}
+								setExtras={setHeaderMobileExtras}
+							/>
+							{showInPlaceEditToggle
+								? (
+									<InPlaceEditToggle
+										active={inPlaceEditActive}
+										className="shrink-0"
+										onChange={setInPlaceEditActive}
+									/>
+								)
+								: null
+							}
+						</div>
 					</div>
 				</div>
 				{sellerChrome
