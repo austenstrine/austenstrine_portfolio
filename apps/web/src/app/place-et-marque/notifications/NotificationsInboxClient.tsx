@@ -3,7 +3,6 @@
 import { Suspense, useEffect, useRef, useState } from 'react';
 import { RequireAccess } from '../../../components/auth/RequireAccess';
 import { ArrowRightIcon } from '../../../components/icons/ArrowRightIcon';
-import { BellIcon } from '../../../components/icons/BellIcon';
 import {
 	listNotifications,
 	markAllNotificationsRead,
@@ -114,6 +113,28 @@ function NotificationsInboxInner() {
 		}
 	}
 
+	function applyRead(updated: NotificationDto) {
+		setItems((current) =>
+			current.map((row) =>
+				row.id === updated.id
+					? updated
+					: row,
+			),
+		);
+	}
+
+	function markReadIfNeeded(item: NotificationDto) {
+		if(item.readAt || markedRef.current.has(item.id)) {
+			return;
+		}
+		markedRef.current.add(item.id);
+		void markNotificationRead(item.id)
+			.then(applyRead)
+			.catch(() => {
+				markedRef.current.delete(item.id);
+			});
+	}
+
 	const unreadCount = items.filter((item) => !item.readAt).length;
 
 	return (
@@ -128,55 +149,20 @@ function NotificationsInboxInner() {
 				className="
 					flex
 					flex-wrap
-					items-start
+					items-center
 					justify-between
 					gap-3
 				"
 			>
-				<div
+				<h1
 					className="
-						flex
-						min-w-0
-						items-start
-						gap-3
+						text-2xl
+						font-semibold
+						text-ink
 					"
 				>
-					<span
-						className="
-							mt-1
-							inline-flex
-							size-9
-							shrink-0
-							items-center
-							justify-center
-							rounded-full
-							bg-sky/10
-							text-sky
-						"
-					>
-						<BellIcon className="h-4 w-4" />
-					</span>
-					<div className="min-w-0">
-						<h1
-							className="
-								text-2xl
-								font-semibold
-								text-ink
-							"
-						>
-							Notifications
-						</h1>
-						<p
-							className="
-								mt-1
-								text-sm
-								text-slate-600
-							"
-						>
-							Unread first. Read items stay here for later.
-						</p>
-					</div>
-				</div>
+					Notifications
+				</h1>
 				{unreadCount > 0
 					? (
 						<button
@@ -213,7 +199,7 @@ function NotificationsInboxInner() {
 							text-slate-500
 						"
 					>
-						Loading notifications…
+						Loading…
 					</p>
 				)
 				: error
@@ -233,14 +219,6 @@ function NotificationsInboxInner() {
 							<p
 								className="
 									mt-8
-									rounded-xl
-									border
-									border-dashed
-									border-slate-200
-									bg-white
-									px-4
-									py-8
-									text-center
 									text-sm
 									text-slate-500
 								"
@@ -252,53 +230,50 @@ function NotificationsInboxInner() {
 							<ul
 								className="
 									mt-6
-									flex
-									flex-col
-									gap-2
+									divide-y
+									divide-slate-200
+									border-y
+									border-slate-200
 								"
 							>
 								{items.map((item) => {
 									const isActive = item.id === activeId;
 									const unread = !item.readAt;
-									return (
-										<li
-											id={`notification-${item.id}`}
-											key={item.id}
-										>
-											<article
+									const rowClass = `
+										flex
+										w-full
+										items-start
+										gap-3
+										px-1
+										py-3
+										text-left
+										${isActive
+											? 'bg-sky/5 ring-2 ring-inset ring-sky/25'
+											: ''
+										}
+									`.trim();
+									const inner = (
+										<>
+											<span
+												aria-hidden="true"
 												className={
-													isActive
+													unread
 														? `
-															rounded-xl
-															border
-															border-sky/40
-															bg-sky/5
-															px-4
-															py-3
-															shadow-sm
-															ring-2
-															ring-sky/20
+															mt-2
+															size-2
+															shrink-0
+															rounded-full
+															bg-signal
 														`
-														: unread
-															? `
-																rounded-xl
-																border
-																border-asgreen/20
-																bg-asgreen/10
-																px-4
-																py-3
-															`
-															: `
-																rounded-xl
-																border
-																border-slate-200
-																bg-white
-																px-4
-																py-3
-															`
+														: `
+															mt-2
+															size-2
+															shrink-0
+														`
 												}
-											>
-												<div
+											/>
+											<span className="min-w-0 flex-1">
+												<span
 													className="
 														flex
 														flex-wrap
@@ -307,13 +282,13 @@ function NotificationsInboxInner() {
 														gap-2
 													"
 												>
-													<h2
+													<span
 														className={
 															unread
 																? `
 																	text-base
 																	font-semibold
-																	text-sky
+																	text-ink
 																`
 																: `
 																	text-base
@@ -323,9 +298,10 @@ function NotificationsInboxInner() {
 														}
 													>
 														{item.title}
-													</h2>
+													</span>
 													<time
 														className="
+															shrink-0
 															text-xs
 															text-slate-500
 														"
@@ -333,65 +309,96 @@ function NotificationsInboxInner() {
 													>
 														{formatCreatedAt(item.createdAt)}
 													</time>
-												</div>
+												</span>
 												{item.body
 													? (
-														<p
+														<span
 															className="
-																mt-1.5
+																mt-1
+																block
 																text-sm
 																text-slate-600
 															"
 														>
 															{item.body}
-														</p>
+														</span>
 													)
 													: null
 												}
-												{item.href
+											</span>
+											{item.href
+												? (
+													<ArrowRightIcon
+														className="
+															mt-1.5
+															h-3.5
+															w-3.5
+															shrink-0
+															text-asgreen
+														"
+													/>
+												)
+												: null
+											}
+										</>
+									);
+
+									return (
+										<li
+											id={`notification-${item.id}`}
+											key={item.id}
+										>
+											{item.href
+												? (
+													<a
+														aria-current={
+															isActive
+																? 'true'
+																: undefined
+														}
+														className={
+															`${rowClass} hover:bg-slate-50`
+														}
+														href={item.href}
+														onClick={() => {
+															markReadIfNeeded(item);
+														}}
+													>
+														{inner}
+													</a>
+												)
+												: unread
 													? (
-														<a
-															className="
-																mt-3
-																inline-flex
-																items-center
-																gap-1.5
-																text-sm
-																font-semibold
-																text-asgreen
-																hover:underline
-															"
-															href={item.href}
+														<button
+															aria-current={
+																isActive
+																	? 'true'
+																	: undefined
+															}
+															className={
+																`${rowClass} hover:bg-slate-50`
+															}
 															onClick={() => {
-																if(unread) {
-																	void markNotificationRead(item.id)
-																		.then((updated) => {
-																			setItems((current) =>
-																				current.map((row) =>
-																					row.id === updated.id
-																						? updated
-																						: row,
-																				),
-																			);
-																		})
-																		.catch(() => {
-																			// Navigation still proceeds.
-																		});
-																}
+																markReadIfNeeded(item);
 															}}
+															type="button"
 														>
-															Open
-															<ArrowRightIcon
-																className="
-																	h-3.5
-																	w-3.5
-																"
-															/>
-														</a>
+															{inner}
+														</button>
 													)
-													: null
-												}
-											</article>
+													: (
+														<article
+															aria-current={
+																isActive
+																	? 'true'
+																	: undefined
+															}
+															className={rowClass}
+														>
+															{inner}
+														</article>
+													)
+											}
 										</li>
 									);
 								})}
@@ -411,7 +418,7 @@ export default function NotificationsInboxClient() {
 			<Suspense
 				fallback={
 					<p className="text-sm text-slate-500">
-						Loading notifications…
+						Loading…
 					</p>
 				}
 			>
