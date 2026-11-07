@@ -571,29 +571,6 @@ export function CatalogSearchExperience({
 					)
 					: null}
 
-				{!hideVendorIdentityChrome
-					? (
-						<p className="mt-6 flex flex-wrap gap-3 text-sm lg:mt-8">
-							<a
-								className="
-									rounded
-									font-semibold
-									text-sky
-									underline
-									underline-offset-2
-									focus:outline
-									focus:outline-2
-									focus:outline-offset-2
-									focus:outline-sky
-								"
-								href="#catalog-results"
-							>
-								Skip to results
-							</a>
-						</p>
-					)
-					: null}
-
 				<div className="mt-3 grid gap-10 lg:grid-cols-[240px_minmax(0,1fr)]">
 					<aside
 						className="
