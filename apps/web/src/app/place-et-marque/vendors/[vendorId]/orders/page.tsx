@@ -6,11 +6,11 @@ import {
 	useDeferredValue,
 	useEffect,
 	useMemo,
+	useRef,
 	useState,
 } from 'react';
 import {
 	formatMoney,
-	formatOrderStatus,
 	listVendorOrders,
 	refundVendorOrder,
 	shipVendorOrder,
@@ -26,6 +26,7 @@ import { OrderSupportCode } from '../../../../../components/orders/OrderSupportC
 import {
 	ORDER_STATUS_FILTERS,
 	countOrdersNeedingShip,
+	displayOrderStatus,
 	filterOrders,
 	formatShipTo,
 	orderNeedsShipping,
@@ -55,6 +56,7 @@ function VendorOrdersPageContent() {
 	const [orders, setOrders] = useState<PlaceEtMarqueOrder[]>([]);
 	const [error, setError] = useState<string | null>(null);
 	const [busyId, setBusyId] = useState<string | null>(null);
+	const busyRef = useRef(false);
 	const [confirmRefundId, setConfirmRefundId] = useState<string | null>(null);
 	const [filterText, setFilterText] = useState('');
 	const [statusFilter, setStatusFilter] = useState<OrderStatusFilter>('all');
@@ -99,9 +101,10 @@ function VendorOrdersPageContent() {
 	}, [user, vendorRef]);
 
 	async function onShip(orderId: string) {
-		if(!vendorId) {
+		if(!vendorId || busyRef.current) {
 			return;
 		}
+		busyRef.current = true;
 		setBusyId(orderId);
 		setError(null);
 		setConfirmRefundId(null);
@@ -117,14 +120,16 @@ function VendorOrdersPageContent() {
 			);
 		}
 		finally {
+			busyRef.current = false;
 			setBusyId(null);
 		}
 	}
 
 	async function onRefund(order: PlaceEtMarqueOrder) {
-		if(!vendorId) {
+		if(!vendorId || busyRef.current) {
 			return;
 		}
+		busyRef.current = true;
 		setBusyId(order.id);
 		setError(null);
 		try {
@@ -142,6 +147,7 @@ function VendorOrdersPageContent() {
 			);
 		}
 		finally {
+			busyRef.current = false;
 			setBusyId(null);
 		}
 	}
@@ -329,7 +335,7 @@ function VendorOrdersPageContent() {
 															{order.orderRef}
 														</p>
 														<p className="text-sm text-slate-700">
-															{formatOrderStatus(order.status)}
+															{displayOrderStatus(order)}
 															{order.buyerEmail
 																? ` · ${order.buyerEmail}`
 																: ''

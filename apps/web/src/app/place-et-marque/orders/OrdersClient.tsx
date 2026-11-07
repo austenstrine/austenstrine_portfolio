@@ -10,7 +10,6 @@ import {
 	useState,
 } from 'react';
 import {
-	formatOrderStatus,
 	listBuyerOrders,
 	type PlaceEtMarqueOrder,
 } from '../../../lib/checkout-api';
@@ -20,6 +19,7 @@ import { PageBottomPanePortal } from '../../../components/catalog/CatalogSearchC
 import { OrderMoneySummary } from '../../../components/orders/OrderMoneySummary';
 import {
 	ORDER_STATUS_FILTERS,
+	displayOrderStatus,
 	filterOrders,
 	type OrderStatusFilter,
 } from '../../../components/orders/order-display';
@@ -257,7 +257,7 @@ function OrdersContent() {
 														{order.orderRef}
 													</p>
 													<p className="text-sm text-slate-600">
-														{formatOrderStatus(order.status)} ·{' '}
+														{displayOrderStatus(order)} ·{' '}
 														{new Date(order.createdAt).toLocaleString()}
 													</p>
 												</div>

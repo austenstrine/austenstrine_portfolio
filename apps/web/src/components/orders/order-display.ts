@@ -1,4 +1,7 @@
-import type { PlaceEtMarqueOrder } from '../../lib/checkout-api';
+import {
+	formatOrderStatus,
+	type PlaceEtMarqueOrder,
+} from '../../lib/checkout-api';
 
 export type OrderStatusFilter =
 	| 'all'
@@ -42,6 +45,22 @@ export function orderNeedsShipping(order: PlaceEtMarqueOrder): boolean {
 	return order.status === 'PAID' || order.status === 'FULFILLING';
 }
 
+/** Cancel/refund APIs land as REFUNDED; cancel reasons also set cancelledAt. */
+export function orderWasCancelled(order: PlaceEtMarqueOrder): boolean {
+	return Boolean(order.cancelledAt) || order.status === 'CANCELLED';
+}
+
+export function orderWasRefundedOnly(order: PlaceEtMarqueOrder): boolean {
+	return order.status === 'REFUNDED' && !order.cancelledAt;
+}
+
+export function displayOrderStatus(order: PlaceEtMarqueOrder): string {
+	if(orderWasCancelled(order)) {
+		return 'Cancelled';
+	}
+	return formatOrderStatus(order.status);
+}
+
 export function orderMatchesStatusFilter(
 	order: PlaceEtMarqueOrder,
 	filter: OrderStatusFilter,
@@ -56,10 +75,10 @@ export function orderMatchesStatusFilter(
 		return order.status === 'SHIPPED';
 	}
 	if(filter === 'refunded') {
-		return order.status === 'REFUNDED';
+		return orderWasRefundedOnly(order);
 	}
 	if(filter === 'cancelled') {
-		return order.status === 'CANCELLED';
+		return orderWasCancelled(order);
 	}
 	return true;
 }

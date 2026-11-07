@@ -1,11 +1,10 @@
 'use client';
 
 import { useParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
 	cancelBuyerOrder,
 	formatMoney,
-	formatOrderStatus,
 	getBuyerOrder,
 	type PlaceEtMarqueOrder,
 } from '../../../../lib/checkout-api';
@@ -14,7 +13,10 @@ import { BackLink } from '../../../../components/BackLink';
 import { OrderConfirmActions } from '../../../../components/orders/OrderConfirmActions';
 import { OrderMoneySummary } from '../../../../components/orders/OrderMoneySummary';
 import { OrderSupportCode } from '../../../../components/orders/OrderSupportCode';
-import { formatShipTo } from '../../../../components/orders/order-display';
+import {
+	displayOrderStatus,
+	formatShipTo,
+} from '../../../../components/orders/order-display';
 import { RefundIcon } from '../../../../components/icons/RefundIcon';
 
 export default function OrderDetailPage() {
@@ -23,6 +25,7 @@ export default function OrderDetailPage() {
 	const [order, setOrder] = useState<PlaceEtMarqueOrder | null>(null);
 	const [error, setError] = useState<string | null>(null);
 	const [busy, setBusy] = useState(false);
+	const busyRef = useRef(false);
 	const [confirmCancel, setConfirmCancel] = useState(false);
 	const [cancelNote, setCancelNote] = useState('');
 
@@ -47,10 +50,11 @@ export default function OrderDetailPage() {
 	}, [user, params.orderId]);
 
 	async function onCancel() {
-		if(!params.orderId) {
+		if(!params.orderId || busyRef.current) {
 			return;
 		}
 
+		busyRef.current = true;
 		setBusy(true);
 		setError(null);
 		try {
@@ -70,6 +74,7 @@ export default function OrderDetailPage() {
 			);
 		}
 		finally {
+			busyRef.current = false;
 			setBusy(false);
 		}
 	}
@@ -150,7 +155,7 @@ export default function OrderDetailPage() {
 										text-slate-600
 									"
 								>
-									{formatOrderStatus(order.status)}
+									{displayOrderStatus(order)}
 									{order.shippingLabel
 										? ` · ${order.shippingLabel}`
 										: ''
