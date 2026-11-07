@@ -16,6 +16,7 @@ import { InventoryService } from './inventory/inventory.service';
 import { VendorAccessService } from './vendor-access.service';
 import { VendorAppPasswordService } from './vendor-app-password.service';
 import { VendorInviteService } from './vendor-invite.service';
+import { VendorMemberService } from './vendor-member.service';
 import { DemoJoinService } from './demo-join.service';
 import { UomMergeService } from './uom-merge.service';
 import { JsonSeedBootstrapService } from './json-seed-bootstrap.service';
@@ -35,6 +36,7 @@ import { VendorService } from './vendor.service';
 		VendorAccessService,
 		VendorService,
 		VendorInviteService,
+		VendorMemberService,
 		DemoJoinService,
 		UomMergeService,
 		VendorAppPasswordService,

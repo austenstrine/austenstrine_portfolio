@@ -41,6 +41,7 @@ import { CreateVendorAppPasswordDto } from './dto/create-vendor-app-password.dto
 import { CreateVendorDto } from './dto/create-vendor.dto';
 import { UpdateVendorProfileDto } from './dto/update-vendor-profile.dto';
 import { CreateVendorInviteDto } from './dto/create-vendor-invite.dto';
+import { UpdateVendorMemberRoleDto } from './dto/update-vendor-member-role.dto';
 import { JoinDemoDto } from './dto/join-demo.dto';
 import { DeleteCatalogProductsDto } from './dto/delete-catalog-products.dto';
 import { RequestCategoryDto } from './dto/request-category.dto';
@@ -56,6 +57,7 @@ import { CatalogImportService } from './import/catalog-import.service';
 import { InventoryService } from './inventory/inventory.service';
 import { VendorAppPasswordService } from './vendor-app-password.service';
 import { VendorInviteService } from './vendor-invite.service';
+import { VendorMemberService } from './vendor-member.service';
 import { DemoJoinService } from './demo-join.service';
 import { UomMergeService } from './uom-merge.service';
 import { VendorService } from './vendor.service';
@@ -72,6 +74,7 @@ export class CatalogController {
 		private readonly inventory: InventoryService,
 		private readonly vendors: VendorService,
 		private readonly invites: VendorInviteService,
+		private readonly members: VendorMemberService,
 		private readonly demoJoin: DemoJoinService,
 		private readonly uomMerges: UomMergeService,
 		private readonly appPasswords: VendorAppPasswordService,
@@ -333,6 +336,36 @@ export class CatalogController {
 		@Param('inviteId') inviteId: string,
 	) {
 		return this.invites.revokeInvite(req.user!.id, vendorId, inviteId);
+	}
+
+	@UseGuards(JwtAuthGuard)
+	@Patch('vendors/:vendorId/members/:memberUserId')
+	updateVendorMemberRole(
+		@Req() req: AuthedRequest,
+		@Param('vendorId') vendorId: string,
+		@Param('memberUserId') memberUserId: string,
+		@Body() dto: UpdateVendorMemberRoleDto,
+	) {
+		return this.members.updateMemberRole(
+			req.user!.id,
+			vendorId,
+			memberUserId,
+			dto.role,
+		);
+	}
+
+	@UseGuards(JwtAuthGuard)
+	@Delete('vendors/:vendorId/members/:memberUserId')
+	removeVendorMember(
+		@Req() req: AuthedRequest,
+		@Param('vendorId') vendorId: string,
+		@Param('memberUserId') memberUserId: string,
+	) {
+		return this.members.removeMember(
+			req.user!.id,
+			vendorId,
+			memberUserId,
+		);
 	}
 
 	@Get('invites/peek')
