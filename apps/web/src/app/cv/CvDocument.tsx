@@ -453,28 +453,6 @@ export function CvDocument() {
 						</li>
 					</ul>
 				</div>
-				<div className="cv-job">
-					<div className="cv-job-header">
-						<span className="cv-job-title">
-							Cast member
-						</span>
-						<span className="cv-job-dates">
-							2014
-						</span>
-					</div>
-					<div className="cv-job-company">
-						<em>
-							The King and I
-						</em>
-						{' '}
-						· Cedar Valley Community Theater
-					</div>
-					<ul>
-						<li>
-							Rehearsals, ballet scenes, stage-manager notes, promo video, costumes, and related production work.
-						</li>
-					</ul>
-				</div>
 				<table className="cv-additional">
 					<tbody>
 						<tr>
