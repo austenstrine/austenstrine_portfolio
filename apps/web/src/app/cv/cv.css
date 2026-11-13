@@ -310,6 +310,18 @@ html:has(.cv-page) body {
 	font-size: 10pt;
 }
 
+.cv-page .cv-job a,
+.cv-page .cv-additional a {
+	color: #0d1b2a;
+	text-decoration: underline;
+	text-underline-offset: 0.12em;
+}
+
+.cv-page .cv-job a:hover,
+.cv-page .cv-additional a:hover {
+	color: var(--asgreen);
+}
+
 .cv-page .cv-additional {
 	width: 100%;
 	border-collapse: collapse;

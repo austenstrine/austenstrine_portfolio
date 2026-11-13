@@ -381,6 +381,182 @@ export function CvDocument() {
 
 			<section className="cv-section">
 				<h2 className="cv-section-title">
+					Extracurriculars
+				</h2>
+				<div className="cv-job">
+					<div className="cv-job-header">
+						<span className="cv-job-title">
+							Billy Crocker (lead)
+						</span>
+						<span className="cv-job-dates">
+							Jul–Aug 2013
+						</span>
+					</div>
+					<div className="cv-job-company">
+						<em>
+							Anything Goes
+						</em>
+						{' '}
+						· Chico Theater Company
+					</div>
+					<ul>
+						<li>
+							Lead role as Billy Crocker; press:
+							{' '}
+							<a
+								href="https://www.timesheraldonline.com/2013/07/18/anything-goes-at-chico-theater/"
+								target="_blank"
+								rel="noopener noreferrer"
+							>
+								Times Herald Online
+							</a>
+						</li>
+					</ul>
+				</div>
+				<div className="cv-job">
+					<div className="cv-job-header">
+						<span className="cv-job-title">
+							Marius (lead)
+						</span>
+						<span className="cv-job-dates">
+							Oct 2013
+						</span>
+					</div>
+					<div className="cv-job-company">
+						<em>
+							Les Misérables
+						</em>
+						{' '}
+						· California Regional Theatre
+					</div>
+					<ul>
+						<li>
+							Lead role as Marius; press:
+							{' '}
+							<a
+								href="https://www.chicoer.com/2013/10/10/french-revolution-experienced-in-les-miserables/"
+								target="_blank"
+								rel="noopener noreferrer"
+							>
+								Chico Enterprise-Record
+							</a>
+							{' '}
+							(
+							<a
+								href="https://web.archive.org/web/20240408180702/https://www.chicoer.com/2013/10/10/french-revolution-experienced-in-les-miserables/"
+								target="_blank"
+								rel="noopener noreferrer"
+							>
+								archive
+							</a>
+							)
+						</li>
+					</ul>
+				</div>
+				<div className="cv-job">
+					<div className="cv-job-header">
+						<span className="cv-job-title">
+							Cast member
+						</span>
+						<span className="cv-job-dates">
+							2014
+						</span>
+					</div>
+					<div className="cv-job-company">
+						<em>
+							The King and I
+						</em>
+						{' '}
+						· Cedar Valley Community Theater
+					</div>
+					<ul>
+						<li>
+							Rehearsals, ballet scenes, stage-manager notes, promo video, costumes, and related production work.
+						</li>
+					</ul>
+				</div>
+				<table className="cv-additional">
+					<tbody>
+						<tr>
+							<td>
+								<div>
+									High school choir
+								</div>
+							</td>
+							<td>
+								Madrigals, a cappella, and Sac Street Boys
+							</td>
+							<td>
+								High school
+							</td>
+						</tr>
+						<tr>
+							<td>
+								<div>
+									Choir tours
+								</div>
+							</td>
+							<td>
+								New York City and San Francisco (2007, 2009); Portland, Seattle, and Northwest coast (2010–2012) — high school and college
+							</td>
+							<td>
+								2007–2012
+							</td>
+						</tr>
+						<tr>
+							<td>
+								<div>
+									Drama Club President
+								</div>
+								<div className="cv-additional-org">
+									Simpson University
+								</div>
+							</td>
+							<td>
+								President (2011); Vice-President (2010)
+							</td>
+							<td>
+								2010–2011
+							</td>
+						</tr>
+						<tr>
+							<td>
+								<div>
+									Theater & Worship leadership
+								</div>
+								<div className="cv-additional-org">
+									Campus City Connection
+								</div>
+							</td>
+							<td>
+								Leadership in Theater and Worship; drama team including script writing into early 2013
+							</td>
+							<td>
+								2012–2013
+							</td>
+						</tr>
+						<tr>
+							<td>
+								<div>
+									Community service
+								</div>
+								<div className="cv-additional-org">
+									Campus City Connection
+								</div>
+							</td>
+							<td>
+								Weekly food service to the homeless (2012); Torres Shelter cooking and serving for ~65 people (Dec 2013); comedy night fundraiser for an Africa missions trip (2011)
+							</td>
+							<td>
+								2011–2013
+							</td>
+						</tr>
+					</tbody>
+				</table>
+			</section>
+
+			<section className="cv-section">
+				<h2 className="cv-section-title">
 					Skills
 				</h2>
 				<div className="cv-skills-grid">
