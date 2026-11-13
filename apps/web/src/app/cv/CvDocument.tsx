@@ -226,7 +226,7 @@ export function CvDocument() {
 							Tech Support
 						</span>
 						<span className="cv-job-dates">
-							Mar 2016 – Sep 2017 · 1 yr 7 mos
+							Mar 2016 – Oct 2017 · 1 yr 7 mos
 						</span>
 					</div>
 					<div className="cv-job-company">
@@ -287,17 +287,49 @@ export function CvDocument() {
 						<tr>
 							<td>
 								<div>
-									House Management
+									House Manager
 								</div>
 								<div className="cv-additional-org">
 									Utah Shakespeare Festival
 								</div>
 							</td>
 							<td>
-								Guest experience, ushers, seating, and accessibility
+								Paid house management; guest experience, ushers, seating, and accessibility
 							</td>
 							<td>
 								Jun–Nov 2015
+							</td>
+						</tr>
+						<tr>
+							<td>
+								<div>
+									Customer Service Representative
+								</div>
+								<div className="cv-additional-org">
+									Convergys
+								</div>
+							</td>
+							<td>
+								Inbound Cingular and AT&amp;T cell-phone and billing support; payments and account administration
+							</td>
+							<td>
+								2014
+							</td>
+						</tr>
+						<tr>
+							<td>
+								<div>
+									Sales Associate
+								</div>
+								<div className="cv-additional-org">
+									Local Verifications
+								</div>
+							</td>
+							<td>
+								Inbound and outbound calls expanding Google Places profiles; sales and marketing
+							</td>
+							<td>
+								2014
 							</td>
 						</tr>
 						<tr>
@@ -386,6 +418,28 @@ export function CvDocument() {
 				<div className="cv-job">
 					<div className="cv-job-header">
 						<span className="cv-job-title">
+							Cast / Participant
+						</span>
+						<span className="cv-job-dates">
+							Late 2015 – early 2016
+						</span>
+					</div>
+					<div className="cv-job-company">
+						<em>
+							The Wedding Singer
+						</em>
+						{' '}
+						· Cedar Valley Community Theatre
+					</div>
+					<ul>
+						<li>
+							Cast member; rehearsals through the run; scripts and scores returned to Music Theatre International after closing.
+						</li>
+					</ul>
+				</div>
+				<div className="cv-job">
+					<div className="cv-job-header">
+						<span className="cv-job-title">
 							Billy Crocker (lead)
 						</span>
 						<span className="cv-job-dates">
@@ -455,6 +509,38 @@ export function CvDocument() {
 				</div>
 				<table className="cv-additional">
 					<tbody>
+						<tr>
+							<td>
+								<div>
+									Warehouse Volunteer
+								</div>
+								<div className="cv-additional-org">
+									Iron County Care and Share
+								</div>
+							</td>
+							<td>
+								Stock and Sort: food warehouse sorting, restocking, and prep for group volunteers (Wednesdays 3–5 pm, Cedar City / Enoch)
+							</td>
+							<td>
+								2018
+							</td>
+						</tr>
+						<tr>
+							<td>
+								<div>
+									Usher
+								</div>
+								<div className="cv-additional-org">
+									Utah Shakespeare Festival
+								</div>
+							</td>
+							<td>
+								Volunteered as usher for multiple seasons before and after the paid House Manager role, including 2016 and 2017
+							</td>
+							<td>
+								2016–2017
+							</td>
+						</tr>
 						<tr>
 							<td>
 								<div>

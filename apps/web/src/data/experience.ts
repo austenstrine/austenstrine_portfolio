@@ -100,7 +100,7 @@ export const professionalExperience: ExperienceRole[] = [
 		kind: 'software',
 		title: 'Tech Support',
 		organization: 'Infowest Inc.',
-		dates: 'Mar 2016 – Sep 2017 · 1 yr 7 mos',
+		dates: 'Mar 2016 – Oct 2017 · 1 yr 7 mos',
 		location: 'Cedar City, UT',
 		bullets: [
 			'Troubleshot Ubiquiti WISP equipment at customer and tower levels; router setup, PPPoE, IMAP/POP email, VoIP ATA.',
@@ -110,12 +110,33 @@ export const professionalExperience: ExperienceRole[] = [
 	{
 		id: 'shakespeare',
 		kind: 'non-software',
-		title: 'House Management',
+		title: 'House Manager',
 		organization: 'Utah Shakespeare Festival',
 		dates: 'Jun–Nov 2015',
 		location: 'Cedar City, UT',
 		bullets: [
-			'Guest experience, ushers, seating, and accessibility for assigned shows.',
+			'Paid house management; guest experience, ushers, seating, and accessibility for assigned shows.',
+		],
+	},
+	{
+		id: 'convergys',
+		kind: 'non-software',
+		title: 'Customer Service Representative',
+		organization: 'Convergys',
+		dates: '2014',
+		location: 'Cedar City / St. George, UT area',
+		bullets: [
+			'Answered inbound Cingular and AT&T calls; cell-phone and billing support, payments, and account administration.',
+		],
+	},
+	{
+		id: 'local-verifications',
+		kind: 'non-software',
+		title: 'Sales Associate',
+		organization: 'Local Verifications',
+		dates: '2014',
+		bullets: [
+			'Inbound and outbound calls to expand Google Places profiles; trained in sales and marketing techniques.',
 		],
 	},
 	{
