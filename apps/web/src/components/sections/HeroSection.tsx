@@ -1,5 +1,5 @@
 import { CdnImg } from '../CdnImg';
-import { JOIN_DEMO_HREF, SITE_HEADLINE } from '../../lib/site';
+import { SITE_HEADLINE } from '../../lib/site';
 
 export function HeroSection() {
 	return (
@@ -142,9 +142,9 @@ export function HeroSection() {
 								hover:bg-white/10
 								max-[399px]:px-4
 							"
-							href={JOIN_DEMO_HREF}
+							href="#featured-build"
 						>
-							Join Place et Marque demo
+							explore a demo of my skills
 						</a>
 						<a
 							className="
