@@ -430,9 +430,13 @@ export function CvDocument() {
 						<div className="cv-job-company">
 							{certificate.org}
 						</div>
-						<div className="cv-job-meta">
-							{certificate.location}
-						</div>
+						{certificate.location
+							? (
+								<div className="cv-job-meta">
+									{certificate.location}
+								</div>
+							)
+							: null}
 						{certificate.bullets.length > 0
 							? (
 								<ul>

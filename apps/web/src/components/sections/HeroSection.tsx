@@ -91,20 +91,24 @@ export function HeroSection() {
 							text-slate-100
 						"
 					>
-						I&apos;ve spent six and a half years as a product, catalog, and search
-						software engineer developing several production e-commerce sites. I live
-						in Parowan, Utah. I&apos;m
-						in Murray Mondays and Tuesdays, and I&apos;m moving there full-time in
-						January 2027. I&apos;m open to on-site and hybrid roles in the Salt
-						Lake Valley.
+						I&apos;m a Senior Product, Catalog, and Search Software Engineer who has
+						been programming (and loving it) for the past 10 years (since 2016),
+						including 6 1/2 years of professional experience developing several
+						production e-commerce sites. I live in Parowan, Utah. I&apos;m in Murray
+						Mondays and Tuesdays, and I&apos;m moving there full-time in January
+						2027. I&apos;m open to on-site and hybrid roles in the Salt Lake Valley.
 					</p>
 					<div
 						className="
 							mt-8
 							flex
-							flex-wrap
-							justify-end
+							flex-col
+							items-stretch
 							gap-3
+							sm:flex-row
+							sm:flex-wrap
+							sm:justify-end
+							sm:items-center
 						"
 					>
 						<a
@@ -114,6 +118,7 @@ export function HeroSection() {
 								bg-white
 								px-6
 								py-3
+								text-center
 								text-sm
 								font-semibold
 								text-ink
@@ -134,6 +139,7 @@ export function HeroSection() {
 								border-white/60
 								px-6
 								py-3
+								text-center
 								text-sm
 								font-semibold
 								text-white
@@ -154,6 +160,7 @@ export function HeroSection() {
 								border-white/60
 								px-6
 								py-3
+								text-center
 								text-sm
 								font-semibold
 								text-white
@@ -164,7 +171,7 @@ export function HeroSection() {
 							"
 							href="#contact"
 						>
-							Email
+							Contact
 						</a>
 					</div>
 				</div>

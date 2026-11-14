@@ -28,6 +28,8 @@ git -C ~/Development/port-broadcast-bash checkout master && git -C ~/Development
 dssh launch                 # preferred stack bring-up
 dssh launch --dry-run       # map + launcher dry-run (no GUI)
 dssh launch --map-only      # refresh map only
+dssh land                   # opposite of launch: rlog off + containers/infra + hop listeners
+dssh land --dry-run         # print plan only
 
 # Equivalent hand call:
 ./scripts/port-broadcast-launcher --dry-run --config ./scripts/port-broadcast-stack.conf --confirm

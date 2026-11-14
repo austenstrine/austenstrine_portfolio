@@ -184,6 +184,7 @@ function PeekToggle({
 						items-center
 						justify-start
 						gap-1.5
+						text-left
 						text-sm
 						leading-none
 						text-slate-400
@@ -469,7 +470,9 @@ function SaveSelectedPdfButton({
 }
 
 export function ExperienceSection() {
-	const [selectedKinds, setSelectedKinds] = useState<ExperienceKind[]>([]);
+	const [selectedKinds, setSelectedKinds] = useState<ExperienceKind[]>([
+		'software',
+	]);
 	const [peekedIds, setPeekedIds] = useState<string[]>([]);
 	const [filtersOpen, setFiltersOpen] = useState(true);
 	const sectionRef = useRef<HTMLElement>(null);
@@ -587,12 +590,13 @@ export function ExperienceSection() {
 				measureBox();
 			}
 
-			// Apply sticky width first, then measure the full rendered
-			// bar (includes + count + print) so the spacer matches.
-			// offsetHeight ignores translateY. Keep spacer at full bar
-			// height while hidden — collapsing it to 0 shifts layout
-			// under the stick point and scroll-anchors fight auto-hide
-			// (show → grow spacer → +scrollY → hide → shrink → …).
+			// Reserve the in-flow bar height on the slot BEFORE taking the
+			// bar out of flow. Reading offsetHeight after position:fixed
+			// forces a reflow with a collapsed slot; scroll anchoring then
+			// eats homepage hash scroll-margin (#featured-build lands on
+			// the title instead of the frost gutter above the card).
+			// Keep spacer at full bar height while hidden — collapsing it
+			// to 0 also fights auto-hide via the same anchor loop.
 			barEl.setAttribute('data-stuck', '');
 			barEl.setAttribute(
 				'data-hidden',
@@ -600,6 +604,9 @@ export function ExperienceSection() {
 					? 'true'
 					: 'false',
 			);
+			if(barEl.style.position !== 'fixed') {
+				write(slotEl, 'height', `${barEl.offsetHeight}px`);
+			}
 			write(barEl, 'position', 'fixed');
 			write(barEl, 'left', `${box.left}px`);
 			write(barEl, 'width', `${box.width}px`);
@@ -873,7 +880,10 @@ export function ExperienceSection() {
 				ref={sentinelRef}
 			/>
 			<div
-				className="-mx-gutter"
+				className="
+					-mx-gutter
+					[overflow-anchor:none]
+				"
 				ref={slotRef}
 			>
 			<div

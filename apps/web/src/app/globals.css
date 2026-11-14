@@ -8,6 +8,8 @@
   --gutter: clamp(0.75rem, 4vw, 2rem);
   /* Card / panel chrome pad (≈ Tailwind p-5). Soften on micromobile. */
   --inset: 1.25rem;
+  /* Vertical rhythm between homepage section cards (Tailwind gap-6). */
+  --section-gap: 1.5rem;
   /* CatalogHeader writes the live px value; 4.5rem is search-page chrome without the department bar. */
   --catalog-header-h: 4.5rem;
 }
@@ -29,6 +31,16 @@ body {
 .main-grid {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none'%3E%3Ccircle cx='1' cy='1' r='0.75' fill='%230d1b2a' fill-opacity='0.06'/%3E%3C/svg%3E");
   background-size: 24px 24px;
+}
+
+/*
+ * Hash / scroll targets: land at the frost gutter above the card
+ * (flex gap-section), not flush on the title. Experience sticky docking
+ * must reserve its slot before position:fixed or scroll anchoring eats
+ * this margin (see ExperienceSection).
+ */
+.main-grid [id] {
+  scroll-margin-top: calc(var(--site-top-banner-h, 0px) + var(--section-gap));
 }
 
 .tour-target-active {

@@ -261,7 +261,7 @@ console.log("  npm ci");
 console.log("  npm run prepare:api-types   # before lint/test/build");
 console.log("  npm run dev:api | dev:web | dev:crm");
 console.log("  npm run prisma:migrate -w apps/api && npm run prisma:seed -w apps/api");
-console.log("  ./dssh launch | ./dssh status | ./dssh backend start | ./dssh publish  (live box)");
+console.log("  ./dssh launch | ./dssh land | ./dssh status | ./dssh backend start | ./dssh publish  (live box)");
 '
 }
 
@@ -341,6 +341,7 @@ docker / dssh
   common:
     docker compose up -d
     ./dssh launch           # local 6-tab stack (rlog/proxy/cdn/backend/frontend/crm)
+    ./dssh land             # opposite of launch (rlog + containers/infra + hops)
     ./dssh status | ./dssh backend start | ./dssh frontend start | ./dssh proxy start | ./dssh cdn start
     ./dssh publish          # live: ops/deploy/live.sh
     ./dssh migrate          # prisma migrate on api

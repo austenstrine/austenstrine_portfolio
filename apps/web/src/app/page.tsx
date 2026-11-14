@@ -16,7 +16,7 @@ export default function Home() {
 					w-full
 					max-w-6xl
 					flex-col
-					gap-6
+					gap-section
 					px-0
 					pt-0
 					pb-0
