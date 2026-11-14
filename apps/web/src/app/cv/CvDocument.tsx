@@ -108,50 +108,6 @@ export function CvDocument() {
 				<div className="cv-job">
 					<div className="cv-job-header">
 						<span className="cv-job-title">
-							Door Builder
-						</span>
-						<span className="cv-job-dates">
-							Jul 2026 – Sep 2026 · 3 mos
-						</span>
-					</div>
-					<div className="cv-job-company">
-						Timberline Cabinets · Express Employment Professionals
-					</div>
-					<div className="cv-job-meta">
-						Cedar City, UT
-					</div>
-					<ul>
-						<li>
-							Cut, ripped, drilled, banded, assembled, ran CNC, cleaned, and palletized cabinet doors; color matching and shop problem-solving.
-						</li>
-					</ul>
-				</div>
-
-				<div className="cv-job">
-					<div className="cv-job-header">
-						<span className="cv-job-title">
-							Team Member
-						</span>
-						<span className="cv-job-dates">
-							Aug 2025 – May 2026 · 10 mos
-						</span>
-					</div>
-					<div className="cv-job-company">
-						Burger King · New Era Management, LLC
-					</div>
-					<div className="cv-job-meta">
-						Cedar City, UT
-					</div>
-					<ul>
-						<li>
-							Drive-through, front counter, cash handling, fryers, quality control, and expediting. C-suite commendation for drive-through customer service; began management training.
-						</li>
-					</ul>
-				</div>
-
-				<div className="cv-job">
-					<div className="cv-job-header">
-						<span className="cv-job-title">
 							Full-stack Developer
 						</span>
 						<span className="cv-job-dates">
@@ -252,6 +208,38 @@ export function CvDocument() {
 				</h2>
 				<table className="cv-additional">
 					<tbody>
+						<tr>
+							<td>
+								<div>
+									Door Builder
+								</div>
+								<div className="cv-additional-org">
+									Timberline Cabinets · Express Employment Professionals
+								</div>
+							</td>
+							<td>
+								Cut, ripped, drilled, banded, assembled, ran CNC, cleaned, and palletized cabinet doors; color matching and shop problem-solving.
+							</td>
+							<td>
+								Jul 2026 – Sep 2026 · 3 mos
+							</td>
+						</tr>
+						<tr>
+							<td>
+								<div>
+									Team Member
+								</div>
+								<div className="cv-additional-org">
+									Burger King · New Era Management, LLC
+								</div>
+							</td>
+							<td>
+								Drive-through, front counter, cash handling, fryers, quality control, and expediting. C-suite commendation for drive-through customer service; began management training.
+							</td>
+							<td>
+								Aug 2025 – May 2026 · 10 mos
+							</td>
+						</tr>
 						<tr>
 							<td>
 								<div>
