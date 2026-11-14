@@ -3,6 +3,36 @@
 import { usePathname } from 'next/navigation';
 import { pathUsesSellerChrome } from '../../lib/accessGate';
 import { MarketplaceBrandLink } from './MarketplaceBrandLink';
+import { NavigateHoverArrow } from './NavigateHoverArrow';
+
+const footerLinkClassName = `
+	group
+	inline-flex
+	items-center
+	text-sm
+	font-semibold
+	text-ink
+	transition
+	hover:text-sky
+`;
+
+function FooterNavLink({
+	href,
+	children,
+}: {
+	href: string;
+	children: string;
+}) {
+	return (
+		<a
+			className={footerLinkClassName}
+			href={href}
+		>
+			{children}
+			<NavigateHoverArrow className="text-slate-400" />
+		</a>
+	);
+}
 
 export function MarketplaceFooter() {
 	const pathname = usePathname();
@@ -55,64 +85,28 @@ export function MarketplaceFooter() {
 						flex-wrap
 						gap-x-5
 						gap-y-2
-						text-sm
 					"
 				>
-					<a
-						className="
-							text-sky
-							underline
-							underline-offset-2
-						"
-						href="/place-et-marque/search"
-					>
+					<FooterNavLink href="/place-et-marque/search">
 						Shop
-					</a>
+					</FooterNavLink>
 					{sellerChrome
 						? null
 						: (
-							<a
-								className="
-									text-sky
-									underline
-									underline-offset-2
-								"
-								href="/place-et-marque/cart"
-							>
+							<FooterNavLink href="/place-et-marque/cart">
 								Cart
-							</a>
+							</FooterNavLink>
 						)
 					}
-					<a
-						className="
-							text-sky
-							underline
-							underline-offset-2
-						"
-						href="/place-et-marque/guide"
-					>
+					<FooterNavLink href="/place-et-marque/guide">
 						Guide
-					</a>
-					<a
-						className="
-							text-sky
-							underline
-							underline-offset-2
-						"
-						href="/place-et-marque/manage"
-					>
+					</FooterNavLink>
+					<FooterNavLink href="/place-et-marque/manage">
 						Sell
-					</a>
-					<a
-						className="
-							text-sky
-							underline
-							underline-offset-2
-						"
-						href="/"
-					>
+					</FooterNavLink>
+					<FooterNavLink href="/">
 						Portfolio
-					</a>
+					</FooterNavLink>
 				</nav>
 			</div>
 		</footer>
