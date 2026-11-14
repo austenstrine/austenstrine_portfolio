@@ -3,8 +3,10 @@
 import { useLayoutEffect, useRef, useState } from 'react';
 import { PrinterIcon } from '../icons/PrinterIcon';
 import {
+	educationExperienceRoles,
+	extracurricularExperienceRoles,
 	professionalExperience,
-	type ExperienceCategory,
+	workExperienceRoles,
 	type ExperienceKind,
 	type ExperienceRole,
 } from '../../data/experience';
@@ -18,15 +20,6 @@ const SOFTWARE_COUNT = professionalExperience.filter(
 ).length;
 const NON_SOFTWARE_COUNT = professionalExperience.filter(
 	(role) => role.kind === 'non-software',
-).length;
-const PROFESSIONAL_COUNT = professionalExperience.filter(
-	(role) => role.category === 'professional',
-).length;
-const EDUCATION_COUNT = professionalExperience.filter(
-	(role) => role.category === 'education',
-).length;
-const EXTRACURRICULAR_COUNT = professionalExperience.filter(
-	(role) => role.category === 'extracurricular',
 ).length;
 const ROLE_COUNT = professionalExperience.length;
 const PIN_MS = 360;
@@ -475,16 +468,13 @@ export function ExperienceSection() {
 	const [selectedKinds, setSelectedKinds] = useState<ExperienceKind[]>([
 		'software',
 	]);
-	const [selectedCategories, setSelectedCategories] = useState<
-		ExperienceCategory[]
-	>([]);
 	const [peekedIds, setPeekedIds] = useState<string[]>([]);
 	const [filtersOpen, setFiltersOpen] = useState(true);
 	const sectionRef = useRef<HTMLElement>(null);
 	const sentinelRef = useRef<HTMLDivElement>(null);
 	const slotRef = useRef<HTMLDivElement>(null);
 	const stickyRef = useRef<HTMLDivElement>(null);
-	const listRef = useRef<HTMLOListElement>(null);
+	const timelinesRef = useRef<HTMLDivElement>(null);
 	const pinRef = useRef<{ id: string; offset: number } | null>(null);
 	const pinUntilRef = useRef(0);
 
@@ -609,18 +599,18 @@ export function ExperienceSection() {
 
 	function pinFromSticky(preferredId?: string) {
 		const sticky = stickyRef.current;
-		const list = listRef.current;
-		if(!sticky || !list) {
+		const timelines = timelinesRef.current;
+		if(!sticky || !timelines) {
 			return;
 		}
 
 		const stickyBottom = sticky.getBoundingClientRect().bottom;
 		let item: HTMLElement | null = preferredId
-			? list.querySelector(`[data-role-mark="${preferredId}"]`)
+			? timelines.querySelector(`[data-role-mark="${preferredId}"]`)
 			: null;
 
 		if(!item) {
-			const rows = list.querySelectorAll<HTMLElement>('[data-role-id]');
+			const rows = timelines.querySelectorAll<HTMLElement>('[data-role-id]');
 			for(const row of rows) {
 				if(row.getBoundingClientRect().bottom > stickyBottom + 8) {
 					item = row.querySelector('[data-role-mark]') ?? row;
@@ -644,14 +634,14 @@ export function ExperienceSection() {
 	function applyPin() {
 		const pin = pinRef.current;
 		const sticky = stickyRef.current;
-		const list = listRef.current;
-		if(!pin || !sticky || !list || performance.now() > pinUntilRef.current) {
+		const timelines = timelinesRef.current;
+		if(!pin || !sticky || !timelines || performance.now() > pinUntilRef.current) {
 			return;
 		}
 
-		const item = list.querySelector<HTMLElement>(
+		const item = timelines.querySelector<HTMLElement>(
 			`[data-role-mark="${pin.id}"]`,
-		) ?? list.querySelector<HTMLElement>(
+		) ?? timelines.querySelector<HTMLElement>(
 			`[data-role-id="${pin.id}"]`,
 		);
 		if(!item) {
@@ -672,13 +662,13 @@ export function ExperienceSection() {
 		}
 
 		applyPin();
-		const list = listRef.current;
-		if(!list) {
+		const timelines = timelinesRef.current;
+		if(!timelines) {
 			return;
 		}
 
 		const observer = new ResizeObserver(() => applyPin());
-		observer.observe(list);
+		observer.observe(timelines);
 		const timer = window.setTimeout(() => {
 			observer.disconnect();
 			pinRef.current = null;
@@ -688,16 +678,12 @@ export function ExperienceSection() {
 			observer.disconnect();
 			window.clearTimeout(timer);
 		};
-	}, [selectedKinds, selectedCategories, peekedIds]);
+	}, [selectedKinds, peekedIds]);
 
-	const hasFilter =
-		selectedKinds.length > 0 || selectedCategories.length > 0;
+	const hasFilter = selectedKinds.length > 0;
 
 	function inScope(role: ExperienceRole) {
-		return (
-			matchesFacetGroup(selectedKinds, role.kind)
-			&& matchesFacetGroup(selectedCategories, role.category)
-		);
+		return matchesFacetGroup(selectedKinds, role.kind);
 	}
 
 	function toggleKind(kind: ExperienceKind) {
@@ -706,15 +692,6 @@ export function ExperienceSection() {
 			current.includes(kind)
 				? current.filter((row) => row !== kind)
 				: [...current, kind]
-		));
-	}
-
-	function toggleCategory(category: ExperienceCategory) {
-		pinFromSticky();
-		setSelectedCategories((current) => (
-			current.includes(category)
-				? current.filter((row) => row !== category)
-				: [...current, category]
 		));
 	}
 
@@ -739,69 +716,39 @@ export function ExperienceSection() {
 		peekRole(id);
 	}
 
-	const expandedRoles = professionalExperience.filter((role) => (
-		inScope(role) || peekedIds.includes(role.id)
+	/**
+	 * Three category timelines; shared kind filter ANDs with each
+	 * (in-scope = matches kind; else peekable — same UX as before).
+	 */
+	const timelineBlocks: {
+		id: string;
+		title: string;
+		roles: ExperienceRole[];
+	}[] = [
+		{
+			id: 'work-experience',
+			title: 'Work experience',
+			roles: workExperienceRoles,
+		},
+		{
+			id: 'education',
+			title: 'Education',
+			roles: educationExperienceRoles,
+		},
+		{
+			id: 'extracurricular',
+			title: 'Extra-Curricular',
+			roles: extracurricularExperienceRoles,
+		},
+	];
+
+	const expandedRoles = timelineBlocks.flatMap((block) => (
+		block.roles.filter((role) => (
+			inScope(role) || peekedIds.includes(role.id)
+		))
 	));
 	const selectedForPrintCount = expandedRoles.length;
 	const canPrintSelected = selectedForPrintCount > 0;
-
-	const kindFacetRow = (
-		<div
-			className="
-				flex
-				min-w-0
-				flex-wrap
-				items-center
-				gap-x-4
-				gap-y-1
-			"
-		>
-			<FacetCheck
-				checked={selectedKinds.includes('software')}
-				count={SOFTWARE_COUNT}
-				label="Software"
-				onChange={() => toggleKind('software')}
-			/>
-			<FacetCheck
-				checked={selectedKinds.includes('non-software')}
-				count={NON_SOFTWARE_COUNT}
-				label="Non-software"
-				onChange={() => toggleKind('non-software')}
-			/>
-		</div>
-	);
-
-	const categoryFacetRow = (
-		<div
-			className="
-				flex
-				min-w-0
-				flex-wrap
-				items-center
-				gap-x-4
-				gap-y-1
-			"
-		>
-			<FacetCheck
-				checked={selectedCategories.includes('professional')}
-				count={PROFESSIONAL_COUNT}
-				label="Professional Experience"
-				onChange={() => toggleCategory('professional')}
-			/>
-			<FacetCheck
-				checked={selectedCategories.includes('education')}
-				count={EDUCATION_COUNT}
-				label="Education"
-				onChange={() => toggleCategory('education')}
-			/>
-			<FacetCheck
-				checked={selectedCategories.includes('extracurricular')}
-				count={EXTRACURRICULAR_COUNT}
-				label="Extra-Curricular"
-				onChange={() => toggleCategory('extracurricular')}
-			/>
-		</div>
-	);
 
 	return (
 		<section
@@ -834,7 +781,7 @@ export function ExperienceSection() {
 						text-sky
 					"
 				>
-					Work
+					Background
 				</p>
 				<h2
 					className="
@@ -880,112 +827,43 @@ export function ExperienceSection() {
 				<div
 					className="
 						flex
-						flex-col
-						gap-2
-						py-1
+						h-11
+						flex-nowrap
+						items-center
+						justify-between
+						gap-3
 						md:hidden
 					"
 				>
-					<div
-						className="
-							flex
-							min-h-11
-							flex-nowrap
-							items-center
-							justify-between
-							gap-3
-						"
-					>
-						{filtersOpen
-							? (
-								<div className="min-w-0 flex-1">
-									{kindFacetRow}
-								</div>
-							)
-							: (
-								<p
-									aria-live="polite"
-									className="
-										truncate
-										text-sm
-										text-slate-600
-									"
-								>
-									{hasFilter
-										? `${selectedForPrintCount} of ${ROLE_COUNT} selected for print`
-										: `${ROLE_COUNT} roles`}
-								</p>
-							)}
-						<div
-							className="
-								flex
-								shrink-0
-								items-center
-								gap-2
-							"
-						>
-							<SaveSelectedPdfButton
-								disabled={!canPrintSelected}
-								onClick={printSelectedExperience}
-							/>
-							<button
-								className="
-									shrink-0
-									text-sm
-									font-semibold
-									text-ink
-								"
-								onClick={() => setFiltersOpen((open) => !open)}
-								type="button"
-							>
-								{filtersOpen
-									? 'Hide filters'
-									: 'View filters'}
-							</button>
-						</div>
-					</div>
 					{filtersOpen
 						? (
 							<div
 								className="
-									border-t
-									border-slate-100
-									pt-2
+									flex
+									min-w-0
+									items-center
+									gap-x-4
 								"
 							>
-								{categoryFacetRow}
+								<FacetCheck
+									checked={selectedKinds.includes('software')}
+									count={SOFTWARE_COUNT}
+									label="Software"
+									onChange={() => toggleKind('software')}
+								/>
+								<FacetCheck
+									checked={selectedKinds.includes('non-software')}
+									count={NON_SOFTWARE_COUNT}
+									label="Non-software"
+									onChange={() => toggleKind('non-software')}
+								/>
 							</div>
 						)
-						: null}
-				</div>
-				<div
-					className="
-						hidden
-						flex-col
-						gap-2
-						py-1
-						md:flex
-					"
-				>
-					<div
-						className="
-							flex
-							items-center
-							justify-between
-							gap-x-4
-						"
-					>
-						{kindFacetRow}
-						<div
-							className="
-								flex
-								items-center
-								gap-3
-							"
-						>
+						: (
 							<p
 								aria-live="polite"
 								className="
+									truncate
 									text-sm
 									text-slate-600
 								"
@@ -994,231 +872,345 @@ export function ExperienceSection() {
 									? `${selectedForPrintCount} of ${ROLE_COUNT} selected for print`
 									: `${ROLE_COUNT} roles`}
 							</p>
-							<SaveSelectedPdfButton
-								disabled={!canPrintSelected}
-								onClick={printSelectedExperience}
-							/>
-						</div>
+						)}
+					<div
+						className="
+							flex
+							shrink-0
+							items-center
+							gap-2
+						"
+					>
+						<SaveSelectedPdfButton
+							disabled={!canPrintSelected}
+							onClick={printSelectedExperience}
+						/>
+						<button
+							className="
+								shrink-0
+								text-sm
+								font-semibold
+								text-ink
+							"
+							onClick={() => setFiltersOpen((open) => !open)}
+							type="button"
+						>
+							{filtersOpen
+								? 'Hide filters'
+								: 'View filters'}
+						</button>
+					</div>
+				</div>
+				<div
+					className="
+						hidden
+						items-center
+						justify-between
+						gap-x-4
+						md:flex
+					"
+				>
+					<div
+						className="
+							flex
+							items-center
+							gap-x-5
+						"
+					>
+						<FacetCheck
+							checked={selectedKinds.includes('software')}
+							count={SOFTWARE_COUNT}
+							label="Software"
+							onChange={() => toggleKind('software')}
+						/>
+						<FacetCheck
+							checked={selectedKinds.includes('non-software')}
+							count={NON_SOFTWARE_COUNT}
+							label="Non-software"
+							onChange={() => toggleKind('non-software')}
+						/>
 					</div>
 					<div
 						className="
-							border-t
-							border-slate-100
-							pt-2
+							flex
+							items-center
+							gap-3
 						"
 					>
-						{categoryFacetRow}
+						<p
+							aria-live="polite"
+							className="
+								text-sm
+								text-slate-600
+							"
+						>
+							{hasFilter
+								? `${selectedForPrintCount} of ${ROLE_COUNT} selected for print`
+								: `${ROLE_COUNT} roles`}
+						</p>
+						<SaveSelectedPdfButton
+							disabled={!canPrintSelected}
+							onClick={printSelectedExperience}
+						/>
 					</div>
 				</div>
 			</div>
 			</div>
 
-			<ol
-				className="
-					timeline-list
-					relative
-					mt-8
-				"
-				ref={listRef}
+			<div
+				className="mt-8 space-y-10"
+				ref={timelinesRef}
 			>
-				<div
-					aria-hidden="true"
-					className="
-						absolute
-						bottom-3
-						left-[7px]
-						top-3
-						w-px
-						bg-slate-200
-					"
-				/>
-				{professionalExperience.map((role) => {
-					const scoped = inScope(role);
-					const peeked = peekedIds.includes(role.id);
-					const expanded = scoped || peeked;
-					const dateRange = splitRoleDates(role.dates).range;
-					const markClass = `
-						flex
-						h-4
-						w-4
-						items-center
-						justify-center
-						rounded-full
-						border-2
-						ring-4
-						ring-white
-						transition-[background-color,border-color]
-						duration-300
-						${scoped && expanded
-							? 'border-sky bg-sky'
-							: peeked && expanded
-								? 'border-slate-400 bg-white'
-								: 'border-slate-300 bg-white'}
-					`;
-
-					return (
-						<li
-							className={
-								expanded
-									? `
-										relative
-										flex
-										items-start
-										gap-4
-										pb-6
-										transition-[padding]
-										duration-300
-										last:pb-0
-									`
-									: `
-										relative
-										flex
-										items-start
-										gap-4
-										pb-3
-										transition-[padding]
-										duration-300
-										last:pb-0
-									`
-							}
-							data-role-id={role.id}
-							key={role.id}
+				{timelineBlocks.map((block) => (
+					<section
+						aria-labelledby={`timeline-${block.id}-heading`}
+						key={block.id}
+					>
+						<h3
+							className="
+								text-xl
+								font-semibold
+								text-ink
+							"
+							id={`timeline-${block.id}-heading`}
 						>
-							{expanded
+							{block.title}
+						</h3>
+						<ExperienceTimelineList
+							hidePeek={hidePeek}
+							inScope={inScope}
+							peekRole={peekRole}
+							peekedIds={peekedIds}
+							roles={block.roles}
+							togglePeek={togglePeek}
+						/>
+					</section>
+				))}
+			</div>
+		</section>
+	);
+}
+
+function ExperienceTimelineList({
+	hidePeek,
+	inScope,
+	peekRole,
+	peekedIds,
+	roles,
+	togglePeek,
+}: {
+	hidePeek: (id: string) => void;
+	inScope: (role: ExperienceRole) => boolean;
+	peekRole: (id: string) => void;
+	peekedIds: string[];
+	roles: ExperienceRole[];
+	togglePeek: (id: string) => void;
+}) {
+	return (
+		<ol
+			className="
+				timeline-list
+				relative
+				mt-4
+			"
+		>
+			<div
+				aria-hidden="true"
+				className="
+					absolute
+					bottom-3
+					left-[7px]
+					top-3
+					w-px
+					bg-slate-200
+				"
+			/>
+			{roles.map((role) => {
+				const scoped = inScope(role);
+				const peeked = peekedIds.includes(role.id);
+				const expanded = scoped || peeked;
+				const dateRange = splitRoleDates(role.dates).range;
+				const markClass = `
+					flex
+					h-4
+					w-4
+					items-center
+					justify-center
+					rounded-full
+					border-2
+					ring-4
+					ring-white
+					transition-[background-color,border-color]
+					duration-300
+					${scoped && expanded
+						? 'border-sky bg-sky'
+						: peeked && expanded
+							? 'border-slate-400 bg-white'
+							: 'border-slate-300 bg-white'}
+				`;
+
+				return (
+					<li
+						className={
+							expanded
+								? `
+									relative
+									flex
+									items-start
+									gap-4
+									pb-6
+									transition-[padding]
+									duration-300
+									last:pb-0
+								`
+								: `
+									relative
+									flex
+									items-start
+									gap-4
+									pb-3
+									transition-[padding]
+									duration-300
+									last:pb-0
+								`
+						}
+						data-role-id={role.id}
+						key={role.id}
+					>
+						{expanded
+							? (
+								<span
+									aria-hidden="true"
+									className="
+										pointer-events-none
+										absolute
+										left-4
+										top-[0.875rem]
+										z-[1]
+										h-px
+										w-4
+										bg-slate-200
+									"
+								/>
+							)
+							: null}
+						<div
+							className="
+								relative
+								z-10
+								mt-1.5
+								h-4
+								w-4
+								shrink-0
+							"
+						>
+							{scoped
 								? (
 									<span
 										aria-hidden="true"
+										className={markClass}
+										data-role-mark={role.id}
+									/>
+								)
+								: (
+									<button
+										aria-label={
+											expanded
+												? `Hide ${role.title}`
+												: `Peek ${role.title}`
+										}
 										className="
-											pointer-events-none
 											absolute
-											left-4
-											top-[0.875rem]
-											z-[1]
-											h-px
-											w-4
-											bg-slate-200
+											left-1/2
+											top-1/2
+											flex
+											h-11
+											w-11
+											-translate-x-1/2
+											-translate-y-1/2
+											items-center
+											justify-center
+											md:h-4
+											md:w-4
 										"
+										data-role-mark={role.id}
+										onClick={() => (
+											expanded
+												? hidePeek(role.id)
+												: peekRole(role.id)
+										)}
+										type="button"
+									>
+										<span
+											aria-hidden="true"
+											className={markClass}
+										>
+											<span
+												aria-hidden="true"
+												className={
+													expanded
+														? `
+															block
+															h-0.5
+															w-2
+															rounded-full
+															bg-slate-400
+															opacity-100
+															transition-opacity
+															duration-300
+														`
+														: `
+															block
+															h-0.5
+															w-2
+															rounded-full
+															bg-slate-400
+															opacity-0
+															transition-opacity
+															duration-300
+														`
+												}
+											/>
+										</span>
+									</button>
+								)}
+						</div>
+						<div className="min-w-0 flex-1">
+							{!scoped
+								? (
+									<PeekToggle
+										expanded={expanded}
+										onClick={() => togglePeek(role.id)}
+										range={dateRange || role.organization}
+										title={role.title}
 									/>
 								)
 								: null}
 							<div
-								className="
-									relative
-									z-10
-									mt-1.5
-									h-4
-									w-4
-									shrink-0
-								"
+								aria-hidden={!expanded}
+								className={
+									expanded
+										? 'timeline-fold timeline-fold-open'
+										: 'timeline-fold'
+								}
 							>
-								{scoped
-									? (
-										<span
-											aria-hidden="true"
-											className={markClass}
-											data-role-mark={role.id}
-										/>
-									)
-									: (
-										<button
-											aria-label={
-												expanded
-													? `Hide ${role.title}`
-													: `Peek ${role.title}`
-											}
-											className="
-												absolute
-												left-1/2
-												top-1/2
-												flex
-												h-11
-												w-11
-												-translate-x-1/2
-												-translate-y-1/2
-												items-center
-												justify-center
-												md:h-4
-												md:w-4
-											"
-											data-role-mark={role.id}
-											onClick={() => (
-												expanded
-													? hidePeek(role.id)
-													: peekRole(role.id)
-											)}
-											type="button"
-										>
-											<span
-												aria-hidden="true"
-												className={markClass}
-											>
-												<span
-													aria-hidden="true"
-													className={
-														expanded
-															? `
-																block
-																h-0.5
-																w-2
-																rounded-full
-																bg-slate-400
-																opacity-100
-																transition-opacity
-																duration-300
-															`
-															: `
-																block
-																h-0.5
-																w-2
-																rounded-full
-																bg-slate-400
-																opacity-0
-																transition-opacity
-																duration-300
-															`
-													}
-												/>
-											</span>
-										</button>
-									)}
-							</div>
-							<div className="min-w-0 flex-1">
-								{!scoped
-									? (
-										<PeekToggle
-											expanded={expanded}
-											onClick={() => togglePeek(role.id)}
-											range={dateRange || role.organization}
-											title={role.title}
-										/>
-									)
-									: null}
-								<div
-									aria-hidden={!expanded}
-									className={
-										expanded
-											? 'timeline-fold timeline-fold-open'
-											: 'timeline-fold'
-									}
-								>
-									<div className="timeline-fold-inner">
-										{scoped && dateRange
-											? (
-												<DateConnector
-													range={dateRange}
-												/>
-											)
-											: (
-												<DateConnectorTail />
-											)}
-										<ExperienceRoleCard role={role} />
-									</div>
+								<div className="timeline-fold-inner">
+									{scoped && dateRange
+										? (
+											<DateConnector
+												range={dateRange}
+											/>
+										)
+										: (
+											<DateConnectorTail />
+										)}
+									<ExperienceRoleCard role={role} />
 								</div>
 							</div>
-						</li>
-					);
-				})}
-			</ol>
-		</section>
+						</div>
+					</li>
+				);
+			})}
+		</ol>
 	);
 }

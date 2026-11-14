@@ -401,3 +401,15 @@ export const softwareExperience = professionalExperience.filter(
 export const otherRecentExperience = professionalExperience.filter(
 	(role) => role.kind === 'non-software',
 );
+
+export const workExperienceRoles = professionalExperience.filter(
+	(role) => role.category === 'professional',
+);
+
+export const educationExperienceRoles = professionalExperience.filter(
+	(role) => role.category === 'education',
+);
+
+export const extracurricularExperienceRoles = professionalExperience.filter(
+	(role) => role.category === 'extracurricular',
+);
