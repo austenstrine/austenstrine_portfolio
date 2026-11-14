@@ -56,28 +56,61 @@ export function MarketplaceFooter() {
 						gap-x-5
 						gap-y-2
 						text-sm
-						font-semibold
-						text-slate-600
 					"
 				>
-					<a className="hover:text-ink" href="/place-et-marque/search">
+					<a
+						className="
+							text-sky
+							underline
+							underline-offset-2
+						"
+						href="/place-et-marque/search"
+					>
 						Shop
 					</a>
 					{sellerChrome
 						? null
 						: (
-							<a className="hover:text-ink" href="/place-et-marque/cart">
+							<a
+								className="
+									text-sky
+									underline
+									underline-offset-2
+								"
+								href="/place-et-marque/cart"
+							>
 								Cart
 							</a>
 						)
 					}
-					<a className="hover:text-ink" href="/place-et-marque/guide">
+					<a
+						className="
+							text-sky
+							underline
+							underline-offset-2
+						"
+						href="/place-et-marque/guide"
+					>
 						Guide
 					</a>
-					<a className="hover:text-ink" href="/place-et-marque/manage">
+					<a
+						className="
+							text-sky
+							underline
+							underline-offset-2
+						"
+						href="/place-et-marque/manage"
+					>
 						Sell
 					</a>
-					<a className="hover:text-ink" href="/">
+					<a
+						className="
+							text-sky
+							underline
+							underline-offset-2
+						"
+						href="/"
+					>
 						Portfolio
 					</a>
 				</nav>

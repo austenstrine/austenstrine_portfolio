@@ -15,7 +15,7 @@ import {
 } from '../../lib/widget-prefs';
 import { useSession } from '../../lib/useSession';
 import { ArrowRightIcon } from '../icons/ArrowRightIcon';
-import { ChevronRightIcon } from '../icons/ChevronRightIcon';
+import { CaretDownIcon } from '../icons/CaretDownIcon';
 import { CloseIcon } from '../icons/CloseIcon';
 import { MoreVerticalIcon } from '../icons/MoreVerticalIcon';
 import {
@@ -315,7 +315,7 @@ export function CollapsibleWidget({
 								>
 									{expandLabel}
 								</span>
-								<ChevronRightIcon
+								<CaretDownIcon
 									className="
 										h-3
 										w-3

@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import { pathUsesSellerChrome } from '../../lib/accessGate';
 import { getCart } from '../../lib/checkout-api';
 import { useSession } from '../../lib/useSession';
+import { ArrowRightIcon } from '../icons/ArrowRightIcon';
 import { CaretDownIcon } from '../icons/CaretDownIcon';
 import { CartIcon } from '../icons/CartIcon';
 import { AccountMenu } from './AccountMenu';
@@ -375,6 +376,9 @@ export function CatalogHeader() {
 									: (
 										<a
 											className="
+												inline-flex
+												items-center
+												gap-1.5
 												rounded-full
 												bg-asgreen
 												px-3.5
@@ -385,6 +389,13 @@ export function CatalogHeader() {
 											href="/auth/login"
 										>
 											Sign in
+											<ArrowRightIcon
+												className="
+													h-3.5
+													w-3.5
+													shrink-0
+												"
+											/>
 										</a>
 									)
 							}

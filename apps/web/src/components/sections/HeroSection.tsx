@@ -1,5 +1,6 @@
 import { CdnImg } from '../CdnImg';
 import { SITE_HEADLINE } from '../../lib/site';
+import { ArrowRightIcon } from '../icons/ArrowRightIcon';
 
 export function HeroSection() {
 	return (
@@ -113,7 +114,10 @@ export function HeroSection() {
 					>
 						<a
 							className="
-								inline-block
+								inline-flex
+								items-center
+								justify-center
+								gap-1.5
 								rounded-full
 								bg-white
 								px-6
@@ -130,10 +134,20 @@ export function HeroSection() {
 							href="/cv.html"
 						>
 							View CV
+							<ArrowRightIcon
+								className="
+									h-3.5
+									w-3.5
+									shrink-0
+								"
+							/>
 						</a>
 						<a
 							className="
-								inline-block
+								inline-flex
+								items-center
+								justify-center
+								gap-1.5
 								rounded-full
 								border
 								border-white/60
@@ -151,10 +165,20 @@ export function HeroSection() {
 							href="#featured-build"
 						>
 							Explore a demo of my skills
+							<ArrowRightIcon
+								className="
+									h-3.5
+									w-3.5
+									shrink-0
+								"
+							/>
 						</a>
 						<a
 							className="
-								inline-block
+								inline-flex
+								items-center
+								justify-center
+								gap-1.5
 								rounded-full
 								border
 								border-white/60
@@ -172,6 +196,13 @@ export function HeroSection() {
 							href="#contact"
 						>
 							Contact
+							<ArrowRightIcon
+								className="
+									h-3.5
+									w-3.5
+									shrink-0
+								"
+							/>
 						</a>
 					</div>
 				</div>

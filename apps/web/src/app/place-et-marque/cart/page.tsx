@@ -12,6 +12,7 @@ import {
 import { useSession } from '../../../lib/useSession';
 import { RequireAccess } from '../../../components/auth/RequireAccess';
 import { CompoundQtyField } from '../../../components/catalog/CompoundQtyField';
+import { ArrowRightIcon } from '../../../components/icons/ArrowRightIcon';
 import { formatAvailableQty } from '../../../lib/uom-qty';
 
 function CartContent() {
@@ -385,6 +386,7 @@ function CartContent() {
 									w-full
 									items-center
 									justify-center
+									gap-1.5
 									rounded-full
 									bg-sky
 									px-4
@@ -397,6 +399,13 @@ function CartContent() {
 								href="/place-et-marque/checkout"
 							>
 								Checkout
+								<ArrowRightIcon
+									className="
+										h-3.5
+										w-3.5
+										shrink-0
+									"
+								/>
 							</Link>
 							<Link
 								className="
@@ -404,9 +413,9 @@ function CartContent() {
 									flex
 									justify-end
 									text-sm
-									font-semibold
-									text-ink
-									hover:underline
+									text-sky
+									underline
+									underline-offset-2
 								"
 								href="/place-et-marque/search"
 							>

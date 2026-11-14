@@ -30,6 +30,7 @@ import { CollapsibleWidget } from '../../../../components/catalog/CollapsibleWid
 import { UrlSlugField } from '../../../../components/catalog/UrlSlugField';
 import { VendorMembersPanel } from '../../../../components/catalog/VendorMembersPanel';
 import { ArrowRightIcon } from '../../../../components/icons/ArrowRightIcon';
+import { CaretDownIcon } from '../../../../components/icons/CaretDownIcon';
 import { ChevronRightIcon } from '../../../../components/icons/ChevronRightIcon';
 import { CloseIcon } from '../../../../components/icons/CloseIcon';
 import { DocumentIcon } from '../../../../components/icons/DocumentIcon';
@@ -448,7 +449,8 @@ function VendorDetailContent() {
 							className="
 								font-semibold
 								text-sky
-								hover:underline
+								underline
+								underline-offset-2
 							"
 							href="/place-et-marque/vendors"
 						>
@@ -613,7 +615,7 @@ function VendorDetailContent() {
 																	>
 																		Change link name
 																	</span>
-																	<ChevronRightIcon
+																	<CaretDownIcon
 																		className="
 																			h-3
 																			w-3
