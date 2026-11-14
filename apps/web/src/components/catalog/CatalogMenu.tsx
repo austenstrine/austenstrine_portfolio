@@ -8,6 +8,7 @@ import {
 	type RefObject,
 } from 'react';
 import { createPortal } from 'react-dom';
+import { ArrowRightIcon } from '../icons/ArrowRightIcon';
 
 export type CatalogMenuBox = {
 	left: number;
@@ -75,11 +76,14 @@ export function CatalogMenuLink({
 	children,
 	href,
 	onClick,
+	/** When false, caller supplies its own navigate/action cue (rare). Default: shafted →. */
+	showNavigateCue = true,
 }: {
 	active?: boolean;
 	children: ReactNode;
 	href: string;
 	onClick?: () => void;
+	showNavigateCue?: boolean;
 }) {
 	return (
 		<a
@@ -92,6 +96,19 @@ export function CatalogMenuLink({
 			role="menuitem"
 		>
 			{children}
+			{showNavigateCue
+				? (
+					<ArrowRightIcon
+						className="
+							h-3.5
+							w-3.5
+							shrink-0
+							text-slate-400
+						"
+					/>
+				)
+				: null
+			}
 		</a>
 	);
 }

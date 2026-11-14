@@ -138,6 +138,9 @@ tester.run('no-directional-caret', plugin.rules['no-directional-caret'], {
 		{
 			code: 'export function X(){ return <ArrowRightIcon className="h-4 w-4" />; }\n',
 		},
+		{
+			code: 'export function X(){ return <ChevronRightIcon className="h-3.5 w-3.5" />; }\n',
+		},
 	],
 	invalid: [
 		{

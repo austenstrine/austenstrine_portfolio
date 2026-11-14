@@ -19,7 +19,7 @@ Rule ids: `portfolio-prefs/<kebab-name>`. Do not fork a second plugin.
 | `no-raw-svg-in-pages` | error | Icons under `components/icons/` |
 | `session-aware-sign-in` | error | Account hub `page.tsx` uses `RequireAccess` |
 | `no-sketch-parens` | error | No `(change >)` sketch strings |
-| `no-directional-caret` | error | ArrowLeft/Right icons; no lone ›/←/→ text |
+| `no-directional-caret` | error | ArrowLeft/Right + ChevronRightIcon; no lone ›/←/→ text |
 | `no-ink-as-surface` | error | No `bg-ink` / gradient ink fills |
 | `tabs-indent` | error | Tabs for indent (JSDoc ` *` / strings OK) |
 | `single-quotes-ts` | error | Single quotes in TS; JSX attrs may be double |

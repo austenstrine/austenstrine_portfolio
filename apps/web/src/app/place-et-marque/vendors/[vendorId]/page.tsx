@@ -30,6 +30,7 @@ import { CollapsibleWidget } from '../../../../components/catalog/CollapsibleWid
 import { UrlSlugField } from '../../../../components/catalog/UrlSlugField';
 import { VendorMembersPanel } from '../../../../components/catalog/VendorMembersPanel';
 import { ArrowRightIcon } from '../../../../components/icons/ArrowRightIcon';
+import { ChevronRightIcon } from '../../../../components/icons/ChevronRightIcon';
 import { CloseIcon } from '../../../../components/icons/CloseIcon';
 import { DocumentIcon } from '../../../../components/icons/DocumentIcon';
 import { EyeIcon } from '../../../../components/icons/EyeIcon';
@@ -455,8 +456,12 @@ function VendorDetailContent() {
 						</a>
 					</li>
 					<li aria-hidden="true">
-						<ArrowRightIcon
-							className="h-3.5 w-3.5"
+						<ChevronRightIcon
+							className="
+								h-3.5
+								w-3.5
+								text-slate-400
+							"
 						/>
 					</li>
 					<li
@@ -608,7 +613,7 @@ function VendorDetailContent() {
 																	>
 																		Change link name
 																	</span>
-																	<ArrowRightIcon
+																	<ChevronRightIcon
 																		className="
 																			h-3
 																			w-3

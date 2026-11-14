@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react';
 import type { CatalogAttributeDefinition } from '../../lib/catalog-api';
 import { ArrowLeftIcon } from '../icons/ArrowLeftIcon';
-import { ArrowRightIcon } from '../icons/ArrowRightIcon';
+import { ChevronRightIcon } from '../icons/ChevronRightIcon';
 
 type ProductAttributeFieldProps = {
 	catalog: CatalogAttributeDefinition[];
@@ -354,7 +354,7 @@ export function ProductAttributeField({
 																	: ''}
 																{attribute.values.length} values
 															</span>
-															<ArrowRightIcon
+															<ChevronRightIcon
 																className="
 																	h-3.5
 																	w-3.5

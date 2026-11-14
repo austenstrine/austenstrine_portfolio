@@ -14,7 +14,7 @@ import {
 } from '../../lib/category-tree';
 import type { CatalogCategoryRow } from '../../lib/catalog-api';
 import { ArrowLeftIcon } from '../icons/ArrowLeftIcon';
-import { ArrowRightIcon } from '../icons/ArrowRightIcon';
+import { ChevronRightIcon } from '../icons/ChevronRightIcon';
 
 const CHIP_STAGGER_MS = 36;
 
@@ -159,7 +159,7 @@ function CategoryChip({
 			{children}
 			{drills
 				? (
-					<ArrowRightIcon
+					<ChevronRightIcon
 						className="
 							h-3.5
 							w-3.5
