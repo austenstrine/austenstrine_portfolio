@@ -1,9 +1,16 @@
 import {
+	CV_CERTIFICATES,
+	CV_SKILL_GROUPS,
+	CV_SUMMARY_PARAGRAPHS,
+} from '../../data/cv-content';
+import { recommendations } from '../../data/recommendations';
+import {
 	SITE_EMAIL,
 	SITE_GITHUB,
 	SITE_HEADLINE,
 	SITE_LINKEDIN,
 	SITE_NAME,
+	SITE_OG_IMAGE,
 	SITE_PHONE,
 	SITE_PHONE_HREF,
 	SITE_URL,
@@ -21,83 +28,94 @@ export function CvDocument() {
 	return (
 		<div className="cv">
 			<header className="cv-header">
-				<h1>
-					{SITE_NAME}
-				</h1>
-				<p className="cv-headline">
-					{SITE_HEADLINE}
-				</p>
-				<div className="cv-contact">
-					<ul className="cv-contact-list">
-						<li>
-							<a href={`mailto:${SITE_EMAIL}`}>
-								{SITE_EMAIL}
-							</a>
-						</li>
-						<li>
-							<a href={SITE_PHONE_HREF}>
-								{SITE_PHONE}
-							</a>
-						</li>
-						<li>
-							<a href={SITE_URL}>
-								{siteHost}
-							</a>
-						</li>
-					</ul>
-					<ul className="cv-contact-list">
-						<li>
-							<a
-								href={SITE_LINKEDIN}
-								target="_blank"
-								rel="noopener noreferrer"
-							>
-								{linkedInPath}
-							</a>
-						</li>
-						<li>
-							<a
-								href={SITE_GITHUB}
-								target="_blank"
-								rel="noopener noreferrer"
-							>
-								{githubPath}
-							</a>
-						</li>
-					</ul>
-					<p className="cv-location">
-						<span>
-							Parowan, UT
-						</span>
-						<span
-							className="cv-sep"
-							aria-hidden="true"
-						>
-							·
-						</span>
-						<span>
-							Murray Mon/Tue
-						</span>
-						<span
-							className="cv-sep"
-							aria-hidden="true"
-						>
-							·
-						</span>
-						<span>
-							relocating full-time January 2027
-						</span>
+				<div className="cv-header-main">
+					<h1>
+						{SITE_NAME}
+					</h1>
+					<p className="cv-headline">
+						{SITE_HEADLINE}
 					</p>
+					<div className="cv-contact">
+						<ul className="cv-contact-list">
+							<li>
+								<a href={`mailto:${SITE_EMAIL}`}>
+									{SITE_EMAIL}
+								</a>
+							</li>
+							<li>
+								<a href={SITE_PHONE_HREF}>
+									{SITE_PHONE}
+								</a>
+							</li>
+							<li>
+								<a href={SITE_URL}>
+									{siteHost}
+								</a>
+							</li>
+						</ul>
+						<ul className="cv-contact-list">
+							<li>
+								<a
+									href={SITE_LINKEDIN}
+									target="_blank"
+									rel="noopener noreferrer"
+								>
+									{linkedInPath}
+								</a>
+							</li>
+							<li>
+								<a
+									href={SITE_GITHUB}
+									target="_blank"
+									rel="noopener noreferrer"
+								>
+									{githubPath}
+								</a>
+							</li>
+						</ul>
+						<p className="cv-location">
+							<span>
+								Parowan, UT
+							</span>
+							<span
+								className="cv-sep"
+								aria-hidden="true"
+							>
+								·
+							</span>
+							<span>
+								Murray Mon/Tue
+							</span>
+							<span
+								className="cv-sep"
+								aria-hidden="true"
+							>
+								·
+							</span>
+							<span>
+								relocating full-time January 2027
+							</span>
+						</p>
+					</div>
 				</div>
+				<img
+					className="cv-photo"
+					src={SITE_OG_IMAGE}
+					alt={SITE_NAME}
+					width={112}
+					height={112}
+				/>
 			</header>
 
 			<section className="cv-section cv-summary">
 				<h2 className="cv-section-title">
 					Summary
 				</h2>
-				<p>
-					I&apos;m a Senior Product, Catalog, and Search Software Engineer with six and a half years of professional software work (November 2018–June 2025) developing several production e-commerce sites. I own problems end to end and partner very well with product owners. I&apos;m a force stack multiplier in small teams, especially when I have leeway to move fast and drill deep.
-				</p>
+				{CV_SUMMARY_PARAGRAPHS.map((paragraph) => (
+					<p key={paragraph.slice(0, 48)}>
+						{paragraph}
+					</p>
+				))}
 			</section>
 
 			<section className="cv-section">
@@ -392,27 +410,34 @@ export function CvDocument() {
 				<h2 className="cv-section-title">
 					Education
 				</h2>
-				<div className="cv-job">
-					<div className="cv-job-header">
-						<span className="cv-job-title">
-							Technical Certificate, Computer Science
-						</span>
-						<span className="cv-job-dates">
-							2016–2018
-						</span>
+				{CV_CERTIFICATES.map((certificate) => (
+					<div
+						className="cv-job"
+						key={certificate.title}
+					>
+						<div className="cv-job-header">
+							<span className="cv-job-title">
+								{certificate.title}
+							</span>
+							<span className="cv-job-dates">
+								{certificate.dates}
+							</span>
+						</div>
+						<div className="cv-job-company">
+							{certificate.org}
+						</div>
+						<div className="cv-job-meta">
+							{certificate.location}
+						</div>
+						<ul>
+							{certificate.bullets.map((bullet) => (
+								<li key={bullet}>
+									{bullet}
+								</li>
+							))}
+						</ul>
 					</div>
-					<div className="cv-job-company">
-						Southwest Applied Technology College (now Southwest Technical College)
-					</div>
-					<div className="cv-job-meta">
-						Cedar City, UT
-					</div>
-					<ul>
-						<li>
-							Certified proficiency in C++, Python, Java, and Swift.
-						</li>
-					</ul>
-				</div>
+				))}
 			</section>
 
 			<section className="cv-section">
@@ -706,55 +731,75 @@ export function CvDocument() {
 					Skills
 				</h2>
 				<div className="cv-skills-grid">
-					<div className="cv-skill-group">
-						<div className="cv-skill-label">
-							Frontend
+					{CV_SKILL_GROUPS.map((group) => (
+						<div
+							className="cv-skill-group"
+							key={group.label}
+						>
+							<div className="cv-skill-label">
+								{group.label}
+							</div>
+							<div className="cv-skill-list">
+								{group.list}
+							</div>
 						</div>
-						<div className="cv-skill-list">
-							Next.js, React, TypeScript, Tailwind CSS, MUI, HTML5, CSS3
-						</div>
-					</div>
-					<div className="cv-skill-group">
-						<div className="cv-skill-label">
-							Backend
-						</div>
-						<div className="cv-skill-list">
-							Node.js, NestJS (Nest.js), PHP, Laravel, REST APIs, Prisma
-						</div>
-					</div>
-					<div className="cv-skill-group">
-						<div className="cv-skill-label">
-							Data & search
-						</div>
-						<div className="cv-skill-list">
-							PostgreSQL (Postgres), MySQL, MongoDB, Elasticsearch, OpenSearch
-						</div>
-					</div>
-					<div className="cv-skill-group">
-						<div className="cv-skill-label">
-							Mobile
-						</div>
-						<div className="cv-skill-list">
-							Swift (iOS), SQLite, Dart/Flutter (used at GO Green)
-						</div>
-					</div>
-					<div className="cv-skill-group">
-						<div className="cv-skill-label">
-							Infrastructure
-						</div>
-						<div className="cv-skill-list">
-							AWS, Ubuntu, Apache, Bash, Git, CI/CD
-						</div>
-					</div>
-					<div className="cv-skill-group">
-						<div className="cv-skill-label">
-							How I work
-						</div>
-						<div className="cv-skill-list">
-							Unsupervised ownership, product-owner communication, junior mentorship, production incident response.
-						</div>
-					</div>
+					))}
 				</div>
+			</section>
+
+			<section className="cv-section">
+				<h2 className="cv-section-title">
+					Recommendations
+				</h2>
+				{recommendations.map((recommendation) => {
+					const paragraphs = recommendation.text
+						.split('\n')
+						.filter(Boolean);
+					const linkedInHandle = recommendation.profileUrl
+						.replace(/^https?:\/\//, '')
+						.replace(/^www\./, '')
+						.replace(/\/$/, '');
+
+					return (
+						<article
+							className="cv-recommendation"
+							key={recommendation.name}
+						>
+							<div className="cv-recommendation-header">
+								<div>
+									<a
+										className="cv-recommendation-name"
+										href={recommendation.profileUrl}
+										target="_blank"
+										rel="noopener noreferrer"
+									>
+										{recommendation.name}
+									</a>
+									<div className="cv-recommendation-meta">
+										{recommendation.headline}
+										{' · '}
+										{recommendation.relationship}
+										{' · '}
+										{recommendation.date}
+									</div>
+									<a
+										className="cv-recommendation-profile"
+										href={recommendation.profileUrl}
+										target="_blank"
+										rel="noopener noreferrer"
+									>
+										{linkedInHandle}
+									</a>
+								</div>
+							</div>
+							{paragraphs.map((paragraph) => (
+								<p key={paragraph.slice(0, 48)}>
+									{paragraph}
+								</p>
+							))}
+						</article>
+					);
+				})}
 			</section>
 		</div>
 	);

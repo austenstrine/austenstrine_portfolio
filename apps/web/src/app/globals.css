@@ -223,6 +223,14 @@ body {
     color: #475569;
   }
 
+  .experience-print-section {
+    margin-top: 1.15rem;
+  }
+
+  .experience-print-section:first-of-type {
+    margin-top: 0;
+  }
+
   .experience-print-section h2 {
     margin: 0 0 0.75rem;
     font-size: 11pt;
@@ -230,6 +238,17 @@ body {
     letter-spacing: 0.08em;
     text-transform: uppercase;
     color: #1b263b;
+  }
+
+  .experience-print-summary {
+    margin: 0 0 0.45rem;
+    font-size: 9.5pt;
+    line-height: 1.45;
+    color: #334155;
+  }
+
+  .experience-print-summary:last-child {
+    margin-bottom: 0;
   }
 
   .experience-print-job {
@@ -270,6 +289,27 @@ body {
 
   .experience-print-job li {
     margin: 0.2rem 0;
+    font-size: 9.5pt;
+    line-height: 1.4;
+    color: #334155;
+  }
+
+  .experience-print-skills {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.45rem 1.5rem;
+  }
+
+  .experience-print-skill-label {
+    font-size: 8.5pt;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #0d1b2a;
+  }
+
+  .experience-print-skill-list {
+    margin-top: 0.1rem;
     font-size: 9.5pt;
     line-height: 1.4;
     color: #334155;

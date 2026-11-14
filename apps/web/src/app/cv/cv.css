@@ -113,9 +113,18 @@ html:has(.cv-page) body {
 
 .cv-page .cv-header {
 	/* Lighter 1px rule; large margin so Summary isn’t pinched against its own HR */
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: 1.25rem;
 	border-bottom: 1px solid color-mix(in srgb, var(--asgreen) 72%, #fff);
 	padding-bottom: 1rem;
 	margin-bottom: 2.5rem;
+}
+
+.cv-page .cv-header-main {
+	min-width: 0;
+	flex: 1;
 }
 
 .cv-page .cv-header h1 {
@@ -125,6 +134,17 @@ html:has(.cv-page) body {
 	color: #0d1b2a;
 	letter-spacing: -0.5px;
 	line-height: 1.1;
+}
+
+.cv-page .cv-photo {
+	display: block;
+	width: 7rem;
+	height: 7rem;
+	flex-shrink: 0;
+	border-radius: 4px;
+	object-fit: cover;
+	object-position: center top;
+	background: #e8ecef;
 }
 
 .cv-page .cv-headline {
@@ -232,6 +252,11 @@ html:has(.cv-page) body {
 	.cv-page .cv-header {
 		padding-bottom: 1.05rem;
 		margin-bottom: 2.35rem;
+	}
+
+	.cv-page .cv-photo {
+		width: 5.25rem;
+		height: 5.25rem;
 	}
 }
 
@@ -420,6 +445,51 @@ html:has(.cv-page) body {
 	color: #444;
 }
 
+.cv-page .cv-recommendation {
+	margin-bottom: 1.15rem;
+}
+
+.cv-page .cv-recommendation:last-child {
+	margin-bottom: 0;
+}
+
+.cv-page .cv-recommendation-name {
+	font-size: 10.5pt;
+	font-weight: 700;
+	color: #0d1b2a;
+	text-decoration: none;
+}
+
+.cv-page .cv-recommendation-name:hover {
+	text-decoration: underline;
+	text-underline-offset: 0.15em;
+}
+
+.cv-page .cv-recommendation-meta {
+	margin-top: 0.15rem;
+	font-size: 8.5pt;
+	color: #5c6570;
+}
+
+.cv-page .cv-recommendation-profile {
+	display: inline-block;
+	margin-top: 0.2rem;
+	font-size: 8.5pt;
+	color: #0d1b2a;
+	text-decoration: underline;
+	text-underline-offset: 0.12em;
+}
+
+.cv-page .cv-recommendation-profile:hover {
+	color: var(--asgreen);
+}
+
+.cv-page .cv-recommendation p {
+	margin: 0.45rem 0 0;
+	font-size: 9.5pt;
+	color: #333;
+}
+
 @media print {
 	@page {
 		size: letter;
@@ -450,12 +520,30 @@ html:has(.cv-page) body {
 	}
 
 	.cv-page .cv-job,
-	.cv-page .cv-section {
+	.cv-page .cv-section,
+	.cv-page .cv-recommendation {
 		page-break-inside: avoid;
+	}
+
+	.cv-page .cv-photo {
+		print-color-adjust: exact;
+		-webkit-print-color-adjust: exact;
 	}
 
 	.cv-page a {
 		color: inherit !important;
 		text-decoration: none !important;
+	}
+
+	/* Keep LinkedIn profile URLs discoverable on paper / PDF */
+	.cv-page .cv-recommendation-profile {
+		text-decoration: underline !important;
+	}
+
+	.cv-page .cv-recommendation-profile::after {
+		content: ' (' attr(href) ')';
+		font-size: 8pt;
+		color: #5c6570;
+		text-decoration: none;
 	}
 }
