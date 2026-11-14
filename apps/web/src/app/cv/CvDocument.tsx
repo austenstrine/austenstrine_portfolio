@@ -291,6 +291,22 @@ export function CvDocument() {
 						<tr>
 							<td>
 								<div>
+									Dishwasher
+								</div>
+								<div className="cv-additional-org">
+									Centro&apos;s Woodfired Pizza
+								</div>
+							</td>
+							<td>
+								Washed dishes, glassware, utensils, and cookware by hand and/or using commercial dishwashing equipment; maintained cleanliness of the dish pit, kitchen, and related areas; assisted with basic prep, restocking, and general kitchen support as needed; ensured compliance with health and safety standards for food-service sanitation
+							</td>
+							<td>
+								May–August 2015
+							</td>
+						</tr>
+						<tr>
+							<td>
+								<div>
 									Customer Service Representative
 								</div>
 								<div className="cv-additional-org">

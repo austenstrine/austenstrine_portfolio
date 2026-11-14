@@ -119,6 +119,20 @@ export const professionalExperience: ExperienceRole[] = [
 		],
 	},
 	{
+		id: 'centros',
+		kind: 'non-software',
+		title: 'Dishwasher',
+		organization: "Centro's Woodfired Pizza",
+		dates: 'May–August 2015',
+		location: 'Cedar City, UT area',
+		bullets: [
+			'Washed dishes, glassware, utensils, and cookware by hand and/or using commercial dishwashing equipment.',
+			'Maintained cleanliness of the dish pit, kitchen, and related areas.',
+			'Assisted with basic prep, restocking, and general kitchen support as needed.',
+			'Ensured compliance with health and safety standards for food-service sanitation.',
+		],
+	},
+	{
 		id: 'convergys',
 		kind: 'non-software',
 		title: 'Customer Service Representative',
