@@ -233,7 +233,7 @@ body {
     margin-top: 0;
   }
 
-  /* Last page content: Education, then Skills (no Skills-first / orphan blanks). */
+  /* Last page content: Skills (no Skills-first / orphan blanks). */
   .experience-print-closing {
     break-before: page;
     page-break-before: always;

@@ -3,7 +3,6 @@
 import { useLayoutEffect, useRef, useState } from 'react';
 import { PrinterIcon } from '../icons/PrinterIcon';
 import {
-	education,
 	professionalExperience,
 	type ExperienceKind,
 	type ExperienceRole,
@@ -1113,79 +1112,6 @@ export function ExperienceSection() {
 					);
 				})}
 			</ol>
-
-			<div
-				className="
-					mt-8
-					flex
-					flex-col
-					gap-4
-				"
-			>
-				<p
-					className="
-						text-xs
-						font-semibold
-						uppercase
-						tracking-[0.18em]
-						text-sky
-					"
-				>
-					Education
-				</p>
-				{education.map((entry) => (
-					<article
-						className="
-							rounded-2xl
-							border
-							border-slate-100
-							bg-frost/60
-							p-inset
-							md:p-6
-						"
-						key={`${entry.school}-${entry.dates}`}
-					>
-						<h3
-							className="
-								text-lg
-								font-semibold
-								text-ink
-							"
-						>
-							{entry.credential}
-						</h3>
-						<p
-							className="
-								mt-1
-								text-sm
-								font-semibold
-								text-sky
-							"
-						>
-							{entry.school}
-						</p>
-						<p
-							className="
-								text-sm
-								text-slate-500
-							"
-						>
-							{entry.place}
-							{' · '}
-							{entry.dates}
-						</p>
-						<p
-							className="
-								mt-3
-								text-sm
-								text-slate-700
-							"
-						>
-							{entry.note}
-						</p>
-					</article>
-				))}
-			</div>
 		</section>
 	);
 }

@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import type { ExperienceRole } from '../../data/experience';
 import {
-	CV_CERTIFICATES,
 	CV_SKILL_GROUPS,
 	CV_SUMMARY_PARAGRAPHS,
 } from '../../data/cv-content';
@@ -114,39 +113,6 @@ export function ExperiencePrintSheet({
 			</section>
 
 			<div className="experience-print-closing">
-				<section className="experience-print-section">
-					<h2>
-						Education
-					</h2>
-					{CV_CERTIFICATES.map((certificate) => (
-						<article
-							className="experience-print-job"
-							key={certificate.title}
-						>
-							<div className="experience-print-job-header">
-								<span className="experience-print-job-title">
-									{certificate.title}
-								</span>
-								<span className="experience-print-job-dates">
-									{certificate.dates}
-								</span>
-							</div>
-							<p className="experience-print-job-org">
-								{certificate.org}
-								{' · '}
-								{certificate.location}
-							</p>
-							<ul>
-								{certificate.bullets.map((bullet) => (
-									<li key={bullet}>
-										{bullet}
-									</li>
-								))}
-							</ul>
-						</article>
-					))}
-				</section>
-
 				<section className="experience-print-section">
 					<h2>
 						Skills

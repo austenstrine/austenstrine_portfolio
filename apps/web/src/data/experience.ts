@@ -10,14 +10,6 @@ export type ExperienceRole = {
 	bullets: string[];
 };
 
-export type EducationEntry = {
-	credential: string;
-	school: string;
-	place: string;
-	dates: string;
-	note: string;
-};
-
 export const professionalExperience: ExperienceRole[] = [
 	{
 		id: 'timberline',
@@ -60,6 +52,19 @@ export const professionalExperience: ExperienceRole[] = [
 		],
 	},
 	{
+		id: 'impac-white-christmas',
+		kind: 'non-software',
+		title: 'Mentor / Cast Member',
+		organization: 'White Christmas · IMPAC',
+		dates: 'December 2023',
+		location: 'Cedar City',
+		bullets: [
+			'Paid mentor and cast member in a dual-performance production (mentors-only and mentees-only cast).',
+			'Roles: Mike; Ed Sullivan Announcer; Train Conductor; Varius Ensemble.',
+			'Guided the acting technique, character development, and performance skills of my mentee; it was an outstanding production and a successful educational experience.',
+		],
+	},
+	{
 		id: 'gogreen',
 		kind: 'software',
 		title: 'Senior Application Developer',
@@ -76,6 +81,17 @@ export const professionalExperience: ExperienceRole[] = [
 		],
 	},
 	{
+		id: 'care-and-share',
+		kind: 'non-software',
+		title: 'Warehouse Volunteer',
+		organization: 'Iron County Care and Share',
+		dates: '2018',
+		location: 'Cedar City / Enoch',
+		bullets: [
+			'Stock and Sort: food warehouse sorting, restocking, and prep for group volunteers (Wednesdays 3–5 pm).',
+		],
+	},
+	{
 		id: 'anderson',
 		kind: 'non-software',
 		title: 'Territory Sales Lead',
@@ -83,6 +99,18 @@ export const professionalExperience: ExperienceRole[] = [
 		dates: 'Jul–Nov 2018',
 		bullets: [
 			'Delegation and deadline management across two Walmart locations.',
+		],
+	},
+	{
+		id: 'edu-swatc',
+		kind: 'software',
+		title: 'Technical Certificate, Computer Science',
+		organization:
+			'Southwest Applied Technology College (now Southwest Technical College)',
+		dates: '2016–2018',
+		location: 'Cedar City, UT',
+		bullets: [
+			'Certified proficiency in C++, Python, Java, and Swift.',
 		],
 	},
 	{
@@ -96,6 +124,16 @@ export const professionalExperience: ExperienceRole[] = [
 		],
 	},
 	{
+		id: 'usher-usf',
+		kind: 'non-software',
+		title: 'Usher',
+		organization: 'Utah Shakespeare Festival',
+		dates: '2016–2017',
+		bullets: [
+			'Volunteered as usher for multiple seasons before and after the paid House Manager role, including 2016 and 2017.',
+		],
+	},
+	{
 		id: 'infowest',
 		kind: 'software',
 		title: 'Tech Support',
@@ -105,6 +143,27 @@ export const professionalExperience: ExperienceRole[] = [
 		bullets: [
 			'Troubleshot Ubiquiti WISP equipment at customer and tower levels; router setup, PPPoE, IMAP/POP email, VoIP ATA.',
 			'Built an internal troubleshooting flow app (WISP-T) that reached beta.',
+		],
+	},
+	{
+		id: 'wedding-singer',
+		kind: 'non-software',
+		title: 'Glen Guglia',
+		organization: 'The Wedding Singer · Cedar Valley Community Theatre',
+		dates: 'Late 2015 – early 2016',
+		bullets: [
+			'Played Glen Guglia; production photos: https://utahtheatrebloggers.com/22772/something-to-celebrate-at-the-wedding-singer · https://www.cvct.online/projects-7-6',
+		],
+	},
+	{
+		id: 'edu-suu',
+		kind: 'non-software',
+		title: 'Musical Theater — pursued',
+		organization: 'Southern Utah University (SUU)',
+		dates: '2015–2016',
+		location: 'Cedar City, UT',
+		bullets: [
+			'Pursued Musical Theater. Withdrew August 2016 — did not complete the degree.',
 		],
 	},
 	{
@@ -164,6 +223,58 @@ export const professionalExperience: ExperienceRole[] = [
 		],
 	},
 	{
+		id: 'les-mis',
+		kind: 'non-software',
+		title: 'Marius (lead)',
+		organization: 'Les Misérables · California Regional Theatre',
+		dates: 'Oct 2013',
+		bullets: [
+			'Lead role as Marius; press: https://www.chicoer.com/2013/10/10/french-revolution-experienced-in-les-miserables/ (archive: https://web.archive.org/web/20240408180702/https://www.chicoer.com/2013/10/10/french-revolution-experienced-in-les-miserables/)',
+		],
+	},
+	{
+		id: 'anything-goes',
+		kind: 'non-software',
+		title: 'Billy Crocker (lead)',
+		organization: 'Anything Goes · Chico Theater Company',
+		dates: 'Jul–Aug 2013',
+		bullets: [
+			'Lead role as Billy Crocker; press: https://www.timesheraldonline.com/2013/07/18/anything-goes-at-chico-theater/',
+		],
+	},
+	{
+		id: 'ccc-theater-worship',
+		kind: 'non-software',
+		title: 'Theater & Worship leadership',
+		organization: 'Campus City Connection',
+		dates: '2012–2013',
+		bullets: [
+			'Leadership in Theater and Worship; drama team including script writing into early 2013.',
+		],
+	},
+	{
+		id: 'ccc-community-service',
+		kind: 'non-software',
+		title: 'Community service',
+		organization: 'Campus City Connection',
+		dates: '2011–2013',
+		bullets: [
+			'Weekly food service to the homeless (2012); Torres Shelter cooking and serving for ~65 people (Dec 2013); comedy night fundraiser for an Africa missions trip (2011).',
+		],
+	},
+	{
+		id: 'edu-simpson',
+		kind: 'non-software',
+		title: 'B.S. in Music (Composition) — pursued',
+		organization: 'Simpson University',
+		dates: '2010–2013',
+		location: 'Redding, CA',
+		bullets: [
+			'Pursued B.S. in Music with emphasis in Composition and minor in Psychology. Did not complete the degree.',
+			'University Chorale and Drama Club (VP 2010, President 2011).',
+		],
+	},
+	{
 		id: 'old-navy',
 		kind: 'non-software',
 		title: 'Salesman / Cashier',
@@ -184,6 +295,56 @@ export const professionalExperience: ExperienceRole[] = [
 			'Dish area, closing the cafeteria, on-call and scheduled shifts.',
 		],
 	},
+	{
+		id: 'choir-tours',
+		kind: 'non-software',
+		title: 'Choir tours',
+		organization: 'High school and college',
+		dates: '2007–2012',
+		bullets: [
+			'New York City and San Francisco (2007, 2009); Portland, Seattle, and Northwest coast (2010–2012).',
+		],
+	},
+	{
+		id: 'drama-club-simpson',
+		kind: 'non-software',
+		title: 'Drama Club President',
+		organization: 'Simpson University',
+		dates: '2010–2011',
+		bullets: [
+			'President (2011); Vice-President (2010).',
+		],
+	},
+	{
+		id: 'taming-of-the-shrew',
+		kind: 'non-software',
+		title: 'Petruchio',
+		organization: 'The Taming of the Shrew · Simpson University Drama Club',
+		dates: '2011',
+		bullets: [
+			'Role as Petruchio; video: https://www.youtube.com/playlist?list=PLF38A98137436629F',
+		],
+	},
+	{
+		id: 'john-his-story',
+		kind: 'non-software',
+		title: 'John and Jesus',
+		organization: 'John, His Story · Simpson University Drama Club',
+		dates: '2011',
+		bullets: [
+			'Roles as John and Jesus; video: https://www.youtube.com/playlist?list=PL02749288672392F2',
+		],
+	},
+	{
+		id: 'high-school-choir',
+		kind: 'non-software',
+		title: 'High school choir',
+		organization: 'High school',
+		dates: 'High school',
+		bullets: [
+			'Madrigals, a cappella, and Sac Street Boys.',
+		],
+	},
 ];
 
 export const softwareExperience = professionalExperience.filter(
@@ -193,14 +354,3 @@ export const softwareExperience = professionalExperience.filter(
 export const otherRecentExperience = professionalExperience.filter(
 	(role) => role.kind === 'non-software',
 );
-
-export const education: EducationEntry[] = [
-	{
-		credential: 'Technical Certificate, Computer Science',
-		school:
-			'Southwest Applied Technology College (now Southwest Technical College)',
-		place: 'Cedar City, UT',
-		dates: '2016–2018',
-		note: 'Certified proficiency in C++, Python, Java, and Swift.',
-	},
-];
