@@ -29,15 +29,15 @@ type ProductCardImageCarouselProps = {
 /**
  * In-place slide carets — shaftless chevron, not navigate Arrow.
  * Stay mounted; fade/slide via opacity+transform (not display) so hover
- * does not pop. Below `md` (site desktop): always visible (touch has no
- * hover); enabled = full + clickable, end-of-range = faded. At `md+`:
- * rest opacity-0; reveal under `@media (hover: hover)` + group-hover when
- * enabled.
+ * does not pop. Below `lg` (tablet and smaller): always visible (touch has
+ * no hover); enabled = full + clickable, end-of-range = faded. At `lg+`
+ * (desktop): rest opacity-0; reveal under `@media (hover: hover)` +
+ * group-hover when enabled.
  */
 function carouselSlideClassName(side: 'left' | 'right', enabled: boolean) {
 	const desktopRestShift = side === 'left'
-		? 'md:-translate-x-0.5'
-		: 'md:translate-x-0.5';
+		? 'lg:-translate-x-0.5'
+		: 'lg:translate-x-0.5';
 	return `
 		absolute
 		top-1/2
@@ -64,16 +64,16 @@ function carouselSlideClassName(side: 'left' | 'right', enabled: boolean) {
 			? `
 				opacity-100
 				pointer-events-auto
-				md:opacity-0
-				md:pointer-events-none
-				[@media(hover:hover)]:md:group-hover/carousel:pointer-events-auto
-				[@media(hover:hover)]:md:group-hover/carousel:translate-x-0
-				[@media(hover:hover)]:md:group-hover/carousel:opacity-100
+				lg:opacity-0
+				lg:pointer-events-none
+				[@media(hover:hover)]:lg:group-hover/carousel:pointer-events-auto
+				[@media(hover:hover)]:lg:group-hover/carousel:translate-x-0
+				[@media(hover:hover)]:lg:group-hover/carousel:opacity-100
 			`
 			: `
 				opacity-40
 				pointer-events-none
-				md:opacity-0
+				lg:opacity-0
 			`}
 	`;
 }
