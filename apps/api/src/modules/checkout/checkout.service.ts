@@ -110,6 +110,11 @@ export class CheckoutService implements OnModuleInit, OnModuleDestroy {
 		},
 	) {
 		const unpaidDevBypass = process.env.CHECKOUT_DEV_BYPASS === '1';
+		if(unpaidDevBypass && process.env.NODE_ENV === 'production') {
+			throw new BadRequestException(
+				'CHECKOUT_DEV_BYPASS is refused when NODE_ENV=production.',
+			);
+		}
 		if(!this.stripe.enabled && !unpaidDevBypass) {
 			throw new BadRequestException(
 				'Stripe is not configured on the server (STRIPE_SECRET_KEY).',
@@ -349,6 +354,11 @@ export class CheckoutService implements OnModuleInit, OnModuleDestroy {
 	 * Completes an AWAITING_PAYMENT checkout after the buyer submits the payment step.
 	 */
 	async confirmDemoPayment(buyerId: string, checkoutId: string) {
+		if(process.env.NODE_ENV === 'production') {
+			throw new BadRequestException(
+				'Demo payment is refused when NODE_ENV=production.',
+			);
+		}
 		const unpaidDevBypass = process.env.CHECKOUT_DEV_BYPASS === '1';
 		if(!unpaidDevBypass || this.stripe.enabled) {
 			throw new BadRequestException(

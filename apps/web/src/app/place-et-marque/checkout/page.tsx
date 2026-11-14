@@ -260,7 +260,7 @@ function CheckoutContent() {
 				);
 				return;
 			}
-			if(session.demoPayment || session.checkoutId) {
+			if(session.demoPayment === true) {
 				setClientSecret(null);
 				setPublishableKey('');
 				setDemoCheckoutId(session.checkoutId);
