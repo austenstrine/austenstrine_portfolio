@@ -2,6 +2,8 @@ import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
 import { CatalogHeader } from '../../components/catalog/CatalogHeader';
 import { CatalogSearchProvider } from '../../components/catalog/CatalogSearchContext';
+import { EditableVendorsProvider } from '../../components/catalog/EditableVendorsProvider';
+import { InPlacePageSaveBar } from '../../components/catalog/InPlaceProductFields';
 import { JumpToTop } from '../../components/catalog/JumpToTop';
 import { MarketplaceFooter } from '../../components/catalog/MarketplaceFooter';
 import { PardonOurDustBanner } from '../../components/catalog/PardonOurDustBanner';
@@ -30,27 +32,30 @@ export default function PlaceEtMarqueLayout({ children }: { children: ReactNode 
 			"
 		>
 			<CatalogSearchProvider>
-				<WidgetPrefsProvider>
-					<PardonOurDustBanner />
-					<CatalogHeader />
-					{/* Fixed chrome early in DOM so page actions are reachable by Tab before the product grid. */}
-					<SellerPageActionPane />
-					<JumpToTop />
-					<main
-						className="
-							mx-auto
-							w-full
-							max-w-7xl
-							flex-1
-							px-gutter
-							py-6
-							md:py-8
-						"
-					>
-						{children}
-					</main>
-					<MarketplaceFooter />
-				</WidgetPrefsProvider>
+				<EditableVendorsProvider>
+					<WidgetPrefsProvider>
+						<PardonOurDustBanner />
+						<CatalogHeader />
+						{/* Fixed chrome early in DOM so page actions are reachable by Tab before the product grid. */}
+						<SellerPageActionPane />
+						<JumpToTop />
+						<main
+							className="
+								mx-auto
+								w-full
+								max-w-7xl
+								flex-1
+								px-gutter
+								py-6
+								md:py-8
+							"
+						>
+							{children}
+						</main>
+						<InPlacePageSaveBar />
+						<MarketplaceFooter />
+					</WidgetPrefsProvider>
+				</EditableVendorsProvider>
 			</CatalogSearchProvider>
 		</div>
 	);

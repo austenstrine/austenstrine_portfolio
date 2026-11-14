@@ -8,11 +8,16 @@ export const SITE_GITHUB = 'https://github.com/austenstrine';
 export const SITE_REPO =
 	'https://github.com/austenstrine/austenstrine_portfolio';
 
+/** Stem browsers use for Save-as-PDF when document.title is set before print. */
+export const SITE_FILE_STEM = SITE_NAME.replace(/\s+/g, '-');
+export const SITE_CV_PRINT_TITLE = `${SITE_FILE_STEM}-CV`;
+export const SITE_EXPERIENCE_PRINT_TITLE = `${SITE_FILE_STEM}-Experience`;
+
 export const SITE_TITLE =
 	'Austen Strine | Senior Product, Catalog, and Search Software Engineer';
 
 export const SITE_DESCRIPTION =
-	'Senior Product, Catalog, and Search Software Engineer with six and a half years of professional work developing several production e-commerce sites. Based in Parowan, Utah; in Murray Mondays and Tuesdays; relocating to Murray full-time in December 2026.';
+	'Senior Product, Catalog, and Search Software Engineer with six and a half years of professional work developing several production e-commerce sites. Based in Parowan, Utah; in Murray Mondays and Tuesdays; relocating to Murray full-time in January 2027.';
 
 export const SITE_HEADLINE =
 	'Senior Product, Catalog, and Search Software Engineer';

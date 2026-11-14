@@ -48,6 +48,7 @@ export function CatalogEmptyActions() {
 					mt-4
 					flex
 					flex-wrap
+					justify-end
 					gap-3
 				"
 			>

@@ -105,26 +105,15 @@ function CartContent() {
 				gap-6
 			"
 		>
-			<div>
-				<h1
-					className="
-						text-3xl
-						font-semibold
-						tracking-tight
-					"
-				>
-					Cart
-				</h1>
-				<p
-					className="
-						mt-2
-						text-sm
-						text-slate-600
-					"
-				>
-					Items from different sellers checkout as separate shipments when needed.
-				</p>
-			</div>
+			<h1
+				className="
+					text-3xl
+					font-semibold
+					tracking-tight
+				"
+			>
+				Cart
+			</h1>
 
 			{sessionLoading
 				? (
@@ -160,17 +149,6 @@ function CartContent() {
 					>
 						<p className="text-xl font-semibold text-ink">
 							Your cart is empty
-						</p>
-						<p
-							className="
-								mx-auto
-								mt-2
-								max-w-md
-								text-sm
-								text-slate-600
-							"
-						>
-							No merchandise selected.
 						</p>
 						<Link
 							className="
@@ -230,21 +208,9 @@ function CartContent() {
 											py-3
 										"
 									>
-										<p
-											className="
-												text-[11px]
-												font-semibold
-												uppercase
-												tracking-[0.16em]
-												text-slate-500
-											"
-										>
-											Sold by
-										</p>
 										<Link
 											className="
-												mt-0.5
-												text-sm
+												text-base
 												font-semibold
 												text-ink
 												hover:underline
@@ -382,6 +348,7 @@ function CartContent() {
 								border-slate-200
 								bg-white
 								p-5
+								max-lg:pr-14
 								lg:sticky
 								lg:top-24
 							"
@@ -394,59 +361,23 @@ function CartContent() {
 							>
 								Order summary
 							</h2>
-							<dl
+							<div
 								className="
 									mt-4
 									flex
-									flex-col
-									gap-2
-									text-sm
+									justify-between
+									gap-3
+									text-base
+									font-semibold
 								"
 							>
-								<div
-									className="
-										flex
-										justify-between
-										gap-3
-									"
-								>
-									<dt className="text-slate-600">
-										Items ({cart.lineCount})
-									</dt>
-									<dd className="tabular-nums">
-										{formatMoney(merchandiseCents)}
-									</dd>
-								</div>
-								<div
-									className="
-										flex
-										justify-between
-										gap-3
-										border-t
-										border-slate-100
-										pt-3
-										text-base
-										font-semibold
-									"
-								>
-									<dt>
-										Merchandise
-									</dt>
-									<dd className="tabular-nums">
-										{formatMoney(merchandiseCents)}
-									</dd>
-								</div>
-							</dl>
-							<p
-								className="
-									mt-3
-									text-[12px]
-									leading-5
-									text-slate-500
-								"
-							>
-								Shipping is chosen per seller at checkout.
-							</p>
+								<span>
+									Subtotal
+								</span>
+								<span className="tabular-nums">
+									{formatMoney(merchandiseCents)}
+								</span>
+							</div>
 							<Link
 								className="
 									mt-5
@@ -471,7 +402,7 @@ function CartContent() {
 								className="
 									mt-3
 									flex
-									justify-center
+									justify-end
 									text-sm
 									font-semibold
 									text-ink

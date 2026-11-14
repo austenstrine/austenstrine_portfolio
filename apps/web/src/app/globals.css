@@ -21,6 +21,9 @@
 
 body {
   @apply bg-frost text-ink antialiased;
+  /* Clears fixed site top banners (dust / backend-down). CatalogHeader
+     spacer is header-only; banner height lives here so homepage/auth clear too. */
+  padding-top: var(--site-top-banner-h, 0px);
 }
 
 .main-grid {
@@ -152,5 +155,177 @@ body {
 
   .scrollbar-none::-webkit-scrollbar {
     display: none;
+  }
+}
+
+/* Experience timeline: print only the expanded-selection resume sheet.
+   Sheet is portaled to document.body so print can display:none siblings
+   (visibility:hidden + position:absolute left the tall page in layout → blank pages). */
+.experience-print-sheet {
+  display: none;
+}
+
+@media print {
+  @page {
+    size: letter;
+    margin: 0.55in 0.65in;
+  }
+
+  html.experience-print-selection,
+  html.experience-print-selection body {
+    background: #fff !important;
+    color: #0d1b2a;
+    height: auto !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+  }
+
+  /* Drop every body child from layout except the portaled resume sheet. */
+  html.experience-print-selection body > *:not(.experience-print-sheet) {
+    display: none !important;
+  }
+
+  html.experience-print-selection .experience-print-sheet {
+    display: block !important;
+    position: static;
+    width: 100%;
+    max-width: 7.5in;
+    margin: 0;
+    padding: 0;
+    color: #0d1b2a;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  }
+
+  .experience-print-header {
+    border-bottom: 1px solid #257257;
+    padding-bottom: 0.55rem;
+    margin-bottom: 0.85rem;
+  }
+
+  .experience-print-header h1 {
+    margin: 0;
+    font-size: 20pt;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+  }
+
+  .experience-print-headline {
+    margin: 0.25rem 0 0;
+    font-size: 10pt;
+    font-weight: 500;
+    color: #1b263b;
+  }
+
+  .experience-print-contact {
+    margin: 0.4rem 0 0;
+    font-size: 9pt;
+    color: #475569;
+  }
+
+  .experience-print-section {
+    margin-top: 0.85rem;
+  }
+
+  .experience-print-sheet > .experience-print-section:first-of-type {
+    margin-top: 0;
+  }
+
+  /* Last page content: Skills (no Skills-first / orphan blanks). */
+  .experience-print-closing {
+    break-before: page;
+    page-break-before: always;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .experience-print-closing > .experience-print-section:first-child {
+    margin-top: 0;
+  }
+
+  .experience-print-section h2 {
+    margin: 0 0 0.5rem;
+    font-size: 10.5pt;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #1b263b;
+  }
+
+  .experience-print-summary {
+    margin: 0 0 0.35rem;
+    font-size: 9pt;
+    line-height: 1.4;
+    color: #334155;
+  }
+
+  .experience-print-summary:last-child {
+    margin-bottom: 0;
+  }
+
+  .experience-print-job {
+    break-inside: avoid;
+    page-break-inside: avoid;
+    margin-bottom: 0.7rem;
+  }
+
+  .experience-print-job-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.75rem;
+  }
+
+  .experience-print-job-title {
+    font-size: 10.5pt;
+    font-weight: 700;
+  }
+
+  .experience-print-job-dates {
+    flex-shrink: 0;
+    font-size: 9pt;
+    color: #64748b;
+  }
+
+  .experience-print-job-org {
+    margin: 0.1rem 0 0;
+    font-size: 9.5pt;
+    font-weight: 600;
+    color: #1b263b;
+  }
+
+  .experience-print-job ul {
+    margin: 0.3rem 0 0;
+    padding-left: 1.05rem;
+  }
+
+  .experience-print-job li {
+    margin: 0.12rem 0;
+    font-size: 9pt;
+    line-height: 1.35;
+    color: #334155;
+  }
+
+  .experience-print-skills {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.35rem 1.25rem;
+  }
+
+  .experience-print-skill-label {
+    font-size: 8pt;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #0d1b2a;
+  }
+
+  .experience-print-skill-list {
+    margin-top: 0.08rem;
+    font-size: 9pt;
+    line-height: 1.35;
+    color: #334155;
   }
 }

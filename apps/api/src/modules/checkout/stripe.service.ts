@@ -50,6 +50,25 @@ export class StripeService {
 		});
 	}
 
+	async cancelPaymentIntent(paymentIntentId: string) {
+		if(!this.client) {
+			return null;
+		}
+		try {
+			return await this.client.paymentIntents.cancel(paymentIntentId);
+		}
+		catch(error) {
+			this.logger.warn(
+				`Failed to cancel PaymentIntent ${paymentIntentId}: ${
+					error instanceof Error
+						? error.message
+						: String(error)
+				}`,
+			);
+			return null;
+		}
+	}
+
 	constructEvent(rawBody: Buffer, signature: string) {
 		const stripe = this.requireClient();
 		const secret = process.env.STRIPE_WEBHOOK_SECRET;

@@ -44,12 +44,15 @@ dssh_live_migrate_service=api
 dssh_live_migrate_cmd='npx prisma migrate deploy --schema apps/api/prisma/schema.prisma'
 dssh_migrate_target=backend
 
-# Optional global actions:
+# Optional global actions (any dssh_<name>_local becomes `dssh <name>`):
 #   dssh_stop_local=<host command>   (LOCAL only; live ignores this)
 #   dssh_status_local=<host command>
 #   dssh_mailtest_local=<host command>
 #   dssh_publish_local=<host command>
 #     Required for `dssh publish` — rolling deploy on this host.
+#   dssh_launch_local=<host command>
+#     Local stack bring-up: 6 Terminal tabs via port-broadcast (rlog/proxy/cdn/
+#     backend/frontend/crm). Prefer `dssh launch` over calling the launcher by hand.
 #
 # Resource logger (`dssh rlog`):
 #   dssh_rlog_containers=<comma-separated target aliases>
@@ -70,6 +73,10 @@ dssh_migrate_target=backend
 dssh_stop_local="ids=\$(docker ps -aq --filter label=dssh.image); if [[ -n \"\$ids\" ]]; then docker rm -f \$ids; fi; docker compose --profile dashboards stop postgres redis opensearch opensearch-dashboards; echo 'Stopped dssh app containers and compose infra services.'"
 dssh_mailtest_local="\"$script_dir/dssh\" backend mailtest"
 dssh_publish_local="./ops/deploy/live.sh"
+# Local stack: Ptyxis/Terminal 6-tab port-broadcast + agent port map.
+# See docs/port-broadcast.md. Map → Project internal/port-broadcast-stack-map.md
+# (and ops/diagnostics/port-broadcast-stack-map.md, gitignored).
+dssh_launch_local="./scripts/dssh-launch"
 dssh_env_backup_relpath=ops/tooling/env-backup.sh
 dssh_rlog_containers=backend,frontend,crm,proxy,cdn
 dssh_rlog_dir=./ops/diagnostics

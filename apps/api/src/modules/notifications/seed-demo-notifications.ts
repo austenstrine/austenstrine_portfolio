@@ -1,14 +1,13 @@
 import type { PrismaClient } from '@prisma/client';
 import { SUPERVENDOR_ADMIN_EMAIL } from '../catalog/ensure-supervendor';
 
-const DEMO_KINDS = [
-	'system.welcome',
-	'vendor.listings_tip',
-] as const;
+const DEMO_WELCOME_KIND = 'system.welcome';
+const DEMO_TIP_KIND = 'vendor.listings_tip';
 
 /**
- * Idempotent demo inbox rows for the supervendor admin so the AccountMenu
- * bubble is visible on a fresh seed.
+ * Idempotent demo inbox row for the supervendor admin so the AccountMenu
+ * badge is visible on a fresh seed. Drops the old seed tip (coaching noise)
+ * and keeps welcome copy short.
  */
 export async function seedDemoNotifications(prisma: PrismaClient): Promise<void> {
 	const admin = await prisma.user.findUnique({
@@ -19,34 +18,42 @@ export async function seedDemoNotifications(prisma: PrismaClient): Promise<void>
 		return;
 	}
 
-	const existing = await prisma.notification.count({
+	await prisma.notification.deleteMany({
 		where: {
 			userId: admin.id,
-			kind: { in: [...DEMO_KINDS] },
+			kind: DEMO_TIP_KIND,
 		},
 	});
-	if(existing > 0) {
-		return;
-	}
 
-	await prisma.notification.createMany({
-		data: [
-			{
-				userId: admin.id,
-				kind: 'system.welcome',
-				title: 'Welcome to selling on Place et Marque',
-				body: 'Use Vendors and Manage listings from your account menu to set up your catalog.',
+	const existingWelcome = await prisma.notification.findFirst({
+		where: {
+			userId: admin.id,
+			kind: DEMO_WELCOME_KIND,
+		},
+		select: { id: true },
+	});
+
+	if(existingWelcome) {
+		await prisma.notification.update({
+			where: { id: existingWelcome.id },
+			data: {
+				title: 'Welcome to Place et Marque',
+				body: null,
 				href: '/place-et-marque/vendors',
 				payload: { source: 'seed' },
 			},
-			{
-				userId: admin.id,
-				kind: 'vendor.listings_tip',
-				title: 'Tip: keep inventory current',
-				body: 'Open Manage listings to filter by vendor and update stock before shoppers hit checkout.',
-				href: '/place-et-marque/manage',
-				payload: { source: 'seed' },
-			},
-		],
+		});
+		return;
+	}
+
+	await prisma.notification.create({
+		data: {
+			userId: admin.id,
+			kind: DEMO_WELCOME_KIND,
+			title: 'Welcome to Place et Marque',
+			body: null,
+			href: '/place-et-marque/vendors',
+			payload: { source: 'seed' },
+		},
 	});
 }

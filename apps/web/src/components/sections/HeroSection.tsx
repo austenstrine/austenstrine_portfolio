@@ -1,5 +1,5 @@
 import { CdnImg } from '../CdnImg';
-import { JOIN_DEMO_HREF, SITE_HEADLINE } from '../../lib/site';
+import { SITE_HEADLINE } from '../../lib/site';
 
 export function HeroSection() {
 	return (
@@ -47,6 +47,8 @@ export function HeroSection() {
 					src="/pp1_sq_sm.jpg"
 					cdn={{ w: 416, h: 416, fit: 'cover', fm: 'webp' }}
 					alt="Austen Strine"
+					width={208}
+					height={208}
 				/>
 				<div>
 					<p
@@ -58,7 +60,7 @@ export function HeroSection() {
 							text-white/80
 						"
 					>
-						Parowan, Utah · Murray in December 2026
+						Parowan, Utah · Murray in January 2027
 					</p>
 					<h1
 						className="
@@ -93,7 +95,7 @@ export function HeroSection() {
 						software engineer developing several production e-commerce sites. I live
 						in Parowan, Utah. I&apos;m
 						in Murray Mondays and Tuesdays, and I&apos;m moving there full-time in
-						December 2026. I&apos;m open to on-site and hybrid roles in the Salt
+						January 2027. I&apos;m open to on-site and hybrid roles in the Salt
 						Lake Valley.
 					</p>
 					<div
@@ -101,6 +103,7 @@ export function HeroSection() {
 							mt-8
 							flex
 							flex-wrap
+							justify-end
 							gap-3
 						"
 					>
@@ -139,9 +142,9 @@ export function HeroSection() {
 								hover:bg-white/10
 								max-[399px]:px-4
 							"
-							href={JOIN_DEMO_HREF}
+							href="#featured-build"
 						>
-							Join Place et Marque demo
+							Explore a demo of my skills
 						</a>
 						<a
 							className="

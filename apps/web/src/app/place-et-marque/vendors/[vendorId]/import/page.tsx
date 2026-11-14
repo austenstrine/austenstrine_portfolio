@@ -217,6 +217,7 @@ function VendorImportPageContent() {
 								flex
 								flex-wrap
 								items-center
+								justify-end
 								gap-3
 							"
 						>
@@ -319,6 +320,7 @@ function VendorImportPageContent() {
 									mt-4
 									flex
 									flex-wrap
+									justify-end
 									gap-3
 								"
 							>

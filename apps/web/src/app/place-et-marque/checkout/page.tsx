@@ -9,7 +9,7 @@ import {
 import { loadStripe, type Stripe } from '@stripe/stripe-js';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Suspense, useEffect, useMemo, useState } from 'react';
+import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import {
 	createCheckoutSession,
 	formatMoney,
@@ -20,9 +20,26 @@ import {
 import { useSession } from '../../../lib/useSession';
 import { RequireAccess } from '../../../components/auth/RequireAccess';
 
+const REQUIRED_ADDRESS_FIELDS = [
+	['name', 'Name'],
+	['line1', 'Address'],
+	['city', 'City'],
+	['region', 'State / region'],
+	['postal', 'Postal'],
+] as const;
+
+const OPTIONAL_ADDRESS_FIELDS = [
+	['line2', 'Address 2'],
+	['country', 'Country'],
+] as const;
+
+type RequiredAddressKey = (typeof REQUIRED_ADDRESS_FIELDS)[number][0];
+
 function PaymentForm({
+	amountLabel,
 	onError,
 }: {
+	amountLabel: string;
 	onError: (message: string) => void;
 }) {
 	const stripe = useStripe();
@@ -68,6 +85,7 @@ function PaymentForm({
 			<PaymentElement />
 			<button
 				className="
+					self-end
 					rounded-full
 					bg-sky
 					px-4
@@ -77,17 +95,27 @@ function PaymentForm({
 					text-white
 					hover:bg-sky/90
 					disabled:opacity-60
+					max-lg:mr-14
 				"
 				type="submit"
 				disabled={!stripe || submitting}
 			>
 				{submitting
-					? 'Processing…'
-					: 'Pay now'
+					? 'Working…'
+					: `Pay ${amountLabel}`
 				}
 			</button>
 		</form>
 	);
+}
+
+function firstEmptyRequired(address: Record<RequiredAddressKey, string>): RequiredAddressKey | null {
+	for(const [key] of REQUIRED_ADDRESS_FIELDS) {
+		if(address[key].trim().length === 0) {
+			return key;
+		}
+	}
+	return null;
 }
 
 function CheckoutContent() {
@@ -108,7 +136,9 @@ function CheckoutContent() {
 	const [publishableKey, setPublishableKey] = useState('');
 	const [totalCents, setTotalCents] = useState(0);
 	const [error, setError] = useState<string | null>(null);
+	const [fieldError, setFieldError] = useState<RequiredAddressKey | null>(null);
 	const [busy, setBusy] = useState(false);
+	const fieldRefs = useRef<Partial<Record<RequiredAddressKey, HTMLInputElement | null>>>({});
 
 	useEffect(() => {
 		if(!user) {
@@ -150,12 +180,47 @@ function CheckoutContent() {
 		}, 0);
 	}, [preview, rateByGroup]);
 
-	async function onStartPayment() {
+	const vendorGroupCounts = useMemo(() => {
+		const counts = new Map<string, number>();
 		if(!preview) {
+			return counts;
+		}
+		for(const group of preview.groups) {
+			counts.set(group.vendorId, (counts.get(group.vendorId) ?? 0) + 1);
+		}
+		return counts;
+	}, [preview]);
+
+	const ratesReady = useMemo(() => {
+		if(!preview || preview.groups.length === 0) {
+			return false;
+		}
+		return preview.groups.every((group) => Boolean(rateByGroup[group.groupKey]));
+	}, [preview, rateByGroup]);
+
+	async function onStartPayment() {
+		if(!preview || preview.groups.length === 0) {
 			return;
 		}
+
+		const missing = firstEmptyRequired(address);
+		if(missing) {
+			setFieldError(missing);
+			setError(null);
+			const target = fieldRefs.current[missing];
+			target?.focus();
+			target?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+			return;
+		}
+
+		if(!ratesReady) {
+			setError('Choose shipping for each seller.');
+			return;
+		}
+
 		setBusy(true);
 		setError(null);
+		setFieldError(null);
 		try {
 			const session = await createCheckoutSession({
 				address,
@@ -187,6 +252,12 @@ function CheckoutContent() {
 		}
 	}
 
+	const cartEmpty = Boolean(preview && preview.groups.length === 0);
+	const amountLabel = formatMoney(
+		totalCents || ((preview?.merchandiseCents ?? 0) + shippingCents),
+		preview?.currency,
+	);
+
 	return (
 		<div
 			className="
@@ -195,26 +266,15 @@ function CheckoutContent() {
 				gap-6
 			"
 		>
-			<div>
-				<h1
-					className="
-						text-3xl
-						font-semibold
-						tracking-tight
-					"
-				>
-					Checkout
-				</h1>
-				<p
-					className="
-						mt-2
-						text-sm
-						text-slate-600
-					"
-				>
-					One payment covers every shipment group in your cart.
-				</p>
-			</div>
+			<h1
+				className="
+					text-3xl
+					font-semibold
+					tracking-tight
+				"
+			>
+				Checkout
+			</h1>
 
 			{sessionLoading
 				? (
@@ -234,7 +294,46 @@ function CheckoutContent() {
 				: null
 			}
 
-			{user && preview
+			{user && cartEmpty
+				? (
+					<div
+						className="
+							rounded-2xl
+							border
+							border-dashed
+							border-slate-300
+							bg-white
+							px-6
+							py-16
+							text-center
+						"
+					>
+						<p className="text-xl font-semibold text-ink">
+							Your cart is empty
+						</p>
+						<Link
+							className="
+								mt-6
+								inline-flex
+								rounded-full
+								bg-sky
+								px-5
+								py-2.5
+								text-sm
+								font-semibold
+								text-white
+								hover:bg-sky/90
+							"
+							href="/place-et-marque/cart"
+						>
+							Back to cart
+						</Link>
+					</div>
+				)
+				: null
+			}
+
+			{user && preview && preview.groups.length > 0
 				? (
 					<>
 						<section
@@ -257,25 +356,87 @@ function CheckoutContent() {
 									md:grid-cols-2
 								"
 							>
-								{(
-									[
-										['name', 'Name'],
-										['line1', 'Address'],
-										['line2', 'Address 2'],
-										['city', 'City'],
-										['region', 'State / region'],
-										['postal', 'Postal'],
-										['country', 'Country'],
-									] as const
-								).map(([key, label]) => (
+								{REQUIRED_ADDRESS_FIELDS.map(([key, label]) => {
+									const invalid = fieldError === key;
+									return (
+										<label
+											className="
+												block
+												text-sm
+											"
+											key={key}
+										>
+											<span className="font-semibold">
+												{label}
+											</span>
+											<input
+												ref={(node) => {
+													fieldRefs.current[key] = node;
+												}}
+												aria-invalid={invalid
+													? true
+													: undefined
+												}
+												aria-required="true"
+												className={
+													invalid
+														? `
+															mt-1
+															w-full
+															rounded-lg
+															border
+															border-red-600
+															px-3
+															py-2
+														`
+														: `
+															mt-1
+															w-full
+															rounded-lg
+															border
+															border-slate-300
+															px-3
+															py-2
+														`
+												}
+												required
+												value={address[key]}
+												onChange={(event) => {
+													const value = event.target.value;
+													setAddress((prev) => ({
+														...prev,
+														[key]: value,
+													}));
+													if(fieldError === key && value.trim().length > 0) {
+														setFieldError(null);
+													}
+												}}
+											/>
+										</label>
+									);
+								})}
+							</div>
+							<div
+								className="
+									mt-3
+									grid
+									gap-3
+									border-t
+									border-slate-100
+									pt-3
+									md:grid-cols-2
+								"
+							>
+								{OPTIONAL_ADDRESS_FIELDS.map(([key, label]) => (
 									<label
 										className="
 											block
 											text-sm
+											text-slate-600
 										"
 										key={key}
 									>
-										<span className="font-semibold">
+										<span className="font-medium">
 											{label}
 										</span>
 										<input
@@ -284,9 +445,11 @@ function CheckoutContent() {
 												w-full
 												rounded-lg
 												border
-												border-slate-300
+												border-slate-200
+												bg-slate-50
 												px-3
 												py-2
+												text-ink
 											"
 											value={address[key]}
 											onChange={(event) =>
@@ -301,104 +464,96 @@ function CheckoutContent() {
 							</div>
 						</section>
 
-						{preview.groups.map((group) => (
-							<section
-								className="
-									rounded-2xl
-									border
-									border-slate-200
-									bg-white
-									p-5
-								"
-								key={group.groupKey}
-							>
-								<h2 className="text-lg font-semibold">
-									{group.vendorName} · {group.shippingProfileName}
-								</h2>
-								{group.shipsSeparately
-									? (
-										<p
+						{preview.groups.map((group) => {
+							const showProfile =
+								(vendorGroupCounts.get(group.vendorId) ?? 0) > 1
+								|| group.shipsSeparately;
+							const heading =
+								showProfile && group.shippingProfileName
+									? `${group.vendorName} · ${group.shippingProfileName}`
+									: group.vendorName;
+							return (
+								<section
+									className="
+										rounded-2xl
+										border
+										border-slate-200
+										bg-white
+										p-5
+									"
+									key={group.groupKey}
+								>
+									<h2 className="text-lg font-semibold">
+										{heading}
+									</h2>
+									<ul
+										className="
+											mt-3
+											flex
+											flex-col
+											gap-2
+											text-sm
+										"
+									>
+										{group.lines.map((line) => (
+											<li
+												className="
+													flex
+													justify-between
+													gap-3
+												"
+												key={line.offeringId}
+											>
+												<span>
+													{line.title} × {line.quantity}
+												</span>
+												<span>
+													{formatMoney(line.lineTotalCents, group.currency)}
+												</span>
+											</li>
+										))}
+									</ul>
+									<label
+										className="
+											mt-4
+											block
+											text-sm
+										"
+									>
+										<span className="font-semibold">
+											Shipping
+										</span>
+										<select
 											className="
 												mt-1
-												text-xs
-												font-semibold
-												uppercase
-												tracking-wide
-												text-amber-800
+												w-full
+												rounded-lg
+												border
+												border-slate-300
+												px-3
+												py-2
 											"
+											value={rateByGroup[group.groupKey] ?? ''}
+											onChange={(event) =>
+												setRateByGroup((prev) => ({
+													...prev,
+													[group.groupKey]: event.target.value,
+												}))
+											}
 										>
-											Ships separately
-										</p>
-									)
-									: null
-								}
-								<ul
-									className="
-										mt-3
-										flex
-										flex-col
-										gap-2
-										text-sm
-									"
-								>
-									{group.lines.map((line) => (
-										<li
-											className="
-												flex
-												justify-between
-												gap-3
-											"
-											key={line.offeringId}
-										>
-											<span>
-												{line.title} × {line.quantity}
-											</span>
-											<span>
-												{formatMoney(line.lineTotalCents, group.currency)}
-											</span>
-										</li>
-									))}
-								</ul>
-								<label
-									className="
-										mt-4
-										block
-										text-sm
-									"
-								>
-									<span className="font-semibold">
-										Shipping rate
-									</span>
-									<select
-										className="
-											mt-1
-											w-full
-											rounded-lg
-											border
-											border-slate-300
-											px-3
-											py-2
-										"
-										value={rateByGroup[group.groupKey] ?? ''}
-										onChange={(event) =>
-											setRateByGroup((prev) => ({
-												...prev,
-												[group.groupKey]: event.target.value,
-											}))
-										}
-									>
-										{group.rates.map((rate) => (
-											<option
-												key={rate.id}
-												value={rate.id}
-											>
-												{rate.label} · {formatMoney(rate.amountCents)}
-											</option>
-										))}
-									</select>
-								</label>
-							</section>
-						))}
+											{group.rates.map((rate) => (
+												<option
+													key={rate.id}
+													value={rate.id}
+												>
+													{rate.label} · {formatMoney(rate.amountCents)}
+												</option>
+											))}
+										</select>
+									</label>
+								</section>
+							);
+						})}
 
 						<div
 							className="
@@ -407,6 +562,7 @@ function CheckoutContent() {
 								items-center
 								justify-between
 								gap-3
+								max-lg:pr-14
 							"
 						>
 							<p className="text-lg font-semibold">
@@ -431,20 +587,16 @@ function CheckoutContent() {
 											disabled:opacity-60
 										"
 										type="button"
-										disabled={busy || preview.groups.length === 0}
+										disabled={busy}
 										onClick={() => void onStartPayment()}
 									>
 										{busy
-											? 'Reserving…'
+											? 'Working…'
 											: 'Continue to payment'
 										}
 									</button>
 								)
-								: (
-									<p className="text-sm text-slate-600">
-										Charging {formatMoney(totalCents)}
-									</p>
-								)
+								: null
 							}
 						</div>
 
@@ -467,6 +619,7 @@ function CheckoutContent() {
 										options={{ clientSecret }}
 									>
 										<PaymentForm
+											amountLabel={amountLabel}
 											onError={(message) => setError(message || null)}
 										/>
 									</Elements>

@@ -4,13 +4,11 @@ import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useState, type FormEvent } from 'react';
 import {
 	createVendorAppPassword,
-	createVendorInvite,
 	getMyVendor,
 	listVendorAppPasswords,
 	listVendorInvites,
 	requestVendorLinkName,
 	revokeVendorAppPassword,
-	revokeVendorInvite,
 	updateVendorProfile,
 	type CreatedVendorAppPassword,
 	type VendorAppPassword,
@@ -30,6 +28,7 @@ import { useSession } from '../../../../lib/useSession';
 import { RequireAccess } from '../../../../components/auth/RequireAccess';
 import { CollapsibleWidget } from '../../../../components/catalog/CollapsibleWidget';
 import { UrlSlugField } from '../../../../components/catalog/UrlSlugField';
+import { VendorMembersPanel } from '../../../../components/catalog/VendorMembersPanel';
 import { ArrowRightIcon } from '../../../../components/icons/ArrowRightIcon';
 import { CartIcon } from '../../../../components/icons/CartIcon';
 import { CloseIcon } from '../../../../components/icons/CloseIcon';
@@ -117,12 +116,6 @@ function VendorDetailContent() {
 	const [passwordError, setPasswordError] = useState<string | null>(null);
 	const [appPasswordsOpen, setAppPasswordsOpen] = useWidgetOpenState('vendor.app-passwords', false);
 	const [invites, setInvites] = useState<VendorInviteSummary[]>([]);
-	const [inviteEmail, setInviteEmail] = useState('');
-	const [inviteRole, setInviteRole] = useState<'EDITOR' | 'VIEWER'>('EDITOR');
-	const [inviteBusy, setInviteBusy] = useState(false);
-	const [inviteError, setInviteError] = useState<string | null>(null);
-	const [inviteMessage, setInviteMessage] = useState<string | null>(null);
-	const [inviteOpen, setInviteOpen] = useState(false);
 	const [membersOpen, setMembersOpen] = useWidgetOpenState('vendor.members', false);
 	const [profileOpen, setProfileOpen] = useWidgetOpenState('vendor.public-profile', true);
 	const [profileTagline, setProfileTagline] = useState('');
@@ -1139,413 +1132,32 @@ function VendorDetailContent() {
 							title="Members"
 							expandLabel="Manage members"
 							open={membersOpen}
-							onOpenChange={(next) => {
-								setMembersOpen(next);
-								if(!next) {
-									setInviteOpen(false);
-									setInviteError(null);
-									setInviteMessage(null);
-								}
-							}}
+							onOpenChange={setMembersOpen}
 						>
-							<ul
-								className="
-									mt-4
-									flex
-									flex-col
-									gap-3
-								"
-							>
-								{vendor.members.map((member) => (
-									<li
-										className="
-											flex
-											flex-wrap
-											items-center
-											justify-between
-											gap-2
-											rounded-xl
-											border
-											border-slate-100
-											p-3
-										"
-										key={member.userId}
-									>
-										<div>
-											<p className="font-semibold">
-												{member.email}
-											</p>
-											<p className="text-xs text-slate-500">
-												Joined {new Date(member.joinedAt).toLocaleDateString()}
-											</p>
-										</div>
-										<span
-											className="
-												rounded-full
-												bg-slate-100
-												px-3
-												py-1
-												text-xs
-												font-semibold
-												uppercase
-												tracking-wide
-												text-slate-700
-											"
-										>
-											{member.role}
-										</span>
-									</li>
-								))}
-								{(vendor.myRole === 'OWNER' || vendor.myRole === 'EDITOR')
-									&& invites.map((invite) => (
-										<li
-											className="
-												flex
-												flex-wrap
-												items-center
-												justify-between
-												gap-2
-												rounded-xl
-												border
-												border-dashed
-												border-slate-200
-												p-3
-												text-sm
-											"
-											key={invite.id}
-										>
-											<div>
-												<p className="font-semibold">
-													{invite.email}
-												</p>
-												<p className="text-xs text-slate-500">
-													Invite pending · {invite.role} · expires{' '}
-													{new Date(invite.expiresAt).toLocaleDateString()}
-												</p>
-											</div>
-											<button
-												className="
-													text-xs
-													font-semibold
-													uppercase
-													tracking-wide
-													text-red-700
-													hover:underline
-												"
-												type="button"
-												onClick={() => {
-													if(!vendorId) {
-														return;
-													}
-													revokeVendorInvite(vendorId, invite.id)
-														.then(async () => {
-															setInvites(await listVendorInvites(vendorId));
-														})
-														.catch(() => undefined);
-												}}
-											>
-												Revoke
-											</button>
-										</li>
-									))
-								}
-								{vendor.myRole === 'OWNER' || vendor.myRole === 'EDITOR'
-									? (
-											<li
-												className={
-													inviteOpen
-														? `
-															rounded-xl
-															border
-															border-slate-100
-															p-3
-														`
-														: `
-															flex
-															justify-end
-														`
+							<VendorMembersPanel
+								vendor={vendor}
+								viewerUserId={user?.id}
+								invites={invites}
+								onInvitesChange={setInvites}
+								onMembersChange={({ members, myRole, leftOrganization }) => {
+									if(leftOrganization) {
+										router.push('/place-et-marque/vendors');
+										return;
+									}
+									setVendor((prev) =>
+										prev
+											? {
+													...prev,
+													members,
+													memberCount: members.length,
+													...(myRole
+														? { myRole }
+														: {}),
 												}
-											>
-												{inviteOpen
-													? (
-															<div
-																className="
-																	flex
-																	w-full
-																	flex-col
-																	gap-3
-																"
-															>
-																<div
-																	className="
-																		flex
-																		items-center
-																		justify-between
-																		gap-2
-																	"
-																>
-																	<p
-																		className="
-																			text-sm
-																			font-semibold
-																		"
-																	>
-																		Invite a teammate
-																	</p>
-																	<button
-																		type="button"
-																		aria-expanded={true}
-																		aria-label="Close invite form"
-																		className="
-																			inline-flex
-																			h-8
-																			w-8
-																			shrink-0
-																			items-center
-																			justify-center
-																			gap-1.5
-																			rounded-full
-																			border
-																			border-slate-200
-																			bg-white
-																			text-xs
-																			font-semibold
-																			text-slate-600
-																			transition
-																			hover:border-sky
-																			hover:text-sky
-																			sm:h-auto
-																			sm:w-auto
-																			sm:px-3
-																			sm:py-1
-																		"
-																		onClick={() => {
-																			setInviteOpen(false);
-																			setInviteError(null);
-																			setInviteMessage(null);
-																		}}
-																	>
-																		<CloseIcon
-																			className="
-																				h-3
-																				w-3
-																				shrink-0
-																			"
-																		/>
-																		<span
-																			className="
-																				hidden
-																				sm:inline
-																			"
-																		>
-																			Cancel
-																		</span>
-																	</button>
-																</div>
-																<p
-																	className="
-																		text-sm
-																		text-slate-600
-																	"
-																>
-																	Send an email invite so teammates can join this organization.
-																</p>
-																<form
-																	className="
-																		flex
-																		flex-col
-																		gap-3
-																		md:flex-row
-																		md:items-end
-																	"
-																	onSubmit={(event) => {
-																		event.preventDefault();
-																		if(!vendorId) {
-																			return;
-																		}
-																		setInviteBusy(true);
-																		setInviteError(null);
-																		setInviteMessage(null);
-																		createVendorInvite(vendorId, {
-																			email: inviteEmail.trim(),
-																			role: inviteRole,
-																		})
-																			.then(async () => {
-																				setInviteEmail('');
-																				setInviteMessage('Invite sent.');
-																				setInvites(await listVendorInvites(vendorId));
-																			})
-																			.catch((inviteErr) => {
-																				setInviteError(
-																					inviteErr instanceof Error
-																						? inviteErr.message
-																						: 'Could not send invite.',
-																				);
-																			})
-																			.finally(() => setInviteBusy(false));
-																	}}
-																>
-																	<label
-																		className="
-																			block
-																			flex-1
-																			text-sm
-																		"
-																	>
-																		<span className="font-semibold">
-																			Email
-																		</span>
-																		<input
-																			className="
-																				mt-1
-																				w-full
-																				rounded-lg
-																				border
-																				border-slate-300
-																				px-3
-																				py-2
-																			"
-																			type="email"
-																			required
-																			value={inviteEmail}
-																			onChange={(event) => setInviteEmail(event.target.value)}
-																			placeholder="teammate@example.com"
-																		/>
-																	</label>
-																	<label
-																		className="
-																			block
-																			text-sm
-																			md:w-40
-																		"
-																	>
-																		<span className="font-semibold">
-																			Role
-																		</span>
-																		<select
-																			className="
-																				mt-1
-																				w-full
-																				rounded-lg
-																				border
-																				border-slate-300
-																				px-3
-																				py-2
-																			"
-																			value={inviteRole}
-																			onChange={(event) =>
-																				setInviteRole(event.target.value as 'EDITOR' | 'VIEWER')
-																			}
-																		>
-																			<option value="EDITOR">
-																				Editor
-																			</option>
-																			<option value="VIEWER">
-																				Viewer
-																			</option>
-																		</select>
-																	</label>
-																	<button
-																		className="
-																			rounded-full
-																			bg-sky
-																			px-4
-																			py-2.5
-																			text-sm
-																			font-semibold
-																			text-white
-																			hover:bg-sky/90
-																			disabled:opacity-60
-																		"
-																		type="submit"
-																		disabled={inviteBusy}
-																	>
-																		{inviteBusy
-																			? 'Sending…'
-																			: 'Send invite'
-																		}
-																	</button>
-																</form>
-																{inviteError
-																	? (
-																			<p
-																				className="
-																					text-sm
-																					text-red-700
-																				"
-																			>
-																				{inviteError}
-																			</p>
-																		)
-																	: null
-																}
-																{inviteMessage
-																	? (
-																			<p
-																				className="
-																					text-sm
-																					text-emerald-700
-																				"
-																			>
-																				{inviteMessage}
-																			</p>
-																		)
-																	: null
-																}
-															</div>
-														)
-													: (
-															<button
-																type="button"
-																aria-label="Invite members"
-																aria-expanded={false}
-																className="
-																	inline-flex
-																	h-8
-																	w-8
-																	items-center
-																	justify-center
-																	gap-1.5
-																	rounded-full
-																	border
-																	border-slate-200
-																	bg-white
-																	text-xs
-																	font-semibold
-																	text-slate-600
-																	transition
-																	hover:border-sky
-																	hover:text-sky
-																	sm:h-auto
-																	sm:w-auto
-																	sm:px-3
-																	sm:py-1.5
-																"
-																onClick={() => setInviteOpen(true)}
-															>
-																<PlusIcon
-																	className="
-																		h-3.5
-																		w-3.5
-																		shrink-0
-																	"
-																/>
-																<span
-																	className="
-																		hidden
-																		sm:inline
-																	"
-																>
-																	Invite
-																</span>
-															</button>
-														)
-												}
-											</li>
-										)
-									: null
-								}
-							</ul>
+											: prev,
+									);
+								}}
+							/>
 						</CollapsibleWidget>
 
 						{vendor.myRole === 'OWNER'
@@ -1713,6 +1325,7 @@ function VendorDetailContent() {
 													className="
 														inline-flex
 														w-fit
+														self-end
 														items-center
 														rounded-xl
 														bg-sky
@@ -2274,6 +1887,7 @@ function VendorDetailContent() {
 													flex
 													flex-wrap
 													items-end
+													justify-end
 													gap-3
 												"
 											>

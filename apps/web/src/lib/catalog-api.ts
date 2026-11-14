@@ -621,6 +621,39 @@ export function revokeVendorInvite(vendorId: string, inviteId: string): Promise<
 	});
 }
 
+export type VendorMemberSummary = {
+	userId: string;
+	email: string;
+	role: 'OWNER' | 'EDITOR' | 'VIEWER';
+	joinedAt: string;
+};
+
+export function updateVendorMemberRole(
+	vendorId: string,
+	memberUserId: string,
+	role: 'EDITOR' | 'VIEWER',
+): Promise<VendorMemberSummary> {
+	return catalogRequest<VendorMemberSummary>(
+		`/vendors/${vendorId}/members/${encodeURIComponent(memberUserId)}`,
+		{
+			method: 'PATCH',
+			body: JSON.stringify({ role }),
+		},
+	);
+}
+
+export function removeVendorMember(
+	vendorId: string,
+	memberUserId: string,
+): Promise<{ message: string }> {
+	return catalogRequest<{ message: string }>(
+		`/vendors/${vendorId}/members/${encodeURIComponent(memberUserId)}`,
+		{
+			method: 'DELETE',
+		},
+	);
+}
+
 export function peekVendorInvite(token: string): Promise<VendorInvitePeek> {
 	return catalogRequest<VendorInvitePeek>(
 		`/invites/peek?token=${encodeURIComponent(token)}`,
@@ -649,8 +682,8 @@ export type JoinDemoResult = {
 	vendorSlug: string;
 	role: 'EDITOR' | 'VIEWER' | 'OWNER';
 	email: string;
-	token: string | null;
-	acceptPath: string | null;
+	/** Invite accept token is email-only; never returned in the API body. */
+	mailSent: boolean;
 	expiresAt: string | null;
 };
 

@@ -1,13 +1,14 @@
 'use client';
 
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';
 import { CrmShell } from '../../components/layout/CrmShell';
 import { AuthApiError } from '../../lib/auth-api';
 import { applyUomMerge } from '../../lib/crm-api';
 
 function UomMergeContent() {
+	const router = useRouter();
 	const searchParams = useSearchParams();
 	const token = searchParams.get('token')?.trim() ?? '';
 	const [message, setMessage] = useState<string | null>(null);
@@ -16,9 +17,7 @@ function UomMergeContent() {
 
 	useEffect(() => {
 		if(!token) {
-			setLoading(false);
-			setError(null);
-			setMessage(null);
+			router.replace('/uoms');
 			return;
 		}
 
@@ -37,7 +36,15 @@ function UomMergeContent() {
 				);
 			})
 			.finally(() => setLoading(false));
-	}, [token]);
+	}, [router, token]);
+
+	if(!token) {
+		return (
+			<p className="text-sm text-mist/60">
+				Loading…
+			</p>
+		);
+	}
 
 	return (
 		<div
@@ -54,49 +61,8 @@ function UomMergeContent() {
 					text-white
 				"
 			>
-				UOM approvals
+				Unit merges
 			</h1>
-			<p
-				className="
-					mt-3
-					text-sm
-					text-mist/75
-				"
-			>
-				Confirm or skip cross-vendor unit merges from the automerge email links.
-			</p>
-
-			{!token
-				? (
-						<p
-							className="
-								mt-8
-								rounded-xl
-								border
-								border-line
-								bg-panel/70
-								px-5
-								py-4
-								text-sm
-								text-mist/70
-							"
-						>
-							Open a merge link from email to apply a decision. Global units live on{' '}
-							<Link
-								href="/uoms"
-								className="
-									text-glow
-									underline-offset-2
-									hover:underline
-								"
-							>
-								Units of measure
-							</Link>
-							.
-						</p>
-					)
-				: null
-			}
 
 			{loading
 				? (
@@ -107,7 +73,7 @@ function UomMergeContent() {
 								text-mist/60
 							"
 						>
-							Applying decision…
+							Applying…
 						</p>
 					)
 				: null
@@ -157,9 +123,15 @@ function UomMergeContent() {
 				: null
 			}
 
-			{token && !loading
+			{!loading
 				? (
-						<p className="mt-6 text-sm">
+						<p
+							className="
+								mt-6
+								text-right
+								text-sm
+							"
+						>
 							<Link
 								href="/uoms"
 								className="
@@ -168,7 +140,7 @@ function UomMergeContent() {
 									hover:underline
 								"
 							>
-								Back to units of measure
+								Units
 							</Link>
 						</p>
 					)

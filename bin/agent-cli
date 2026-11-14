@@ -261,7 +261,7 @@ console.log("  npm ci");
 console.log("  npm run prepare:api-types   # before lint/test/build");
 console.log("  npm run dev:api | dev:web | dev:crm");
 console.log("  npm run prisma:migrate -w apps/api && npm run prisma:seed -w apps/api");
-console.log("  ./dssh status | ./dssh backend start | ./dssh publish  (live box)");
+console.log("  ./dssh launch | ./dssh status | ./dssh backend start | ./dssh publish  (live box)");
 '
 }
 
@@ -340,6 +340,7 @@ docker / dssh
   live container names typically portfolio-* (see .dsshrc *_name)
   common:
     docker compose up -d
+    ./dssh launch           # local 6-tab stack (rlog/proxy/cdn/backend/frontend/crm)
     ./dssh status | ./dssh backend start | ./dssh frontend start | ./dssh proxy start | ./dssh cdn start
     ./dssh publish          # live: ops/deploy/live.sh
     ./dssh migrate          # prisma migrate on api
@@ -474,7 +475,7 @@ const out={
   integrationBranch: "development",
   defaultBranch: "master",
   rule: "Run ./bin/agent-cli orient first; prefer subcommands over re-reading files.",
-  coord: "Assume async peers; agent-coord claim before contested edits (./bin/agent-coord or ~/.local/bin/agent-coord).",
+  coord: "Optional same-checkout claims via agent-coord when peers may touch the same paths; skip when alone (./bin/agent-coord or ~/.local/bin/agent-coord).",
   sameVm: "git worktree add before edits; do not edit shared /agent/repos checkouts in place",
   branching: "feature/<user>/development/<name> → merge to development (no PR); master only when asked",
   layout: run("layout"),
@@ -494,7 +495,7 @@ orient — austenstrine_portfolio
   Branches: integrate on development (based on master); features feature/<user>/development/<name>.
   Same-VM: git worktree before edits (do not mutate shared checkouts in place).
   Prefer: ./bin/agent-cli <cmd> over re-reading files / guessing npm or dssh.
-  Coord first when editing: assume async peers; agent-coord claim before contested edits.
+  Coord when useful: same-checkout peer contention → agent-coord claim; skip when alone.
 
 EOF
   cmd_layout

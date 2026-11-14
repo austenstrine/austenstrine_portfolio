@@ -1,8 +1,8 @@
 ---
-description: Assume async peers; claim contested files via agent-coord
+description: Optional same-checkout file claims via agent-coord
 alwaysApply: true
 ---
 
 # Agent coordination
 
-Assume async peers may edit at any time. Before contested edits: `./bin/agent-coord` (or `agent-coord` on PATH) claim / negotiate / release. See `AGENTS.md` §7 and `~/Development/agent-coord`.
+When another agent may edit the same checkout paths on this host, use `./bin/agent-coord` (or `agent-coord` on PATH) claim / negotiate / release. Skip when you are alone on those paths — judgment over ritual. See `AGENTS.md` §7 and `~/Development/agent-coord`.

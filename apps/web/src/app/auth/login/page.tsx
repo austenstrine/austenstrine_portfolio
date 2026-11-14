@@ -13,6 +13,8 @@ import {
 	safeNextPath,
 	stashAuthRedirect,
 } from '../../../lib/accessGate';
+import { useRedirectIfAuthenticated } from '../../../lib/useRedirectIfAuthenticated';
+
 
 function LoginForm() {
 	const router = useRouter();
@@ -20,6 +22,9 @@ function LoginForm() {
 	const googleError = searchParams.get('error') === 'google';
 	const nextPath = safeNextPath(searchParams.get('next'));
 	const reason = searchParams.get('reason');
+	const { loading: sessionLoading, redirecting } = useRedirectIfAuthenticated(
+		nextPath,
+	);
 
 	const [email, setEmail] = useState('');
 	const [password, setPassword] = useState('');
@@ -27,6 +32,14 @@ function LoginForm() {
 		googleError ? 'Google sign-in failed. Please try again.' : null,
 	);
 	const [submitting, setSubmitting] = useState(false);
+
+	if(sessionLoading || redirecting) {
+		return (
+			<p className="text-sm text-slate-500">
+				Checking session…
+			</p>
+		);
+	}
 
 	const onSubmit = async (event: FormEvent) => {
 		event.preventDefault();
@@ -146,6 +159,7 @@ function LoginForm() {
 
 				<button
 					className="
+						self-end
 						mt-2
 						rounded-full
 						bg-sky

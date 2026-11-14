@@ -1,12 +1,19 @@
 'use client';
 
 import { useLayoutEffect, useRef, useState } from 'react';
+import { PrinterIcon } from '../icons/PrinterIcon';
 import {
-	education,
+	educationExperienceRoles,
+	extracurricularExperienceRoles,
 	professionalExperience,
+	workExperienceRoles,
 	type ExperienceKind,
 	type ExperienceRole,
 } from '../../data/experience';
+import {
+	ExperiencePrintSheet,
+	printSelectedExperience,
+} from './ExperiencePrintSheet';
 
 const SOFTWARE_COUNT = professionalExperience.filter(
 	(role) => role.kind === 'software',
@@ -16,17 +23,36 @@ const NON_SOFTWARE_COUNT = professionalExperience.filter(
 ).length;
 const ROLE_COUNT = professionalExperience.length;
 const PIN_MS = 360;
+/** Match CatalogHeader / SellerPageActionPane scroll chrome. */
+const STICKY_SCROLL_DELTA = 8;
+const STICKY_SHOW_TOP = 16;
+const STICKY_MOBILE_MQ = '(max-width: 767px)';
 
 function snapCssPixel(value: number) {
 	return Math.round(value);
 }
 
-function splitRoleDates(dates: string) {
+function splitRoleDates(dates: string | undefined) {
+	if(!dates) {
+		return {
+			range: '',
+			duration: null as string | null,
+		};
+	}
+
 	const [range, duration] = dates.split(' · ');
 	return {
 		range,
 		duration: duration ?? null,
 	};
+}
+
+/** Kind chips are includes: empty selection → nothing in-scope. */
+function matchesKindInclude(
+	selected: ExperienceKind[],
+	kind: ExperienceKind,
+) {
+	return selected.includes(kind);
 }
 
 function DateConnector({
@@ -286,24 +312,28 @@ function ExperienceRoleCard({
 					</p>
 				)
 				: null}
-			<ul
-				className="
-					mt-4
-					list-disc
-					space-y-2
-					pl-5
-					text-sm
-					leading-relaxed
-					text-slate-700
-					max-[399px]:pl-4
-				"
-			>
-				{role.bullets.map((bullet) => (
-					<li key={bullet}>
-						{bullet}
-					</li>
-				))}
-			</ul>
+			{role.bullets.length > 0
+				? (
+					<ul
+						className="
+							mt-4
+							list-disc
+							space-y-2
+							pl-5
+							text-sm
+							leading-relaxed
+							text-slate-700
+							max-[399px]:pl-4
+						"
+					>
+						{role.bullets.map((bullet) => (
+							<li key={bullet}>
+								{bullet}
+							</li>
+						))}
+					</ul>
+				)
+				: null}
 		</article>
 	);
 }
@@ -362,17 +392,91 @@ function FacetCheck({
 	);
 }
 
+function SaveSelectedPdfButton({
+	disabled,
+	onClick,
+}: {
+	disabled: boolean;
+	onClick: () => void;
+}) {
+	return (
+		<button
+			aria-disabled={disabled}
+			aria-label="Save selected experience as PDF"
+			className={
+				disabled
+					? `
+						inline-flex
+						h-11
+						w-11
+						shrink-0
+						cursor-not-allowed
+						items-center
+						justify-center
+						rounded-full
+						border
+						border-slate-200
+						text-slate-300
+						md:h-9
+						md:w-auto
+						md:gap-1.5
+						md:px-3
+					`
+					: `
+						inline-flex
+						h-11
+						w-11
+						shrink-0
+						items-center
+						justify-center
+						rounded-full
+						border
+						border-slate-200
+						text-ink
+						transition
+						hover:border-slate-300
+						hover:bg-frost
+						md:h-9
+						md:w-auto
+						md:gap-1.5
+						md:px-3
+					`
+			}
+			disabled={disabled}
+			onClick={onClick}
+			title={
+				disabled
+					? undefined
+					: 'Save selected experience as PDF'
+			}
+			type="button"
+		>
+			<PrinterIcon
+				className="h-3.5 w-3.5"
+			/>
+			<span
+				className="
+					hidden
+					text-[13px]
+					font-semibold
+					md:inline
+				"
+			>
+				PDF
+			</span>
+		</button>
+	);
+}
+
 export function ExperienceSection() {
-	const [selectedKinds, setSelectedKinds] = useState<ExperienceKind[]>([
-		'software',
-	]);
+	const [selectedKinds, setSelectedKinds] = useState<ExperienceKind[]>([]);
 	const [peekedIds, setPeekedIds] = useState<string[]>([]);
 	const [filtersOpen, setFiltersOpen] = useState(true);
 	const sectionRef = useRef<HTMLElement>(null);
 	const sentinelRef = useRef<HTMLDivElement>(null);
 	const slotRef = useRef<HTMLDivElement>(null);
 	const stickyRef = useRef<HTMLDivElement>(null);
-	const listRef = useRef<HTMLOListElement>(null);
+	const timelinesRef = useRef<HTMLDivElement>(null);
 	const pinRef = useRef<{ id: string; offset: number } | null>(null);
 	const pinUntilRef = useRef(0);
 
@@ -389,9 +493,12 @@ export function ExperienceSection() {
 		const sentinelEl: HTMLDivElement = sentinelNode;
 		const slotEl: HTMLDivElement = slotNode;
 		const barEl: HTMLDivElement = barNode;
+		const mobileMq = window.matchMedia(STICKY_MOBILE_MQ);
 
 		let frame = 0;
 		let stuck = false;
+		let barHidden = false;
+		let lastScrollY = window.scrollY;
 		const box = {
 			left: 0,
 			width: 0,
@@ -399,12 +506,16 @@ export function ExperienceSection() {
 
 		function write(
 			el: HTMLElement,
-			key: 'height' | 'left' | 'position' | 'top' | 'width',
+			key: 'height' | 'left' | 'position' | 'top' | 'transform' | 'width',
 			value: string,
 		) {
 			if(el.style[key] !== value) {
 				el.style[key] = value;
 			}
+		}
+
+		function canAutoHide() {
+			return !filtersOpen && mobileMq.matches;
 		}
 
 		function measureBox() {
@@ -421,16 +532,22 @@ export function ExperienceSection() {
 		function release() {
 			write(slotEl, 'height', '');
 			barEl.removeAttribute('data-stuck');
+			barEl.removeAttribute('data-hidden');
 			write(barEl, 'position', '');
 			write(barEl, 'top', '');
 			write(barEl, 'left', '');
 			write(barEl, 'width', '');
+			write(barEl, 'transform', '');
+			if(barEl.style.pointerEvents) {
+				barEl.style.pointerEvents = '';
+			}
 		}
 
 		function dock() {
 			const sentinelRect = sentinelEl.getBoundingClientRect();
 			const sectionRect = sectionEl.getBoundingClientRect();
-			const height = barEl.offsetHeight;
+			const y = Math.max(0, window.scrollY);
+			const delta = y - lastScrollY;
 
 			if(sentinelRect.bottom <= 0) {
 				stuck = true;
@@ -440,22 +557,67 @@ export function ExperienceSection() {
 			}
 
 			if(!stuck) {
+				barHidden = false;
+				lastScrollY = y;
 				release();
 				return;
+			}
+
+			if(canAutoHide()) {
+				// Sentinel just crossed → keep bar visible near stick start.
+				if(sentinelRect.bottom > -STICKY_SHOW_TOP) {
+					barHidden = false;
+					lastScrollY = y;
+				}
+				else if(delta > STICKY_SCROLL_DELTA) {
+					barHidden = true;
+					lastScrollY = y;
+				}
+				else if(delta < -STICKY_SCROLL_DELTA) {
+					barHidden = false;
+					lastScrollY = y;
+				}
+			}
+			else {
+				barHidden = false;
+				lastScrollY = y;
 			}
 
 			if(barEl.style.position !== 'fixed') {
 				measureBox();
 			}
 
-			write(slotEl, 'height', `${height}px`);
+			// Apply sticky width first, then measure the full rendered
+			// bar (includes + count + print) so the spacer matches.
+			// offsetHeight ignores translateY. Keep spacer at full bar
+			// height while hidden — collapsing it to 0 shifts layout
+			// under the stick point and scroll-anchors fight auto-hide
+			// (show → grow spacer → +scrollY → hide → shrink → …).
 			barEl.setAttribute('data-stuck', '');
+			barEl.setAttribute(
+				'data-hidden',
+				barHidden
+					? 'true'
+					: 'false',
+			);
 			write(barEl, 'position', 'fixed');
 			write(barEl, 'left', `${box.left}px`);
 			write(barEl, 'width', `${box.width}px`);
+			const height = barEl.offsetHeight;
+			write(slotEl, 'height', `${height}px`);
 			write(barEl, 'top', `${
 				snapCssPixel(Math.min(0, sectionRect.bottom - height))
 			}px`);
+			write(
+				barEl,
+				'transform',
+				barHidden
+					? 'translateY(-100%)'
+					: 'translateY(0)',
+			);
+			barEl.style.pointerEvents = barHidden
+				? 'none'
+				: '';
 		}
 
 		function onFrame() {
@@ -476,12 +638,24 @@ export function ExperienceSection() {
 			requestDock();
 		}
 
+		function onFocusCapture() {
+			if(!barHidden) {
+				return;
+			}
+
+			barHidden = false;
+			requestDock();
+		}
+
 		measureBox();
 		dock();
 		window.addEventListener('scroll', requestDock, { passive: true });
 		window.addEventListener('resize', onResize);
+		mobileMq.addEventListener('change', onResize);
+		barEl.addEventListener('focusin', onFocusCapture);
 		const observer = new ResizeObserver(onResize);
 		observer.observe(sectionEl);
+		observer.observe(barEl);
 
 		return () => {
 			if(frame !== 0) {
@@ -490,6 +664,8 @@ export function ExperienceSection() {
 
 			window.removeEventListener('scroll', requestDock);
 			window.removeEventListener('resize', onResize);
+			mobileMq.removeEventListener('change', onResize);
+			barEl.removeEventListener('focusin', onFocusCapture);
 			observer.disconnect();
 			release();
 		};
@@ -497,18 +673,18 @@ export function ExperienceSection() {
 
 	function pinFromSticky(preferredId?: string) {
 		const sticky = stickyRef.current;
-		const list = listRef.current;
-		if(!sticky || !list) {
+		const timelines = timelinesRef.current;
+		if(!sticky || !timelines) {
 			return;
 		}
 
 		const stickyBottom = sticky.getBoundingClientRect().bottom;
 		let item: HTMLElement | null = preferredId
-			? list.querySelector(`[data-role-mark="${preferredId}"]`)
+			? timelines.querySelector(`[data-role-mark="${preferredId}"]`)
 			: null;
 
 		if(!item) {
-			const rows = list.querySelectorAll<HTMLElement>('[data-role-id]');
+			const rows = timelines.querySelectorAll<HTMLElement>('[data-role-id]');
 			for(const row of rows) {
 				if(row.getBoundingClientRect().bottom > stickyBottom + 8) {
 					item = row.querySelector('[data-role-mark]') ?? row;
@@ -532,14 +708,14 @@ export function ExperienceSection() {
 	function applyPin() {
 		const pin = pinRef.current;
 		const sticky = stickyRef.current;
-		const list = listRef.current;
-		if(!pin || !sticky || !list || performance.now() > pinUntilRef.current) {
+		const timelines = timelinesRef.current;
+		if(!pin || !sticky || !timelines || performance.now() > pinUntilRef.current) {
 			return;
 		}
 
-		const item = list.querySelector<HTMLElement>(
+		const item = timelines.querySelector<HTMLElement>(
 			`[data-role-mark="${pin.id}"]`,
-		) ?? list.querySelector<HTMLElement>(
+		) ?? timelines.querySelector<HTMLElement>(
 			`[data-role-id="${pin.id}"]`,
 		);
 		if(!item) {
@@ -560,13 +736,13 @@ export function ExperienceSection() {
 		}
 
 		applyPin();
-		const list = listRef.current;
-		if(!list) {
+		const timelines = timelinesRef.current;
+		if(!timelines) {
 			return;
 		}
 
 		const observer = new ResizeObserver(() => applyPin());
-		observer.observe(list);
+		observer.observe(timelines);
 		const timer = window.setTimeout(() => {
 			observer.disconnect();
 			pinRef.current = null;
@@ -578,10 +754,8 @@ export function ExperienceSection() {
 		};
 	}, [selectedKinds, peekedIds]);
 
-	const hasFilter = selectedKinds.length > 0;
-
-	function inScope(kind: ExperienceKind) {
-		return selectedKinds.includes(kind);
+	function inScope(role: ExperienceRole) {
+		return matchesKindInclude(selectedKinds, role.kind);
 	}
 
 	function toggleKind(kind: ExperienceKind) {
@@ -614,7 +788,39 @@ export function ExperienceSection() {
 		peekRole(id);
 	}
 
-	const shownCount = professionalExperience.filter((role) => inScope(role.kind)).length;
+	/**
+	 * Three category timelines; shared kind includes ANDs with each
+	 * (in-scope = selected kind; else peekable — same UX as before).
+	 */
+	const timelineBlocks: {
+		id: string;
+		title: string;
+		roles: ExperienceRole[];
+	}[] = [
+		{
+			id: 'work-experience',
+			title: 'Work experience',
+			roles: workExperienceRoles,
+		},
+		{
+			id: 'education',
+			title: 'Education',
+			roles: educationExperienceRoles,
+		},
+		{
+			id: 'extracurricular',
+			title: 'Extra-Curricular',
+			roles: extracurricularExperienceRoles,
+		},
+	];
+
+	const expandedRoles = timelineBlocks.flatMap((block) => (
+		block.roles.filter((role) => (
+			inScope(role) || peekedIds.includes(role.id)
+		))
+	));
+	const selectedForPrintCount = expandedRoles.length;
+	const canPrintSelected = selectedForPrintCount > 0;
 
 	return (
 		<section
@@ -631,6 +837,8 @@ export function ExperienceSection() {
 			id="experience"
 			ref={sectionRef}
 		>
+			<ExperiencePrintSheet roles={expandedRoles} />
+
 			<div
 				className="
 					max-w-3xl
@@ -645,7 +853,7 @@ export function ExperienceSection() {
 						text-sky
 					"
 				>
-					Work
+					Background
 				</p>
 				<h2
 					className="
@@ -675,6 +883,10 @@ export function ExperienceSection() {
 					px-gutter
 					py-2
 					[overflow-anchor:none]
+					transition-transform
+					duration-200
+					ease-out
+					motion-reduce:transition-none
 					after:pointer-events-none
 					after:absolute
 					after:inset-x-0
@@ -732,25 +944,36 @@ export function ExperienceSection() {
 									text-slate-600
 								"
 							>
-								{hasFilter
-									? `Showing ${shownCount} of ${ROLE_COUNT}`
-									: `${ROLE_COUNT} roles`}
+								{`${selectedForPrintCount} of ${ROLE_COUNT} selected for print`}
 							</p>
 						)}
-					<button
+					<div
 						className="
+							flex
 							shrink-0
-							text-sm
-							font-semibold
-							text-ink
+							items-center
+							gap-2
 						"
-						onClick={() => setFiltersOpen((open) => !open)}
-						type="button"
 					>
-						{filtersOpen
-							? 'Hide filters'
-							: 'View filters'}
-					</button>
+						<SaveSelectedPdfButton
+							disabled={!canPrintSelected}
+							onClick={printSelectedExperience}
+						/>
+						<button
+							className="
+								shrink-0
+								text-sm
+								font-semibold
+								text-ink
+							"
+							onClick={() => setFiltersOpen((open) => !open)}
+							type="button"
+						>
+							{filtersOpen
+								? 'Hide'
+								: 'View'}
+						</button>
+					</div>
 				</div>
 				<div
 					className="
@@ -781,299 +1004,285 @@ export function ExperienceSection() {
 							onChange={() => toggleKind('non-software')}
 						/>
 					</div>
-					<p
-						aria-live="polite"
+					<div
 						className="
-							text-sm
-							text-slate-600
+							flex
+							items-center
+							gap-3
 						"
 					>
-						{hasFilter
-							? `Showing ${shownCount} of ${ROLE_COUNT}`
-							: `${ROLE_COUNT} roles`}
-					</p>
+						<p
+							aria-live="polite"
+							className="
+								text-sm
+								text-slate-600
+							"
+						>
+							{`${selectedForPrintCount} of ${ROLE_COUNT} selected for print`}
+						</p>
+						<SaveSelectedPdfButton
+							disabled={!canPrintSelected}
+							onClick={printSelectedExperience}
+						/>
+					</div>
 				</div>
 			</div>
 			</div>
 
-			<ol
-				className="
-					timeline-list
-					relative
-					mt-8
-				"
-				ref={listRef}
+			<div
+				className="mt-8 space-y-10"
+				ref={timelinesRef}
 			>
-				<div
-					aria-hidden="true"
-					className="
-						absolute
-						bottom-3
-						left-[7px]
-						top-3
-						w-px
-						bg-slate-200
-					"
-				/>
-				{professionalExperience.map((role) => {
-					const scoped = inScope(role.kind);
-					const peeked = peekedIds.includes(role.id);
-					const expanded = scoped || peeked;
-					const markClass = `
-						flex
-						h-4
-						w-4
-						items-center
-						justify-center
-						rounded-full
-						border-2
-						ring-4
-						ring-white
-						transition-[background-color,border-color]
-						duration-300
-						${scoped && expanded
-							? 'border-sky bg-sky'
-							: peeked && expanded
-								? 'border-slate-400 bg-white'
-								: 'border-slate-300 bg-white'}
-					`;
-
-					return (
-						<li
-							className={
-								expanded
-									? `
-										relative
-										flex
-										items-start
-										gap-4
-										pb-6
-										transition-[padding]
-										duration-300
-										last:pb-0
-									`
-									: `
-										relative
-										flex
-										items-start
-										gap-4
-										pb-3
-										transition-[padding]
-										duration-300
-										last:pb-0
-									`
-							}
-							data-role-id={role.id}
-							key={role.id}
+				{timelineBlocks.map((block) => (
+					<section
+						aria-labelledby={`timeline-${block.id}-heading`}
+						key={block.id}
+					>
+						<h3
+							className="
+								text-xl
+								font-semibold
+								text-ink
+							"
+							id={`timeline-${block.id}-heading`}
 						>
-							{expanded
+							{block.title}
+						</h3>
+						<ExperienceTimelineList
+							hidePeek={hidePeek}
+							inScope={inScope}
+							peekRole={peekRole}
+							peekedIds={peekedIds}
+							roles={block.roles}
+							togglePeek={togglePeek}
+						/>
+					</section>
+				))}
+			</div>
+		</section>
+	);
+}
+
+function ExperienceTimelineList({
+	hidePeek,
+	inScope,
+	peekRole,
+	peekedIds,
+	roles,
+	togglePeek,
+}: {
+	hidePeek: (id: string) => void;
+	inScope: (role: ExperienceRole) => boolean;
+	peekRole: (id: string) => void;
+	peekedIds: string[];
+	roles: ExperienceRole[];
+	togglePeek: (id: string) => void;
+}) {
+	return (
+		<ol
+			className="
+				timeline-list
+				relative
+				mt-4
+			"
+		>
+			<div
+				aria-hidden="true"
+				className="
+					absolute
+					bottom-3
+					left-[7px]
+					top-3
+					w-px
+					bg-slate-200
+				"
+			/>
+			{roles.map((role) => {
+				const scoped = inScope(role);
+				const peeked = peekedIds.includes(role.id);
+				const expanded = scoped || peeked;
+				const dateRange = splitRoleDates(role.dates).range;
+				const markClass = `
+					flex
+					h-4
+					w-4
+					items-center
+					justify-center
+					rounded-full
+					border-2
+					ring-4
+					ring-white
+					transition-[background-color,border-color]
+					duration-300
+					${scoped && expanded
+						? 'border-sky bg-sky'
+						: peeked && expanded
+							? 'border-slate-400 bg-white'
+							: 'border-slate-300 bg-white'}
+				`;
+
+				return (
+					<li
+						className={
+							expanded
+								? `
+									relative
+									flex
+									items-start
+									gap-4
+									pb-6
+									transition-[padding]
+									duration-300
+									last:pb-0
+								`
+								: `
+									relative
+									flex
+									items-start
+									gap-4
+									pb-3
+									transition-[padding]
+									duration-300
+									last:pb-0
+								`
+						}
+						data-role-id={role.id}
+						key={role.id}
+					>
+						{expanded
+							? (
+								<span
+									aria-hidden="true"
+									className="
+										pointer-events-none
+										absolute
+										left-4
+										top-[0.875rem]
+										z-[1]
+										h-px
+										w-4
+										bg-slate-200
+									"
+								/>
+							)
+							: null}
+						<div
+							className="
+								relative
+								z-10
+								mt-1.5
+								h-4
+								w-4
+								shrink-0
+							"
+						>
+							{scoped
 								? (
 									<span
 										aria-hidden="true"
+										className={markClass}
+										data-role-mark={role.id}
+									/>
+								)
+								: (
+									<button
+										aria-label={
+											expanded
+												? `Hide ${role.title}`
+												: `Peek ${role.title}`
+										}
 										className="
-											pointer-events-none
 											absolute
-											left-4
-											top-[0.875rem]
-											z-[1]
-											h-px
-											w-4
-											bg-slate-200
+											left-1/2
+											top-1/2
+											flex
+											h-11
+											w-11
+											-translate-x-1/2
+											-translate-y-1/2
+											items-center
+											justify-center
+											md:h-4
+											md:w-4
 										"
+										data-role-mark={role.id}
+										onClick={() => (
+											expanded
+												? hidePeek(role.id)
+												: peekRole(role.id)
+										)}
+										type="button"
+									>
+										<span
+											aria-hidden="true"
+											className={markClass}
+										>
+											<span
+												aria-hidden="true"
+												className={
+													expanded
+														? `
+															block
+															h-0.5
+															w-2
+															rounded-full
+															bg-slate-400
+															opacity-100
+															transition-opacity
+															duration-300
+														`
+														: `
+															block
+															h-0.5
+															w-2
+															rounded-full
+															bg-slate-400
+															opacity-0
+															transition-opacity
+															duration-300
+														`
+												}
+											/>
+										</span>
+									</button>
+								)}
+						</div>
+						<div className="min-w-0 flex-1">
+							{!scoped
+								? (
+									<PeekToggle
+										expanded={expanded}
+										onClick={() => togglePeek(role.id)}
+										range={dateRange || role.organization}
+										title={role.title}
 									/>
 								)
 								: null}
 							<div
-								className="
-									relative
-									z-10
-									mt-1.5
-									h-4
-									w-4
-									shrink-0
-								"
+								aria-hidden={!expanded}
+								className={
+									expanded
+										? 'timeline-fold timeline-fold-open'
+										: 'timeline-fold'
+								}
 							>
-								{scoped
-									? (
-										<span
-											aria-hidden="true"
-											className={markClass}
-											data-role-mark={role.id}
-										/>
-									)
-									: (
-										<button
-											aria-label={
-												expanded
-													? `Hide ${role.title}`
-													: `Peek ${role.title}`
-											}
-											className="
-												absolute
-												left-1/2
-												top-1/2
-												flex
-												h-11
-												w-11
-												-translate-x-1/2
-												-translate-y-1/2
-												items-center
-												justify-center
-												md:h-4
-												md:w-4
-											"
-											data-role-mark={role.id}
-											onClick={() => (
-												expanded
-													? hidePeek(role.id)
-													: peekRole(role.id)
-											)}
-											type="button"
-										>
-											<span
-												aria-hidden="true"
-												className={markClass}
-											>
-												<span
-													aria-hidden="true"
-													className={
-														expanded
-															? `
-																block
-																h-0.5
-																w-2
-																rounded-full
-																bg-slate-400
-																opacity-100
-																transition-opacity
-																duration-300
-															`
-															: `
-																block
-																h-0.5
-																w-2
-																rounded-full
-																bg-slate-400
-																opacity-0
-																transition-opacity
-																duration-300
-															`
-													}
-												/>
-											</span>
-										</button>
-									)}
-							</div>
-							<div className="min-w-0 flex-1">
-								{!scoped
-									? (
-										<PeekToggle
-											expanded={expanded}
-											onClick={() => togglePeek(role.id)}
-											range={splitRoleDates(role.dates).range}
-											title={role.title}
-										/>
-									)
-									: null}
-								<div
-									aria-hidden={!expanded}
-									className={
-										expanded
-											? 'timeline-fold timeline-fold-open'
-											: 'timeline-fold'
-									}
-								>
-									<div className="timeline-fold-inner">
-										{scoped
-											? (
-												<DateConnector
-													range={splitRoleDates(role.dates).range}
-												/>
-											)
-											: (
-												<DateConnectorTail />
-											)}
-										<ExperienceRoleCard role={role} />
-									</div>
+								<div className="timeline-fold-inner">
+									{scoped && dateRange
+										? (
+											<DateConnector
+												range={dateRange}
+											/>
+										)
+										: (
+											<DateConnectorTail />
+										)}
+									<ExperienceRoleCard role={role} />
 								</div>
 							</div>
-						</li>
-					);
-				})}
-			</ol>
-
-			<div
-				className="
-					mt-8
-					flex
-					flex-col
-					gap-4
-				"
-			>
-				<p
-					className="
-						text-xs
-						font-semibold
-						uppercase
-						tracking-[0.18em]
-						text-sky
-					"
-				>
-					Education
-				</p>
-				{education.map((entry) => (
-					<article
-						className="
-							rounded-2xl
-							border
-							border-slate-100
-							bg-frost/60
-							p-inset
-							md:p-6
-						"
-						key={`${entry.school}-${entry.dates}`}
-					>
-						<h3
-							className="
-								text-lg
-								font-semibold
-								text-ink
-							"
-						>
-							{entry.credential}
-						</h3>
-						<p
-							className="
-								mt-1
-								text-sm
-								font-semibold
-								text-sky
-							"
-						>
-							{entry.school}
-						</p>
-						<p
-							className="
-								text-sm
-								text-slate-500
-							"
-						>
-							{entry.place}
-							{' · '}
-							{entry.dates}
-						</p>
-						<p
-							className="
-								mt-3
-								text-sm
-								text-slate-700
-							"
-						>
-							{entry.note}
-						</p>
-					</article>
-				))}
-			</div>
-		</section>
+						</div>
+					</li>
+				);
+			})}
+		</ol>
 	);
 }

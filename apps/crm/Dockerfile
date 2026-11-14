@@ -20,5 +20,7 @@ RUN npm ci
 COPY . .
 ARG NEXT_PUBLIC_API_BASE_URL=https://crm.local.austenstrine.dev/api
 ENV NEXT_PUBLIC_API_BASE_URL=$NEXT_PUBLIC_API_BASE_URL
+# NODE_COMPILE_CACHE can EvalError on typescript.js (memoizeOne var) during Next loadJsConfig.
+ENV NODE_COMPILE_CACHE=
 RUN npm run build -w apps/crm
 CMD ["npm", "run", "start", "-w", "apps/crm"]

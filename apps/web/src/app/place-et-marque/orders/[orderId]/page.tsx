@@ -1,17 +1,23 @@
 'use client';
 
 import { useParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
 	cancelBuyerOrder,
 	formatMoney,
-	formatOrderStatus,
 	getBuyerOrder,
 	type PlaceEtMarqueOrder,
 } from '../../../../lib/checkout-api';
 import { useSession } from '../../../../lib/useSession';
 import { BackLink } from '../../../../components/BackLink';
+import { OrderConfirmActions } from '../../../../components/orders/OrderConfirmActions';
+import { OrderMoneySummary } from '../../../../components/orders/OrderMoneySummary';
 import { OrderSupportCode } from '../../../../components/orders/OrderSupportCode';
+import {
+	displayOrderStatus,
+	formatShipTo,
+} from '../../../../components/orders/order-display';
+import { RefundIcon } from '../../../../components/icons/RefundIcon';
 
 export default function OrderDetailPage() {
 	const params = useParams<{ orderId: string }>();
@@ -19,6 +25,8 @@ export default function OrderDetailPage() {
 	const [order, setOrder] = useState<PlaceEtMarqueOrder | null>(null);
 	const [error, setError] = useState<string | null>(null);
 	const [busy, setBusy] = useState(false);
+	const busyRef = useRef(false);
+	const [confirmCancel, setConfirmCancel] = useState(false);
 	const [cancelNote, setCancelNote] = useState('');
 
 	async function refresh() {
@@ -42,16 +50,11 @@ export default function OrderDetailPage() {
 	}, [user, params.orderId]);
 
 	async function onCancel() {
-		if(!params.orderId) {
-			return;
-		}
-		const confirmed = window.confirm(
-			'Cancel this order and refund the charge? This cannot be undone.',
-		);
-		if(!confirmed) {
+		if(!params.orderId || busyRef.current) {
 			return;
 		}
 
+		busyRef.current = true;
 		setBusy(true);
 		setError(null);
 		try {
@@ -59,6 +62,7 @@ export default function OrderDetailPage() {
 				params.orderId,
 				cancelNote.trim() || undefined,
 			);
+			setConfirmCancel(false);
 			await refresh();
 			setCancelNote('');
 		}
@@ -70,6 +74,7 @@ export default function OrderDetailPage() {
 			);
 		}
 		finally {
+			busyRef.current = false;
 			setBusy(false);
 		}
 	}
@@ -115,43 +120,66 @@ export default function OrderDetailPage() {
 							p-5
 						"
 					>
-						<h1
+						<div
 							className="
-								text-2xl
-								font-semibold
+								flex
+								flex-wrap
+								items-start
+								justify-between
+								gap-4
 							"
 						>
-							{order.vendor?.name ?? 'Order'}
-						</h1>
-						<p
-							className="
-								mt-1
-								text-base
-								font-medium
-								text-slate-800
-							"
-						>
-							{order.orderRef}
-						</p>
-						<p
-							className="
-								mt-2
-								text-sm
-								text-slate-600
-							"
-						>
-							{formatOrderStatus(order.status)} · {formatMoney(order.totalCents, order.currency)}
-							{order.shippingLabel
-								? ` · ${order.shippingLabel}`
-								: ''
-							}
-						</p>
-						<OrderSupportCode orderId={order.id} />
+							<div className="min-w-0 flex-1">
+								<h1
+									className="
+										text-2xl
+										font-semibold
+									"
+								>
+									{order.vendor?.name ?? 'Order'}
+								</h1>
+								<p
+									className="
+										mt-1
+										text-base
+										font-medium
+										text-slate-800
+									"
+								>
+									{order.orderRef}
+								</p>
+								<p
+									className="
+										mt-2
+										text-sm
+										text-slate-600
+									"
+								>
+									{displayOrderStatus(order)}
+									{order.shippingLabel
+										? ` · ${order.shippingLabel}`
+										: ''
+									}
+								</p>
+								<p className="text-sm text-slate-500">
+									{new Date(order.createdAt).toLocaleString()}
+									{order.shippedAt
+										? ` · Shipped ${new Date(order.shippedAt).toLocaleString()}`
+										: ''
+									}
+								</p>
+								<OrderSupportCode orderId={order.id} />
+							</div>
+							<OrderMoneySummary
+								order={order}
+								perspective="buyer"
+							/>
+						</div>
 						{order.refundedAt
 							? (
 								<p
 									className="
-										mt-2
+										mt-3
 										text-sm
 										font-semibold
 										text-amber-800
@@ -173,13 +201,7 @@ export default function OrderDetailPage() {
 								text-slate-600
 							"
 						>
-							Ship to {order.shipTo.name}, {order.shipTo.line1}
-							{order.shipTo.line2
-								? `, ${order.shipTo.line2}`
-								: ''
-							},{' '}
-							{order.shipTo.city}, {order.shipTo.region}{' '}
-							{order.shipTo.postal}
+							{formatShipTo(order.shipTo)}
 						</p>
 						<ul
 							className="
@@ -188,21 +210,26 @@ export default function OrderDetailPage() {
 								flex-col
 								gap-2
 								text-sm
+								text-slate-600
 							"
 						>
 							{order.lines.map((line) => (
 								<li
 									className="
 										flex
+										flex-wrap
 										justify-between
-										gap-3
+										gap-x-3
+										gap-y-0.5
 									"
 									key={line.id}
 								>
 									<span>
-										{line.title} × {line.quantity} ({line.sku})
+										{line.title} × {line.quantity}
 									</span>
 									<span>
+										{formatMoney(line.unitPriceCents, order.currency)}
+										{' each · '}
 										{formatMoney(line.lineTotalCents, order.currency)}
 									</span>
 								</li>
@@ -214,70 +241,108 @@ export default function OrderDetailPage() {
 								<div
 									className="
 										mt-6
+										flex
+										flex-col
+										items-end
+										gap-3
 										border-t
 										border-slate-100
 										pt-4
 									"
 								>
-									<p
-										className="
-											text-sm
-											text-slate-600
-										"
-									>
-										Cancel before the vendor ships to receive a full refund
-										(merchandise + shipping).
-									</p>
-									<label
-										className="
-											mt-3
-											block
-											text-sm
-											font-semibold
-											text-slate-700
-										"
-									>
-										Optional note
-										<textarea
-											className="
-												mt-1
-												w-full
-												rounded-xl
-												border
-												border-slate-200
-												px-3
-												py-2
-												text-sm
-												font-normal
-											"
-											onChange={(event) => setCancelNote(event.target.value)}
-											rows={2}
-											value={cancelNote}
-										/>
-									</label>
-									<button
-										className="
-											mt-3
-											rounded-xl
-											border
-											border-red-300
-											px-4
-											py-2
-											text-sm
-											font-semibold
-											text-red-700
-											hover:border-red-500
-											disabled:opacity-60
-										"
-										disabled={busy}
-										onClick={() => void onCancel()}
-										type="button"
-									>
-										{busy
-											? 'Cancelling…'
-											: 'Cancel & refund'
-										}
-									</button>
+									{confirmCancel
+										? (
+											<>
+												<label
+													className="
+														w-full
+														max-w-md
+														text-sm
+														font-semibold
+														text-slate-700
+													"
+												>
+													Note
+													<textarea
+														className="
+															mt-1
+															w-full
+															rounded-xl
+															border
+															border-slate-200
+															px-3
+															py-2
+															text-sm
+															font-normal
+														"
+														onChange={(event) => setCancelNote(event.target.value)}
+														rows={2}
+														value={cancelNote}
+													/>
+												</label>
+												<OrderConfirmActions
+													busy={busy}
+													busyLabel="Cancelling…"
+													confirmLabel="Cancel & refund"
+													onConfirm={() => void onCancel()}
+													onDismiss={() => setConfirmCancel(false)}
+													prompt={`Refund ${formatMoney(order.totalCents, order.currency)}?`}
+												/>
+											</>
+										)
+										: (
+											<>
+												<button
+													aria-label="Cancel & refund"
+													className="
+														inline-flex
+														h-9
+														w-9
+														items-center
+														justify-center
+														rounded-full
+														border
+														border-red-300
+														bg-white
+														text-red-700
+														hover:border-red-500
+														disabled:opacity-60
+														sm:hidden
+													"
+													disabled={busy}
+													onClick={() => setConfirmCancel(true)}
+													type="button"
+												>
+													<RefundIcon className="h-3.5 w-3.5" />
+												</button>
+												<button
+													className="
+														hidden
+														items-center
+														gap-1.5
+														rounded-full
+														border
+														border-red-300
+														bg-white
+														px-4
+														py-2
+														text-sm
+														font-semibold
+														text-red-700
+														hover:border-red-500
+														disabled:opacity-60
+														sm:inline-flex
+													"
+													disabled={busy}
+													onClick={() => setConfirmCancel(true)}
+													type="button"
+												>
+													<RefundIcon className="h-3.5 w-3.5" />
+													Cancel & refund
+												</button>
+											</>
+										)
+									}
 								</div>
 							)
 							: null

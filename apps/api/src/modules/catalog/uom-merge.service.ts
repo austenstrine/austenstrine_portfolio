@@ -202,6 +202,7 @@ export class UomMergeService {
 
 	async handleToken(token: string): Promise<{ message: string; action: MergeAction; nameKey: string }> {
 		const { action, nameKey } = this.parseToken(token);
+		await this.assertTokenReusable(nameKey);
 		if(action === 'confirm') {
 			await this.confirmMerge(nameKey);
 			return {
@@ -213,18 +214,7 @@ export class UomMergeService {
 		if(action === 'skip-once') {
 			const group = await this.findCollisionGroup(nameKey);
 			const ids = group.uoms.filter((row) => row.vendorId).map((row) => row.id).sort();
-			await this.prisma.uomMergePolicy.upsert({
-				where: { nameKey },
-				create: {
-					nameKey,
-					status: UomMergePolicyStatus.SKIP_ONCE,
-					lastNotifiedUomIds: ids,
-				},
-				update: {
-					status: UomMergePolicyStatus.SKIP_ONCE,
-					lastNotifiedUomIds: ids,
-				},
-			});
+			await this.writeSkipPolicy(nameKey, UomMergePolicyStatus.SKIP_ONCE, ids);
 			return {
 				action,
 				nameKey,
@@ -232,22 +222,75 @@ export class UomMergeService {
 			};
 		}
 
-		await this.prisma.uomMergePolicy.upsert({
-			where: { nameKey },
-			create: {
-				nameKey,
-				status: UomMergePolicyStatus.SKIP_FOREVER,
-				lastNotifiedUomIds: [],
-			},
-			update: {
-				status: UomMergePolicyStatus.SKIP_FOREVER,
-			},
-		});
+		await this.writeSkipPolicy(nameKey, UomMergePolicyStatus.SKIP_FOREVER, []);
 		return {
 			action,
 			nameKey,
 			message: `Will never prompt to merge UOMs named "${nameKey}" again.`,
 		};
+	}
+
+	/** Tokens must not apply once the nameKey is already MERGED. */
+	private async assertTokenReusable(nameKey: string): Promise<void> {
+		const policy = await this.prisma.uomMergePolicy.findUnique({
+			where: { nameKey },
+		});
+		if(policy?.status === UomMergePolicyStatus.MERGED) {
+			throw new BadRequestException(
+				'This merge was already completed; the token is no longer valid.',
+			);
+		}
+	}
+
+	/**
+	 * Skip-once / skip-forever must never overwrite MERGED (CAS via updateMany).
+	 */
+	private async writeSkipPolicy(
+		nameKey: string,
+		status: typeof UomMergePolicyStatus.SKIP_ONCE | typeof UomMergePolicyStatus.SKIP_FOREVER,
+		lastNotifiedUomIds: string[],
+	): Promise<void> {
+		const existing = await this.prisma.uomMergePolicy.findUnique({
+			where: { nameKey },
+		});
+		if(existing?.status === UomMergePolicyStatus.MERGED) {
+			throw new BadRequestException(
+				'This merge was already completed; the token is no longer valid.',
+			);
+		}
+
+		if(!existing) {
+			try {
+				await this.prisma.uomMergePolicy.create({
+					data: {
+						nameKey,
+						status,
+						lastNotifiedUomIds,
+					},
+				});
+				return;
+			}
+			catch {
+				// Concurrent create (likely MERGED or another skip) — re-check.
+				await this.assertTokenReusable(nameKey);
+			}
+		}
+
+		const updated = await this.prisma.uomMergePolicy.updateMany({
+			where: {
+				nameKey,
+				status: { not: UomMergePolicyStatus.MERGED },
+			},
+			data: {
+				status,
+				lastNotifiedUomIds,
+			},
+		});
+		if(updated.count === 0) {
+			throw new BadRequestException(
+				'This merge was already completed; the token is no longer valid.',
+			);
+		}
 	}
 
 	async confirmMerge(nameKey: string): Promise<void> {

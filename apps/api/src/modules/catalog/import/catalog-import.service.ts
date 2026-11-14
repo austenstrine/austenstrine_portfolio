@@ -577,10 +577,13 @@ export class CatalogImportService {
 	}
 
 	private async runJob(jobId: string, vendorId: string, rows: ParsedOfferingRow[]) {
-		await this.prisma.catalogImportJob.update({
-			where: { id: jobId },
+		const claimed = await this.prisma.catalogImportJob.updateMany({
+			where: { id: jobId, status: CatalogImportStatus.PENDING },
 			data: { status: CatalogImportStatus.RUNNING },
 		});
+		if(claimed.count === 0) {
+			return;
+		}
 
 		const uoms = await this.prisma.unitOfMeasure.findMany();
 		const uomByCode = new Map(uoms.map((row) => [row.code.toUpperCase(), row]));
@@ -718,7 +721,7 @@ export class CatalogImportService {
 			data: {
 				status:
 					runtimeErrors.length > 0
-						? CatalogImportStatus.COMPLETED
+						? CatalogImportStatus.FAILED
 						: CatalogImportStatus.COMPLETED,
 				createdCount,
 				updatedCount,

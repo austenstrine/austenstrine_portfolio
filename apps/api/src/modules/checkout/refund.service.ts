@@ -27,6 +27,18 @@ const VENDOR_REFUND_STATUSES: PlaceEtMarqueOrderStatus[] = [
 	PlaceEtMarqueOrderStatus.SHIPPED,
 ];
 
+/** Load in-flight/done refunds plus any row that already hit Stripe (blocks retry). */
+const REFUND_LOAD_WHERE = {
+	OR: [
+		{
+			status: {
+				in: [OrderRefundStatus.PENDING, OrderRefundStatus.SUCCEEDED],
+			},
+		},
+		{ stripeRefundId: { not: null } },
+	],
+};
+
 @Injectable()
 export class RefundService {
 	private readonly logger = new Logger(RefundService.name);
@@ -44,11 +56,7 @@ export class RefundService {
 				payout: true,
 				checkout: true,
 				refunds: {
-					where: {
-						status: {
-							in: [OrderRefundStatus.PENDING, OrderRefundStatus.SUCCEEDED],
-						},
-					},
+					where: REFUND_LOAD_WHERE,
 				},
 			},
 		});
@@ -96,11 +104,7 @@ export class RefundService {
 				payout: true,
 				checkout: true,
 				refunds: {
-					where: {
-						status: {
-							in: [OrderRefundStatus.PENDING, OrderRefundStatus.SUCCEEDED],
-						},
-					},
+					where: REFUND_LOAD_WHERE,
 				},
 			},
 		});
@@ -151,7 +155,11 @@ export class RefundService {
 				vendorNetCents: number;
 				stripeTransferReversalId: string | null;
 			} | null;
-			refunds: Array<{ id: string; status: OrderRefundStatus }>;
+			refunds: Array<{
+				id: string;
+				status: OrderRefundStatus;
+				stripeRefundId: string | null;
+			}>;
 		};
 		userId: string;
 		reason: OrderRefundReason;
@@ -159,8 +167,20 @@ export class RefundService {
 	}) {
 		const { order } = input;
 
-		if(order.refunds.some((row) => row.status === OrderRefundStatus.SUCCEEDED)) {
-			throw new BadRequestException('Order is already refunded.');
+		if(
+			order.refunds.some(
+				(row) =>
+					row.status === OrderRefundStatus.SUCCEEDED ||
+					Boolean(row.stripeRefundId),
+			)
+		) {
+			throw new BadRequestException(
+				order.refunds.some(
+					(row) => row.status === OrderRefundStatus.SUCCEEDED,
+				)
+					? 'Order is already refunded.'
+					: 'A Stripe refund was already recorded for this order; refusing another attempt to avoid double-refund.',
+			);
 		}
 		const pending = order.refunds.find(
 			(row) => row.status === OrderRefundStatus.PENDING,
@@ -224,54 +244,12 @@ export class RefundService {
 			order.payout?.stripeTransferReversalId ?? null;
 
 		try {
-			if(
-				order.payout &&
-				order.payout.status === VendorPayoutStatus.TRANSFERRED
-			) {
-				const transferId =
-					order.payout.stripeTransferId ?? order.stripeTransferId;
-				if(!transferId) {
-					throw new Error(
-						'Vendor payout was transferred but no Stripe transfer id is stored.',
-					);
-				}
-				if(!stripeTransferReversalId) {
-					const reversal = await this.stripe.reverseTransfer({
-						transferId,
-						amountCents: vendorReversalCents,
-						orderId: order.id,
-						refundId: refundRow.id,
-					});
-					stripeTransferReversalId = reversal.id;
-					await this.prisma.vendorPayout.update({
-						where: { id: order.payout.id },
-						data: {
-							status: VendorPayoutStatus.REVERSED,
-							stripeTransferReversalId,
-							reversedAt: new Date(),
-							lastError: null,
-						},
-					});
-				}
-			}
-			else if(order.payout) {
-				const cancellable: VendorPayoutStatus[] = [
-					VendorPayoutStatus.PENDING,
-					VendorPayoutStatus.READY,
-					VendorPayoutStatus.FAILED,
-					VendorPayoutStatus.SKIPPED,
-				];
-				if(cancellable.includes(order.payout.status)) {
-					await this.prisma.vendorPayout.update({
-						where: { id: order.payout.id },
-						data: {
-							status: VendorPayoutStatus.CANCELLED,
-							lastError: null,
-						},
-					});
-				}
-			}
-
+			// Stripe order: buyer refund first, then vendor transfer reverse.
+			// Reversing before createRefund left payout REVERSED when refund threw
+			// (vendor clawed back, buyer unpaid). Refund and transfer reversal are
+			// independent Stripe calls; refund-first keeps clawback from succeeding
+			// without a buyer refund. If reverse fails after refund, buyer refund
+			// still completes and payout stays consistent for ops retry.
 			const stripeRefund = await this.stripe.createRefund({
 				paymentIntentId,
 				amountCents: buyerRefundCents,
@@ -284,40 +262,105 @@ export class RefundService {
 			});
 			stripeRefundId = stripeRefund.id;
 
-			await this.inventory.restockClaimsForOrder(order.id);
-
-			const now = new Date();
-			await this.prisma.$transaction(async (tx) => {
-				await tx.orderRefund.update({
-					where: { id: refundRow.id },
-					data: {
-						status: OrderRefundStatus.SUCCEEDED,
-						stripeRefundId,
-						stripeTransferReversalId,
-						succeededAt: now,
-						lastError: null,
-					},
-				});
-				await tx.placeEtMarqueOrder.update({
-					where: { id: order.id },
-					data: {
-						status: PlaceEtMarqueOrderStatus.REFUNDED,
-						refundedAt: now,
-						cancelledAt:
-							input.reason === OrderRefundReason.BUYER_CANCEL ||
-							input.reason === OrderRefundReason.VENDOR_CANCEL
-								? now
-								: undefined,
-					},
-				});
-				if(order.checkoutId) {
-					await tx.checkout.update({
-						where: { id: order.checkoutId },
+			let clawbackWarning: string | null = null;
+			try {
+				if(
+					order.payout &&
+					order.payout.status === VendorPayoutStatus.TRANSFERRED
+				) {
+					const transferId =
+						order.payout.stripeTransferId ?? order.stripeTransferId;
+					if(!transferId) {
+						throw new Error(
+							'Vendor payout was transferred but no Stripe transfer id is stored.',
+						);
+					}
+					if(!stripeTransferReversalId) {
+						const reversal = await this.stripe.reverseTransfer({
+							transferId,
+							amountCents: vendorReversalCents,
+							orderId: order.id,
+							refundId: refundRow.id,
+						});
+						stripeTransferReversalId = reversal.id;
+						await this.prisma.vendorPayout.update({
+							where: { id: order.payout.id },
+							data: {
+								status: VendorPayoutStatus.REVERSED,
+								stripeTransferReversalId,
+								reversedAt: new Date(),
+								lastError: null,
+							},
+						});
+					}
+				}
+				else if(order.payout) {
+					const cancellable: VendorPayoutStatus[] = [
+						VendorPayoutStatus.PENDING,
+						VendorPayoutStatus.READY,
+						VendorPayoutStatus.FAILED,
+						VendorPayoutStatus.SKIPPED,
+					];
+					if(cancellable.includes(order.payout.status)) {
+						await this.prisma.vendorPayout.update({
+							where: { id: order.payout.id },
+							data: {
+								status: VendorPayoutStatus.CANCELLED,
+								lastError: null,
+							},
+						});
+					}
+				}
+			}
+			catch(clawbackError) {
+				clawbackWarning =
+					clawbackError instanceof Error
+						? clawbackError.message
+						: 'Vendor clawback failed after buyer refund.';
+				this.logger.error(
+					`Buyer refund ${stripeRefundId} succeeded for order ${order.id} but vendor clawback failed: ${clawbackWarning}`,
+					clawbackError as Error,
+				);
+				if(
+					order.payout &&
+					order.payout.status === VendorPayoutStatus.TRANSFERRED
+				) {
+					await this.prisma.vendorPayout.update({
+						where: { id: order.payout.id },
 						data: {
-							refundedCents: { increment: buyerRefundCents },
+							lastError: clawbackWarning.slice(0, 1000),
 						},
 					});
 				}
+			}
+
+			let localWarning = clawbackWarning;
+			try {
+				await this.inventory.restockClaimsForOrder(order.id);
+			}
+			catch(restockError) {
+				localWarning =
+					restockError instanceof Error
+						? restockError.message
+						: 'Inventory restock failed after buyer refund.';
+				this.logger.error(
+					`Buyer refund ${stripeRefundId} succeeded for order ${order.id} but restock failed: ${localWarning}`,
+					restockError as Error,
+				);
+			}
+
+			// Once Stripe createRefund has landed, always persist SUCCEEDED.
+			// Marking FAILED here would drop the row from the PENDING|SUCCEEDED
+			// load filter and let a retry mint a new refund id / idempotency key.
+			await this.persistBuyerRefundSucceeded({
+				refundId: refundRow.id,
+				orderId: order.id,
+				checkoutId: order.checkoutId,
+				buyerRefundCents,
+				reason: input.reason,
+				stripeRefundId,
+				stripeTransferReversalId,
+				lastError: localWarning,
 			});
 
 			return this.toRefundDto(
@@ -333,6 +376,38 @@ export class RefundService {
 				`Order refund failed for ${order.id}: ${message}`,
 				error as Error,
 			);
+			if(stripeRefundId) {
+				// Stripe already moved buyer money — never leave a retryable FAILED.
+				try {
+					await this.persistBuyerRefundSucceeded({
+						refundId: refundRow.id,
+						orderId: order.id,
+						checkoutId: order.checkoutId,
+						buyerRefundCents,
+						reason: input.reason,
+						stripeRefundId,
+						stripeTransferReversalId,
+						lastError: message,
+					});
+				}
+				catch(persistError) {
+					this.logger.error(
+						`Failed to persist SUCCEEDED after Stripe refund ${stripeRefundId} for order ${order.id}`,
+						persistError as Error,
+					);
+					await this.prisma.orderRefund.update({
+						where: { id: refundRow.id },
+						data: {
+							status: OrderRefundStatus.SUCCEEDED,
+							stripeRefundId,
+							stripeTransferReversalId,
+							succeededAt: new Date(),
+							lastError: message.slice(0, 1000),
+						},
+					});
+				}
+				throw new BadRequestException(message);
+			}
 			await this.prisma.orderRefund.update({
 				where: { id: refundRow.id },
 				data: {
@@ -344,6 +419,53 @@ export class RefundService {
 			});
 			throw new BadRequestException(message);
 		}
+	}
+
+	private async persistBuyerRefundSucceeded(input: {
+		refundId: string;
+		orderId: string;
+		checkoutId: string | null;
+		buyerRefundCents: number;
+		reason: OrderRefundReason;
+		stripeRefundId: string;
+		stripeTransferReversalId: string | null;
+		lastError: string | null;
+	}) {
+		const now = new Date();
+		await this.prisma.$transaction(async (tx) => {
+			await tx.orderRefund.update({
+				where: { id: input.refundId },
+				data: {
+					status: OrderRefundStatus.SUCCEEDED,
+					stripeRefundId: input.stripeRefundId,
+					stripeTransferReversalId: input.stripeTransferReversalId,
+					succeededAt: now,
+					lastError: input.lastError
+						? input.lastError.slice(0, 1000)
+						: null,
+				},
+			});
+			await tx.placeEtMarqueOrder.update({
+				where: { id: input.orderId },
+				data: {
+					status: PlaceEtMarqueOrderStatus.REFUNDED,
+					refundedAt: now,
+					cancelledAt:
+						input.reason === OrderRefundReason.BUYER_CANCEL ||
+						input.reason === OrderRefundReason.VENDOR_CANCEL
+							? now
+							: undefined,
+				},
+			});
+			if(input.checkoutId) {
+				await tx.checkout.update({
+					where: { id: input.checkoutId },
+					data: {
+						refundedCents: { increment: input.buyerRefundCents },
+					},
+				});
+			}
+		});
 	}
 
 	async listOrderRefunds(orderId: string) {

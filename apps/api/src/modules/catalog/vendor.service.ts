@@ -18,6 +18,19 @@ import {
 	throwLinkNameConflict,
 } from './vendor-link-name';
 
+type PrismaTxClient = Parameters<
+	Parameters<PrismaService['$transaction']>[0]
+>[0];
+
+function isPrismaUniqueViolation(error: unknown): boolean {
+	return (
+		typeof error === 'object'
+		&& error !== null
+		&& 'code' in error
+		&& (error as { code: unknown }).code === 'P2002'
+	);
+}
+
 @Injectable()
 export class VendorService {
 	constructor(
@@ -373,21 +386,51 @@ export class VendorService {
 			};
 		}
 
-		await this.assertLinkNameAvailable(request.requestedSlug, request.vendorId);
-
+		// Availability + PENDING→APPROVED claim must share one transaction so two
+		// concurrent approves of the same slug cannot both pass a pre-tx check
+		// (TOCTOU). Exact collisions still lose on Vendor.slug @@unique.
 		const updated = await this.prisma.$transaction(async (tx) => {
-			const vendor = await tx.vendor.update({
-				where: { id: request.vendorId },
-				data: { slug: request.requestedSlug },
-			});
-			const approved = await tx.vendorLinkNameRequest.update({
-				where: { id: request.id },
+			const conflict = await this.findConflictForSlug(
+				request.requestedSlug,
+				request.vendorId,
+				tx,
+			);
+			if(conflict) {
+				throwLinkNameConflict(conflict);
+			}
+
+			const claim = await tx.vendorLinkNameRequest.updateMany({
+				where: {
+					id: request.id,
+					status: VendorLinkNameRequestStatus.PENDING,
+				},
 				data: {
 					status: VendorLinkNameRequestStatus.APPROVED,
 					reviewReason: dto.note?.trim() || dto.reason?.trim() || null,
 					reviewedByUserId: userId,
 					reviewedAt: new Date(),
 				},
+			});
+			if(claim.count !== 1) {
+				throw new BadRequestException('That request was already reviewed.');
+			}
+
+			let vendor;
+			try {
+				vendor = await tx.vendor.update({
+					where: { id: request.vendorId },
+					data: { slug: request.requestedSlug },
+				});
+			}
+			catch(error) {
+				if(isPrismaUniqueViolation(error)) {
+					throwLinkNameConflict('taken');
+				}
+				throw error;
+			}
+
+			const approved = await tx.vendorLinkNameRequest.findUniqueOrThrow({
+				where: { id: request.id },
 			});
 			return { vendor, approved };
 		});
@@ -451,8 +494,12 @@ export class VendorService {
 		}
 	}
 
-	private async findConflictForSlug(slug: string, excludeVendorId?: string) {
-		const vendors = await this.prisma.vendor.findMany({
+	private async findConflictForSlug(
+		slug: string,
+		excludeVendorId?: string,
+		db: PrismaService | PrismaTxClient = this.prisma,
+	) {
+		const vendors = await db.vendor.findMany({
 			where: excludeVendorId
 				? { id: { not: excludeVendorId } }
 				: undefined,

@@ -1,7 +1,38 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+	BadRequestException,
+	Injectable,
+	NotFoundException,
+} from '@nestjs/common';
 import { PayoutTrigger } from '@prisma/client';
 import { PrismaService } from '../../infra/prisma/prisma.service';
 import { VendorAccessService } from '../catalog/vendor-access.service';
+
+/** FREIGHT code carries fixed payout/separate-ship semantics; ensure + upsert must agree. */
+const FREIGHT_SHIPS_SEPARATELY = true;
+const FREIGHT_PAYOUT_TRIGGER = PayoutTrigger.ON_SHIPMENT;
+
+function resolveProfileFlags(
+	code: string,
+	input: {
+		shipsSeparately?: boolean;
+		payoutTrigger?: PayoutTrigger;
+	},
+): { shipsSeparately: boolean; payoutTrigger: PayoutTrigger } {
+	if(code === 'FREIGHT') {
+		return {
+			shipsSeparately: FREIGHT_SHIPS_SEPARATELY,
+			payoutTrigger: FREIGHT_PAYOUT_TRIGGER,
+		};
+	}
+
+	const shipsSeparately = input.shipsSeparately ?? false;
+	const payoutTrigger =
+		input.payoutTrigger ??
+		(shipsSeparately
+			? PayoutTrigger.ON_SHIPMENT
+			: PayoutTrigger.ON_PAYMENT);
+	return { shipsSeparately, payoutTrigger };
+}
 
 @Injectable()
 export class ShippingService {
@@ -63,8 +94,8 @@ export class ShippingService {
 					vendorId,
 					code: 'FREIGHT',
 					name: 'Freight',
-					shipsSeparately: true,
-					payoutTrigger: PayoutTrigger.ON_SHIPMENT,
+					shipsSeparately: FREIGHT_SHIPS_SEPARATELY,
+					payoutTrigger: FREIGHT_PAYOUT_TRIGGER,
 					rates: {
 						create: {
 							label: 'Freight pallet',
@@ -75,18 +106,34 @@ export class ShippingService {
 				include: { rates: true },
 			});
 		}
-		else if(
-			freight.payoutTrigger !== PayoutTrigger.ON_SHIPMENT ||
-			!freight.shipsSeparately
-		) {
-			freight = await this.prisma.shippingProfile.update({
-				where: { id: freight.id },
-				data: {
-					shipsSeparately: true,
-					payoutTrigger: PayoutTrigger.ON_SHIPMENT,
-				},
-				include: { rates: true },
-			});
+		else {
+			if(
+				freight.payoutTrigger !== FREIGHT_PAYOUT_TRIGGER ||
+				freight.shipsSeparately !== FREIGHT_SHIPS_SEPARATELY
+			) {
+				freight = await this.prisma.shippingProfile.update({
+					where: { id: freight.id },
+					data: {
+						shipsSeparately: FREIGHT_SHIPS_SEPARATELY,
+						payoutTrigger: FREIGHT_PAYOUT_TRIGGER,
+					},
+					include: { rates: true },
+				});
+			}
+
+			if(freight.rates.length === 0) {
+				await this.prisma.shippingRate.create({
+					data: {
+						profileId: freight.id,
+						label: 'Freight pallet',
+						amountCents: 14900,
+					},
+				});
+				freight = await this.prisma.shippingProfile.findUniqueOrThrow({
+					where: { id: freight.id },
+					include: { rates: true },
+				});
+			}
 		}
 
 		return { standard, freight };
@@ -121,13 +168,7 @@ export class ShippingService {
 	) {
 		await this.vendorAccess.assertCanEditVendor(userId, vendorId);
 		const code = input.code.trim().toUpperCase();
-		const shipsSeparately =
-			input.shipsSeparately ?? (code === 'FREIGHT' ? true : false);
-		const payoutTrigger =
-			input.payoutTrigger ??
-			(shipsSeparately || code === 'FREIGHT'
-				? PayoutTrigger.ON_SHIPMENT
-				: PayoutTrigger.ON_PAYMENT);
+		const { shipsSeparately, payoutTrigger } = resolveProfileFlags(code, input);
 
 		const profile = await this.prisma.shippingProfile.upsert({
 			where: {
@@ -148,41 +189,46 @@ export class ShippingService {
 		});
 
 		if(input.rates) {
-			const keepIds: string[] = [];
-			for(const rate of input.rates) {
-				if(rate.id) {
-					const updated = await this.prisma.shippingRate.updateMany({
-						where: { id: rate.id, profileId: profile.id },
-						data: {
-							label: rate.label,
-							amountCents: rate.amountCents,
-							minSubtotalCents: rate.minSubtotalCents ?? null,
-							maxSubtotalCents: rate.maxSubtotalCents ?? null,
-						},
-					});
-					if(updated.count > 0) {
+			await this.prisma.$transaction(async (tx) => {
+				const keepIds: string[] = [];
+				for(const rate of input.rates!) {
+					if(rate.id) {
+						const updated = await tx.shippingRate.updateMany({
+							where: { id: rate.id, profileId: profile.id },
+							data: {
+								label: rate.label,
+								amountCents: rate.amountCents,
+								minSubtotalCents: rate.minSubtotalCents ?? null,
+								maxSubtotalCents: rate.maxSubtotalCents ?? null,
+							},
+						});
+						if(updated.count === 0) {
+							throw new BadRequestException(
+								'Shipping rate not found for this profile.',
+							);
+						}
 						keepIds.push(rate.id);
 					}
+					else {
+						const created = await tx.shippingRate.create({
+							data: {
+								profileId: profile.id,
+								label: rate.label,
+								amountCents: rate.amountCents,
+								minSubtotalCents: rate.minSubtotalCents ?? null,
+								maxSubtotalCents: rate.maxSubtotalCents ?? null,
+							},
+						});
+						keepIds.push(created.id);
+					}
 				}
-				else {
-					const created = await this.prisma.shippingRate.create({
-						data: {
-							profileId: profile.id,
-							label: rate.label,
-							amountCents: rate.amountCents,
-							minSubtotalCents: rate.minSubtotalCents ?? null,
-							maxSubtotalCents: rate.maxSubtotalCents ?? null,
-						},
-					});
-					keepIds.push(created.id);
-				}
-			}
 
-			await this.prisma.shippingRate.deleteMany({
-				where: {
-					profileId: profile.id,
-					id: { notIn: keepIds },
-				},
+				await tx.shippingRate.deleteMany({
+					where: {
+						profileId: profile.id,
+						id: { notIn: keepIds },
+					},
+				});
 			});
 		}
 

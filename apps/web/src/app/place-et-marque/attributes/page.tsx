@@ -2,6 +2,7 @@
 
 import { Suspense, useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
 import { RequireAccess } from '../../../components/auth/RequireAccess';
+import { SellerTopContextPortal } from '../../../components/catalog/CatalogSearchContext';
 import {
 	createCatalogAttribute,
 	createGlobalAttributeValue,
@@ -14,6 +15,66 @@ import {
 } from '../../../lib/catalog-api';
 import { sortCategoryTree } from '../../../lib/category-tree';
 import { useSession } from '../../../lib/useSession';
+
+const fieldClassName = `
+	mt-1
+	w-full
+	rounded-lg
+	border
+	border-slate-300
+	px-3
+	py-2
+	text-sm
+`;
+
+function valueKindLabel(kind: CatalogAttributeDefinition['valueKind']) {
+	switch(kind) {
+		case 'SCALAR_STRING':
+			return 'Text';
+		case 'SCALAR_NUMBER':
+			return 'Number';
+		case 'SCALAR_BOOLEAN':
+			return 'Yes / no';
+		case 'OPTION':
+		default:
+			return 'Options';
+	}
+}
+
+function AttributeRow({
+	attribute,
+	values,
+}: {
+	attribute: CatalogAttributeDefinition;
+	values: CatalogAttributeDefinition['values'];
+}) {
+	return (
+		<li
+			className="
+				flex
+				flex-col
+				gap-0.5
+				px-1
+				py-3
+			"
+		>
+			<p className="font-semibold text-ink">
+				{attribute.name}
+				<span className="ml-2 text-xs font-medium text-slate-500">
+					{valueKindLabel(attribute.valueKind)}
+				</span>
+			</p>
+			{values.length > 0
+				? (
+						<p className="text-sm text-slate-600">
+							{values.map((value) => value.value).join(', ')}
+						</p>
+					)
+				: null
+			}
+		</li>
+	);
+}
 
 function AttributesPageContent() {
 	const { user } = useSession();
@@ -71,6 +132,16 @@ function AttributesPageContent() {
 	);
 	const selectedAttribute = attributes.find((row) => row.id === valueAttributeId);
 	const globalParents = selectedAttribute?.values.filter((row) => !row.vendorId) ?? [];
+	const vendorScopedGlobals = useMemo(
+		() =>
+			globals
+				.map((attribute) => ({
+					attribute,
+					values: attribute.values.filter((row) => row.vendorId === vendorId),
+				}))
+				.filter((row) => row.values.length > 0),
+		[globals, vendorId],
+	);
 
 	const onCreateAttribute = async (event: FormEvent) => {
 		event.preventDefault();
@@ -134,67 +205,117 @@ function AttributesPageContent() {
 	};
 
 	return (
-		<div className="flex flex-col gap-8">
-			<div>
-				<h1 className="text-3xl font-semibold tracking-tight">
+		<div
+			className="
+				flex
+				flex-col
+				gap-8
+			"
+		>
+			<SellerTopContextPortal>
+				{vendors.length > 0
+					? (
+							<label
+								className="
+									flex
+									min-w-[12rem]
+									max-w-full
+									flex-1
+									flex-col
+									gap-0.5
+									sm:max-w-sm
+									sm:flex-none
+								"
+							>
+								<span
+									className="
+										text-[11px]
+										font-medium
+										leading-tight
+										text-slate-500
+									"
+								>
+									Vendor:
+								</span>
+								<select
+									className="
+										w-full
+										rounded-full
+										border
+										border-slate-300
+										bg-white
+										px-3
+										py-1.5
+										text-sm
+									"
+									value={vendorId}
+									onChange={(event) => setVendorId(event.target.value)}
+								>
+									{vendors.map((vendor) => (
+										<option
+											key={vendor.id}
+											value={vendor.id}
+										>
+											{vendor.name}
+										</option>
+									))}
+								</select>
+							</label>
+						)
+					: null
+				}
+			</SellerTopContextPortal>
+
+			<div
+				className="
+					flex
+					flex-wrap
+					items-center
+					justify-between
+					gap-3
+				"
+			>
+				<h1
+					className="
+						text-2xl
+						font-semibold
+						tracking-tight
+						text-ink
+					"
+				>
 					Attributes
 				</h1>
-				<p className="mt-2 max-w-2xl text-slate-600">
-					Globals are shared option lists (Color, Size). Vendor values can roll up to a global
-					option and apply to a few categories without copying by hand.
-				</p>
+				{user && attributes.length > 0
+					? (
+							<p className="text-sm text-slate-500">
+								{attributes.length}
+								{' '}
+								attribute
+								{attributes.length === 1 ? '' : 's'}
+							</p>
+						)
+					: null
+				}
 			</div>
 
-			{user
-				? (
-						<p className="text-sm text-slate-600">
-							Signed in as {user.email}
-						</p>
-					)
-				: null
-			}
-
-			{vendors.length > 1
-				? (
-						<label className="block max-w-sm text-sm">
-							<span className="font-semibold">
-								Vendor
-							</span>
-							<select
-								className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
-								value={vendorId}
-								onChange={(event) => setVendorId(event.target.value)}
-							>
-								{vendors.map((vendor) => (
-									<option
-										key={vendor.id}
-										value={vendor.id}
-									>
-										{vendor.name}
-									</option>
-								))}
-							</select>
-						</label>
-					)
-				: null
-			}
-
 			<form
-				className="space-y-3 rounded-2xl border border-slate-200 bg-white p-4"
+				className="
+					grid
+					gap-3
+					sm:grid-cols-2
+				"
 				onSubmit={onCreateAttribute}
 			>
-				<h2 className="font-semibold">
-					New attribute
-				</h2>
-				<label className="block text-sm">
+				<label className="block text-sm sm:col-span-2">
 					<span className="font-semibold">
 						Name
 					</span>
 					<input
-						className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
+						className={fieldClassName}
 						value={name}
 						onChange={(event) => setName(event.target.value)}
 						required
+						placeholder="Color"
 					/>
 				</label>
 				<label className="block text-sm">
@@ -202,7 +323,7 @@ function AttributesPageContent() {
 						Kind
 					</span>
 					<select
-						className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
+						className={fieldClassName}
 						value={valueKind}
 						onChange={(event) =>
 							setValueKind(event.target.value as typeof valueKind)
@@ -224,39 +345,65 @@ function AttributesPageContent() {
 				</label>
 				{isSuperVendor
 					? (
-							<label className="flex items-center gap-2 text-sm">
+							<label
+								className="
+									flex
+									items-end
+									gap-2
+									pb-2
+									text-sm
+								"
+							>
 								<input
 									type="checkbox"
 									checked={asGlobal}
 									onChange={(event) => setAsGlobal(event.target.checked)}
 								/>
-								Create as global
+								Global
 							</label>
 						)
-					: null
+					: (
+							<span className="hidden sm:block" />
+						)
 				}
-				<button
-					className="rounded-full bg-sky px-4 py-2 text-sm font-semibold text-white"
-					disabled={submitting}
-					type="submit"
+				<div
+					className="
+						flex
+						justify-end
+						sm:col-span-2
+					"
 				>
-					Add attribute
-				</button>
+					<button
+						className="
+							rounded-full
+							bg-sky
+							px-4
+							py-2
+							text-sm
+							font-semibold
+							text-white
+						"
+						disabled={submitting}
+						type="submit"
+					>
+						Add attribute
+					</button>
+				</div>
 			</form>
 
 			<form
-				className="space-y-3 rounded-2xl border border-slate-200 bg-white p-4"
+				className="
+					grid
+					gap-3
+				"
 				onSubmit={onCreateValue}
 			>
-				<h2 className="font-semibold">
-					New option value
-				</h2>
 				<label className="block text-sm">
 					<span className="font-semibold">
 						Attribute
 					</span>
 					<select
-						className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
+						className={fieldClassName}
 						value={valueAttributeId}
 						onChange={(event) => setValueAttributeId(event.target.value)}
 						required
@@ -272,7 +419,7 @@ function AttributesPageContent() {
 									value={attribute.id}
 								>
 									{attribute.name}
-									{attribute.vendorId ? ' (vendor)' : ''}
+									{attribute.vendorId ? ' · vendor' : ''}
 								</option>
 							))
 						}
@@ -283,10 +430,11 @@ function AttributesPageContent() {
 						Value
 					</span>
 					<input
-						className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
+						className={fieldClassName}
 						value={valueText}
 						onChange={(event) => setValueText(event.target.value)}
 						required
+						placeholder="Red"
 					/>
 				</label>
 				{globalParents.length > 0
@@ -296,7 +444,7 @@ function AttributesPageContent() {
 									Roll up to
 								</span>
 								<select
-									className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
+									className={fieldClassName}
 									value={parentId}
 									onChange={(event) => setParentId(event.target.value)}
 								>
@@ -316,18 +464,31 @@ function AttributesPageContent() {
 						)
 					: null
 				}
-				<div>
-					<p className="text-sm font-semibold">
+				<fieldset>
+					<legend className="text-sm font-semibold">
 						Categories
-					</p>
-					<p className="text-xs text-slate-500">
-						Vendor values need at least one category. Copies stay hidden.
-					</p>
-					<div className="mt-2 max-h-40 overflow-y-auto rounded-lg border border-slate-200">
+					</legend>
+					<div
+						className="
+							mt-2
+							max-h-40
+							overflow-y-auto
+							rounded-lg
+							border
+							border-slate-200
+						"
+					>
 						{categoryTree.map((row) => (
 							<label
 								key={row.id}
-								className="flex items-center gap-2 px-3 py-1.5 text-sm"
+								className="
+									flex
+									items-center
+									gap-2
+									px-3
+									py-1.5
+									text-sm
+								"
 							>
 								<input
 									type="checkbox"
@@ -344,14 +505,24 @@ function AttributesPageContent() {
 							</label>
 						))}
 					</div>
+				</fieldset>
+				<div className="flex justify-end">
+					<button
+						className="
+							rounded-full
+							bg-sky
+							px-4
+							py-2
+							text-sm
+							font-semibold
+							text-white
+						"
+						disabled={submitting}
+						type="submit"
+					>
+						Add value
+					</button>
 				</div>
-				<button
-					className="rounded-full bg-sky px-4 py-2 text-sm font-semibold text-white"
-					disabled={submitting}
-					type="submit"
-				>
-					Add value
-				</button>
 			</form>
 
 			{error
@@ -363,68 +534,85 @@ function AttributesPageContent() {
 				: null
 			}
 
-			<section className="space-y-3">
-				<h2 className="text-lg font-semibold">
+			<section
+				className="
+					flex
+					flex-col
+					gap-2
+				"
+			>
+				<h2 className="text-lg font-semibold text-ink">
 					Global
 				</h2>
-				{globals.map((attribute) => (
-					<div
-						className="rounded-xl border border-slate-200 bg-white p-4"
-						key={attribute.id}
-					>
-						<p className="font-semibold">
-							{attribute.name}
-							<span className="ml-2 text-xs font-medium text-slate-500">
-								{attribute.valueKind ?? 'OPTION'}
-							</span>
-						</p>
-						<p className="mt-1 text-sm text-slate-600">
-							{attribute.values.map((value) => value.value).join(', ') || 'No values yet'}
-						</p>
-					</div>
-				))}
+				{globals.length === 0
+					? (
+							<p className="text-sm text-slate-500">
+								No global attributes yet.
+							</p>
+						)
+					: (
+							<ul
+								className="
+									divide-y
+									divide-slate-200
+									border-y
+									border-slate-200
+								"
+							>
+								{globals.map((attribute) => (
+									<AttributeRow
+										key={attribute.id}
+										attribute={attribute}
+										values={attribute.values.filter((row) => !row.vendorId)}
+									/>
+								))}
+							</ul>
+						)
+				}
 			</section>
 
-			<section className="space-y-3">
-				<h2 className="text-lg font-semibold">
+			<section
+				className="
+					flex
+					flex-col
+					gap-2
+				"
+			>
+				<h2 className="text-lg font-semibold text-ink">
 					This vendor
 				</h2>
-				{mine.map((attribute) => (
-					<div
-						className="rounded-xl border border-slate-200 bg-white p-4"
-						key={attribute.id}
-					>
-						<p className="font-semibold">
-							{attribute.name}
-						</p>
-						<p className="mt-1 text-sm text-slate-600">
-							{attribute.values.map((value) => value.value).join(', ') || 'No values yet'}
-						</p>
-					</div>
-				))}
-				{globals.map((attribute) => {
-					const vendorValues = attribute.values.filter((row) => row.vendorId === vendorId);
-					if(vendorValues.length === 0) {
-						return null;
-					}
-					return (
-						<div
-							className="rounded-xl border border-slate-200 bg-white p-4"
-							key={`vendor-${attribute.id}`}
-						>
-							<p className="font-semibold">
-								{attribute.name}
-								{' '}
-								<span className="text-xs font-medium text-slate-500">
-									vendor values
-								</span>
+				{mine.length === 0 && vendorScopedGlobals.length === 0
+					? (
+							<p className="text-sm text-slate-500">
+								No vendor attributes yet.
 							</p>
-							<p className="mt-1 text-sm text-slate-600">
-								{vendorValues.map((value) => value.value).join(', ')}
-							</p>
-						</div>
-					);
-				})}
+						)
+					: (
+							<ul
+								className="
+									divide-y
+									divide-slate-200
+									border-y
+									border-slate-200
+								"
+							>
+								{mine.map((attribute) => (
+									<AttributeRow
+										key={attribute.id}
+										attribute={attribute}
+										values={attribute.values}
+									/>
+								))}
+								{vendorScopedGlobals.map(({ attribute, values }) => (
+									<AttributeRow
+										key={`vendor-${attribute.id}`}
+										attribute={attribute}
+										values={values}
+									/>
+								))}
+							</ul>
+						)
+				}
 			</section>
 		</div>
 	);

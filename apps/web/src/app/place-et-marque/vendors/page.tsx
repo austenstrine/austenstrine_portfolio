@@ -27,6 +27,7 @@ function VendorManageContent() {
 	const router = useRouter();
 	const searchParams = useSearchParams();
 	const nextPath = safeNextPath(searchParams.get('next'), '');
+	const gateReason = searchParams.get('reason')?.trim() || null;
 	const [vendors, setVendors] = useState<VendorSummary[]>([]);
 	const [loading, setLoading] = useState(true);
 	const [createOpen, setCreateOpen] = useState(false);
@@ -169,7 +170,7 @@ function VendorManageContent() {
 				>
 					Seller organizations on your account.
 				</p>
-				{nextPath
+				{gateReason
 					? (
 							<p
 								className="
@@ -184,11 +185,29 @@ function VendorManageContent() {
 									text-slate-700
 								"
 							>
-								After you join or create a vendor, we&apos;ll send you back to continue
-								where you left off.
+								{gateReason}
 							</p>
 						)
-					: null
+					: nextPath
+						? (
+								<p
+									className="
+										mt-3
+										rounded-xl
+										border
+										border-sky/30
+										bg-sky/5
+										px-4
+										py-3
+										text-sm
+										text-slate-700
+									"
+								>
+									After you join or create a vendor, we&apos;ll send you back to continue
+									where you left off.
+								</p>
+							)
+						: null
 				}
 			</div>
 
@@ -429,7 +448,7 @@ function VendorManageContent() {
 
 									<button
 										className="
-											self-start
+											self-end
 											rounded-full
 											bg-sky
 											px-4

@@ -89,15 +89,6 @@ function VerifyForm() {
 				>
 					Enter your code
 				</h1>
-				<p
-					className="
-						mt-2
-						text-sm
-						text-mist/70
-					"
-				>
-					We sent a 6-digit code to your email to confirm this sign-in.
-				</p>
 
 				<form
 					className="
@@ -110,7 +101,7 @@ function VerifyForm() {
 				>
 					<label className="block text-sm">
 						<span className="font-medium text-mist">
-							Verification code
+							Code
 						</span>
 						<input
 							className="
@@ -155,6 +146,7 @@ function VerifyForm() {
 						type="submit"
 						disabled={submitting || !pendingToken}
 						className="
+							self-end
 							rounded-lg
 							bg-glow
 							px-4

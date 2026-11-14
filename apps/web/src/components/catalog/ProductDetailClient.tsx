@@ -2,20 +2,44 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
 	deleteCatalogProduct,
+	getCatalogProduct,
 	type CatalogOfferingDetail,
 	type CatalogProductDetail,
 	type CatalogProductSummary,
 } from '../../lib/catalog-api';
 import { upsertCartLine } from '../../lib/checkout-api';
-import { ACCESS_REASONS, buildLoginUrl } from '../../lib/accessGate';
+import { accessReason, buildLoginUrl } from '../../lib/accessGate';
 import { useSession } from '../../lib/useSession';
 import { vendorViewHref } from '../../lib/vendor-ref';
 import { CatalogCover } from './CatalogCover';
+import {
+	fieldEditOpen,
+	inPlaceFieldKey,
+	productEditOpen,
+	useEditableVendors,
+	type InPlaceFieldName,
+} from './EditableVendorsProvider';
+import {
+	InPlaceActivateHint,
+	InPlaceCategorySelect,
+	InPlaceDescriptionInput,
+	InPlaceEditToggle,
+	InPlaceError,
+	InPlaceFieldSaveButton,
+	InPlaceFullEditLink,
+	InPlaceImageActions,
+	InPlacePriceInput,
+	InPlaceQtyInput,
+	InPlaceSaveControls,
+	InPlaceTitleInput,
+	InPlaceUomSelect,
+	useInPlaceProductEdit,
+} from './InPlaceProductFields';
 import { ProductCard } from './ProductCard';
-import { ProductQuickEdit } from './ProductQuickEdit';
+import { ProductMobileStickyCta } from './ProductMobileStickyCta';
 import { TermHint } from './TermHint';
 import { CompoundQtyField } from './CompoundQtyField';
 import { formatAvailableQty } from '../../lib/uom-qty';
@@ -162,7 +186,7 @@ export function ProductDetailClient({
 	relatedProducts = [],
 }: ProductDetailClientProps) {
 	const router = useRouter();
-	const { user } = useSession();
+	const { user, loading: sessionLoading } = useSession();
 	const [product, setProduct] = useState(initialProduct);
 	const [deleteBusy, setDeleteBusy] = useState(false);
 	const [deleteError, setDeleteError] = useState<string | null>(null);
@@ -173,6 +197,94 @@ export function ProductDetailClient({
 	const [cartBusy, setCartBusy] = useState(false);
 	const [cartMessage, setCartMessage] = useState<string | null>(null);
 	const [cartError, setCartError] = useState<string | null>(null);
+
+	// SSR catalog fetch may omit canEdit when access_token was not forwarded;
+	// re-fetch once the browser session is known so seller chrome can appear.
+	useEffect(() => {
+		if(sessionLoading || !user || product.permissions.canEdit || deletedNotice) {
+			return;
+		}
+		let cancelled = false;
+		getCatalogProduct(product.vendor.slug, product.slug)
+			.then((next) => {
+				if(cancelled || !next.permissions.canEdit) {
+					return;
+				}
+				setProduct(next);
+			})
+			.catch(() => {
+				/* keep SSR payload */
+			});
+		return () => {
+			cancelled = true;
+		};
+	}, [
+		deletedNotice,
+		product.permissions.canEdit,
+		product.slug,
+		product.vendor.slug,
+		sessionLoading,
+		user,
+	]);
+
+	const {
+		editTier,
+		setEditTier,
+		activeCardId,
+		activeFieldKey,
+		setActiveCardId,
+		setActiveFieldKey,
+	} = useEditableVendors();
+	const canEdit = product.permissions.canEdit && !deletedNotice;
+	const tierActive = canEdit && editTier !== 'off';
+	const bulkEditing = tierActive
+		&& (
+			editTier === 'page'
+			|| (
+				editTier === 'card'
+				&& productEditOpen(editTier, product.id, activeCardId, activeFieldKey)
+			)
+		);
+	const elementMode = tierActive && editTier === 'element';
+	const fieldIsOpen = (field: InPlaceFieldName) =>
+		canEdit && fieldEditOpen(
+			editTier,
+			product.id,
+			field,
+			activeCardId,
+			activeFieldKey,
+		);
+	const activateField = (field: InPlaceFieldName) => {
+		setActiveFieldKey(inPlaceFieldKey(product.id, field));
+	};
+
+	useEffect(() => {
+		if(canEdit && editTier === 'card') {
+			setActiveCardId(product.id);
+		}
+	}, [canEdit, editTier, product.id, setActiveCardId]);
+
+	const edit = useInPlaceProductEdit({
+		enabled: tierActive,
+		offeringId: selectedOfferingId,
+		onUpdated: (next) => {
+			setProduct(next);
+			const stillThere = next.offerings.some(
+				(row) => row.id === selectedOfferingId,
+			);
+			if(!stillThere) {
+				setSelectedOfferingId(firstBuyableId(next));
+			}
+			setActiveImage((index) => {
+				const count = next.imageUrls?.length ?? 0;
+				if(count === 0) {
+					return 0;
+				}
+				return Math.min(index, count - 1);
+			});
+		},
+		product,
+	});
 
 	const selectedOffering = product.offerings.find((offering) => offering.id === selectedOfferingId);
 	const stock = stockCopy(selectedOffering);
@@ -194,6 +306,9 @@ export function ProductDetailClient({
 		}
 		return rows.slice(0, 6);
 	}, [product.attributes]);
+	const editQty = Number(edit.qtyOnHand);
+	const editInStock = Number.isFinite(editQty) && editQty > 0;
+	const editLow = editInStock && editQty < 5;
 
 	function selectOffering(id: string) {
 		setSelectedOfferingId(id);
@@ -210,7 +325,7 @@ export function ProductDetailClient({
 			router.push(
 				buildLoginUrl({
 					next: window.location.pathname,
-					reason: ACCESS_REASONS.cart,
+					reason: accessReason('cart', false),
 				}),
 			);
 			return;
@@ -259,22 +374,204 @@ export function ProductDetailClient({
 		}
 	}
 
+	const qtyEditing = bulkEditing || fieldIsOpen('qty');
+	const priceEditing = bulkEditing || fieldIsOpen('price') || fieldIsOpen('uom');
 	const buyBox = selectedOffering && !deletedNotice
 		? (
 			<div className="flex flex-col gap-5">
 				<div>
-					<p className={`text-sm font-semibold ${stock.tone}`}>
-						{stock.status}
-					</p>
-					<p className="mt-2 text-3xl font-semibold tabular-nums tracking-tight text-ink">
-						{formatPrice(selectedOffering.priceCents, selectedOffering.currency)}
-						<span className="ml-2 text-base font-medium text-slate-500">
-							/ {selectedOffering.uom.code}
-						</span>
-					</p>
-					{stock.detail
-						? <p className="mt-1 text-sm text-slate-500">{stock.detail}</p>
-						: null}
+					{qtyEditing || priceEditing
+						? (
+							<>
+								{qtyEditing
+									? (
+										<>
+											<div
+												className={
+													editLow
+														? 'flex flex-wrap items-baseline gap-2 text-sm font-semibold text-amber-800'
+														: editInStock
+															? 'flex flex-wrap items-baseline gap-2 text-sm font-semibold text-asgreen'
+															: 'flex flex-wrap items-baseline gap-2 text-sm font-semibold text-signal'
+												}
+											>
+												<InPlaceQtyInput
+													className="
+														w-[4.75rem]
+														tabular-nums
+													"
+													edit={edit}
+												/>
+												<span>
+													{editInStock
+														? editLow
+															? 'Low stock'
+															: 'In stock'
+														: 'Currently unavailable'
+													}
+												</span>
+											</div>
+											{elementMode
+												? (
+													<InPlaceFieldSaveButton
+														className="mt-1"
+														edit={edit}
+														field="qty"
+													/>
+												)
+												: null
+											}
+										</>
+									)
+									: elementMode
+										? (
+											<InPlaceActivateHint
+												label="Edit quantity"
+												onActivate={() => activateField('qty')}
+											>
+												<p className={`text-sm font-semibold ${stock.tone}`}>
+													{stock.status}
+												</p>
+											</InPlaceActivateHint>
+										)
+										: (
+											<p className={`text-sm font-semibold ${stock.tone}`}>
+												{stock.status}
+											</p>
+										)
+								}
+								{priceEditing
+									? (
+										<>
+											<div
+												className="
+													mt-2
+													flex
+													flex-wrap
+													items-baseline
+													gap-2
+												"
+											>
+												<InPlacePriceInput
+													className="
+														w-[8.5rem]
+														text-3xl
+														font-semibold
+														tabular-nums
+														tracking-tight
+														text-ink
+													"
+													edit={edit}
+												/>
+												<InPlaceUomSelect
+													className="
+														w-auto
+														max-w-[6rem]
+														text-base
+														font-medium
+														text-slate-500
+													"
+													edit={edit}
+												/>
+											</div>
+											{elementMode
+												? (
+													<div className="mt-1 flex flex-wrap gap-2">
+														<InPlaceFieldSaveButton
+															edit={edit}
+															field="price"
+														/>
+														<InPlaceFieldSaveButton
+															edit={edit}
+															field="uom"
+														/>
+													</div>
+												)
+												: null
+											}
+										</>
+									)
+									: elementMode
+										? (
+											<InPlaceActivateHint
+												label="Edit price"
+												onActivate={() => activateField('price')}
+											>
+												<p className="mt-2 text-3xl font-semibold tabular-nums tracking-tight text-ink">
+													{formatPrice(selectedOffering.priceCents, selectedOffering.currency)}
+													<span className="ml-2 text-base font-medium text-slate-500">
+														/ {selectedOffering.uom.code}
+													</span>
+												</p>
+											</InPlaceActivateHint>
+										)
+										: (
+											<p className="mt-2 text-3xl font-semibold tabular-nums tracking-tight text-ink">
+												{formatPrice(selectedOffering.priceCents, selectedOffering.currency)}
+												<span className="ml-2 text-base font-medium text-slate-500">
+													/ {selectedOffering.uom.code}
+												</span>
+											</p>
+										)
+								}
+								{!qtyEditing && !priceEditing && stock.detail
+									? <p className="mt-1 text-sm text-slate-500">{stock.detail}</p>
+									: null
+								}
+								<InPlaceError
+									className="mt-2"
+									error={edit.error}
+								/>
+							</>
+						)
+						: (
+							<>
+								{elementMode
+									? (
+										<InPlaceActivateHint
+											label="Edit quantity"
+											onActivate={() => activateField('qty')}
+										>
+											<p className={`text-sm font-semibold ${stock.tone}`}>
+												{stock.status}
+											</p>
+										</InPlaceActivateHint>
+									)
+									: (
+										<p className={`text-sm font-semibold ${stock.tone}`}>
+											{stock.status}
+										</p>
+									)
+								}
+								{elementMode
+									? (
+										<InPlaceActivateHint
+											label="Edit price"
+											onActivate={() => activateField('price')}
+										>
+											<p className="mt-2 text-3xl font-semibold tabular-nums tracking-tight text-ink">
+												{formatPrice(selectedOffering.priceCents, selectedOffering.currency)}
+												<span className="ml-2 text-base font-medium text-slate-500">
+													/ {selectedOffering.uom.code}
+												</span>
+											</p>
+										</InPlaceActivateHint>
+									)
+									: (
+										<p className="mt-2 text-3xl font-semibold tabular-nums tracking-tight text-ink">
+											{formatPrice(selectedOffering.priceCents, selectedOffering.currency)}
+											<span className="ml-2 text-base font-medium text-slate-500">
+												/ {selectedOffering.uom.code}
+											</span>
+										</p>
+									)
+								}
+								{stock.detail
+									? <p className="mt-1 text-sm text-slate-500">{stock.detail}</p>
+									: null}
+							</>
+						)
+					}
 				</div>
 
 				{product.offerings.length > 1
@@ -508,16 +805,223 @@ export function ProductDetailClient({
 					</Link>
 					{selectedOffering?.sku || product.sku ? ` · ${selectedOffering?.sku || product.sku}` : ''}
 				</p>
-				<h1 className="mt-2 max-w-3xl text-3xl font-semibold tracking-tight text-ink md:text-4xl">
-					{product.title}
-				</h1>
-				{product.description
-					? (
-						<p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">
-							{product.description}
-						</p>
-					)
-					: null}
+				<div className="mt-2 max-w-3xl">
+					{bulkEditing || fieldIsOpen('category')
+						? (
+							<>
+								<InPlaceCategorySelect
+									className="
+										max-w-md
+										text-[11px]
+										font-semibold
+										uppercase
+										tracking-[0.16em]
+										text-slate-500
+									"
+									edit={edit}
+								/>
+								{elementMode
+									? (
+										<InPlaceFieldSaveButton
+											className="mt-1"
+											edit={edit}
+											field="category"
+										/>
+									)
+									: null
+								}
+							</>
+						)
+						: elementMode
+							? (
+								<InPlaceActivateHint
+									label="Edit category"
+									onActivate={() => activateField('category')}
+								>
+									<p
+										className="
+											text-[11px]
+											font-semibold
+											uppercase
+											tracking-[0.16em]
+											text-slate-500
+										"
+									>
+										{product.category?.name ?? 'Uncategorized'}
+									</p>
+								</InPlaceActivateHint>
+							)
+							: null
+					}
+					<div
+						className="
+							mt-2
+							flex
+							flex-wrap
+							items-start
+							justify-between
+							gap-3
+						"
+					>
+						{bulkEditing || fieldIsOpen('title')
+							? (
+								<div className="min-w-0 flex-1">
+									<InPlaceTitleInput
+										className="
+											w-full
+											text-3xl
+											font-semibold
+											tracking-tight
+											text-ink
+											md:text-4xl
+										"
+										edit={edit}
+									/>
+									{elementMode
+										? (
+											<InPlaceFieldSaveButton
+												className="mt-1"
+												edit={edit}
+												field="title"
+											/>
+										)
+										: null
+									}
+								</div>
+							)
+							: elementMode
+								? (
+									<InPlaceActivateHint
+										label="Edit title"
+										onActivate={() => activateField('title')}
+									>
+										<h1
+											className="
+												min-w-0
+												flex-1
+												text-3xl
+												font-semibold
+												tracking-tight
+												text-ink
+												md:text-4xl
+											"
+										>
+											{product.title}
+										</h1>
+									</InPlaceActivateHint>
+								)
+								: (
+									<h1
+										className="
+											min-w-0
+											flex-1
+											text-3xl
+											font-semibold
+											tracking-tight
+											text-ink
+											md:text-4xl
+										"
+									>
+										{product.title}
+									</h1>
+								)
+						}
+						{canEdit
+							? (
+								<div
+									className="
+										mt-2
+										flex
+										shrink-0
+										flex-wrap
+										items-center
+										gap-3
+									"
+								>
+									<InPlaceEditToggle
+										onChange={setEditTier}
+										tier={editTier}
+									/>
+									<InPlaceFullEditLink product={product} />
+								</div>
+							)
+							: null
+						}
+					</div>
+					{bulkEditing || fieldIsOpen('description')
+						? (
+							<>
+								<InPlaceDescriptionInput
+									className="
+										mt-3
+										max-w-2xl
+										text-sm
+										leading-6
+										text-slate-600
+									"
+									edit={edit}
+									rows={4}
+								/>
+								{elementMode
+									? (
+										<InPlaceFieldSaveButton
+											className="mt-1"
+											edit={edit}
+											field="description"
+										/>
+									)
+									: null
+								}
+							</>
+						)
+						: elementMode
+							? (
+								<InPlaceActivateHint
+									label="Edit description"
+									onActivate={() => activateField('description')}
+								>
+									<p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">
+										{product.description || 'Add a description'}
+									</p>
+								</InPlaceActivateHint>
+							)
+							: product.description
+								? (
+									<p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">
+										{product.description}
+									</p>
+								)
+								: null
+					}
+					{bulkEditing
+						? (
+							<>
+								<InPlaceError
+									className="mt-2"
+									error={edit.error}
+								/>
+								{editTier === 'card'
+									? (
+										<InPlaceSaveControls
+											className="mt-3"
+											dirty={edit.dirty}
+											onDiscard={() => {
+												edit.discard();
+											}}
+											onSave={() => {
+												void edit.saveAll();
+											}}
+											saving={edit.saving}
+											scope="card"
+										/>
+									)
+									: null
+								}
+							</>
+						)
+						: null
+					}
+				</div>
 				{highlightAttributes.length > 0
 					? (
 						<dl className="mt-5 flex flex-wrap gap-x-8 gap-y-3">
@@ -600,9 +1104,43 @@ export function ProductDetailClient({
 									</>
 								)}
 							/>
-							{activeSrc && !stock.inStock
+							{bulkEditing || fieldIsOpen('images')
+								? (
+									<InPlaceImageActions
+										coverIndex={Math.min(
+											activeImage,
+											Math.max(gallery.length - 1, 0),
+										)}
+										edit={edit}
+									/>
+								)
+								: elementMode
+									? (
+										<button
+											aria-label="Edit images"
+											className="
+												absolute
+												inset-0
+												z-10
+												cursor-pointer
+												bg-transparent
+											"
+											onClick={() => activateField('images')}
+											type="button"
+										/>
+									)
+									: null
+							}
+							{activeSrc && !stock.inStock && !(bulkEditing || fieldIsOpen('images'))
 								? (
 									<span className="absolute right-4 top-4 rounded-full bg-white/90 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-ink">
+										Sold out
+									</span>
+								)
+								: null}
+							{activeSrc && !stock.inStock && (bulkEditing || fieldIsOpen('images'))
+								? (
+									<span className="absolute left-4 top-4 z-20 rounded-full bg-white/90 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-ink">
 										Sold out
 									</span>
 								)
@@ -826,28 +1364,68 @@ export function ProductDetailClient({
 				)
 				: null}
 
-			{product.permissions.canEdit && !deletedNotice
+			{bulkEditing
 				? (
-					<details className="rounded-2xl border border-slate-200 bg-white p-5">
-						<summary className="cursor-pointer text-sm font-semibold text-ink">
-							Vendor tools
+					<details
+						className="
+							rounded-2xl
+							border
+							border-slate-200
+							bg-white
+							p-5
+						"
+					>
+						<summary
+							className="
+								cursor-pointer
+								text-sm
+								font-semibold
+								text-red-700
+							"
+						>
+							Delete
 						</summary>
-						<div className="mt-5 flex flex-col gap-4">
-							<ProductQuickEdit product={product} onUpdated={setProduct} />
-							<div className="rounded-xl border border-red-100 bg-red-50 p-4">
-								<p className="text-sm text-red-900">
-									Deleting archives the product out of live indexes, emails owners a CSV of what was removed, and auto-prunes that archive after 6 months.
-								</p>
-								{deleteError
-									? <p className="mt-2 text-sm text-red-700">{deleteError}</p>
-									: null}
+						<div className="mt-4">
+							<p className="text-sm text-slate-600">
+								Archives the listing, emails owners a CSV, and prunes the archive after 6 months.
+							</p>
+							{deleteError
+								? (
+									<p className="mt-2 text-sm text-red-700">
+										{deleteError}
+									</p>
+								)
+								: null
+							}
+							<div
+								className="
+									mt-3
+									flex
+									justify-end
+								"
+							>
 								<button
 									type="button"
 									disabled={deleteBusy}
 									onClick={() => void onDelete()}
-									className="mt-3 rounded-full border border-red-300 bg-white px-4 py-2 text-sm font-semibold text-red-700 hover:border-red-500 disabled:opacity-60"
+									className="
+										rounded-full
+										border
+										border-red-300
+										bg-white
+										px-4
+										py-2
+										text-sm
+										font-semibold
+										text-red-700
+										hover:border-red-500
+										disabled:opacity-60
+									"
 								>
-									{deleteBusy ? 'Deleting…' : 'Delete product'}
+									{deleteBusy
+										? 'Deleting…'
+										: 'Delete product'
+									}
 								</button>
 							</div>
 						</div>
@@ -875,38 +1453,15 @@ export function ProductDetailClient({
 
 			{selectedOffering && !deletedNotice
 				? (
-					<div className="fixed inset-x-0 bottom-0 z-30 border-t border-slate-200 bg-white/95 p-3 backdrop-blur lg:hidden">
-						<div className="mx-auto flex max-w-6xl items-center gap-3 px-3">
-							<div className="min-w-0 flex-1">
-								<p className="truncate text-sm font-semibold tabular-nums text-ink">
-									{formatPrice(selectedOffering.priceCents, selectedOffering.currency)}
-									<span className="ml-1 text-xs font-medium text-slate-500">/ {selectedOffering.uom.code}</span>
-								</p>
-								<p className={`truncate text-xs ${stock.tone}`}>{stock.status}</p>
-							</div>
-							<button
-								type="button"
-								disabled={cartBusy || !stock.inStock}
-								onClick={() => void onAddToCart()}
-								className="
-									rounded-full
-									bg-asgreen
-									px-5
-									py-2.5
-									text-sm
-									font-semibold
-									text-white
-									disabled:opacity-40
-								"
-							>
-								{cartBusy
-									? 'Adding…'
-									: stock.inStock
-										? 'Add to cart'
-										: 'Unavailable'}
-							</button>
-						</div>
-					</div>
+					<ProductMobileStickyCta
+						priceLabel={formatPrice(selectedOffering.priceCents, selectedOffering.currency)}
+						uomCode={selectedOffering.uom.code}
+						stockStatus={stock.status}
+						stockTone={stock.tone}
+						cartBusy={cartBusy}
+						inStock={stock.inStock}
+						onAddToCart={() => void onAddToCart()}
+					/>
 				)
 				: null}
 		</div>

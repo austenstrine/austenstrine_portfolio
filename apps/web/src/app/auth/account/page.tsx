@@ -1,68 +1,19 @@
 'use client';
 
-import { Suspense, useState, type FormEvent } from 'react';
+import Link from 'next/link';
+import { Suspense } from 'react';
 import { AuthCard } from '../../../components/auth/AuthCard';
-import { ErrorText } from '../../../components/auth/ErrorText';
-import { FormField } from '../../../components/auth/FormField';
 import { RequireAccess } from '../../../components/auth/RequireAccess';
-import { AuthApiError, setPassword } from '../../../lib/auth-api';
+import { ArrowRightIcon } from '../../../components/icons/ArrowRightIcon';
 import { useSession } from '../../../lib/useSession';
 
-function AccountForm() {
-	const { user, loading, refresh } = useSession();
-	const [currentPassword, setCurrentPassword] = useState('');
-	const [password, setNewPassword] = useState('');
-	const [confirmPassword, setConfirmPassword] = useState('');
-	const [error, setError] = useState<string | null>(null);
-	const [success, setSuccess] = useState<string | null>(null);
-	const [submitting, setSubmitting] = useState(false);
-	const hasPassword = Boolean(user?.hasPassword);
+const hubLinks = [
+	{ href: '/auth/account/password', label: 'Password' },
+	{ href: '/place-et-marque/preferences', label: 'Preferences' },
+];
 
-	let submitLabel = 'Add password';
-	if(submitting && hasPassword) {
-		submitLabel = 'Updating…';
-	}
-	else if(submitting) {
-		submitLabel = 'Adding password…';
-	}
-	else if(hasPassword) {
-		submitLabel = 'Update password';
-	}
-
-	const onSubmit = async (event: FormEvent) => {
-		event.preventDefault();
-		setError(null);
-		setSuccess(null);
-
-		if(password !== confirmPassword) {
-			setError('Passwords do not match.');
-			return;
-		}
-
-		setSubmitting(true);
-
-		try {
-			const result = await setPassword(
-				password,
-				hasPassword ? currentPassword : undefined,
-			);
-			setCurrentPassword('');
-			setNewPassword('');
-			setConfirmPassword('');
-			setSuccess(result.message);
-			await refresh();
-		}
-		catch(submitError) {
-			setError(
-				submitError instanceof AuthApiError
-					? submitError.message
-					: 'Something went wrong. Please try again.',
-			);
-		}
-		finally {
-			setSubmitting(false);
-		}
-	};
+function AccountHub() {
+	const { user, loading, signOut } = useSession();
 
 	if(loading || !user) {
 		return (
@@ -75,144 +26,79 @@ function AccountForm() {
 	return (
 		<AuthCard
 			title="Account"
-			subtitle={
-				hasPassword
-					? 'Update the password you use with email sign-in.'
-					: 'You signed in with Google. Add a password if you also want to sign in with email.'
-			}
-			footer={
-				<p
-					className="
-						flex
-						flex-col
-						gap-2
-					"
-				>
-					<a
-						className="
-							font-semibold
-							text-sky
-							hover:underline
-						"
-						href="/place-et-marque/preferences"
-					>
-						Manage widget preferences
-					</a>
-					<a
-						className="
-							font-semibold
-							text-sky
-							hover:underline
-						"
-						href="/place-et-marque"
-					>
-						Back to Place et Marque
-					</a>
-				</p>
-			}
 		>
 			<p
 				className="
-					mb-4
+					mb-6
 					text-sm
-					text-slate-600
+					text-ink
 				"
 			>
-				Signed in as
-				{' '}
-				<span className="font-semibold text-ink">
-					{user.email}
-				</span>
+				{user.email}
 			</p>
-			<form
+			<nav
 				className="
 					flex
 					flex-col
-					gap-4
+					gap-1
 				"
-				onSubmit={onSubmit}
 			>
-				{hasPassword
-					? (
-						<FormField
-							label="Current password"
-							type="password"
-							value={currentPassword}
-							onChange={setCurrentPassword}
-							autoComplete="current-password"
-						/>
-					)
-					: null
-				}
-				<FormField
-					label={
-						hasPassword
-							? 'New password'
-							: 'Password'
-					}
-					type="password"
-					value={password}
-					onChange={setNewPassword}
-					autoComplete="new-password"
-					placeholder="At least 10 characters"
-				/>
-				<FormField
-					label={
-						hasPassword
-							? 'Confirm new password'
-							: 'Confirm password'
-					}
-					type="password"
-					value={confirmPassword}
-					onChange={setConfirmPassword}
-					autoComplete="new-password"
-				/>
-
-				<ErrorText
-					message={error}
-				/>
-				{success
-					? (
-						<p
+				{hubLinks.map((link) => (
+					<Link
+						key={link.href}
+						className="
+							flex
+							items-center
+							justify-between
+							gap-3
+							rounded-lg
+							px-2
+							py-2.5
+							text-sm
+							font-semibold
+							text-ink
+							transition
+							hover:bg-frost
+						"
+						href={link.href}
+					>
+						{link.label}
+						<ArrowRightIcon
 							className="
-								rounded-lg
-								border
-								border-emerald-200
-								bg-emerald-50
-								px-3
-								py-2
-								text-sm
-								text-emerald-800
+								h-3.5
+								w-3.5
+								shrink-0
+								text-slate-400
 							"
-							role="status"
-						>
-							{success}
-						</p>
-					)
-					: null
-				}
-
+						/>
+					</Link>
+				))}
+			</nav>
+			<div
+				className="
+					mt-6
+					flex
+					justify-end
+				"
+			>
 				<button
 					className="
-						mt-2
-						rounded-full
-						bg-sky
-						px-4
-						py-2.5
 						text-sm
 						font-semibold
-						text-white
+						text-slate-500
 						transition
-						hover:bg-sky/90
-						disabled:cursor-not-allowed
-						disabled:opacity-60
+						hover:text-ink
 					"
-					type="submit"
-					disabled={submitting}
+					type="button"
+					onClick={() => {
+						void signOut().then(() => {
+							window.location.href = '/auth/login';
+						});
+					}}
 				>
-					{submitLabel}
+					Sign out
 				</button>
-			</form>
+			</div>
 		</AuthCard>
 	);
 }
@@ -234,7 +120,7 @@ export default function AccountPage() {
 				<RequireAccess
 					reasonKey="account"
 				>
-					<AccountForm />
+					<AccountHub />
 				</RequireAccess>
 			</Suspense>
 		</main>

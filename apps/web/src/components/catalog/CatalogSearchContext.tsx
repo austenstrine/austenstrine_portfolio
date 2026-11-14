@@ -24,12 +24,16 @@ import {
 	type CategoryTreeRow,
 } from '../../lib/category-tree';
 
-/** Search / category navigation stays on the current catalog surface when scoped. */
-function catalogSearchSurfacePath(pathname: string): string {
-	if(pathname === '/place-et-marque/search' || pathIsBuyerVendorStorefront(pathname)) {
-		return pathname;
+/** Global header search / category always lands on the shared search surface. */
+const CATALOG_SEARCH_PATH = '/place-et-marque/search';
+
+function buyerVendorSlugFromPath(pathname: string): string | null {
+	if(!pathIsBuyerVendorStorefront(pathname)) {
+		return null;
 	}
-	return '/place-et-marque/search';
+	const match = /^\/place-et-marque\/([^/]+)\/?$/.exec(pathname);
+	const slug = match?.[1]?.trim() ?? '';
+	return slug || null;
 }
 
 type CatalogSearchContextValue = {
@@ -43,6 +47,8 @@ type CatalogSearchContextValue = {
 	syncCategory: (slug: string) => void;
 	applyCategory: (slug: string) => void;
 	categories: CatalogCategoryRow[];
+	/** False until the first categories fetch settles (success or failure). */
+	categoriesReady: boolean;
 	categoryTree: CategoryTreeRow<CatalogCategoryRow>[];
 	categoryOptions: CategoryTreeRow<CatalogCategoryRow>[];
 	headerDesktopRef: RefObject<HTMLInputElement | null>;
@@ -71,6 +77,7 @@ export function CatalogSearchProvider({ children }: { children: ReactNode }) {
 	const [committedQuery, setCommittedQuery] = useState('');
 	const [category, setCategoryState] = useState('');
 	const [categories, setCategories] = useState<CatalogCategoryRow[]>([]);
+	const [categoriesReady, setCategoriesReady] = useState(false);
 	const headerDesktopRef = useRef<HTMLInputElement>(null);
 	const headerMobileRef = useRef<HTMLInputElement>(null);
 	const [pageDock, setPageDock] = useState<HTMLElement | null>(null);
@@ -93,7 +100,8 @@ export function CatalogSearchProvider({ children }: { children: ReactNode }) {
 	useEffect(() => {
 		listCatalogCategories()
 			.then((rows) => setCategories(rows))
-			.catch(() => undefined);
+			.catch(() => undefined)
+			.finally(() => setCategoriesReady(true));
 	}, []);
 
 	useEffect(() => {
@@ -144,9 +152,8 @@ export function CatalogSearchProvider({ children }: { children: ReactNode }) {
 
 	const applyCategory = useCallback((slug: string) => {
 		setCategoryState(slug);
-		const surface = catalogSearchSurfacePath(pathname);
-		const stayOnSurface = surface === pathname;
-		const params = new URLSearchParams(stayOnSurface ? window.location.search : '');
+		const stayOnSearch = pathname === CATALOG_SEARCH_PATH;
+		const params = new URLSearchParams(stayOnSearch ? window.location.search : '');
 		const nextQuery = query.trim();
 		if(nextQuery) {
 			params.set('q', nextQuery);
@@ -161,12 +168,15 @@ export function CatalogSearchProvider({ children }: { children: ReactNode }) {
 			params.delete('category');
 		}
 		params.delete('page');
-		// Vendor storefront is path-scoped; never put vendor= in the query.
-		params.delete('vendor');
+		const fromVendor = buyerVendorSlugFromPath(pathname);
+		if(fromVendor) {
+			// Vendor storefront is path-scoped; carry scope into search as vendor=.
+			params.set('vendor', fromVendor);
+		}
 		const next = params.toString();
 		const href = next
-			? `${surface}?${next}`
-			: surface;
+			? `${CATALOG_SEARCH_PATH}?${next}`
+			: CATALOG_SEARCH_PATH;
 		if(`${window.location.pathname}${window.location.search}` === href) {
 			return;
 		}
@@ -175,9 +185,8 @@ export function CatalogSearchProvider({ children }: { children: ReactNode }) {
 
 	const submit = useCallback(() => {
 		const nextQuery = query.trim();
-		const surface = catalogSearchSurfacePath(pathname);
-		const stayOnSurface = surface === pathname;
-		const params = new URLSearchParams(stayOnSurface ? window.location.search : '');
+		const stayOnSearch = pathname === CATALOG_SEARCH_PATH;
+		const params = new URLSearchParams(stayOnSearch ? window.location.search : '');
 		if(nextQuery) {
 			params.set('q', nextQuery);
 		}
@@ -190,14 +199,17 @@ export function CatalogSearchProvider({ children }: { children: ReactNode }) {
 		else {
 			params.delete('category');
 		}
-		if(stayOnSurface) {
+		if(stayOnSearch) {
 			params.delete('page');
 		}
-		params.delete('vendor');
+		const fromVendor = buyerVendorSlugFromPath(pathname);
+		if(fromVendor) {
+			params.set('vendor', fromVendor);
+		}
 		const next = params.toString();
 		const href = next
-			? `${surface}?${next}`
-			: surface;
+			? `${CATALOG_SEARCH_PATH}?${next}`
+			: CATALOG_SEARCH_PATH;
 		if(`${window.location.pathname}${window.location.search}` === href) {
 			return;
 		}
@@ -234,6 +246,7 @@ export function CatalogSearchProvider({ children }: { children: ReactNode }) {
 		syncCategory,
 		applyCategory,
 		categories,
+		categoriesReady,
 		categoryTree,
 		categoryOptions: categoryTree,
 		headerDesktopRef,
@@ -260,6 +273,7 @@ export function CatalogSearchProvider({ children }: { children: ReactNode }) {
 		syncCategory,
 		applyCategory,
 		categories,
+		categoriesReady,
 		categoryTree,
 		extrasHost,
 		headerDesktopExtrasEl,

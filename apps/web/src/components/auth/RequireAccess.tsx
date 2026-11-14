@@ -4,10 +4,10 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState, type ReactNode } from 'react';
 import { listMyVendors } from '../../lib/catalog-api';
 import {
+	accessReason,
 	buildLoginUrl,
 	buildVendorGateUrl,
 	type AccessReasonKey,
-	ACCESS_REASONS,
 } from '../../lib/accessGate';
 import { useSession } from '../../lib/useSession';
 
@@ -16,7 +16,7 @@ type RequireAccessProps = {
 	/** When true, user must belong to at least one vendor organization. */
 	vendorRequired?: boolean;
 	reasonKey?: AccessReasonKey;
-	/** Override the canned reason copy. */
+	/** Override the canned reason copy (already session-resolved if needed). */
 	reason?: string;
 };
 
@@ -35,12 +35,13 @@ export function RequireAccess({
 	const [vendorCheckFailed, setVendorCheckFailed] = useState<string | null>(null);
 	const [retryKey, setRetryKey] = useState(0);
 
-	const message =
+	const reasonKeyOrDefault: AccessReasonKey = reasonKey ?? 'vendors';
+	const guestMessage =
 		reason
-		?? (reasonKey
-			? ACCESS_REASONS[reasonKey]
-			: ACCESS_REASONS.vendors
-		);
+		?? accessReason(reasonKeyOrDefault, false);
+	const signedInMessage =
+		reason
+		?? accessReason(reasonKeyOrDefault, true);
 
 	useEffect(() => {
 		if(sessionLoading) {
@@ -60,7 +61,7 @@ export function RequireAccess({
 			router.replace(
 				buildLoginUrl({
 					next,
-					reason: message,
+					reason: guestMessage,
 				}),
 			);
 			return;
@@ -82,7 +83,9 @@ export function RequireAccess({
 					return;
 				}
 				if(vendors.length === 0) {
-					router.replace(buildVendorGateUrl(next));
+					router.replace(
+						buildVendorGateUrl(next, signedInMessage),
+					);
 					return;
 				}
 				setAllowed(true);
@@ -115,7 +118,8 @@ export function RequireAccess({
 		pathname,
 		searchParams,
 		router,
-		message,
+		guestMessage,
+		signedInMessage,
 		retryKey,
 	]);
 

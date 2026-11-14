@@ -1,9 +1,38 @@
 import type { Metadata } from 'next';
+import localFont from 'next/font/local';
 import './globals.css';
+
+const ibmPlexSans = localFont({
+	src: [
+		{
+			path: '../fonts/ibm-plex-sans/ibm-plex-sans-latin-400-normal.woff2',
+			weight: '400',
+			style: 'normal',
+		},
+		{
+			path: '../fonts/ibm-plex-sans/ibm-plex-sans-latin-500-normal.woff2',
+			weight: '500',
+			style: 'normal',
+		},
+		{
+			path: '../fonts/ibm-plex-sans/ibm-plex-sans-latin-600-normal.woff2',
+			weight: '600',
+			style: 'normal',
+		},
+		{
+			path: '../fonts/ibm-plex-sans/ibm-plex-sans-latin-700-normal.woff2',
+			weight: '700',
+			style: 'normal',
+		},
+	],
+	display: 'swap',
+	adjustFontFallback: 'Arial',
+	variable: '--font-ibm-plex-sans',
+});
 
 export const metadata: Metadata = {
 	title: 'CRM · austenstrine',
-	description: 'Admin CRM for Place et Marque platform operations.',
+	description: 'CRM',
 };
 
 export default function RootLayout({
@@ -12,23 +41,11 @@ export default function RootLayout({
 	children: React.ReactNode;
 }) {
 	return (
-		<html lang="en">
-			<head>
-				<link
-					rel="preconnect"
-					href="https://fonts.googleapis.com"
-				/>
-				<link
-					rel="preconnect"
-					href="https://fonts.gstatic.com"
-					crossOrigin="anonymous"
-				/>
-				<link
-					href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap"
-					rel="stylesheet"
-				/>
-			</head>
-			<body>
+		<html
+			className={ibmPlexSans.variable}
+			lang="en"
+		>
+			<body className="font-sans">
 				{children}
 			</body>
 		</html>

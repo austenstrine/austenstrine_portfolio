@@ -335,7 +335,7 @@ export function formatMoney(cents: number, currency = 'USD'): string {
 const ORDER_STATUS_LABELS: Record<string, string> = {
 	HOLD: 'On hold',
 	PAID: 'Paid',
-	FULFILLING: 'Fulfilling',
+	FULFILLING: 'Preparing',
 	SHIPPED: 'Shipped',
 	REFUNDED: 'Refunded',
 	CANCELLED: 'Cancelled',

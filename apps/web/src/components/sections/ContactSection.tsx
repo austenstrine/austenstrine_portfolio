@@ -128,7 +128,7 @@ export function ContactSection() {
 			>
 				I&apos;m looking for software engineering work in the Salt Lake Valley. I
 				live in Parowan, Utah. I&apos;m in Murray Mondays and Tuesdays, and I&apos;m
-				moving to Murray full-time in December 2026.
+				moving to Murray full-time in January 2027.
 			</p>
 
 			<div
