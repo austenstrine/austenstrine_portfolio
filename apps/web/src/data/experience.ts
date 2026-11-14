@@ -56,7 +56,7 @@ export const professionalExperience: ExperienceRole[] = [
 		bullets: [
 			'Built a custom, industry-specific regex synthesis engine and library for raw textual data processing, inventory upload, and search keyword harvesting.',
 			'Built Prisma generators that synthesized class suites (DTOs, entities, validators, Swagger) for every model, plus helpers to coerce DTO data into Prisma clauses.',
-			'Rebuilt a poorly implemented core Product feature on frontend and backend.',
+			'Rebuilt the core Product feature on frontend and backend.',
 			'Wrote Bash scripts and a companion API for PostgreSQL backups, live-data debugging, and admin operations.',
 			'Worked without a CTO, reporting to the owners. I showed ownership and initiative that compensated for the team’s lack of technical direction.',
 			'Delivered hotfixes for site-breaking issues and unblocked teammates after earlier project-direction changes.',

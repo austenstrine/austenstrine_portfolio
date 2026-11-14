@@ -146,7 +146,7 @@ export function CvDocument() {
 							Built Prisma generators that synthesized class suites (DTOs, entities, validators, Swagger) for every model, plus helpers to coerce DTO data into Prisma clauses.
 						</li>
 						<li>
-							Rebuilt a poorly implemented core Product feature on frontend and backend.
+							Rebuilt the core Product feature on frontend and backend.
 						</li>
 						<li>
 							Wrote Bash scripts and a companion API for PostgreSQL backups, live-data debugging, and admin operations.
