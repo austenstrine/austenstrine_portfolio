@@ -43,12 +43,12 @@ function splitRoleDates(dates: string | undefined) {
 	};
 }
 
-/** Empty selection in a group = all values in that group. */
-function matchesFacetGroup<T extends string>(
-	selected: T[],
-	value: T,
+/** Kind chips are includes: empty selection → nothing in-scope. */
+function matchesKindInclude(
+	selected: ExperienceKind[],
+	kind: ExperienceKind,
 ) {
-	return selected.length === 0 || selected.includes(value);
+	return selected.includes(kind);
 }
 
 function DateConnector({
@@ -465,9 +465,7 @@ function SaveSelectedPdfButton({
 }
 
 export function ExperienceSection() {
-	const [selectedKinds, setSelectedKinds] = useState<ExperienceKind[]>([
-		'software',
-	]);
+	const [selectedKinds, setSelectedKinds] = useState<ExperienceKind[]>([]);
 	const [peekedIds, setPeekedIds] = useState<string[]>([]);
 	const [filtersOpen, setFiltersOpen] = useState(true);
 	const sectionRef = useRef<HTMLElement>(null);
@@ -680,10 +678,8 @@ export function ExperienceSection() {
 		};
 	}, [selectedKinds, peekedIds]);
 
-	const hasFilter = selectedKinds.length > 0;
-
 	function inScope(role: ExperienceRole) {
-		return matchesFacetGroup(selectedKinds, role.kind);
+		return matchesKindInclude(selectedKinds, role.kind);
 	}
 
 	function toggleKind(kind: ExperienceKind) {
@@ -717,8 +713,8 @@ export function ExperienceSection() {
 	}
 
 	/**
-	 * Three category timelines; shared kind filter ANDs with each
-	 * (in-scope = matches kind; else peekable — same UX as before).
+	 * Three category timelines; shared kind includes ANDs with each
+	 * (in-scope = selected kind; else peekable — same UX as before).
 	 */
 	const timelineBlocks: {
 		id: string;
@@ -868,9 +864,7 @@ export function ExperienceSection() {
 									text-slate-600
 								"
 							>
-								{hasFilter
-									? `${selectedForPrintCount} of ${ROLE_COUNT} selected for print`
-									: `${ROLE_COUNT} roles`}
+								{`${selectedForPrintCount} of ${ROLE_COUNT} selected for print`}
 							</p>
 						)}
 					<div
@@ -944,9 +938,7 @@ export function ExperienceSection() {
 								text-slate-600
 							"
 						>
-							{hasFilter
-								? `${selectedForPrintCount} of ${ROLE_COUNT} selected for print`
-								: `${ROLE_COUNT} roles`}
+							{`${selectedForPrintCount} of ${ROLE_COUNT} selected for print`}
 						</p>
 						<SaveSelectedPdfButton
 							disabled={!canPrintSelected}

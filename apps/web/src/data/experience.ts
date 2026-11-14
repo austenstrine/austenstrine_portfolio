@@ -1,6 +1,6 @@
 export type ExperienceKind = 'software' | 'non-software';
 
-/** Timeline facet separate from software/non-software; AND’d with kind filters. */
+/** Timeline facet separate from software/non-software; AND’d with kind includes. */
 export type ExperienceCategory =
 	| 'professional'
 	| 'education'
