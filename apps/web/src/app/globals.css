@@ -33,7 +33,12 @@ body {
   background-size: 24px 24px;
 }
 
-/* Hash / scroll targets: leave the section gap above the card, not flush on the title. */
+/*
+ * Hash / scroll targets: land at the frost gutter above the card
+ * (flex gap-section), not flush on the title. Experience sticky docking
+ * must reserve its slot before position:fixed or scroll anchoring eats
+ * this margin (see ExperienceSection).
+ */
 .main-grid [id] {
   scroll-margin-top: calc(var(--site-top-banner-h, 0px) + var(--section-gap));
 }
