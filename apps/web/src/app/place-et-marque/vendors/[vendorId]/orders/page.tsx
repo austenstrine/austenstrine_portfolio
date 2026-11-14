@@ -177,23 +177,22 @@ function VendorOrdersPageContent() {
 						tracking-tight
 					"
 				>
-					{vendor
-						? `${vendor.name} orders`
-						: 'Vendor orders'
-					}
+					Orders to fulfill
 				</h1>
-				{orders.length > 0
-					? (
-						<p className="mt-2 text-sm text-slate-600">
-							{orders.length} order{orders.length === 1 ? '' : 's'}
-							{needsShipCount > 0
-								? ` · ${needsShipCount} need shipping`
-								: ''
-							}
-						</p>
-					)
-					: null
-				}
+				<p className="mt-2 text-sm text-slate-600">
+					{vendor
+						? vendor.name
+						: 'Vendor'
+					}
+					{orders.length > 0
+						? ` · ${orders.length} order${orders.length === 1 ? '' : 's'}`
+						: ''
+					}
+					{needsShipCount > 0
+						? ` · ${needsShipCount} need shipping`
+						: ''
+					}
+				</p>
 			</div>
 
 			{sessionLoading
