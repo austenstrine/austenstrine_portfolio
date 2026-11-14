@@ -251,6 +251,29 @@ export function AboutSection() {
 						text-sky
 					"
 				>
+					About
+				</p>
+				<p
+					className="
+						mt-3
+						text-base
+						leading-relaxed
+						text-slate-700
+					"
+				>
+					I built my first site in pure HTML at age 7, when my brother Brenton was
+					getting into code.
+				</p>
+				<p
+					className="
+						mt-8
+						text-xs
+						font-semibold
+						uppercase
+						tracking-[0.18em]
+						text-sky
+					"
+				>
 					Recommendations
 				</p>
 				<h2

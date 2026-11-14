@@ -17,7 +17,7 @@ export const SITE_TITLE =
 	'Austen Strine | Senior Product, Catalog, and Search Software Engineer';
 
 export const SITE_DESCRIPTION =
-	'Senior Product, Catalog, and Search Software Engineer with six and a half years of professional work developing several production e-commerce sites. Based in Parowan, Utah; in Murray Mondays and Tuesdays; relocating to Murray full-time in January 2027.';
+	'Senior Product, Catalog, and Search Software Engineer who has been programming (and loving it) for the past 10 years (since 2016), including 6 1/2 years of professional experience developing several production e-commerce sites. Based in Parowan, Utah; in Murray Mondays and Tuesdays; relocating to Murray full-time in January 2027.';
 
 export const SITE_HEADLINE =
 	'Senior Product, Catalog, and Search Software Engineer';
