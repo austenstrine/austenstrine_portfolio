@@ -15,7 +15,7 @@ export async function generateMetadata({ params }: VendorOrdersLayoutProps): Pro
 	const name = await resolveVendorDisplayName(vendorId);
 	return {
 		title: {
-			absolute: absolutePageTitle(`${name} orders`),
+			absolute: absolutePageTitle(`Orders to fulfill · ${name}`),
 		},
 	};
 }

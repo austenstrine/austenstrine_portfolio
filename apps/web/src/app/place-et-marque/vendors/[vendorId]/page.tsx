@@ -30,11 +30,11 @@ import { CollapsibleWidget } from '../../../../components/catalog/CollapsibleWid
 import { UrlSlugField } from '../../../../components/catalog/UrlSlugField';
 import { VendorMembersPanel } from '../../../../components/catalog/VendorMembersPanel';
 import { ArrowRightIcon } from '../../../../components/icons/ArrowRightIcon';
-import { CartIcon } from '../../../../components/icons/CartIcon';
 import { CloseIcon } from '../../../../components/icons/CloseIcon';
 import { DocumentIcon } from '../../../../components/icons/DocumentIcon';
 import { EyeIcon } from '../../../../components/icons/EyeIcon';
 import { PlusIcon } from '../../../../components/icons/PlusIcon';
+import { TruckIcon } from '../../../../components/icons/TruckIcon';
 import { useWidgetOpenState } from '../../../../hooks/useWidgetOpenState';
 import { productCreateHref, vendorViewHref } from '../../../../lib/vendor-ref';
 
@@ -1632,7 +1632,7 @@ function VendorDetailContent() {
 									"
 									href={`/place-et-marque/vendors/${vendor.slug}/orders`}
 								>
-									<CartIcon
+									<TruckIcon
 										className="
 											h-4
 											w-4

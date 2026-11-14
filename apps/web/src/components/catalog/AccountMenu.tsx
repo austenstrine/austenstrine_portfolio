@@ -1,8 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { pathUsesSellerChrome } from '../../lib/accessGate';
+import { listMyVendors, type VendorSummary } from '../../lib/catalog-api';
+import {
+	matchVendorByRef,
+	vendorUrlRef,
+} from '../../lib/vendor-ref';
 import {
 	listNotifications,
 	getUnreadNotificationCount,
@@ -12,6 +17,7 @@ import {
 	type NotificationDto,
 } from '../../lib/notifications-api';
 import { CaretDownIcon } from '../icons/CaretDownIcon';
+import { TruckIcon } from '../icons/TruckIcon';
 import {
 	CatalogMenuLink,
 	CatalogMenuRow,
@@ -38,12 +44,51 @@ const sellerSetupLinks = [
 	{ href: '/place-et-marque/categories', label: 'Categories' },
 ];
 
+const BUYER_ORDERS_HREF = '/place-et-marque/orders';
+
 function accountLabel(email: string) {
 	const at = email.indexOf('@');
 	if(at <= 0) {
 		return email;
 	}
 	return email.slice(0, at);
+}
+
+function vendorRefFromSellerPath(pathname: string): string | null {
+	const match = /^\/place-et-marque\/vendors\/([^/]+)/.exec(pathname);
+	if(!match?.[1]) {
+		return null;
+	}
+	try {
+		return decodeURIComponent(match[1]);
+	}
+	catch {
+		return match[1];
+	}
+}
+
+function canFulfillOrders(vendor: VendorSummary): boolean {
+	return vendor.myRole === 'OWNER' || vendor.myRole === 'EDITOR';
+}
+
+/** Prefer the vendor on the current seller route, else first fulfillable membership. */
+export function resolveOrdersToFulfillHref(
+	pathname: string,
+	vendors: VendorSummary[],
+): string | null {
+	const pathRef = vendorRefFromSellerPath(pathname);
+	if(pathRef) {
+		const matched = matchVendorByRef(vendors, pathRef);
+		const ref = matched
+			? vendorUrlRef(matched)
+			: pathRef;
+		return `/place-et-marque/vendors/${encodeURIComponent(ref)}/orders`;
+	}
+	const preferred = vendors.find(canFulfillOrders) ?? vendors[0];
+	if(!preferred) {
+		return null;
+	}
+	return `/place-et-marque/vendors/${encodeURIComponent(vendorUrlRef(preferred))}/orders`;
 }
 
 /** Fixed circle so counts never stretch into a pill over the caret. */
@@ -110,6 +155,7 @@ export function AccountMenu({
 	const [notifications, setNotifications] = useState<NotificationDto[]>([]);
 	const [unreadCount, setUnreadCount] = useState(0);
 	const [notificationsLoading, setNotificationsLoading] = useState(false);
+	const [myVendors, setMyVendors] = useState<VendorSummary[]>([]);
 
 	const {
 		open,
@@ -122,6 +168,13 @@ export function AccountMenu({
 		minWidth: 260,
 		preferredWidth: 288,
 	});
+
+	const ordersToFulfillHref = useMemo(
+		() => (sellerChrome
+			? resolveOrdersToFulfillHref(pathname, myVendors)
+			: null),
+		[myVendors, pathname, sellerChrome],
+	);
 
 	useEffect(() => {
 		let cancelled = false;
@@ -140,6 +193,28 @@ export function AccountMenu({
 			cancelled = true;
 		};
 	}, []);
+
+	useEffect(() => {
+		if(!sellerChrome) {
+			setMyVendors([]);
+			return;
+		}
+		let cancelled = false;
+		listMyVendors()
+			.then((rows) => {
+				if(!cancelled) {
+					setMyVendors(rows);
+				}
+			})
+			.catch(() => {
+				if(!cancelled) {
+					setMyVendors([]);
+				}
+			});
+		return () => {
+			cancelled = true;
+		};
+	}, [sellerChrome]);
 
 	useEffect(() => {
 		if(!open) {
@@ -191,13 +266,11 @@ export function AccountMenu({
 		setOpen(false);
 	}
 
-	// Seller chrome still links purchases as "Your orders" so dual-role
-	// teammates leave Selling for shopping chrome without a second label.
 	const primaryLinks = sellerChrome
 		? [
 			{ href: '/auth/account', label: 'Account' },
 			...sellerToolLinks,
-			{ href: '/place-et-marque/orders', label: 'Your orders' },
+			{ href: BUYER_ORDERS_HREF, label: 'Your orders' },
 		]
 		: [
 			...buyerLinks,
@@ -305,6 +378,36 @@ export function AccountMenu({
 								</span>
 							</CatalogMenuLink>
 						))}
+						{ordersToFulfillHref
+							? (
+								<CatalogMenuLink
+									href={ordersToFulfillHref}
+									key="orders-to-fulfill"
+									onClick={closeMenu}
+								>
+									<span
+										className="
+											flex
+											min-w-0
+											items-center
+											gap-2
+										"
+									>
+										<TruckIcon
+											className="
+												h-3.5
+												w-3.5
+												shrink-0
+											"
+										/>
+										<span className="truncate">
+											Orders to fulfill
+										</span>
+									</span>
+								</CatalogMenuLink>
+							)
+							: null
+						}
 						<MenuDivider />
 						<CatalogMenuLink
 							href={NOTIFICATIONS_INBOX_PATH}
