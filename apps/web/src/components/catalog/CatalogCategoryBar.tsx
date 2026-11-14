@@ -4,8 +4,9 @@ import {
 	useEffect,
 	useState,
 	useMemo,
+	type AnimationEvent,
+	type CSSProperties,
 	type ReactNode,
-	type TransitionEvent,
 } from 'react';
 import {
 	allCategoryLabel,
@@ -14,6 +15,15 @@ import {
 } from '../../lib/category-tree';
 import type { CatalogCategoryRow } from '../../lib/catalog-api';
 import { ArrowLeftIcon } from '../icons/ArrowLeftIcon';
+
+const CHIP_STAGGER_MS = 36;
+
+function prefersReducedMotion() {
+	return (
+		typeof window !== 'undefined'
+		&& window.matchMedia('(prefers-reduced-motion: reduce)').matches
+	);
+}
 
 function DepartmentScrollFade({
 	side,
@@ -59,45 +69,85 @@ function CategoryChip({
 	ariaLabel,
 	children,
 	onClick,
+	typewriter = false,
+	typewriterDelayMs = 0,
 }: {
 	active?: boolean;
 	ariaLabel?: string;
 	children: ReactNode;
 	onClick: () => void;
+	typewriter?: boolean;
+	typewriterDelayMs?: number;
 }) {
+	const style: CSSProperties | undefined = typewriter
+		? {
+			animationDelay: `${typewriterDelayMs}ms`,
+		}
+		: undefined;
+
 	return (
 		<button
 			aria-current={active ? true : undefined}
 			aria-label={ariaLabel}
 			className={
 				active
-					? `
-						inline-flex
-						h-8
-						shrink-0
-						items-center
-						whitespace-nowrap
-						rounded-full
-						bg-asgreen/15
-						px-3
-						leading-none
-						text-asgreen
-					`
-					: `
-						inline-flex
-						h-8
-						shrink-0
-						items-center
-						whitespace-nowrap
-						rounded-full
-						px-3
-						leading-none
-						text-slate-600
-						hover:bg-frost
-						hover:text-ink
-					`
+					? typewriter
+						? `
+							catalog-subcat-chip
+							inline-flex
+							h-8
+							shrink-0
+							items-center
+							whitespace-nowrap
+							rounded-full
+							bg-asgreen/15
+							px-3
+							leading-none
+							text-asgreen
+						`
+						: `
+							inline-flex
+							h-8
+							shrink-0
+							items-center
+							whitespace-nowrap
+							rounded-full
+							bg-asgreen/15
+							px-3
+							leading-none
+							text-asgreen
+						`
+					: typewriter
+						? `
+							catalog-subcat-chip
+							inline-flex
+							h-8
+							shrink-0
+							items-center
+							whitespace-nowrap
+							rounded-full
+							px-3
+							leading-none
+							text-slate-600
+							hover:bg-frost
+							hover:text-ink
+						`
+						: `
+							inline-flex
+							h-8
+							shrink-0
+							items-center
+							whitespace-nowrap
+							rounded-full
+							px-3
+							leading-none
+							text-slate-600
+							hover:bg-frost
+							hover:text-ink
+						`
 			}
 			onClick={onClick}
+			style={style}
 			type="button"
 		>
 			{children}
@@ -257,25 +307,37 @@ export function CatalogCategoryBar({
 }) {
 	const [stack, setStack] = useState<NestedCategory<CatalogCategoryRow>[]>([]);
 	const [held, setHeld] = useState<NestedCategory<CatalogCategoryRow> | null>(null);
+	const [linePhase, setLinePhase] = useState<'enter' | 'exit'>('enter');
+	const [reduceMotion, setReduceMotion] = useState(false);
 	const forest = useMemo(() => nestCategoryTree(categories), [categories]);
 	const current = stack[stack.length - 1] ?? null;
 	const root = stack[0] ?? null;
 	const panel = current ?? held;
 	const rows = panel ? panel.children : [];
 	const drilled = current !== null;
+	const lineOpen = panel !== null;
+	const chipMotion = linePhase === 'enter' && !reduceMotion;
+
+	useEffect(() => {
+		setReduceMotion(prefersReducedMotion());
+	}, []);
 
 	useEffect(() => {
 		if(current) {
 			setHeld(current);
+			setLinePhase('enter');
 			return;
 		}
-		if(
-			typeof window !== 'undefined'
-			&& window.matchMedia('(prefers-reduced-motion: reduce)').matches
-		) {
-			setHeld(null);
+		if(!held) {
+			return;
 		}
-	}, [current]);
+		if(prefersReducedMotion()) {
+			setHeld(null);
+			setLinePhase('enter');
+			return;
+		}
+		setLinePhase('exit');
+	}, [current, held]);
 
 	if(forest.length === 0) {
 		return null;
@@ -292,6 +354,7 @@ export function CatalogCategoryBar({
 
 	const drillChild = (row: NestedCategory<CatalogCategoryRow>) => {
 		if(row.children.length > 0) {
+			// Deeper levels replace the second line in place — never a third line.
 			setStack((currentStack) => [...currentStack, row]);
 			return;
 		}
@@ -302,13 +365,18 @@ export function CatalogCategoryBar({
 		setStack((currentStack) => currentStack.slice(0, -1));
 	};
 
-	const onRevealTransitionEnd = (event: TransitionEvent<HTMLDivElement>) => {
-		if(event.propertyName !== 'grid-template-rows') {
+	const onSubcatAnimationEnd = (event: AnimationEvent<HTMLDivElement>) => {
+		if(event.target !== event.currentTarget) {
 			return;
 		}
-		if(!drilled) {
-			setHeld(null);
+		if(linePhase !== 'exit') {
+			return;
 		}
+		if(drilled) {
+			return;
+		}
+		setHeld(null);
+		setLinePhase('enter');
 	};
 
 	return (
@@ -344,99 +412,71 @@ export function CatalogCategoryBar({
 						</CategoryChip>
 					))}
 				</ChipScroller>
-				<div
-					aria-hidden={!drilled}
-					className={
-						drilled
-							? `
-								grid
-								grid-rows-[1fr]
-								opacity-100
-								transition-[grid-template-rows,opacity]
-								duration-300
-								ease-out
-								motion-reduce:transition-none
-							`
-							: `
-								grid
-								grid-rows-[0fr]
-								opacity-0
-								transition-[grid-template-rows,opacity]
-								duration-300
-								ease-out
-								motion-reduce:transition-none
-							`
-					}
-					onTransitionEnd={onRevealTransitionEnd}
-					ref={(el) => {
-						if(el) {
-							el.inert = !drilled;
-						}
-					}}
-				>
-					<div className="overflow-hidden">
+				{lineOpen
+					? (
 						<div
-							className={
-								drilled
-									? `
-										border-t
-										border-slate-100
-										translate-y-0
-										transition-transform
-										duration-300
-										ease-out
-										motion-reduce:transition-none
-									`
-									: `
-										border-t
-										border-slate-100
-										-translate-y-1
-										transition-transform
-										duration-300
-										ease-out
-										motion-reduce:transition-none
-									`
-							}
+							aria-hidden={!drilled}
+							className="
+								h-12
+								overflow-hidden
+								border-t
+								border-slate-100
+							"
+							ref={(el) => {
+								if(el) {
+									el.inert = !drilled;
+								}
+							}}
 						>
-							{panel
-								? (
-									<ChipScroller withBack>
-										<PinnedBack onBack={goBack} />
-										<div
-											className="
-												flex
-												h-8
-												flex-nowrap
-												items-center
-												gap-1
-											"
+							<div
+								className={
+									linePhase === 'exit'
+										? 'catalog-subcat-row-exit'
+										: 'catalog-subcat-row-enter'
+								}
+								key={panel.id}
+								onAnimationEnd={onSubcatAnimationEnd}
+							>
+								<ChipScroller withBack>
+									<PinnedBack onBack={goBack} />
+									<div
+										className="
+											flex
+											h-8
+											flex-nowrap
+											items-center
+											gap-1
+										"
+									>
+										<CategoryChip
+											active={category === panel.slug}
+											onClick={() => onChoose(panel.slug)}
+											typewriter={chipMotion}
+											typewriterDelayMs={0}
 										>
+											{allCategoryLabel(panel.name)}
+										</CategoryChip>
+										{rows.map((row, index) => (
 											<CategoryChip
-												active={category === panel.slug}
-												onClick={() => onChoose(panel.slug)}
+												active={
+													row.children.length === 0
+													&& category === row.slug
+												}
+												key={row.id}
+												onClick={() => drillChild(row)}
+												typewriter={chipMotion}
+												typewriterDelayMs={(index + 1) * CHIP_STAGGER_MS}
 											>
-												{allCategoryLabel(panel.name)}
+												{row.name}
 											</CategoryChip>
-											{rows.map((row) => (
-												<CategoryChip
-													active={
-														row.children.length === 0
-														&& category === row.slug
-													}
-													key={row.id}
-													onClick={() => drillChild(row)}
-												>
-													{row.name}
-												</CategoryChip>
-											))}
-										</div>
-									</ChipScroller>
-								)
-								: null
-							}
+										))}
+									</div>
+								</ChipScroller>
+							</div>
 						</div>
-					</div>
-				</div>
+					)
+					: null
+				}
 			</div>
 		</nav>
 	);
