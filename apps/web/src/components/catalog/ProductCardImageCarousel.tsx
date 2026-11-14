@@ -26,13 +26,21 @@ type ProductCardImageCarouselProps = {
 	editable?: boolean;
 };
 
-/** In-place slide controls — shaftless chevron, not navigate Arrow. */
-function carouselSlideClassName(side: 'left' | 'right') {
+/**
+ * In-place slide carets — shaftless chevron, not navigate Arrow.
+ * Stay mounted; fade/slide via opacity+transform (not display) so hover
+ * does not pop. Rest: opacity-0 + pointer-events-none. Reveal only under
+ * `@media (hover: hover)` + group-hover when `enabled` (not at range end).
+ */
+function carouselSlideClassName(side: 'left' | 'right', enabled: boolean) {
+	const restShift = side === 'left'
+		? '-translate-x-0.5'
+		: 'translate-x-0.5';
 	return `
 		absolute
 		top-1/2
 		z-20
-		hidden
+		inline-flex
 		h-8
 		w-8
 		-translate-y-1/2
@@ -42,9 +50,22 @@ function carouselSlideClassName(side: 'left' | 'right') {
 		bg-white/90
 		text-sky
 		shadow-[0_2px_10px_rgba(13,27,42,0.22)]
+		opacity-0
+		pointer-events-none
+		${restShift}
+		transition-[opacity,transform]
+		duration-200
+		ease-out
+		motion-reduce:transition-none
 		hover:bg-white
 		${side === 'left' ? 'left-2' : 'right-2'}
-		[@media(hover:hover)]:md:group-hover/carousel:inline-flex
+		${enabled
+			? `
+				[@media(hover:hover)]:md:group-hover/carousel:pointer-events-auto
+				[@media(hover:hover)]:md:group-hover/carousel:translate-x-0
+				[@media(hover:hover)]:md:group-hover/carousel:opacity-100
+			`
+			: ''}
 	`;
 }
 
@@ -201,34 +222,39 @@ export function ProductCardImageCarousel({
 			{multi
 				? (
 					<>
-						{active > 0
-							? (
-								<button
-									aria-label="Previous image"
-									className={carouselSlideClassName('left')}
-									onClick={
-										(event) => onCaretClick(event, active - 1)
-									}
-									type="button"
-								>
-									<ChevronLeftIcon className="h-4 w-4" />
-								</button>
-							)
-							: null}
-						{active < urls.length - 1
-							? (
-								<button
-									aria-label="Next image"
-									className={carouselSlideClassName('right')}
-									onClick={
-										(event) => onCaretClick(event, active + 1)
-									}
-									type="button"
-								>
-									<ChevronRightIcon className="h-4 w-4" />
-								</button>
-							)
-							: null}
+						<button
+							aria-hidden={active <= 0 ? true : undefined}
+							aria-label="Previous image"
+							className={carouselSlideClassName('left', active > 0)}
+							onClick={
+								(event) => onCaretClick(event, active - 1)
+							}
+							tabIndex={-1}
+							type="button"
+						>
+							<ChevronLeftIcon className="h-4 w-4" />
+						</button>
+						<button
+							aria-hidden={
+								active >= urls.length - 1
+									? true
+									: undefined
+							}
+							aria-label="Next image"
+							className={
+								carouselSlideClassName(
+									'right',
+									active < urls.length - 1,
+								)
+							}
+							onClick={
+								(event) => onCaretClick(event, active + 1)
+							}
+							tabIndex={-1}
+							type="button"
+						>
+							<ChevronRightIcon className="h-4 w-4" />
+						</button>
 						<div
 							aria-hidden="true"
 							className="
