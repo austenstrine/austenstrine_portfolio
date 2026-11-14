@@ -65,5 +65,12 @@ Preferences, not build errors. Prefer format-on-save over a failing build.
 
 - Extract repeated UI. Import an existing widget instead of copying markup.
 - No raw `<svg>` in pages or HTML. Put SVG in `apps/web/src/components/icons/` with a `className` prop.
-- Directional UI: `ArrowLeftIcon` (back/up), `ArrowRightIcon` (open/go). No caret, chevron, or `←` `→` `›` for that job.
+- Directional / action cues (follow common menu & link conventions):
+	- `ArrowLeftIcon` — back / up a level.
+	- `ArrowRightIcon` (shafted →) — navigate to another page/route on button-like chrome.
+	- `ChevronRightIcon` (shaftless >) — in-place drill / submenu disclosure only. Never reuse for navigation.
+	- `CaretDownIcon` — open a dropdown / expand-collapse toggle (not left/right direction).
+	- Text-only navigation (no icon): traditional link — blue (`text-sky`), underlined — not button chrome.
+	- Button-like controls that navigate or drill must show the matching icon above.
+	- No raw `←` `→` `›` glyphs or unnamed caret/chevron components; use the icons.
 - Find inline `<svg>` with search. Move each hit into an icon widget by hand — no regex rewrite.

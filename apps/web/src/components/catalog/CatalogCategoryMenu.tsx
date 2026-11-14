@@ -8,8 +8,8 @@ import {
 } from '../../lib/category-tree';
 import type { CatalogCategoryRow } from '../../lib/catalog-api';
 import { ArrowLeftIcon } from '../icons/ArrowLeftIcon';
-import { ArrowRightIcon } from '../icons/ArrowRightIcon';
 import { CaretDownIcon } from '../icons/CaretDownIcon';
+import { ChevronRightIcon } from '../icons/ChevronRightIcon';
 import {
 	CatalogMenuRow,
 	CatalogMenuSurface,
@@ -175,7 +175,7 @@ export function CatalogCategoryMenu({
 								</span>
 								{row.children.length > 0
 									? (
-										<ArrowRightIcon
+										<ChevronRightIcon
 											className="
 												h-3.5
 												w-3.5

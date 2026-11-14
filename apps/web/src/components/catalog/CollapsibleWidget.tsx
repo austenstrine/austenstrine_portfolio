@@ -15,6 +15,7 @@ import {
 } from '../../lib/widget-prefs';
 import { useSession } from '../../lib/useSession';
 import { ArrowRightIcon } from '../icons/ArrowRightIcon';
+import { ChevronRightIcon } from '../icons/ChevronRightIcon';
 import { CloseIcon } from '../icons/CloseIcon';
 import { MoreVerticalIcon } from '../icons/MoreVerticalIcon';
 import {
@@ -250,7 +251,17 @@ export function CollapsibleWidget({
 										onClick={() => setMenuOpen(false)}
 										role="menuitem"
 									>
-										Manage all preferences
+										<span className="truncate">
+											Manage all preferences
+										</span>
+										<ArrowRightIcon
+											className="
+												h-3.5
+												w-3.5
+												shrink-0
+												text-slate-400
+											"
+										/>
 									</Link>
 								</CatalogMenuSurface>
 							)
@@ -304,7 +315,7 @@ export function CollapsibleWidget({
 								>
 									{expandLabel}
 								</span>
-								<ArrowRightIcon
+								<ChevronRightIcon
 									className="
 										h-3
 										w-3
