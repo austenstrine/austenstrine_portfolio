@@ -1,4 +1,5 @@
 import { GUIDED_DEMO_PRODUCT } from '../../lib/site';
+import { ArrowRightIcon } from '../icons/ArrowRightIcon';
 
 export function DemoIntro() {
 	return (
@@ -49,6 +50,9 @@ export function DemoIntro() {
 			>
 				<a
 					className="
+						inline-flex
+						items-center
+						gap-1.5
 						rounded-full
 						bg-white
 						px-5
@@ -61,9 +65,19 @@ export function DemoIntro() {
 					href="/place-et-marque/search"
 				>
 					Shop all products
+					<ArrowRightIcon
+						className="
+							h-3.5
+							w-3.5
+							shrink-0
+						"
+					/>
 				</a>
 				<a
 					className="
+						inline-flex
+						items-center
+						gap-1.5
 						rounded-full
 						border
 						border-white/30
@@ -77,6 +91,13 @@ export function DemoIntro() {
 					href={GUIDED_DEMO_PRODUCT.href}
 				>
 					{GUIDED_DEMO_PRODUCT.title}
+					<ArrowRightIcon
+						className="
+							h-3.5
+							w-3.5
+							shrink-0
+						"
+					/>
 				</a>
 			</div>
 		</section>

@@ -38,6 +38,7 @@ import {
 	InPlaceUomSelect,
 	useInPlaceProductEdit,
 } from './InPlaceProductFields';
+import { ChevronRightIcon } from '../icons/ChevronRightIcon';
 import { ProductCard } from './ProductCard';
 import { ProductMobileStickyCta } from './ProductMobileStickyCta';
 import { TermHint } from './TermHint';
@@ -760,16 +761,34 @@ export function ProductDetailClient({
 				<ol className="flex flex-wrap items-center gap-2">
 					<li>
 						<a
-							className="hover:text-asgreen"
+							className="
+								font-semibold
+								text-sky
+								underline
+								underline-offset-2
+							"
 							href="/place-et-marque"
 						>
 							Place et Marque
 						</a>
 					</li>
-					<li aria-hidden="true">/</li>
+					<li aria-hidden="true">
+						<ChevronRightIcon
+							className="
+								h-3.5
+								w-3.5
+								text-slate-400
+							"
+						/>
+					</li>
 					<li>
 						<Link
-							className="hover:text-asgreen"
+							className="
+								font-semibold
+								text-sky
+								underline
+								underline-offset-2
+							"
 							href="/place-et-marque/search"
 						>
 							Shop
@@ -778,10 +797,23 @@ export function ProductDetailClient({
 					{product.category
 						? (
 							<>
-								<li aria-hidden="true">/</li>
+								<li aria-hidden="true">
+									<ChevronRightIcon
+										className="
+											h-3.5
+											w-3.5
+											text-slate-400
+										"
+									/>
+								</li>
 								<li>
 									<Link
-										className="hover:text-asgreen"
+										className="
+											font-semibold
+											text-sky
+											underline
+											underline-offset-2
+										"
 										href={searchHref}
 									>
 										{product.category.name}
@@ -790,8 +822,23 @@ export function ProductDetailClient({
 							</>
 						)
 						: null}
-					<li aria-hidden="true">/</li>
-					<li className="text-ink">{product.title}</li>
+					<li aria-hidden="true">
+						<ChevronRightIcon
+							className="
+								h-3.5
+								w-3.5
+								text-slate-400
+							"
+						/>
+					</li>
+					<li
+						className="
+							font-semibold
+							text-ink
+						"
+					>
+						{product.title}
+					</li>
 				</ol>
 			</nav>
 

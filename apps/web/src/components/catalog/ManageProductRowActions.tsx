@@ -9,6 +9,7 @@ import {
 	productEditHref,
 	productViewHref,
 } from '../../lib/vendor-ref';
+import { ArrowRightIcon } from '../icons/ArrowRightIcon';
 import { CaretDownIcon } from '../icons/CaretDownIcon';
 import { EyeIcon } from '../icons/EyeIcon';
 import { PencilIcon } from '../icons/PencilIcon';
@@ -148,7 +149,16 @@ export function ManageProductRowActions({
 					<span
 						aria-hidden
 						className={desktopCaretSlotClassName}
-					/>
+					>
+						<ArrowRightIcon
+							className="
+								h-3.5
+								w-3.5
+								shrink-0
+								text-slate-400
+							"
+						/>
+					</span>
 				</a>
 				<div
 					className={`
@@ -175,6 +185,15 @@ export function ManageProductRowActions({
 						<span>
 							Edit
 						</span>
+						<ArrowRightIcon
+							className="
+								ml-auto
+								h-3.5
+								w-3.5
+								shrink-0
+								text-slate-400
+							"
+						/>
 					</a>
 					<button
 						aria-expanded={open}

@@ -9,7 +9,6 @@ import {
 	type CatalogSearchResult,
 	type CatalogTermFacet,
 } from '../../lib/catalog-api';
-import { vendorViewHref } from '../../lib/vendor-ref';
 import { ArrowLeftIcon } from '../icons/ArrowLeftIcon';
 import { ArrowRightIcon } from '../icons/ArrowRightIcon';
 import {
@@ -340,7 +339,10 @@ export function CatalogSearchExperience({
 									count={row.count}
 									active={vendor === row.slug}
 									onClick={() => {
-										router.push(vendorViewHref(row.slug));
+										commit({
+											vendor: row.slug,
+											page: 1,
+										});
 									}}
 								/>
 							))}

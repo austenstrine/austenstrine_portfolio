@@ -10,6 +10,7 @@ import {
 	accessReason,
 	buildLoginUrl,
 } from '../../../lib/accessGate';
+import { ArrowRightIcon } from '../../../components/icons/ArrowRightIcon';
 import { useSession } from '../../../lib/useSession';
 
 export default function JoinDemoPage() {
@@ -268,6 +269,9 @@ export default function JoinDemoPage() {
 							? (
 									<a
 										className="
+											inline-flex
+											items-center
+											gap-1.5
 											rounded-full
 											border
 											border-slate-300
@@ -282,11 +286,21 @@ export default function JoinDemoPage() {
 										href={sellerWorkspaceHref}
 									>
 										Open seller workspace
+										<ArrowRightIcon
+											className="
+												h-3.5
+												w-3.5
+												shrink-0
+											"
+										/>
 									</a>
 								)
 							: (
 									<a
 										className="
+											inline-flex
+											items-center
+											gap-1.5
 											rounded-full
 											border
 											border-slate-300
@@ -301,6 +315,13 @@ export default function JoinDemoPage() {
 										href={signInHref}
 									>
 										Sign in
+										<ArrowRightIcon
+											className="
+												h-3.5
+												w-3.5
+												shrink-0
+											"
+										/>
 									</a>
 								)
 						}
@@ -318,9 +339,9 @@ export default function JoinDemoPage() {
 				{' '}
 				<a
 					className="
-						font-semibold
 						text-sky
-						hover:underline
+						underline
+						underline-offset-2
 					"
 					href="/place-et-marque"
 				>

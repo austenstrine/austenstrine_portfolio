@@ -1,6 +1,7 @@
 'use client';
 
 import { useSession } from '../lib/useSession';
+import { ArrowRightIcon } from './icons/ArrowRightIcon';
 
 export function AccountMenu() {
 	const { user, loading, signOut } = useSession();
@@ -16,6 +17,9 @@ export function AccountMenu() {
 					absolute
 					right-4
 					top-4
+					inline-flex
+					items-center
+					gap-1.5
 					rounded-full
 					border
 					border-white/25
@@ -31,6 +35,13 @@ export function AccountMenu() {
 				href="/auth/login"
 			>
 				Sign in
+				<ArrowRightIcon
+					className="
+						h-3.5
+						w-3.5
+						shrink-0
+					"
+				/>
 			</a>
 		);
 	}
@@ -59,7 +70,8 @@ export function AccountMenu() {
 				className="
 					max-w-[10rem]
 					truncate
-					hover:underline
+					underline
+					underline-offset-2
 				"
 				href="/auth/account"
 			>

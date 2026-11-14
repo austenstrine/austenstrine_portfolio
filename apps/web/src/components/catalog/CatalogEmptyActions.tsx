@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { listMyVendors } from '../../lib/catalog-api';
 import { useSession } from '../../lib/useSession';
+import { ArrowRightIcon } from '../icons/ArrowRightIcon';
 
 export function CatalogEmptyActions() {
 	const { user, loading } = useSession();
@@ -57,6 +58,8 @@ export function CatalogEmptyActions() {
 						<a
 							className="
 								inline-flex
+								items-center
+								gap-1.5
 								rounded-full
 								bg-sky
 								px-4
@@ -69,6 +72,13 @@ export function CatalogEmptyActions() {
 							href="/place-et-marque/vendors"
 						>
 							Create a vendor
+							<ArrowRightIcon
+								className="
+									h-3.5
+									w-3.5
+									shrink-0
+								"
+							/>
 						</a>
 					)
 					: null
@@ -76,6 +86,8 @@ export function CatalogEmptyActions() {
 				<a
 					className="
 						inline-flex
+						items-center
+						gap-1.5
 						rounded-full
 						border
 						border-slate-300
@@ -90,6 +102,13 @@ export function CatalogEmptyActions() {
 					href="/place-et-marque/products/new"
 				>
 					New product
+					<ArrowRightIcon
+						className="
+							h-3.5
+							w-3.5
+							shrink-0
+						"
+					/>
 				</a>
 			</div>
 		</>
