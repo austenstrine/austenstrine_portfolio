@@ -1,12 +1,17 @@
 'use client';
 
 import { useLayoutEffect, useRef, useState } from 'react';
+import { PrinterIcon } from '../icons/PrinterIcon';
 import {
 	education,
 	professionalExperience,
 	type ExperienceKind,
 	type ExperienceRole,
 } from '../../data/experience';
+import {
+	ExperiencePrintSheet,
+	printSelectedExperience,
+} from './ExperiencePrintSheet';
 
 const SOFTWARE_COUNT = professionalExperience.filter(
 	(role) => role.kind === 'software',
@@ -362,6 +367,82 @@ function FacetCheck({
 	);
 }
 
+function SaveSelectedPdfButton({
+	disabled,
+	onClick,
+}: {
+	disabled: boolean;
+	onClick: () => void;
+}) {
+	return (
+		<button
+			aria-disabled={disabled}
+			aria-label="Save selected experience as PDF"
+			className={
+				disabled
+					? `
+						inline-flex
+						h-11
+						w-11
+						shrink-0
+						cursor-not-allowed
+						items-center
+						justify-center
+						rounded-full
+						border
+						border-slate-200
+						text-slate-300
+						md:h-9
+						md:w-auto
+						md:gap-1.5
+						md:px-3
+					`
+					: `
+						inline-flex
+						h-11
+						w-11
+						shrink-0
+						items-center
+						justify-center
+						rounded-full
+						border
+						border-slate-200
+						text-ink
+						transition
+						hover:border-slate-300
+						hover:bg-frost
+						md:h-9
+						md:w-auto
+						md:gap-1.5
+						md:px-3
+					`
+			}
+			disabled={disabled}
+			onClick={onClick}
+			title={
+				disabled
+					? undefined
+					: 'Save selected experience as PDF'
+			}
+			type="button"
+		>
+			<PrinterIcon
+				className="h-3.5 w-3.5"
+			/>
+			<span
+				className="
+					hidden
+					text-[13px]
+					font-semibold
+					md:inline
+				"
+			>
+				PDF
+			</span>
+		</button>
+	);
+}
+
 export function ExperienceSection() {
 	const [selectedKinds, setSelectedKinds] = useState<ExperienceKind[]>([
 		'software',
@@ -615,6 +696,10 @@ export function ExperienceSection() {
 	}
 
 	const shownCount = professionalExperience.filter((role) => inScope(role.kind)).length;
+	const expandedRoles = professionalExperience.filter((role) => (
+		inScope(role.kind) || peekedIds.includes(role.id)
+	));
+	const canPrintSelected = expandedRoles.length > 0;
 
 	return (
 		<section
@@ -631,6 +716,8 @@ export function ExperienceSection() {
 			id="experience"
 			ref={sectionRef}
 		>
+			<ExperiencePrintSheet roles={expandedRoles} />
+
 			<div
 				className="
 					max-w-3xl
@@ -737,20 +824,33 @@ export function ExperienceSection() {
 									: `${ROLE_COUNT} roles`}
 							</p>
 						)}
-					<button
+					<div
 						className="
+							flex
 							shrink-0
-							text-sm
-							font-semibold
-							text-ink
+							items-center
+							gap-2
 						"
-						onClick={() => setFiltersOpen((open) => !open)}
-						type="button"
 					>
-						{filtersOpen
-							? 'Hide filters'
-							: 'View filters'}
-					</button>
+						<SaveSelectedPdfButton
+							disabled={!canPrintSelected}
+							onClick={printSelectedExperience}
+						/>
+						<button
+							className="
+								shrink-0
+								text-sm
+								font-semibold
+								text-ink
+							"
+							onClick={() => setFiltersOpen((open) => !open)}
+							type="button"
+						>
+							{filtersOpen
+								? 'Hide filters'
+								: 'View filters'}
+						</button>
+					</div>
 				</div>
 				<div
 					className="
@@ -781,17 +881,29 @@ export function ExperienceSection() {
 							onChange={() => toggleKind('non-software')}
 						/>
 					</div>
-					<p
-						aria-live="polite"
+					<div
 						className="
-							text-sm
-							text-slate-600
+							flex
+							items-center
+							gap-3
 						"
 					>
-						{hasFilter
-							? `Showing ${shownCount} of ${ROLE_COUNT}`
-							: `${ROLE_COUNT} roles`}
-					</p>
+						<p
+							aria-live="polite"
+							className="
+								text-sm
+								text-slate-600
+							"
+						>
+							{hasFilter
+								? `Showing ${shownCount} of ${ROLE_COUNT}`
+								: `${ROLE_COUNT} roles`}
+						</p>
+						<SaveSelectedPdfButton
+							disabled={!canPrintSelected}
+							onClick={printSelectedExperience}
+						/>
+					</div>
 				</div>
 			</div>
 			</div>

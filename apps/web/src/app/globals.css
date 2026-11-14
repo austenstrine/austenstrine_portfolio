@@ -157,3 +157,121 @@ body {
     display: none;
   }
 }
+
+/* Experience timeline: print only the expanded-selection resume sheet. */
+.experience-print-sheet {
+  display: none;
+}
+
+@media print {
+  @page {
+    size: letter;
+    margin: 0.65in 0.7in;
+  }
+
+  html.experience-print-selection body {
+    background: #fff !important;
+    color: #0d1b2a;
+    padding: 0 !important;
+  }
+
+  html.experience-print-selection body * {
+    visibility: hidden !important;
+  }
+
+  html.experience-print-selection .experience-print-sheet,
+  html.experience-print-selection .experience-print-sheet * {
+    visibility: visible !important;
+  }
+
+  html.experience-print-selection .experience-print-sheet {
+    display: block;
+    position: absolute;
+    inset: 0 auto auto 0;
+    width: 100%;
+    max-width: 7.5in;
+    margin: 0;
+    padding: 0;
+    color: #0d1b2a;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  }
+
+  .experience-print-header {
+    border-bottom: 1px solid #257257;
+    padding-bottom: 0.75rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .experience-print-header h1 {
+    margin: 0;
+    font-size: 22pt;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+  }
+
+  .experience-print-headline {
+    margin: 0.3rem 0 0;
+    font-size: 10.5pt;
+    font-weight: 500;
+    color: #1b263b;
+  }
+
+  .experience-print-contact {
+    margin: 0.55rem 0 0;
+    font-size: 9.5pt;
+    color: #475569;
+  }
+
+  .experience-print-section h2 {
+    margin: 0 0 0.75rem;
+    font-size: 11pt;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #1b263b;
+  }
+
+  .experience-print-job {
+    break-inside: avoid;
+    page-break-inside: avoid;
+    margin-bottom: 0.95rem;
+  }
+
+  .experience-print-job-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.75rem;
+  }
+
+  .experience-print-job-title {
+    font-size: 11pt;
+    font-weight: 700;
+  }
+
+  .experience-print-job-dates {
+    flex-shrink: 0;
+    font-size: 9.5pt;
+    color: #64748b;
+  }
+
+  .experience-print-job-org {
+    margin: 0.15rem 0 0;
+    font-size: 10pt;
+    font-weight: 600;
+    color: #1b263b;
+  }
+
+  .experience-print-job ul {
+    margin: 0.4rem 0 0;
+    padding-left: 1.1rem;
+  }
+
+  .experience-print-job li {
+    margin: 0.2rem 0;
+    font-size: 9.5pt;
+    line-height: 1.4;
+    color: #334155;
+  }
+}
