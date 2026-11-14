@@ -24,7 +24,6 @@ type ProductCardImageCarouselProps = {
 
 function carouselCaretClassName(side: 'left' | 'right') {
 	return `
-		pointer-events-none
 		absolute
 		top-1/2
 		z-20
@@ -37,22 +36,10 @@ function carouselCaretClassName(side: 'left' | 'right') {
 		rounded-full
 		bg-white/90
 		text-sky
-		opacity-0
 		shadow-[0_2px_10px_rgba(13,27,42,0.22)]
-		transition-opacity
-		duration-150
-		md:inline-flex
-		${side === 'left' ? 'left-2' : 'right-2'}
-		group-hover/carousel:pointer-events-auto
-		group-hover/carousel:opacity-100
-		focus-visible:pointer-events-auto
-		focus-visible:opacity-100
-		focus-visible:outline
-		focus-visible:outline-2
-		focus-visible:outline-offset-2
-		focus-visible:outline-white
 		hover:bg-white
-		motion-reduce:transition-none
+		${side === 'left' ? 'left-2' : 'right-2'}
+		[@media(hover:hover)]:md:group-hover/carousel:inline-flex
 	`;
 }
 
@@ -212,7 +199,7 @@ export function ProductCardImageCarousel({
 						{active > 0
 							? (
 								<button
-									aria-label="Previous image"
+									aria-hidden="true"
 									className={carouselCaretClassName('left')}
 									onClick={
 										(event) => onCaretClick(event, active - 1)
@@ -227,7 +214,7 @@ export function ProductCardImageCarousel({
 						{active < urls.length - 1
 							? (
 								<button
-									aria-label="Next image"
+									aria-hidden="true"
 									className={carouselCaretClassName('right')}
 									onClick={
 										(event) => onCaretClick(event, active + 1)
