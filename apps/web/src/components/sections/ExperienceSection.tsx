@@ -470,7 +470,9 @@ function SaveSelectedPdfButton({
 }
 
 export function ExperienceSection() {
-	const [selectedKinds, setSelectedKinds] = useState<ExperienceKind[]>([]);
+	const [selectedKinds, setSelectedKinds] = useState<ExperienceKind[]>([
+		'software',
+	]);
 	const [peekedIds, setPeekedIds] = useState<string[]>([]);
 	const [filtersOpen, setFiltersOpen] = useState(true);
 	const sectionRef = useRef<HTMLElement>(null);
