@@ -103,7 +103,7 @@ body {
   }
 }
 
-/* CatalogCategoryBar: in-place second-line scroll / typewriter (no height expand). */
+/* CatalogCategoryBar: fixed category row swap (scroll / typewriter; no height change). */
 @keyframes catalog-subcat-row-in {
   from {
     opacity: 0;

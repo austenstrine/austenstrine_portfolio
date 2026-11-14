@@ -2,9 +2,9 @@
 
 import {
 	useEffect,
+	useRef,
 	useState,
 	useMemo,
-	type AnimationEvent,
 	type CSSProperties,
 	type ReactNode,
 } from 'react';
@@ -155,69 +155,6 @@ function CategoryChip({
 	);
 }
 
-function ChipScroller({
-	children,
-	withBack = false,
-}: {
-	children: ReactNode;
-	withBack?: boolean;
-}) {
-	return (
-		<div
-			className="
-				relative
-				min-w-0
-			"
-		>
-			<div
-				className={
-					withBack
-						? `
-							flex
-							h-12
-							flex-nowrap
-							items-center
-							min-w-0
-							overflow-x-auto
-							overscroll-x-contain
-							whitespace-nowrap
-							pr-[calc(var(--gutter)+1.5rem)]
-							text-[13px]
-							font-semibold
-							[scrollbar-width:none]
-							[&::-webkit-scrollbar]:hidden
-						`
-						: `
-							flex
-							h-12
-							flex-nowrap
-							items-center
-							min-w-0
-							gap-1
-							overflow-x-auto
-							overscroll-x-contain
-							whitespace-nowrap
-							px-[calc(var(--gutter)+1.5rem)]
-							text-[13px]
-							font-semibold
-							[scrollbar-width:none]
-							[&::-webkit-scrollbar]:hidden
-						`
-				}
-			>
-				{children}
-			</div>
-			{withBack
-				? null
-				: (
-					<DepartmentScrollFade side="left" />
-				)
-			}
-			<DepartmentScrollFade side="right" />
-		</div>
-	);
-}
-
 function PinnedBack({
 	onBack,
 }: {
@@ -296,6 +233,79 @@ function PinnedBack({
 	);
 }
 
+function rowClassName(drilled: boolean, animate: boolean) {
+	if(drilled) {
+		if(animate) {
+			return `
+				catalog-subcat-row-enter
+				flex
+				h-12
+				flex-nowrap
+				items-center
+				min-w-0
+				overflow-x-auto
+				overscroll-x-contain
+				whitespace-nowrap
+				pr-[calc(var(--gutter)+1.5rem)]
+				text-[13px]
+				font-semibold
+				[scrollbar-width:none]
+				[&::-webkit-scrollbar]:hidden
+			`;
+		}
+		return `
+			flex
+			h-12
+			flex-nowrap
+			items-center
+			min-w-0
+			overflow-x-auto
+			overscroll-x-contain
+			whitespace-nowrap
+			pr-[calc(var(--gutter)+1.5rem)]
+			text-[13px]
+			font-semibold
+			[scrollbar-width:none]
+			[&::-webkit-scrollbar]:hidden
+		`;
+	}
+	if(animate) {
+		return `
+			catalog-subcat-row-enter
+			flex
+			h-12
+			flex-nowrap
+			items-center
+			min-w-0
+			gap-1
+			overflow-x-auto
+			overscroll-x-contain
+			whitespace-nowrap
+			px-[calc(var(--gutter)+1.5rem)]
+			text-[13px]
+			font-semibold
+			[scrollbar-width:none]
+			[&::-webkit-scrollbar]:hidden
+		`;
+	}
+	return `
+		flex
+		h-12
+		flex-nowrap
+		items-center
+		min-w-0
+		gap-1
+		overflow-x-auto
+		overscroll-x-contain
+		whitespace-nowrap
+		px-[calc(var(--gutter)+1.5rem)]
+		text-[13px]
+		font-semibold
+		[scrollbar-width:none]
+		[&::-webkit-scrollbar]:hidden
+	`;
+}
+
 export function CatalogCategoryBar({
 	categories,
 	category,
@@ -306,38 +316,23 @@ export function CatalogCategoryBar({
 	onChoose: (slug: string) => void;
 }) {
 	const [stack, setStack] = useState<NestedCategory<CatalogCategoryRow>[]>([]);
-	const [held, setHeld] = useState<NestedCategory<CatalogCategoryRow> | null>(null);
-	const [linePhase, setLinePhase] = useState<'enter' | 'exit'>('enter');
 	const [reduceMotion, setReduceMotion] = useState(false);
+	const prevLevelKeyRef = useRef<string | null>(null);
 	const forest = useMemo(() => nestCategoryTree(categories), [categories]);
 	const current = stack[stack.length - 1] ?? null;
-	const root = stack[0] ?? null;
-	const panel = current ?? held;
-	const rows = panel ? panel.children : [];
+	const rows = current ? current.children : forest;
+	const levelKey = current?.id ?? 'root';
 	const drilled = current !== null;
-	const lineOpen = panel !== null;
-	const chipMotion = linePhase === 'enter' && !reduceMotion;
+	// Animate on the same render the row key changes (after first paint).
+	const isLevelChange =
+		prevLevelKeyRef.current !== null
+		&& prevLevelKeyRef.current !== levelKey;
+	prevLevelKeyRef.current = levelKey;
+	const chipMotion = isLevelChange && !reduceMotion;
 
 	useEffect(() => {
 		setReduceMotion(prefersReducedMotion());
 	}, []);
-
-	useEffect(() => {
-		if(current) {
-			setHeld(current);
-			setLinePhase('enter');
-			return;
-		}
-		if(!held) {
-			return;
-		}
-		if(prefersReducedMotion()) {
-			setHeld(null);
-			setLinePhase('enter');
-			return;
-		}
-		setLinePhase('exit');
-	}, [current, held]);
 
 	if(forest.length === 0) {
 		return null;
@@ -345,16 +340,6 @@ export function CatalogCategoryBar({
 
 	const chooseOrDrill = (row: NestedCategory<CatalogCategoryRow>) => {
 		if(row.children.length > 0) {
-			setStack([row]);
-			return;
-		}
-		setStack([]);
-		onChoose(row.slug);
-	};
-
-	const drillChild = (row: NestedCategory<CatalogCategoryRow>) => {
-		if(row.children.length > 0) {
-			// Deeper levels replace the second line in place — never a third line.
 			setStack((currentStack) => [...currentStack, row]);
 			return;
 		}
@@ -363,20 +348,6 @@ export function CatalogCategoryBar({
 
 	const goBack = () => {
 		setStack((currentStack) => currentStack.slice(0, -1));
-	};
-
-	const onSubcatAnimationEnd = (event: AnimationEvent<HTMLDivElement>) => {
-		if(event.target !== event.currentTarget) {
-			return;
-		}
-		if(linePhase !== 'exit') {
-			return;
-		}
-		if(drilled) {
-			return;
-		}
-		setHeld(null);
-		setLinePhase('enter');
 	};
 
 	return (
@@ -392,91 +363,78 @@ export function CatalogCategoryBar({
 		>
 			<div
 				className="
+					relative
 					mx-auto
 					min-w-0
 					max-w-7xl
+					overflow-hidden
 				"
 			>
-				<ChipScroller>
-					{forest.map((row) => (
-						<CategoryChip
-							active={
-								row.children.length === 0
-									? category === row.slug
-									: root?.id === row.id
-							}
-							key={row.id}
-							onClick={() => chooseOrDrill(row)}
-						>
-							{row.name}
-						</CategoryChip>
-					))}
-				</ChipScroller>
-				{lineOpen
-					? (
-						<div
-							aria-hidden={!drilled}
-							className="
-								h-12
-								overflow-hidden
-								border-t
-								border-slate-100
-							"
-							ref={(el) => {
-								if(el) {
-									el.inert = !drilled;
-								}
-							}}
-						>
-							<div
-								className={
-									linePhase === 'exit'
-										? 'catalog-subcat-row-exit'
-										: 'catalog-subcat-row-enter'
-								}
-								key={panel.id}
-								onAnimationEnd={onSubcatAnimationEnd}
-							>
-								<ChipScroller withBack>
-									<PinnedBack onBack={goBack} />
-									<div
-										className="
-											flex
-											h-8
-											flex-nowrap
-											items-center
-											gap-1
-										"
+				<div
+					className={rowClassName(drilled, chipMotion)}
+					key={levelKey}
+				>
+					{current
+						? (
+							<>
+								<PinnedBack onBack={goBack} />
+								<div
+									className="
+										flex
+										h-8
+										flex-nowrap
+										items-center
+										gap-1
+									"
+								>
+									<CategoryChip
+										active={category === current.slug}
+										onClick={() => onChoose(current.slug)}
+										typewriter={chipMotion}
+										typewriterDelayMs={0}
 									>
+										{allCategoryLabel(current.name)}
+									</CategoryChip>
+									{rows.map((row, index) => (
 										<CategoryChip
-											active={category === panel.slug}
-											onClick={() => onChoose(panel.slug)}
+											active={
+												row.children.length === 0
+												&& category === row.slug
+											}
+											key={row.id}
+											onClick={() => chooseOrDrill(row)}
 											typewriter={chipMotion}
-											typewriterDelayMs={0}
+											typewriterDelayMs={(index + 1) * CHIP_STAGGER_MS}
 										>
-											{allCategoryLabel(panel.name)}
+											{row.name}
 										</CategoryChip>
-										{rows.map((row, index) => (
-											<CategoryChip
-												active={
-													row.children.length === 0
-													&& category === row.slug
-												}
-												key={row.id}
-												onClick={() => drillChild(row)}
-												typewriter={chipMotion}
-												typewriterDelayMs={(index + 1) * CHIP_STAGGER_MS}
-											>
-												{row.name}
-											</CategoryChip>
-										))}
-									</div>
-								</ChipScroller>
-							</div>
-						</div>
+									))}
+								</div>
+							</>
+						)
+						: rows.map((row, index) => (
+							<CategoryChip
+								active={
+									row.children.length === 0
+									&& category === row.slug
+								}
+								key={row.id}
+								onClick={() => chooseOrDrill(row)}
+								typewriter={chipMotion}
+								typewriterDelayMs={index * CHIP_STAGGER_MS}
+							>
+								{row.name}
+							</CategoryChip>
+						))
+					}
+				</div>
+				{current
+					? null
+					: (
+						<DepartmentScrollFade side="left" />
 					)
-					: null
 				}
+				<DepartmentScrollFade side="right" />
 			</div>
 		</nav>
 	);
