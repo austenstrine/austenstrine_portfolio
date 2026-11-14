@@ -15,28 +15,15 @@ import {
 } from '../../../lib/checkout-api';
 import { useSession } from '../../../lib/useSession';
 import { RequireAccess } from '../../../components/auth/RequireAccess';
-import { PageBottomPanePortal } from '../../../components/catalog/CatalogSearchContext';
 import { OrderMoneySummary } from '../../../components/orders/OrderMoneySummary';
+import { OrdersListFilters } from '../../../components/orders/OrdersListFilters';
 import {
-	ORDER_STATUS_FILTERS,
 	ORDERS_LIST_SHELL_CLASSNAME,
 	displayOrderStatus,
 	filterOrders,
 	type OrderStatusFilter,
 } from '../../../components/orders/order-display';
 import { ArrowRightIcon } from '../../../components/icons/ArrowRightIcon';
-
-const frostControlClassName = `
-	rounded-full
-	border
-	border-slate-300
-	bg-white
-	px-2.5
-	py-1.5
-	text-sm
-	font-semibold
-	text-ink
-`;
 
 const BUYER_STATUS_FILTERS: Array<{
 	id: OrderStatusFilter;
@@ -91,101 +78,69 @@ function OrdersContent() {
 				gap-6
 			"
 		>
-			<PageBottomPanePortal>
-				<label
-					className="
-						inline-flex
-						min-w-[9rem]
-						max-w-[14rem]
-						flex-1
-						flex-col
-						gap-0.5
-						text-[11px]
-						font-medium
-						text-slate-500
-					"
-				>
-					<span>
-						Filter
-					</span>
-					<input
-						aria-label="Filter orders"
-						className={frostControlClassName}
-						onChange={(event) => setFilterText(event.target.value)}
-						placeholder="Vendor, product, place"
-						type="search"
-						value={filterText}
-					/>
-				</label>
-				<label
-					className="
-						inline-flex
-						flex-col
-						gap-0.5
-						text-[11px]
-						font-medium
-						text-slate-500
-					"
-				>
-					<span>
-						Status
-					</span>
-					<select
-						aria-label="Order status filter"
-						className={frostControlClassName}
-						onChange={(event) => {
-							const next = event.target.value as OrderStatusFilter;
-							if(ORDER_STATUS_FILTERS.some((row) => row.id === next)) {
-								setStatusFilter(next);
-							}
-						}}
-						value={statusFilter}
+			<div
+				className="
+					flex
+					flex-wrap
+					items-end
+					justify-between
+					gap-4
+				"
+			>
+				<div className="min-w-0 flex-1">
+					<h1
+						className="
+							text-3xl
+							font-semibold
+							tracking-tight
+						"
 					>
-						{BUYER_STATUS_FILTERS.map((row) => (
-							<option
-								key={row.id}
-								value={row.id}
+						Your orders
+					</h1>
+					{paid
+						? (
+							<p
+								className="
+									mt-2
+									text-sm
+									font-semibold
+									text-asgreen
+								"
 							>
-								{row.label}
-							</option>
-						))}
-					</select>
-				</label>
-			</PageBottomPanePortal>
-
-			<div>
-				<h1
+								Payment received.
+							</p>
+						)
+						: null
+					}
+					{orders.length > 0
+						? (
+							<p className="mt-2 text-sm text-slate-600">
+								{orders.length} order{orders.length === 1 ? '' : 's'}
+							</p>
+						)
+						: null
+					}
+				</div>
+				<div
 					className="
-						text-3xl
-						font-semibold
-						tracking-tight
+						ml-auto
+						flex
+						flex-wrap
+						items-end
+						justify-end
+						gap-x-2
+						gap-y-2
 					"
 				>
-					Your orders
-				</h1>
-				{paid
-					? (
-						<p
-							className="
-								mt-2
-								text-sm
-								font-semibold
-								text-asgreen
-							"
-						>
-							Payment received.
-						</p>
-					)
-					: null
-				}
-				{orders.length > 0
-					? (
-						<p className="mt-2 text-sm text-slate-600">
-							{orders.length} order{orders.length === 1 ? '' : 's'}
-						</p>
-					)
-					: null
-				}
+					<OrdersListFilters
+						filterPlaceholder="Vendor, product, place"
+						filterText={filterText}
+						onFilterTextChange={setFilterText}
+						onStatusFilterChange={setStatusFilter}
+						statusFilter={statusFilter}
+						statusOptions={BUYER_STATUS_FILTERS}
+					/>
+				</div>
 			</div>
 
 			{sessionLoading

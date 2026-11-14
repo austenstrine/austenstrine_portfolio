@@ -180,12 +180,21 @@ export function pathRequiresVendor(path: string): boolean {
 
 /**
  * Seller chrome: hide category bar + cart; show Selling chip; bottom pane = page actions.
- * Buyer storefronts (/place-et-marque/<slug>) and product detail stay on buyer chrome.
+ * Buyer storefronts (/place-et-marque/<slug>), product detail, and buyer orders
+ * (/place-et-marque/orders) stay on shopping chrome — cart stays visible.
+ * Seller fulfillment lives under /place-et-marque/vendors/<id>/orders.
  */
 export function pathUsesSellerChrome(path: string): boolean {
 	const pathname = path.split('?')[0] ?? path;
 	// Buyer vendor pages are never seller chrome — even for org members browsing.
 	if(pathIsBuyerVendorStorefront(pathname)) {
+		return false;
+	}
+	// Buyer purchase history is shopping chrome (not Selling).
+	if(
+		pathname === '/place-et-marque/orders'
+		|| pathname.startsWith('/place-et-marque/orders/')
+	) {
 		return false;
 	}
 	if(
@@ -198,8 +207,6 @@ export function pathUsesSellerChrome(path: string): boolean {
 		|| pathname.startsWith('/place-et-marque/attributes/')
 		|| pathname === '/place-et-marque/categories'
 		|| pathname.startsWith('/place-et-marque/categories/')
-		|| pathname === '/place-et-marque/orders'
-		|| pathname.startsWith('/place-et-marque/orders/')
 		|| pathname === '/place-et-marque/products/new'
 		|| pathname === '/place-et-marque/products/configure'
 	) {
@@ -212,15 +219,12 @@ export function pathUsesSellerChrome(path: string): boolean {
 }
 
 /**
- * Buyer + seller order *lists* mount frost filter controls into the bottom
- * pane. Reserve pane geometry on these paths so empty:hidden cannot late-show
- * the FOOTER-attributed chrome (order detail has no pane portal).
+ * Seller order *lists* mount frost filter controls into the bottom pane.
+ * Reserve pane geometry so empty:hidden cannot late-show the FOOTER-attributed
+ * chrome (buyer orders filter inline; order detail has no pane portal).
  */
 export function pathReservesOrdersListBottomPane(path: string): boolean {
 	const pathname = path.split('?')[0] ?? path;
-	if(pathname === '/place-et-marque/orders') {
-		return true;
-	}
 	return /^\/place-et-marque\/vendors\/[^/]+\/orders\/?$/.test(pathname);
 }
 
