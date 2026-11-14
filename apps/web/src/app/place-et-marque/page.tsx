@@ -5,6 +5,7 @@ import {
 	nestedCategoryImages,
 } from '../../components/catalog/CategoryCard';
 import { DemoIntro } from '../../components/catalog/DemoIntro';
+import { NavigateHoverArrow } from '../../components/catalog/NavigateHoverArrow';
 import { ProductCard } from '../../components/catalog/ProductCard';
 import {
 	listCatalogCategories,
@@ -177,6 +178,9 @@ export default async function PlaceEtMarqueHomePage() {
 							{vendors.map((row) => (
 								<a
 									className="
+										group
+										inline-flex
+										items-center
 										rounded-full
 										border
 										border-slate-200
@@ -191,17 +195,20 @@ export default async function PlaceEtMarqueHomePage() {
 									href={`/place-et-marque/${encodeURIComponent(row.slug)}`}
 									key={row.slug}
 								>
-									{titleCaseSlug(row.slug)}
-									<span
-										className="
-											ml-2
-											text-[12px]
-											font-medium
-											text-slate-500
-										"
-									>
-										{row.count.toLocaleString()}
+									<span>
+										{titleCaseSlug(row.slug)}
+										<span
+											className="
+												ml-2
+												text-[12px]
+												font-medium
+												text-slate-500
+											"
+										>
+											{row.count.toLocaleString()}
+										</span>
 									</span>
+									<NavigateHoverArrow className="text-slate-400" />
 								</a>
 							))}
 						</div>
