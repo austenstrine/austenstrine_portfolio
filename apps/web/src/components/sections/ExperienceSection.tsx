@@ -184,6 +184,7 @@ function PeekToggle({
 						items-center
 						justify-start
 						gap-1.5
+						text-left
 						text-sm
 						leading-none
 						text-slate-400
