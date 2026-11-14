@@ -418,7 +418,7 @@ export function CvDocument() {
 				<div className="cv-job">
 					<div className="cv-job-header">
 						<span className="cv-job-title">
-							Cast / Participant
+							Glen Guglia
 						</span>
 						<span className="cv-job-dates">
 							Late 2015 – early 2016
@@ -433,7 +433,25 @@ export function CvDocument() {
 					</div>
 					<ul>
 						<li>
-							Cast member; rehearsals through the run; scripts and scores returned to Music Theatre International after closing.
+							Played Glen Guglia; production photos:
+							{' '}
+							<a
+								href="https://utahtheatrebloggers.com/22772/something-to-celebrate-at-the-wedding-singer"
+								target="_blank"
+								rel="noopener noreferrer"
+							>
+								Utah Theatre Bloggers
+							</a>
+							{' '}
+							·
+							{' '}
+							<a
+								href="https://www.cvct.online/projects-7-6"
+								target="_blank"
+								rel="noopener noreferrer"
+							>
+								CVCT
+							</a>
 						</li>
 					</ul>
 				</div>
