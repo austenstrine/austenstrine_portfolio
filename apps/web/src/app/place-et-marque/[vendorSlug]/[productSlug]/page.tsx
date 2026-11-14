@@ -11,6 +11,7 @@ import {
 	type CatalogProductDetail,
 	type CatalogProductSummary,
 } from '../../../../lib/catalog-api';
+import { getCartCached } from '../../../../lib/checkout-api.server';
 import {
 	productPathNeedsCanonicalRedirect,
 	productViewHref,
@@ -107,10 +108,23 @@ export default async function ProductPage({ params }: ProductPageProps) {
 	}
 
 	const related = await relatedProducts(product);
+	// Seed buy-box spinner from cart before paint (PEM-372) — deduped with layout.
+	const cart = await getCartCached().catch(() => null);
+	const offeringIds = new Set(product.offerings.map((row) => row.id));
+	const seededLine = cart?.lines.find((line) => offeringIds.has(line.offeringId));
 	return (
 		<ProductDetailClient
 			initialProduct={product}
 			relatedProducts={related}
+			initialCartLine={
+				seededLine
+					? {
+						offeringId: seededLine.offeringId,
+						quantity: seededLine.quantity,
+					}
+					: null
+			}
+			cartSeeded
 		/>
 	);
 }

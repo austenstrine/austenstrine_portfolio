@@ -20,7 +20,7 @@ import { accessReason, buildLoginUrl } from '../../lib/accessGate';
 import { useSession } from '../../lib/useSession';
 import { vendorViewHref } from '../../lib/vendor-ref';
 import { CatalogCover } from './CatalogCover';
-import { CartQtySpinner } from './CartQtySpinner';
+import { BuyBoxCartCta } from './BuyBoxCartCta';
 import {
 	fieldEditOpen,
 	inPlaceFieldKey,
@@ -53,9 +53,18 @@ import { TermHint } from './TermHint';
 import { CompoundQtyField } from './CompoundQtyField';
 import { formatAvailableQty } from '../../lib/uom-qty';
 
+export type ProductDetailCartLineSeed = {
+	offeringId: string;
+	quantity: string;
+};
+
 type ProductDetailClientProps = {
 	initialProduct: CatalogProductDetail;
 	relatedProducts?: CatalogProductSummary[];
+	/** SSR cart line for this product when already in cart (PEM-372). */
+	initialCartLine?: ProductDetailCartLineSeed | null;
+	/** True when SSR probed cart (even if empty) so client must not flash Add→spinner. */
+	cartSeeded?: boolean;
 };
 
 function formatPrice(cents: number, currency = 'USD') {
@@ -193,6 +202,8 @@ function specGroups(product: CatalogProductDetail, selectedSku?: string) {
 export function ProductDetailClient({
 	initialProduct,
 	relatedProducts = [],
+	initialCartLine = null,
+	cartSeeded = false,
 }: ProductDetailClientProps) {
 	const router = useRouter();
 	const { user, loading: sessionLoading } = useSession();
@@ -201,14 +212,20 @@ export function ProductDetailClient({
 	const [deleteError, setDeleteError] = useState<string | null>(null);
 	const [deletedNotice, setDeletedNotice] = useState<string | null>(null);
 	const [activeImage, setActiveImage] = useState(0);
-	const [selectedOfferingId, setSelectedOfferingId] = useState(() => firstBuyableId(initialProduct));
-	const [cartQty, setCartQty] = useState('1');
-	const [lineInCart, setLineInCart] = useState(false);
+	const [selectedOfferingId, setSelectedOfferingId] = useState(() => (
+		initialCartLine?.offeringId
+		&& initialProduct.offerings.some((row) => row.id === initialCartLine.offeringId)
+			? initialCartLine.offeringId
+			: firstBuyableId(initialProduct)
+	));
+	const [cartQty, setCartQty] = useState(() => initialCartLine?.quantity ?? '1');
+	const [lineInCart, setLineInCart] = useState(() => Boolean(initialCartLine));
+	const [cartSnapshot, setCartSnapshot] = useState<CartDto | null>(null);
 	const [cartBusy, setCartBusy] = useState(false);
 	const [cartMessage, setCartMessage] = useState<string | null>(null);
 	const [cartError, setCartError] = useState<string | null>(null);
 
-	function applyCartLine(offeringId: string, cart: CartDto | null) {
+	function applyCartLine(offeringId: string, cart: CartDto | null, resetQtyWhenAbsent = true) {
 		const line = cart?.lines.find((row) => row.offeringId === offeringId);
 		if(line) {
 			setLineInCart(true);
@@ -216,7 +233,9 @@ export function ProductDetailClient({
 			return;
 		}
 		setLineInCart(false);
-		setCartQty('1');
+		if(resetQtyWhenAbsent) {
+			setCartQty('1');
+		}
 	}
 
 	// SSR catalog fetch may omit canEdit when access_token was not forwarded;
@@ -248,10 +267,15 @@ export function ProductDetailClient({
 		user,
 	]);
 
-	// Hydrate buy-box spinner when this offering is already in the cart.
+	// Refresh cart snapshot; SSR seed already set first paint (no Add→spinner flash).
 	useEffect(() => {
-		if(sessionLoading || !user || !selectedOfferingId) {
-			setLineInCart(false);
+		if(sessionLoading) {
+			return;
+		}
+		if(!user || !selectedOfferingId) {
+			if(!user && !cartSeeded) {
+				setLineInCart(false);
+			}
 			return;
 		}
 		let cancelled = false;
@@ -260,17 +284,18 @@ export function ProductDetailClient({
 				if(cancelled) {
 					return;
 				}
+				setCartSnapshot(cart);
 				applyCartLine(selectedOfferingId, cart);
 			})
 			.catch(() => {
-				if(!cancelled) {
+				if(!cancelled && !cartSeeded) {
 					setLineInCart(false);
 				}
 			});
 		return () => {
 			cancelled = true;
 		};
-	}, [sessionLoading, user, selectedOfferingId]);
+	}, [sessionLoading, user, selectedOfferingId, cartSeeded]);
 
 	const {
 		editTier,
@@ -359,6 +384,18 @@ export function ProductDetailClient({
 		setSelectedOfferingId(id);
 		setCartMessage(null);
 		setCartError(null);
+		// Apply snapshot immediately so offering switches do not flash Add↔spinner.
+		if(cartSnapshot) {
+			applyCartLine(id, cartSnapshot);
+		}
+		else if(initialCartLine && id === initialCartLine.offeringId) {
+			setLineInCart(true);
+			setCartQty(initialCartLine.quantity);
+		}
+		else if(cartSeeded || !user) {
+			setLineInCart(false);
+			setCartQty('1');
+		}
 	}
 
 	async function onAddToCart() {
@@ -381,6 +418,7 @@ export function ProductDetailClient({
 		try {
 			const qty = cartQty || '1';
 			const cart = await upsertCartLine(selectedOfferingId, qty);
+			setCartSnapshot(cart);
 			applyCartLine(selectedOfferingId, cart);
 			setCartMessage('Added to cart');
 		}
@@ -412,7 +450,8 @@ export function ProductDetailClient({
 		setCartMessage(null);
 		try {
 			if(!Number.isFinite(next) || next <= 0) {
-				await removeCartLine(selectedOfferingId);
+				const cart = await removeCartLine(selectedOfferingId);
+				setCartSnapshot(cart);
 				setLineInCart(false);
 				setCartQty('1');
 				setCartMessage(null);
@@ -423,6 +462,7 @@ export function ProductDetailClient({
 				? Math.min(next, available)
 				: next;
 			const cart = await upsertCartLine(selectedOfferingId, String(clamped));
+			setCartSnapshot(cart);
 			applyCartLine(selectedOfferingId, cart);
 		}
 		catch(error) {
@@ -745,17 +785,14 @@ export function ProductDetailClient({
 					)
 					: null}
 
-				{!lineInCart
-					? (
-						<CompoundQtyField
-							label="Quantity"
-							uomCode={selectedOffering.uom.code}
-							value={cartQty}
-							onChange={setCartQty}
-							disabled={!stock.inStock}
-						/>
-					)
-					: null}
+				{/* Always mounted — unmounting on lineInCart caused ~60px jump (PEM-372). */}
+				<CompoundQtyField
+					label="Quantity"
+					uomCode={selectedOffering.uom.code}
+					value={cartQty}
+					onChange={setCartQty}
+					disabled={!stock.inStock || lineInCart || cartBusy}
+				/>
 
 				{/* Reserved slot so status never shifts Add / spinner. */}
 				<div
@@ -788,55 +825,19 @@ export function ProductDetailClient({
 						: null}
 				</div>
 
-				<div
-					data-pem-actions
-					className="
-						flex
-						flex-col
-						justify-end
-						gap-2
-					"
-				>
-					{lineInCart
-						? (
-							<CartQtySpinner
-								quantity={cartQty}
-								busy={cartBusy}
-								incrementDisabled={
-									Number.isFinite(Number(selectedOffering.availableQty))
-									&& Number(cartQty) >= Number(selectedOffering.availableQty)
-								}
-								onDecrement={() => void onDecrementCartQty()}
-								onIncrement={() => void onIncrementCartQty()}
-							/>
-						)
-						: (
-							<button
-								type="button"
-								disabled={cartBusy || !stock.inStock}
-								onClick={() => void onAddToCart()}
-								className="
-									w-full
-									rounded-full
-									bg-asgreen
-									px-5
-									py-3
-									text-sm
-									font-semibold
-									text-white
-									hover:bg-asgreen/90
-									disabled:opacity-40
-								"
-							>
-								{cartBusy
-									? 'Adding…'
-									: stock.inStock
-										? 'Add to cart'
-										: 'Unavailable'}
-							</button>
-						)
+				<BuyBoxCartCta
+					lineInCart={lineInCart}
+					cartBusy={cartBusy}
+					inStock={stock.inStock}
+					cartQty={cartQty}
+					incrementDisabled={
+						Number.isFinite(Number(selectedOffering.availableQty))
+						&& Number(cartQty) >= Number(selectedOffering.availableQty)
 					}
-				</div>
+					onAddToCart={() => void onAddToCart()}
+					onDecrementQty={() => void onDecrementCartQty()}
+					onIncrementQty={() => void onIncrementCartQty()}
+				/>
 
 				<div className="border-t border-slate-100 pt-4 text-[12px] leading-5 text-slate-500">
 					<p>

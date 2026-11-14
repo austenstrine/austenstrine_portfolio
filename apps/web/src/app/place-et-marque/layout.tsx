@@ -15,7 +15,7 @@ import {
 	listMyVendors,
 	type CatalogCategoryRow,
 } from '../../lib/catalog-api';
-import { getCart } from '../../lib/checkout-api';
+import { getCartCached } from '../../lib/checkout-api.server';
 import { PLACE_ET_MARQUE_NAME } from '../../lib/place-et-marque-meta';
 import { SessionProvider } from '../../lib/useSession';
 
@@ -62,7 +62,7 @@ export default async function PlaceEtMarqueLayout({ children }: { children: Reac
 			listMyVendors()
 				.then((vendors) => ({ ok: true as const, vendors }))
 				.catch(() => ({ ok: false as const, vendors: [] as Awaited<ReturnType<typeof listMyVendors>> })),
-			getCart()
+			getCartCached()
 				.then((cart) => ({ ok: true as const, cart }))
 				.catch(() => ({ ok: false as const, cart: null })),
 		]);

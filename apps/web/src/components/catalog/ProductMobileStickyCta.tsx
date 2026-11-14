@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useLayoutEffect, useRef } from 'react';
-import { CartQtySpinner } from './CartQtySpinner';
+import { BuyBoxCartCta } from './BuyBoxCartCta';
 
 const STACK_VAR = '--product-sticky-cta-stack';
 const STACK_GAP_PX = 8;
@@ -25,7 +25,7 @@ type ProductMobileStickyCtaProps = {
 /**
  * Buyer PDP mobile sticky Add to cart / in-cart qty spinner. Publishes
  * --product-sticky-cta-stack so JumpToTop sits above this bar (same pattern
- * as SellerPageActionPane).
+ * as SellerPageActionPane). CTA stacks Add+spinner for stable height (PEM-372).
  */
 export function ProductMobileStickyCta({
 	priceLabel,
@@ -121,51 +121,17 @@ export function ProductMobileStickyCta({
 					</p>
 					<p className={`truncate text-xs ${stockTone}`}>{stockStatus}</p>
 				</div>
-				<div
-					data-pem-actions
-					className="
-						ml-auto
-						flex
-						shrink-0
-						justify-end
-					"
-				>
-					{lineInCart
-						? (
-							<CartQtySpinner
-								quantity={cartQty}
-								busy={cartBusy}
-								incrementDisabled={incrementDisabled}
-								onDecrement={onDecrementQty}
-								onIncrement={onIncrementQty}
-								compact
-							/>
-						)
-						: (
-							<button
-								type="button"
-								disabled={cartBusy || !inStock}
-								onClick={onAddToCart}
-								className="
-									rounded-full
-									bg-asgreen
-									px-5
-									py-2.5
-									text-sm
-									font-semibold
-									text-white
-									disabled:opacity-40
-								"
-							>
-								{cartBusy
-									? 'Adding…'
-									: inStock
-										? 'Add to cart'
-										: 'Unavailable'}
-							</button>
-						)
-					}
-				</div>
+				<BuyBoxCartCta
+					lineInCart={lineInCart}
+					cartBusy={cartBusy}
+					inStock={inStock}
+					cartQty={cartQty}
+					incrementDisabled={incrementDisabled}
+					compact
+					onAddToCart={onAddToCart}
+					onDecrementQty={onDecrementQty}
+					onIncrementQty={onIncrementQty}
+				/>
 			</div>
 		</div>
 	);
