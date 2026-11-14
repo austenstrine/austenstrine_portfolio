@@ -20,6 +20,7 @@ const config: Config = {
       spacing: {
         gutter: 'var(--gutter)',
         inset: 'var(--inset)',
+        section: 'var(--section-gap)',
       },
     },
   },
