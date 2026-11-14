@@ -86,7 +86,6 @@ export function CatalogHeader({
 		setEditTier,
 	} = useEditableVendors();
 	const [cartCount, setCartCount] = useState(initialCartCount);
-	const [headerHeight, setHeaderHeight] = useState(0);
 	const [bannerOffset, setBannerOffset] = useState(0);
 	const [headerHidden, setHeaderHidden] = useState(false);
 	const lastScrollY = useRef(0);
@@ -97,11 +96,19 @@ export function CatalogHeader({
 	// Buyer chrome (incl. /place-et-marque/<vendor>) keeps the department bar.
 	// Search hides it — filters live on the page instead.
 	// Categories are SSR-seeded (PEM-370): show/hide is decided before paint.
+	// Spacer / --catalog-header-h use the same decision (PEM-377) so first
+	// paint matches bar present vs absent — no post-paint spacer jump.
 	const showDepartmentBar =
 		!sellerChrome
 		&& pathname !== '/place-et-marque/search'
 		&& categories.length > 0;
 	const headerRef = useRef<HTMLElement>(null);
+	const headerHeightVar = showDepartmentBar
+		? 'var(--catalog-header-h-with-bar)'
+		: 'var(--catalog-header-h-base)';
+	const spacerClassName = showDepartmentBar
+		? 'h-[var(--catalog-header-h-with-bar)]'
+		: 'h-[var(--catalog-header-h-base)]';
 
 	useLayoutEffect(() => {
 		const syncBanner = () => {
@@ -142,10 +149,9 @@ export function CatalogHeader({
 		}
 		const sync = () => {
 			const height = header.offsetHeight;
-			setHeaderHeight(height);
 			// Sticky filters use viewport top — include banner band. Body
-			// padding-top already clears banners for in-flow content; spacer
-			// below is headerHeight only.
+			// padding-top already clears banners for in-flow content; the
+			// in-flow spacer stays on SSR tokens (base vs with-bar).
 			document.documentElement.style.setProperty(
 				'--catalog-header-h',
 				`${headerHidden ? 0 : height + bannerOffset}px`,
@@ -158,7 +164,7 @@ export function CatalogHeader({
 			observer.disconnect();
 			document.documentElement.style.removeProperty('--catalog-header-h');
 		};
-	}, [bannerOffset, headerHidden]);
+	}, [bannerOffset, headerHidden, showDepartmentBar]);
 
 	useEffect(() => {
 		lastScrollY.current = window.scrollY;
@@ -204,17 +210,22 @@ export function CatalogHeader({
 
 	return (
 		<>
+			{/*
+				SSR with the category bar: pin --catalog-header-h to the matching
+				token before paint. Soft-nav updates this with showDepartmentBar.
+			*/}
+			<style
+				dangerouslySetInnerHTML={{
+					__html: `:root{--catalog-header-h:${headerHeightVar};}`,
+				}}
+			/>
 			<div
 				aria-hidden="true"
-				className={
-					headerHeight > 0
-						? undefined
-						: 'h-[var(--catalog-header-h)]'
-				}
-				style={
-					headerHeight > 0
-						? { height: headerHeight }
-						: undefined
+				className={spacerClassName}
+				data-catalog-header-spacer={
+					showDepartmentBar
+						? 'with-bar'
+						: 'base'
 				}
 			/>
 			<header

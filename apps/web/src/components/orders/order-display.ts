@@ -130,7 +130,7 @@ export function countOrdersNeedingShip(orders: PlaceEtMarqueOrder[]): number {
  */
 export const ORDERS_LIST_SHELL_CLASSNAME = `
 	flex
-	min-h-[calc(100dvh-var(--catalog-header-h,4.5rem))]
+	min-h-[calc(100dvh-var(--catalog-header-h,var(--catalog-header-h-base)))]
 	flex-col
 	gap-6
 	pb-24

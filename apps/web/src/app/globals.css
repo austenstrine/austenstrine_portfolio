@@ -10,8 +10,23 @@
   --inset: 1.25rem;
   /* Vertical rhythm between homepage section cards (Tailwind gap-6). */
   --section-gap: 1.5rem;
-  /* CatalogHeader writes the live px value; 4.5rem is search-page chrome without the department bar. */
-  --catalog-header-h: 4.5rem;
+  /*
+   * PeM fixed-header spacer tokens (PEM-377). Measured chrome:
+   * mobile two-row (bar is md:block only) ≈ 119px; desktop search row ≈ 67px;
+   * desktop + department bar (border-t + h-12) ≈ 116px.
+   * CatalogHeader SSR picks base vs with-bar with the category bar; JS may
+   * refine --catalog-header-h to px (banner / sticky) after paint.
+   */
+  --catalog-header-h-base: 7.4375rem;
+  --catalog-header-h-with-bar: 7.4375rem;
+  --catalog-header-h: var(--catalog-header-h-base);
+}
+
+@media (min-width: 768px) {
+  :root {
+    --catalog-header-h-base: 4.1875rem;
+    --catalog-header-h-with-bar: 7.25rem;
+  }
 }
 
 @media (max-width: 399px) {
