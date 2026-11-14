@@ -1,11 +1,13 @@
+import type { ExperienceRole } from '../../data/experience';
+import { printWithDocumentTitle } from '../../lib/print-document';
 import {
 	SITE_EMAIL,
+	SITE_EXPERIENCE_PRINT_TITLE,
 	SITE_HEADLINE,
 	SITE_NAME,
 	SITE_PHONE,
 	SITE_URL,
 } from '../../lib/site';
-import type { ExperienceRole } from '../../data/experience';
 
 export function ExperiencePrintSheet({
 	roles,
@@ -83,19 +85,13 @@ export function ExperiencePrintSheet({
 
 export function printSelectedExperience() {
 	const root = document.documentElement;
-	const cleanup = () => {
-		root.classList.remove('experience-print-selection');
-		window.removeEventListener('afterprint', cleanup);
-	};
 
-	root.classList.add('experience-print-selection');
-	window.addEventListener('afterprint', cleanup);
-	window.print();
-
-	// Fallback if afterprint never fires (some WebKit builds).
-	window.setTimeout(() => {
-		if(root.classList.contains('experience-print-selection')) {
-			cleanup();
-		}
-	}, 1000);
+	printWithDocumentTitle(SITE_EXPERIENCE_PRINT_TITLE, {
+		beforePrint: () => {
+			root.classList.add('experience-print-selection');
+		},
+		afterPrint: () => {
+			root.classList.remove('experience-print-selection');
+		},
+	});
 }

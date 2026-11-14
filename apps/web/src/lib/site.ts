@@ -8,6 +8,11 @@ export const SITE_GITHUB = 'https://github.com/austenstrine';
 export const SITE_REPO =
 	'https://github.com/austenstrine/austenstrine_portfolio';
 
+/** Stem browsers use for Save-as-PDF when document.title is set before print. */
+export const SITE_FILE_STEM = SITE_NAME.replace(/\s+/g, '-');
+export const SITE_CV_PRINT_TITLE = `${SITE_FILE_STEM}-CV`;
+export const SITE_EXPERIENCE_PRINT_TITLE = `${SITE_FILE_STEM}-Experience`;
+
 export const SITE_TITLE =
 	'Austen Strine | Senior Product, Catalog, and Search Software Engineer';
 
