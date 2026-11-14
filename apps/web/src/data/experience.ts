@@ -135,7 +135,7 @@ export const professionalExperience: ExperienceRole[] = [
 		category: 'education',
 		title: 'Introductory Web Development — Refcode (pilot student)',
 		organization: 'Refcode',
-		dates: 'approx. August–November 2016',
+		dates: 'August–November 2016',
 		bullets: [
 			'First student of brother Brenton Strine\'s Refcode coding bootcamp (used to test curriculum flow and identify common beginner questions and difficulties).',
 			'Core project: rock-paper-scissors web game (posted to GitHub November 2016).',
