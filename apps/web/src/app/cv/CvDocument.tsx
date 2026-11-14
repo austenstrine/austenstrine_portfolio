@@ -465,7 +465,7 @@ export function CvDocument() {
 					</div>
 					<ul>
 						<li>
-							Paid mentor and cast member in a dual-performance production (mentors-only and mentees/student cast).
+							Paid mentor and cast member in a dual-performance production (mentors-only and mentees-only cast).
 						</li>
 						<li>
 							Roles: Mike (Stage Manager; sometimes Mike Nulty); Ed Sullivan Announcer (Radio Announcer, often double-cast with Mike), plus Regency Room Announcer offstage; Train Conductor (small supporting, often double-cast).
