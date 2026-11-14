@@ -244,7 +244,6 @@ export function useInPlaceProductEdit({
 			cancelled = true;
 		};
 		// Seed once per product identity; offering changes sync in a separate effect.
-		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [enabled, product.id, product.slug, product.vendor.id, product.vendor.slug]);
 
 	useEffect(() => {
