@@ -2,7 +2,6 @@
 
 import {
 	useEffect,
-	useRef,
 	useState,
 	useMemo,
 	type CSSProperties,
@@ -233,26 +232,8 @@ function PinnedBack({
 	);
 }
 
-function rowClassName(drilled: boolean, animate: boolean) {
+function scrollRowClassName(drilled: boolean) {
 	if(drilled) {
-		if(animate) {
-			return `
-				catalog-subcat-row-enter
-				flex
-				h-12
-				flex-nowrap
-				items-center
-				min-w-0
-				overflow-x-auto
-				overscroll-x-contain
-				whitespace-nowrap
-				pr-[calc(var(--gutter)+1.5rem)]
-				text-[13px]
-				font-semibold
-				[scrollbar-width:none]
-				[&::-webkit-scrollbar]:hidden
-			`;
-		}
 		return `
 			flex
 			h-12
@@ -263,25 +244,6 @@ function rowClassName(drilled: boolean, animate: boolean) {
 			overscroll-x-contain
 			whitespace-nowrap
 			pr-[calc(var(--gutter)+1.5rem)]
-			text-[13px]
-			font-semibold
-			[scrollbar-width:none]
-			[&::-webkit-scrollbar]:hidden
-		`;
-	}
-	if(animate) {
-		return `
-			catalog-subcat-row-enter
-			flex
-			h-12
-			flex-nowrap
-			items-center
-			min-w-0
-			gap-1
-			overflow-x-auto
-			overscroll-x-contain
-			whitespace-nowrap
-			px-[calc(var(--gutter)+1.5rem)]
 			text-[13px]
 			font-semibold
 			[scrollbar-width:none]
@@ -317,18 +279,29 @@ export function CatalogCategoryBar({
 }) {
 	const [stack, setStack] = useState<NestedCategory<CatalogCategoryRow>[]>([]);
 	const [reduceMotion, setReduceMotion] = useState(false);
-	const prevLevelKeyRef = useRef<string | null>(null);
 	const forest = useMemo(() => nestCategoryTree(categories), [categories]);
 	const current = stack[stack.length - 1] ?? null;
 	const rows = current ? current.children : forest;
 	const levelKey = current?.id ?? 'root';
 	const drilled = current !== null;
-	// Animate on the same render the row key changes (after first paint).
-	const isLevelChange =
-		prevLevelKeyRef.current !== null
-		&& prevLevelKeyRef.current !== levelKey;
-	prevLevelKeyRef.current = levelKey;
-	const chipMotion = isLevelChange && !reduceMotion;
+	// Latch enter/typewriter for the whole level — a render-only ref flip (4ca4456)
+	// dropped classes on the next parent re-render and killed the CSS animation.
+	const [motionEpoch, setMotionEpoch] = useState({
+		key: levelKey,
+		animate: false,
+	});
+
+	if(motionEpoch.key !== levelKey) {
+		setMotionEpoch({
+			key: levelKey,
+			animate: !reduceMotion,
+		});
+	}
+
+	const chipMotion =
+		motionEpoch.key === levelKey
+		&& motionEpoch.animate
+		&& !reduceMotion;
 
 	useEffect(() => {
 		setReduceMotion(prefersReducedMotion());
@@ -365,68 +338,75 @@ export function CatalogCategoryBar({
 				className="
 					relative
 					mx-auto
+					h-12
 					min-w-0
 					max-w-7xl
 					overflow-hidden
 				"
 			>
 				<div
-					className={rowClassName(drilled, chipMotion)}
+					className={
+						chipMotion
+							? 'catalog-subcat-row-enter'
+							: undefined
+					}
 					key={levelKey}
 				>
-					{current
-						? (
-							<>
-								<PinnedBack onBack={goBack} />
-								<div
-									className="
-										flex
-										h-8
-										flex-nowrap
-										items-center
-										gap-1
-									"
-								>
-									<CategoryChip
-										active={category === current.slug}
-										onClick={() => onChoose(current.slug)}
-										typewriter={chipMotion}
-										typewriterDelayMs={0}
+					<div className={scrollRowClassName(drilled)}>
+						{current
+							? (
+								<>
+									<PinnedBack onBack={goBack} />
+									<div
+										className="
+											flex
+											h-8
+											flex-nowrap
+											items-center
+											gap-1
+										"
 									>
-										{allCategoryLabel(current.name)}
-									</CategoryChip>
-									{rows.map((row, index) => (
 										<CategoryChip
-											active={
-												row.children.length === 0
-												&& category === row.slug
-											}
-											key={row.id}
-											onClick={() => chooseOrDrill(row)}
+											active={category === current.slug}
+											onClick={() => onChoose(current.slug)}
 											typewriter={chipMotion}
-											typewriterDelayMs={(index + 1) * CHIP_STAGGER_MS}
+											typewriterDelayMs={0}
 										>
-											{row.name}
+											{allCategoryLabel(current.name)}
 										</CategoryChip>
-									))}
-								</div>
-							</>
-						)
-						: rows.map((row, index) => (
-							<CategoryChip
-								active={
-									row.children.length === 0
-									&& category === row.slug
-								}
-								key={row.id}
-								onClick={() => chooseOrDrill(row)}
-								typewriter={chipMotion}
-								typewriterDelayMs={index * CHIP_STAGGER_MS}
-							>
-								{row.name}
-							</CategoryChip>
-						))
-					}
+										{rows.map((row, index) => (
+											<CategoryChip
+												active={
+													row.children.length === 0
+													&& category === row.slug
+												}
+												key={row.id}
+												onClick={() => chooseOrDrill(row)}
+												typewriter={chipMotion}
+												typewriterDelayMs={(index + 1) * CHIP_STAGGER_MS}
+											>
+												{row.name}
+											</CategoryChip>
+										))}
+									</div>
+								</>
+							)
+							: rows.map((row, index) => (
+								<CategoryChip
+									active={
+										row.children.length === 0
+										&& category === row.slug
+									}
+									key={row.id}
+									onClick={() => chooseOrDrill(row)}
+									typewriter={chipMotion}
+									typewriterDelayMs={index * CHIP_STAGGER_MS}
+								>
+									{row.name}
+								</CategoryChip>
+							))
+						}
+					</div>
 				</div>
 				{current
 					? null
