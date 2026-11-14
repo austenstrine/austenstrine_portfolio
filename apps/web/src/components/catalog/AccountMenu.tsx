@@ -16,7 +16,6 @@ import {
 	NOTIFICATIONS_INBOX_PATH,
 	type NotificationDto,
 } from '../../lib/notifications-api';
-import { ArrowRightIcon } from '../icons/ArrowRightIcon';
 import { CaretDownIcon } from '../icons/CaretDownIcon';
 import { TruckIcon } from '../icons/TruckIcon';
 import {
@@ -496,7 +495,6 @@ export function AccountMenu({
 														flex
 														w-full
 														items-center
-														justify-between
 														gap-3
 														rounded-full
 														bg-asgreen/10
@@ -516,14 +514,6 @@ export function AccountMenu({
 													<span className="block min-w-0 truncate">
 														{item.title}
 													</span>
-													<ArrowRightIcon
-														className="
-															h-3.5
-															w-3.5
-															shrink-0
-															text-slate-400
-														"
-													/>
 												</a>
 											))
 									}
