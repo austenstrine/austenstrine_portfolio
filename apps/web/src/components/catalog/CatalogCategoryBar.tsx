@@ -1,6 +1,12 @@
 'use client';
 
-import { useMemo, useState, type ReactNode } from 'react';
+import {
+	useEffect,
+	useState,
+	useMemo,
+	type ReactNode,
+	type TransitionEvent,
+} from 'react';
 import {
 	allCategoryLabel,
 	nestCategoryTree,
@@ -99,6 +105,69 @@ function CategoryChip({
 	);
 }
 
+function ChipScroller({
+	children,
+	withBack = false,
+}: {
+	children: ReactNode;
+	withBack?: boolean;
+}) {
+	return (
+		<div
+			className="
+				relative
+				min-w-0
+			"
+		>
+			<div
+				className={
+					withBack
+						? `
+							flex
+							h-12
+							flex-nowrap
+							items-center
+							min-w-0
+							overflow-x-auto
+							overscroll-x-contain
+							whitespace-nowrap
+							pr-[calc(var(--gutter)+1.5rem)]
+							text-[13px]
+							font-semibold
+							[scrollbar-width:none]
+							[&::-webkit-scrollbar]:hidden
+						`
+						: `
+							flex
+							h-12
+							flex-nowrap
+							items-center
+							min-w-0
+							gap-1
+							overflow-x-auto
+							overscroll-x-contain
+							whitespace-nowrap
+							px-[calc(var(--gutter)+1.5rem)]
+							text-[13px]
+							font-semibold
+							[scrollbar-width:none]
+							[&::-webkit-scrollbar]:hidden
+						`
+				}
+			>
+				{children}
+			</div>
+			{withBack
+				? null
+				: (
+					<DepartmentScrollFade side="left" />
+				)
+			}
+			<DepartmentScrollFade side="right" />
+		</div>
+	);
+}
+
 function PinnedBack({
 	onBack,
 }: {
@@ -187,9 +256,26 @@ export function CatalogCategoryBar({
 	onChoose: (slug: string) => void;
 }) {
 	const [stack, setStack] = useState<NestedCategory<CatalogCategoryRow>[]>([]);
+	const [held, setHeld] = useState<NestedCategory<CatalogCategoryRow> | null>(null);
 	const forest = useMemo(() => nestCategoryTree(categories), [categories]);
 	const current = stack[stack.length - 1] ?? null;
-	const rows = current ? current.children : forest;
+	const root = stack[0] ?? null;
+	const panel = current ?? held;
+	const rows = panel ? panel.children : [];
+	const drilled = current !== null;
+
+	useEffect(() => {
+		if(current) {
+			setHeld(current);
+			return;
+		}
+		if(
+			typeof window !== 'undefined'
+			&& window.matchMedia('(prefers-reduced-motion: reduce)').matches
+		) {
+			setHeld(null);
+		}
+	}, [current]);
 
 	if(forest.length === 0) {
 		return null;
@@ -197,39 +283,33 @@ export function CatalogCategoryBar({
 
 	const chooseOrDrill = (row: NestedCategory<CatalogCategoryRow>) => {
 		if(row.children.length > 0) {
+			setStack([row]);
+			return;
+		}
+		setStack([]);
+		onChoose(row.slug);
+	};
+
+	const drillChild = (row: NestedCategory<CatalogCategoryRow>) => {
+		if(row.children.length > 0) {
 			setStack((currentStack) => [...currentStack, row]);
 			return;
 		}
 		onChoose(row.slug);
 	};
 
-	const chips = (
-		<>
-			{current
-				? (
-					<CategoryChip
-						active={category === current.slug}
-						onClick={() => onChoose(current.slug)}
-					>
-						{allCategoryLabel(current.name)}
-					</CategoryChip>
-				)
-				: null
-			}
-			{rows.map((row) => (
-				<CategoryChip
-					active={
-						row.children.length === 0
-						&& category === row.slug
-					}
-					key={row.id}
-					onClick={() => chooseOrDrill(row)}
-				>
-					{row.name}
-				</CategoryChip>
-			))}
-		</>
-	);
+	const goBack = () => {
+		setStack((currentStack) => currentStack.slice(0, -1));
+	};
+
+	const onRevealTransitionEnd = (event: TransitionEvent<HTMLDivElement>) => {
+		if(event.propertyName !== 'grid-template-rows') {
+			return;
+		}
+		if(!drilled) {
+			setHeld(null);
+		}
+	};
 
 	return (
 		<nav
@@ -244,77 +324,119 @@ export function CatalogCategoryBar({
 		>
 			<div
 				className="
-					relative
 					mx-auto
 					min-w-0
 					max-w-7xl
 				"
 			>
+				<ChipScroller>
+					{forest.map((row) => (
+						<CategoryChip
+							active={
+								row.children.length === 0
+									? category === row.slug
+									: root?.id === row.id
+							}
+							key={row.id}
+							onClick={() => chooseOrDrill(row)}
+						>
+							{row.name}
+						</CategoryChip>
+					))}
+				</ChipScroller>
 				<div
+					aria-hidden={!drilled}
 					className={
-						current
+						drilled
 							? `
-								flex
-								h-12
-								flex-nowrap
-								items-center
-								min-w-0
-								overflow-x-auto
-								overscroll-x-contain
-								whitespace-nowrap
-								pr-[calc(var(--gutter)+1.5rem)]
-								text-[13px]
-								font-semibold
-								[scrollbar-width:none]
-								[&::-webkit-scrollbar]:hidden
+								grid
+								grid-rows-[1fr]
+								opacity-100
+								transition-[grid-template-rows,opacity]
+								duration-300
+								ease-out
+								motion-reduce:transition-none
 							`
 							: `
-								flex
-								h-12
-								flex-nowrap
-								items-center
-								min-w-0
-								gap-1
-								overflow-x-auto
-								overscroll-x-contain
-								whitespace-nowrap
-								px-[calc(var(--gutter)+1.5rem)]
-								text-[13px]
-								font-semibold
-								[scrollbar-width:none]
-								[&::-webkit-scrollbar]:hidden
+								grid
+								grid-rows-[0fr]
+								opacity-0
+								transition-[grid-template-rows,opacity]
+								duration-300
+								ease-out
+								motion-reduce:transition-none
 							`
 					}
+					onTransitionEnd={onRevealTransitionEnd}
+					ref={(el) => {
+						if(el) {
+							el.inert = !drilled;
+						}
+					}}
 				>
-					{current
-						? (
-							<>
-								<PinnedBack
-									onBack={() => setStack((currentStack) => currentStack.slice(0, -1))}
-								/>
-								<div
-									className="
-										flex
-										h-8
-										flex-nowrap
-										items-center
-										gap-1
-									"
-								>
-									{chips}
-								</div>
-							</>
-						)
-						: chips
-					}
+					<div className="overflow-hidden">
+						<div
+							className={
+								drilled
+									? `
+										border-t
+										border-slate-100
+										translate-y-0
+										transition-transform
+										duration-300
+										ease-out
+										motion-reduce:transition-none
+									`
+									: `
+										border-t
+										border-slate-100
+										-translate-y-1
+										transition-transform
+										duration-300
+										ease-out
+										motion-reduce:transition-none
+									`
+							}
+						>
+							{panel
+								? (
+									<ChipScroller withBack>
+										<PinnedBack onBack={goBack} />
+										<div
+											className="
+												flex
+												h-8
+												flex-nowrap
+												items-center
+												gap-1
+											"
+										>
+											<CategoryChip
+												active={category === panel.slug}
+												onClick={() => onChoose(panel.slug)}
+											>
+												{allCategoryLabel(panel.name)}
+											</CategoryChip>
+											{rows.map((row) => (
+												<CategoryChip
+													active={
+														row.children.length === 0
+														&& category === row.slug
+													}
+													key={row.id}
+													onClick={() => drillChild(row)}
+												>
+													{row.name}
+												</CategoryChip>
+											))}
+										</div>
+									</ChipScroller>
+								)
+								: null
+							}
+						</div>
+					</div>
 				</div>
-				{current
-					? null
-					: (
-						<DepartmentScrollFade side="left" />
-					)
-				}
-				<DepartmentScrollFade side="right" />
 			</div>
 		</nav>
 	);
