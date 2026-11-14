@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import type { ExperienceRole } from '../../data/experience';
 import {
@@ -22,9 +23,15 @@ export function ExperiencePrintSheet({
 }: {
 	roles: ExperienceRole[];
 }) {
+	const [mounted, setMounted] = useState(false);
 	const siteHost = SITE_URL.replace(/^https?:\/\//, '');
 
-	if(typeof document === 'undefined') {
+	useEffect(() => {
+		setMounted(true);
+	}, []);
+
+	// SSR and first client paint must match (null). Portal only after mount.
+	if(!mounted) {
 		return null;
 	}
 

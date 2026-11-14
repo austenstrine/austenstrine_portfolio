@@ -695,11 +695,11 @@ export function ExperienceSection() {
 		peekRole(id);
 	}
 
-	const shownCount = professionalExperience.filter((role) => inScope(role.kind)).length;
 	const expandedRoles = professionalExperience.filter((role) => (
 		inScope(role.kind) || peekedIds.includes(role.id)
 	));
-	const canPrintSelected = expandedRoles.length > 0;
+	const selectedForPrintCount = expandedRoles.length;
+	const canPrintSelected = selectedForPrintCount > 0;
 
 	return (
 		<section
@@ -820,7 +820,7 @@ export function ExperienceSection() {
 								"
 							>
 								{hasFilter
-									? `Showing ${shownCount} of ${ROLE_COUNT}`
+									? `${selectedForPrintCount} of ${ROLE_COUNT} selected for print`
 									: `${ROLE_COUNT} roles`}
 							</p>
 						)}
@@ -896,7 +896,7 @@ export function ExperienceSection() {
 							"
 						>
 							{hasFilter
-								? `Showing ${shownCount} of ${ROLE_COUNT}`
+								? `${selectedForPrintCount} of ${ROLE_COUNT} selected for print`
 								: `${ROLE_COUNT} roles`}
 						</p>
 						<SaveSelectedPdfButton
