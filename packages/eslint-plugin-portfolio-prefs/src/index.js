@@ -21,6 +21,11 @@ const rules = {
 	'no-sketch-parens': require('./rules/no-sketch-parens'),
 	'no-micromobile-gutter-pile': require('./rules/no-micromobile-gutter-pile'),
 	'no-directional-caret': require('./rules/no-directional-caret'),
+	'tabs-indent': require('./rules/tabs-indent'),
+	'single-quotes-ts': require('./rules/single-quotes-ts'),
+	'no-space-before-paren': require('./rules/no-space-before-paren'),
+	'else-on-own-line': require('./rules/else-on-own-line'),
+	'no-crm-in-web': require('./rules/no-crm-in-web'),
 };
 
 const recommendedRules = {
@@ -32,6 +37,11 @@ const recommendedRules = {
 	'portfolio-prefs/no-sketch-parens': 'error',
 	'portfolio-prefs/no-directional-caret': 'error',
 	'portfolio-prefs/no-ink-as-surface': 'error',
+	'portfolio-prefs/tabs-indent': 'error',
+	'portfolio-prefs/single-quotes-ts': 'error',
+	'portfolio-prefs/no-space-before-paren': 'error',
+	'portfolio-prefs/else-on-own-line': 'error',
+	'portfolio-prefs/no-crm-in-web': 'error',
 	// Opt-in via data-pem-* attributes (no-op until markup is tagged)
 	'portfolio-prefs/action-cluster-right-align': 'warn',
 	'portfolio-prefs/mobile-icon-only-actions': 'warn',
@@ -43,7 +53,6 @@ const recommendedRules = {
 
 const strictRules = {
 	...recommendedRules,
-	'portfolio-prefs/no-directional-caret': 'error',
 	'portfolio-prefs/no-micromobile-gutter-pile': 'warn',
 	'portfolio-prefs/no-dynamic-tailwind-class': 'warn',
 };

@@ -23,6 +23,11 @@ const expected = [
 	'no-sketch-parens',
 	'no-micromobile-gutter-pile',
 	'no-directional-caret',
+	'tabs-indent',
+	'single-quotes-ts',
+	'no-space-before-paren',
+	'else-on-own-line',
+	'no-crm-in-web',
 ];
 
 for(const id of expected) {

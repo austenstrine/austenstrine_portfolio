@@ -21,6 +21,11 @@ Rule ids: `portfolio-prefs/<kebab-name>`. Do not fork a second plugin.
 | `no-sketch-parens` | error | No `(change >)` sketch strings |
 | `no-directional-caret` | error | ArrowLeft/Right icons; no lone ›/←/→ text |
 | `no-ink-as-surface` | error | No `bg-ink` / gradient ink fills |
+| `tabs-indent` | error | Tabs for indent (JSDoc ` *` / strings OK) |
+| `single-quotes-ts` | error | Single quotes in TS; JSX attrs may be double |
+| `no-space-before-paren` | error | `if(` not `if (` |
+| `else-on-own-line` | error | No `} else {` |
+| `no-crm-in-web` | error | apps/web must not import apps/crm |
 | `action-cluster-right-align` | warn | `data-pem-actions` → `justify-end` / `ml-auto` |
 | `mobile-icon-only-actions` | warn | `data-pem-action` hides label on mobile |
 | `seller-chrome-no-cart` | warn | Cart gated in CatalogHeader chrome |
