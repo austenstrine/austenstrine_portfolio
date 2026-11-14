@@ -1,3 +1,6 @@
+'use client';
+
+import { createPortal } from 'react-dom';
 import type { ExperienceRole } from '../../data/experience';
 import {
 	CV_CERTIFICATES,
@@ -21,7 +24,11 @@ export function ExperiencePrintSheet({
 }) {
 	const siteHost = SITE_URL.replace(/^https?:\/\//, '');
 
-	return (
+	if(typeof document === 'undefined') {
+		return null;
+	}
+
+	const sheet = (
 		<div
 			aria-hidden="true"
 			className="experience-print-sheet"
@@ -99,61 +106,65 @@ export function ExperiencePrintSheet({
 				))}
 			</section>
 
-			<section className="experience-print-section">
-				<h2>
-					Education
-				</h2>
-				{CV_CERTIFICATES.map((certificate) => (
-					<article
-						className="experience-print-job"
-						key={certificate.title}
-					>
-						<div className="experience-print-job-header">
-							<span className="experience-print-job-title">
-								{certificate.title}
-							</span>
-							<span className="experience-print-job-dates">
-								{certificate.dates}
-							</span>
-						</div>
-						<p className="experience-print-job-org">
-							{certificate.org}
-							{' · '}
-							{certificate.location}
-						</p>
-						<ul>
-							{certificate.bullets.map((bullet) => (
-								<li key={bullet}>
-									{bullet}
-								</li>
-							))}
-						</ul>
-					</article>
-				))}
-			</section>
-
-			<section className="experience-print-section">
-				<h2>
-					Skills
-				</h2>
-				<div className="experience-print-skills">
-					{CV_SKILL_GROUPS.map((group) => (
-						<div
-							className="experience-print-skill-group"
-							key={group.label}
+			<div className="experience-print-closing">
+				<section className="experience-print-section">
+					<h2>
+						Education
+					</h2>
+					{CV_CERTIFICATES.map((certificate) => (
+						<article
+							className="experience-print-job"
+							key={certificate.title}
 						>
-							<div className="experience-print-skill-label">
-								{group.label}
+							<div className="experience-print-job-header">
+								<span className="experience-print-job-title">
+									{certificate.title}
+								</span>
+								<span className="experience-print-job-dates">
+									{certificate.dates}
+								</span>
 							</div>
-							<div className="experience-print-skill-list">
-								{group.list}
-							</div>
-						</div>
+							<p className="experience-print-job-org">
+								{certificate.org}
+								{' · '}
+								{certificate.location}
+							</p>
+							<ul>
+								{certificate.bullets.map((bullet) => (
+									<li key={bullet}>
+										{bullet}
+									</li>
+								))}
+							</ul>
+						</article>
 					))}
-				</div>
-			</section>
+				</section>
+
+				<section className="experience-print-section">
+					<h2>
+						Skills
+					</h2>
+					<div className="experience-print-skills">
+						{CV_SKILL_GROUPS.map((group) => (
+							<div
+								className="experience-print-skill-group"
+								key={group.label}
+							>
+								<div className="experience-print-skill-label">
+									{group.label}
+								</div>
+								<div className="experience-print-skill-list">
+									{group.list}
+								</div>
+							</div>
+						))}
+					</div>
+				</section>
+			</div>
 		</div>
 	);
+
+	return createPortal(sheet, document.body);
 }
 
 export function printSelectedExperience() {
