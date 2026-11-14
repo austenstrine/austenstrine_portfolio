@@ -144,7 +144,7 @@ export function HeroSection() {
 							"
 							href="#featured-build"
 						>
-							explore a demo of my skills
+							Explore a demo of my skills
 						</a>
 						<a
 							className="
