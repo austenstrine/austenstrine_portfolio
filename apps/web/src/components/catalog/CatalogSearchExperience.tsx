@@ -424,7 +424,10 @@ export function CatalogSearchExperience({
 	const HeadingTag = headingTag;
 
 	return (
-		<div className="-mx-gutter min-w-0 max-w-full overflow-x-hidden px-gutter">
+		<div
+			/* No max-w-full: it fights -mx-gutter and widens the right gap. */
+			className="-mx-gutter min-w-0 overflow-x-hidden px-gutter"
+		>
 			<div className="mx-auto min-w-0 max-w-full">
 				{!hideVendorIdentityChrome
 					? (

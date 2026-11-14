@@ -8,6 +8,8 @@ import {
 	type ReactNode,
 	type UIEvent,
 } from 'react';
+import { ArrowLeftIcon } from '../icons/ArrowLeftIcon';
+import { ArrowRightIcon } from '../icons/ArrowRightIcon';
 import { CatalogCover } from './CatalogCover';
 
 type ProductCardImageCarouselProps = {
@@ -19,6 +21,40 @@ type ProductCardImageCarouselProps = {
 	/** Disable snap links; parent owns click targets. */
 	editable?: boolean;
 };
+
+function carouselCaretClassName(side: 'left' | 'right') {
+	return `
+		pointer-events-none
+		absolute
+		top-1/2
+		z-20
+		hidden
+		h-8
+		w-8
+		-translate-y-1/2
+		items-center
+		justify-center
+		rounded-full
+		bg-white/90
+		text-sky
+		opacity-0
+		shadow-[0_2px_10px_rgba(13,27,42,0.22)]
+		transition-opacity
+		duration-150
+		md:inline-flex
+		${side === 'left' ? 'left-2' : 'right-2'}
+		group-hover/carousel:pointer-events-auto
+		group-hover/carousel:opacity-100
+		focus-visible:pointer-events-auto
+		focus-visible:opacity-100
+		focus-visible:outline
+		focus-visible:outline-2
+		focus-visible:outline-offset-2
+		focus-visible:outline-white
+		hover:bg-white
+		motion-reduce:transition-none
+	`;
+}
 
 export function ProductCardImageCarousel({
 	href,
@@ -73,6 +109,15 @@ export function ProductCardImageCarousel({
 		goTo(index);
 	};
 
+	const onCaretClick = (
+		event: MouseEvent<HTMLButtonElement>,
+		index: number,
+	) => {
+		event.preventDefault();
+		event.stopPropagation();
+		goTo(index);
+	};
+
 	if(urls.length === 0) {
 		return (
 			<div className="absolute inset-0">
@@ -82,7 +127,7 @@ export function ProductCardImageCarousel({
 	}
 
 	return (
-		<div className="absolute inset-0">
+		<div className="group/carousel absolute inset-0">
 			<div
 				className="
 					flex
@@ -164,6 +209,36 @@ export function ProductCardImageCarousel({
 			{multi
 				? (
 					<>
+						{active > 0
+							? (
+								<button
+									aria-label="Previous image"
+									className={carouselCaretClassName('left')}
+									onClick={
+										(event) => onCaretClick(event, active - 1)
+									}
+									tabIndex={-1}
+									type="button"
+								>
+									<ArrowLeftIcon className="h-4 w-4" />
+								</button>
+							)
+							: null}
+						{active < urls.length - 1
+							? (
+								<button
+									aria-label="Next image"
+									className={carouselCaretClassName('right')}
+									onClick={
+										(event) => onCaretClick(event, active + 1)
+									}
+									tabIndex={-1}
+									type="button"
+								>
+									<ArrowRightIcon className="h-4 w-4" />
+								</button>
+							)
+							: null}
 						<div
 							aria-hidden="true"
 							className="
