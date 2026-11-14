@@ -14,6 +14,7 @@ import {
 } from '../../lib/category-tree';
 import type { CatalogCategoryRow } from '../../lib/catalog-api';
 import { ArrowLeftIcon } from '../icons/ArrowLeftIcon';
+import { ArrowRightIcon } from '../icons/ArrowRightIcon';
 
 const CHIP_STAGGER_MS = 36;
 
@@ -67,6 +68,7 @@ function CategoryChip({
 	active = false,
 	ariaLabel,
 	children,
+	drills = false,
 	onClick,
 	typewriter = false,
 	typewriterDelayMs = 0,
@@ -74,6 +76,7 @@ function CategoryChip({
 	active?: boolean;
 	ariaLabel?: string;
 	children: ReactNode;
+	drills?: boolean;
 	onClick: () => void;
 	typewriter?: boolean;
 	typewriterDelayMs?: number;
@@ -97,6 +100,7 @@ function CategoryChip({
 							h-8
 							shrink-0
 							items-center
+							gap-1.5
 							whitespace-nowrap
 							rounded-full
 							bg-asgreen/15
@@ -109,6 +113,7 @@ function CategoryChip({
 							h-8
 							shrink-0
 							items-center
+							gap-1.5
 							whitespace-nowrap
 							rounded-full
 							bg-asgreen/15
@@ -123,6 +128,7 @@ function CategoryChip({
 							h-8
 							shrink-0
 							items-center
+							gap-1.5
 							whitespace-nowrap
 							rounded-full
 							px-3
@@ -136,6 +142,7 @@ function CategoryChip({
 							h-8
 							shrink-0
 							items-center
+							gap-1.5
 							whitespace-nowrap
 							rounded-full
 							px-3
@@ -150,6 +157,19 @@ function CategoryChip({
 			type="button"
 		>
 			{children}
+			{drills
+				? (
+					<ArrowRightIcon
+						className="
+							h-3.5
+							w-3.5
+							shrink-0
+							text-slate-400
+						"
+					/>
+				)
+				: null
+			}
 		</button>
 	);
 }
@@ -380,6 +400,7 @@ export function CatalogCategoryBar({
 													row.children.length === 0
 													&& category === row.slug
 												}
+												drills={row.children.length > 0}
 												key={row.id}
 												onClick={() => chooseOrDrill(row)}
 												typewriter={chipMotion}
@@ -397,6 +418,7 @@ export function CatalogCategoryBar({
 										row.children.length === 0
 										&& category === row.slug
 									}
+									drills={row.children.length > 0}
 									key={row.id}
 									onClick={() => chooseOrDrill(row)}
 									typewriter={chipMotion}
