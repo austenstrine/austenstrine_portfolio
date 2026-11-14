@@ -223,8 +223,7 @@ export function ProductCardImageCarousel({
 				? (
 					<>
 						<button
-							aria-hidden={active <= 0 ? true : undefined}
-							aria-label="Previous image"
+							aria-hidden={true}
 							className={carouselSlideClassName('left', active > 0)}
 							onClick={
 								(event) => onCaretClick(event, active - 1)
@@ -235,12 +234,7 @@ export function ProductCardImageCarousel({
 							<ChevronLeftIcon className="h-4 w-4" />
 						</button>
 						<button
-							aria-hidden={
-								active >= urls.length - 1
-									? true
-									: undefined
-							}
-							aria-label="Next image"
+							aria-hidden={true}
 							className={
 								carouselSlideClassName(
 									'right',
