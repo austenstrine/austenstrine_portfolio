@@ -23,6 +23,10 @@ const NON_SOFTWARE_COUNT = professionalExperience.filter(
 ).length;
 const ROLE_COUNT = professionalExperience.length;
 const PIN_MS = 360;
+/** Match CatalogHeader / SellerPageActionPane scroll chrome. */
+const STICKY_SCROLL_DELTA = 8;
+const STICKY_SHOW_TOP = 16;
+const STICKY_MOBILE_MQ = '(max-width: 767px)';
 
 function snapCssPixel(value: number) {
 	return Math.round(value);
@@ -489,9 +493,12 @@ export function ExperienceSection() {
 		const sentinelEl: HTMLDivElement = sentinelNode;
 		const slotEl: HTMLDivElement = slotNode;
 		const barEl: HTMLDivElement = barNode;
+		const mobileMq = window.matchMedia(STICKY_MOBILE_MQ);
 
 		let frame = 0;
 		let stuck = false;
+		let barHidden = false;
+		let lastScrollY = window.scrollY;
 		const box = {
 			left: 0,
 			width: 0,
@@ -499,12 +506,16 @@ export function ExperienceSection() {
 
 		function write(
 			el: HTMLElement,
-			key: 'height' | 'left' | 'position' | 'top' | 'width',
+			key: 'height' | 'left' | 'position' | 'top' | 'transform' | 'width',
 			value: string,
 		) {
 			if(el.style[key] !== value) {
 				el.style[key] = value;
 			}
+		}
+
+		function canAutoHide() {
+			return !filtersOpen && mobileMq.matches;
 		}
 
 		function measureBox() {
@@ -521,15 +532,22 @@ export function ExperienceSection() {
 		function release() {
 			write(slotEl, 'height', '');
 			barEl.removeAttribute('data-stuck');
+			barEl.removeAttribute('data-hidden');
 			write(barEl, 'position', '');
 			write(barEl, 'top', '');
 			write(barEl, 'left', '');
 			write(barEl, 'width', '');
+			write(barEl, 'transform', '');
+			if(barEl.style.pointerEvents) {
+				barEl.style.pointerEvents = '';
+			}
 		}
 
 		function dock() {
 			const sentinelRect = sentinelEl.getBoundingClientRect();
 			const sectionRect = sectionEl.getBoundingClientRect();
+			const y = Math.max(0, window.scrollY);
+			const delta = y - lastScrollY;
 
 			if(sentinelRect.bottom <= 0) {
 				stuck = true;
@@ -539,8 +557,30 @@ export function ExperienceSection() {
 			}
 
 			if(!stuck) {
+				barHidden = false;
+				lastScrollY = y;
 				release();
 				return;
+			}
+
+			if(canAutoHide()) {
+				// Sentinel just crossed → keep bar visible near stick start.
+				if(sentinelRect.bottom > -STICKY_SHOW_TOP) {
+					barHidden = false;
+					lastScrollY = y;
+				}
+				else if(delta > STICKY_SCROLL_DELTA) {
+					barHidden = true;
+					lastScrollY = y;
+				}
+				else if(delta < -STICKY_SCROLL_DELTA) {
+					barHidden = false;
+					lastScrollY = y;
+				}
+			}
+			else {
+				barHidden = false;
+				lastScrollY = y;
 			}
 
 			if(barEl.style.position !== 'fixed') {
@@ -549,15 +589,38 @@ export function ExperienceSection() {
 
 			// Apply sticky width first, then measure the full rendered
 			// bar (includes + count + print) so the spacer matches.
+			// offsetHeight ignores translateY; spacer uses 0 when hidden.
 			barEl.setAttribute('data-stuck', '');
+			barEl.setAttribute(
+				'data-hidden',
+				barHidden
+					? 'true'
+					: 'false',
+			);
 			write(barEl, 'position', 'fixed');
 			write(barEl, 'left', `${box.left}px`);
 			write(barEl, 'width', `${box.width}px`);
 			const height = barEl.offsetHeight;
-			write(slotEl, 'height', `${height}px`);
+			write(
+				slotEl,
+				'height',
+				`${barHidden
+					? 0
+					: height}px`,
+			);
 			write(barEl, 'top', `${
 				snapCssPixel(Math.min(0, sectionRect.bottom - height))
 			}px`);
+			write(
+				barEl,
+				'transform',
+				barHidden
+					? 'translateY(-100%)'
+					: 'translateY(0)',
+			);
+			barEl.style.pointerEvents = barHidden
+				? 'none'
+				: '';
 		}
 
 		function onFrame() {
@@ -578,10 +641,21 @@ export function ExperienceSection() {
 			requestDock();
 		}
 
+		function onFocusCapture() {
+			if(!barHidden) {
+				return;
+			}
+
+			barHidden = false;
+			requestDock();
+		}
+
 		measureBox();
 		dock();
 		window.addEventListener('scroll', requestDock, { passive: true });
 		window.addEventListener('resize', onResize);
+		mobileMq.addEventListener('change', onResize);
+		barEl.addEventListener('focusin', onFocusCapture);
 		const observer = new ResizeObserver(onResize);
 		observer.observe(sectionEl);
 		observer.observe(barEl);
@@ -593,6 +667,8 @@ export function ExperienceSection() {
 
 			window.removeEventListener('scroll', requestDock);
 			window.removeEventListener('resize', onResize);
+			mobileMq.removeEventListener('change', onResize);
+			barEl.removeEventListener('focusin', onFocusCapture);
 			observer.disconnect();
 			release();
 		};
@@ -810,6 +886,10 @@ export function ExperienceSection() {
 					px-gutter
 					py-2
 					[overflow-anchor:none]
+					transition-transform
+					duration-200
+					ease-out
+					motion-reduce:transition-none
 					after:pointer-events-none
 					after:absolute
 					after:inset-x-0
