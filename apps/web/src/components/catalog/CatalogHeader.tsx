@@ -3,7 +3,7 @@
 import { useEffect, useLayoutEffect, useRef, useState, type RefObject } from 'react';
 import { usePathname } from 'next/navigation';
 import { pathUsesSellerChrome } from '../../lib/accessGate';
-import { getCart } from '../../lib/checkout-api';
+import { CART_CHANGED_EVENT, getCart } from '../../lib/checkout-api';
 import { useSession } from '../../lib/useSession';
 import { ArrowRightIcon } from '../icons/ArrowRightIcon';
 import { CaretDownIcon } from '../icons/CaretDownIcon';
@@ -187,9 +187,14 @@ export function CatalogHeader() {
 			setCartCount(0);
 			return;
 		}
-		getCart()
-			.then((cart) => setCartCount(cart.lineCount ?? cart.lines.length))
-			.catch(() => setCartCount(0));
+		const refresh = () => {
+			getCart()
+				.then((cart) => setCartCount(cart.lineCount ?? cart.lines.length))
+				.catch(() => setCartCount(0));
+		};
+		refresh();
+		window.addEventListener(CART_CHANGED_EVENT, refresh);
+		return () => window.removeEventListener(CART_CHANGED_EVENT, refresh);
 	}, [user, sellerChrome]);
 
 	return (

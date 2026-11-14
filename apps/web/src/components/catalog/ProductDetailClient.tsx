@@ -10,11 +10,17 @@ import {
 	type CatalogProductDetail,
 	type CatalogProductSummary,
 } from '../../lib/catalog-api';
-import { upsertCartLine } from '../../lib/checkout-api';
+import {
+	getCart,
+	removeCartLine,
+	upsertCartLine,
+	type CartDto,
+} from '../../lib/checkout-api';
 import { accessReason, buildLoginUrl } from '../../lib/accessGate';
 import { useSession } from '../../lib/useSession';
 import { vendorViewHref } from '../../lib/vendor-ref';
 import { CatalogCover } from './CatalogCover';
+import { CartQtySpinner } from './CartQtySpinner';
 import {
 	fieldEditOpen,
 	inPlaceFieldKey,
@@ -197,9 +203,21 @@ export function ProductDetailClient({
 	const [activeImage, setActiveImage] = useState(0);
 	const [selectedOfferingId, setSelectedOfferingId] = useState(() => firstBuyableId(initialProduct));
 	const [cartQty, setCartQty] = useState('1');
+	const [lineInCart, setLineInCart] = useState(false);
 	const [cartBusy, setCartBusy] = useState(false);
 	const [cartMessage, setCartMessage] = useState<string | null>(null);
 	const [cartError, setCartError] = useState<string | null>(null);
+
+	function applyCartLine(offeringId: string, cart: CartDto | null) {
+		const line = cart?.lines.find((row) => row.offeringId === offeringId);
+		if(line) {
+			setLineInCart(true);
+			setCartQty(line.quantity);
+			return;
+		}
+		setLineInCart(false);
+		setCartQty('1');
+	}
 
 	// SSR catalog fetch may omit canEdit when access_token was not forwarded;
 	// re-fetch once the browser session is known so seller chrome can appear.
@@ -229,6 +247,30 @@ export function ProductDetailClient({
 		sessionLoading,
 		user,
 	]);
+
+	// Hydrate buy-box spinner when this offering is already in the cart.
+	useEffect(() => {
+		if(sessionLoading || !user || !selectedOfferingId) {
+			setLineInCart(false);
+			return;
+		}
+		let cancelled = false;
+		getCart()
+			.then((cart) => {
+				if(cancelled) {
+					return;
+				}
+				applyCartLine(selectedOfferingId, cart);
+			})
+			.catch(() => {
+				if(!cancelled) {
+					setLineInCart(false);
+				}
+			});
+		return () => {
+			cancelled = true;
+		};
+	}, [sessionLoading, user, selectedOfferingId]);
 
 	const {
 		editTier,
@@ -315,7 +357,6 @@ export function ProductDetailClient({
 
 	function selectOffering(id: string) {
 		setSelectedOfferingId(id);
-		setCartQty('1');
 		setCartMessage(null);
 		setCartError(null);
 	}
@@ -338,7 +379,9 @@ export function ProductDetailClient({
 		setCartError(null);
 		setCartMessage(null);
 		try {
-			await upsertCartLine(selectedOfferingId, cartQty || '1');
+			const qty = cartQty || '1';
+			const cart = await upsertCartLine(selectedOfferingId, qty);
+			applyCartLine(selectedOfferingId, cart);
 			setCartMessage('Added to cart');
 		}
 		catch(error) {
@@ -347,6 +390,61 @@ export function ProductDetailClient({
 		finally {
 			setCartBusy(false);
 		}
+	}
+
+	async function setCartLineQty(nextRaw: string) {
+		if(!selectedOfferingId) {
+			return;
+		}
+		if(!user) {
+			router.push(
+				buildLoginUrl({
+					next: window.location.pathname,
+					reason: accessReason('cart', false),
+				}),
+			);
+			return;
+		}
+
+		const next = Number(nextRaw);
+		setCartBusy(true);
+		setCartError(null);
+		setCartMessage(null);
+		try {
+			if(!Number.isFinite(next) || next <= 0) {
+				await removeCartLine(selectedOfferingId);
+				setLineInCart(false);
+				setCartQty('1');
+				setCartMessage(null);
+				return;
+			}
+			const available = Number(selectedOffering?.availableQty);
+			const clamped = Number.isFinite(available)
+				? Math.min(next, available)
+				: next;
+			const cart = await upsertCartLine(selectedOfferingId, String(clamped));
+			applyCartLine(selectedOfferingId, cart);
+		}
+		catch(error) {
+			setCartError(
+				error instanceof Error ? error.message : 'Could not update cart.',
+			);
+		}
+		finally {
+			setCartBusy(false);
+		}
+	}
+
+	function onIncrementCartQty() {
+		const current = Number(cartQty);
+		const base = Number.isFinite(current) ? current : 0;
+		void setCartLineQty(String(base + 1));
+	}
+
+	function onDecrementCartQty() {
+		const current = Number(cartQty);
+		const base = Number.isFinite(current) ? current : 0;
+		void setCartLineQty(String(base - 1));
 	}
 
 	async function onDelete() {
@@ -647,95 +745,97 @@ export function ProductDetailClient({
 					)
 					: null}
 
-				<CompoundQtyField
-					label="Quantity"
-					uomCode={selectedOffering.uom.code}
-					value={cartQty}
-					onChange={setCartQty}
-					disabled={!stock.inStock}
-				/>
-
-				{cartMessage
+				{!lineInCart
 					? (
-						<p
-							className="
-								rounded-lg
-								bg-asgreen/15
-								px-3
-								py-2
-								text-sm
-								font-medium
-								text-asgreen
-							"
-							aria-live="polite"
-						>
-							{cartMessage}.{' '}
-							<Link
-								href="/place-et-marque/cart"
+						<CompoundQtyField
+							label="Quantity"
+							uomCode={selectedOffering.uom.code}
+							value={cartQty}
+							onChange={setCartQty}
+							disabled={!stock.inStock}
+						/>
+					)
+					: null}
+
+				{/* Reserved slot so status never shifts Add / spinner. */}
+				<div
+					className="min-h-[2.75rem]"
+					aria-live="polite"
+				>
+					{cartError
+						? (
+							<p className="text-sm text-red-700">
+								{cartError}
+							</p>
+						)
+						: null}
+					{!cartError && cartMessage
+						? (
+							<p
 								className="
-									text-sky
-									underline
-									underline-offset-2
+									rounded-lg
+									bg-asgreen/15
+									px-3
+									py-2
+									text-sm
+									font-medium
+									text-asgreen
 								"
 							>
-								View cart
-							</Link>
-						</p>
-					)
-					: null}
-				{cartError
-					? (
-						<p className="text-sm text-red-700" aria-live="polite">
-							{cartError}
-						</p>
-					)
-					: null}
+								{cartMessage}
+							</p>
+						)
+						: null}
+				</div>
 
-				<div className="flex flex-col gap-2">
-					<button
-						type="button"
-						disabled={cartBusy || !stock.inStock}
-						onClick={() => void onAddToCart()}
-						className="
-							w-full
-							rounded-full
-							bg-asgreen
-							px-5
-							py-3
-							text-sm
-							font-semibold
-							text-white
-							hover:bg-asgreen/90
-							disabled:opacity-40
-						"
-					>
-						{cartBusy
-							? 'Adding…'
-							: stock.inStock
-								? 'Add to cart'
-								: 'Unavailable'}
-					</button>
-					<Link
-						href="/place-et-marque/cart"
-						className="
-							inline-flex
-							items-center
-							justify-center
-							gap-1.5
-							text-sm
-							font-semibold
-							text-sky
-						"
-					>
-						View cart
-						<ArrowRightIcon
-							className="
-								h-3.5
-								w-3.5
-								shrink-0
-							"
-						/>
-					</Link>
+				<div
+					data-pem-actions
+					className="
+						flex
+						flex-col
+						justify-end
+						gap-2
+					"
+				>
+					{lineInCart
+						? (
+							<CartQtySpinner
+								quantity={cartQty}
+								busy={cartBusy}
+								incrementDisabled={
+									Number.isFinite(Number(selectedOffering.availableQty))
+									&& Number(cartQty) >= Number(selectedOffering.availableQty)
+								}
+								onDecrement={() => void onDecrementCartQty()}
+								onIncrement={() => void onIncrementCartQty()}
+							/>
+						)
+						: (
+							<button
+								type="button"
+								disabled={cartBusy || !stock.inStock}
+								onClick={() => void onAddToCart()}
+								className="
+									w-full
+									rounded-full
+									bg-asgreen
+									px-5
+									py-3
+									text-sm
+									font-semibold
+									text-white
+									hover:bg-asgreen/90
+									disabled:opacity-40
+								"
+							>
+								{cartBusy
+									? 'Adding…'
+									: stock.inStock
+										? 'Add to cart'
+										: 'Unavailable'}
+							</button>
+						)
+					}
 				</div>
 
 				<div className="border-t border-slate-100 pt-4 text-[12px] leading-5 text-slate-500">
@@ -1493,7 +1593,15 @@ export function ProductDetailClient({
 						stockTone={stock.tone}
 						cartBusy={cartBusy}
 						inStock={stock.inStock}
+						lineInCart={lineInCart}
+						cartQty={cartQty}
+						incrementDisabled={
+							Number.isFinite(Number(selectedOffering.availableQty))
+							&& Number(cartQty) >= Number(selectedOffering.availableQty)
+						}
 						onAddToCart={() => void onAddToCart()}
+						onDecrementQty={() => void onDecrementCartQty()}
+						onIncrementQty={() => void onIncrementCartQty()}
 					/>
 				)
 				: null}
