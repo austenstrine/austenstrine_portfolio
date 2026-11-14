@@ -63,6 +63,7 @@ dssh_migrate_target=backend
 #   dssh_rlog_history_max=<bytes before history-TIMESTAMP.log rotation>
 #   dssh_rlog_history_keep=<uncompressed rotated files to keep; older are xz -9e>
 #   dssh_rlog_archive_max=<max bytes for history.log + rotated/compressed archives>
+#   `dssh logs rlog` → less +F on history.log (scrollable live follow; Ctrl-C scroll, F resume)
 #   dssh_gpus=auto|off            (auto: --gpus all when NVIDIA Docker works)
 #
 # Remote file edit (`dssh rnano <alias>`): ssh -t host nano path.
