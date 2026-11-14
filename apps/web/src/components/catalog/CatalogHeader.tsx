@@ -65,7 +65,6 @@ export function CatalogHeader() {
 	const {
 		applyCategory,
 		categories,
-		categoriesReady,
 		category,
 		extrasHost,
 		headerDesktopRef,
@@ -92,18 +91,11 @@ export function CatalogHeader() {
 		&& editableVendorIds.size > 0;
 	// Buyer chrome (incl. /place-et-marque/<vendor>) keeps the department bar.
 	// Search hides it — filters live on the page instead.
-	const wantDepartmentBar =
-		!sellerChrome
-		&& pathname !== '/place-et-marque/search';
+	// Categories are SSR-seeded (PEM-370): show/hide is decided before paint.
 	const showDepartmentBar =
-		wantDepartmentBar
+		!sellerChrome
+		&& pathname !== '/place-et-marque/search'
 		&& categories.length > 0;
-	// Hold the bar's height while categories load so the late insert does not
-	// shove main content. Collapse only after a settled empty fetch.
-	const reserveDepartmentBar =
-		wantDepartmentBar
-		&& !showDepartmentBar
-		&& !categoriesReady;
 	const headerRef = useRef<HTMLElement>(null);
 
 	useLayoutEffect(() => {
@@ -449,21 +441,7 @@ export function CatalogHeader() {
 								onChoose={applyCategory}
 							/>
 						)
-						: reserveDepartmentBar
-							? (
-								<div
-									aria-hidden
-									className="
-										hidden
-										h-12
-										border-t
-										border-slate-100
-										bg-white
-										md:block
-									"
-								/>
-							)
-							: null
+						: null
 				}
 			</header>
 		</>
