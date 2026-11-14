@@ -102,9 +102,13 @@ export function HeroSection() {
 						className="
 							mt-8
 							flex
-							flex-wrap
-							justify-end
+							flex-col
+							items-stretch
 							gap-3
+							sm:flex-row
+							sm:flex-wrap
+							sm:justify-end
+							sm:items-center
 						"
 					>
 						<a
@@ -114,6 +118,7 @@ export function HeroSection() {
 								bg-white
 								px-6
 								py-3
+								text-center
 								text-sm
 								font-semibold
 								text-ink
@@ -134,6 +139,7 @@ export function HeroSection() {
 								border-white/60
 								px-6
 								py-3
+								text-center
 								text-sm
 								font-semibold
 								text-white
@@ -154,6 +160,7 @@ export function HeroSection() {
 								border-white/60
 								px-6
 								py-3
+								text-center
 								text-sm
 								font-semibold
 								text-white
@@ -164,7 +171,7 @@ export function HeroSection() {
 							"
 							href="#contact"
 						>
-							Email
+							Contact
 						</a>
 					</div>
 				</div>
