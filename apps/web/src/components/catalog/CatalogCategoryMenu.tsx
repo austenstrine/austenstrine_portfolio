@@ -136,6 +136,7 @@ export function CatalogCategoryMenu({
 									</CatalogMenuRow>
 									<CatalogMenuRow
 										active={category === current.slug}
+										navigates
 										onClick={() => choose(current.slug)}
 									>
 										<span className="truncate">
@@ -147,6 +148,7 @@ export function CatalogCategoryMenu({
 							: (
 								<CatalogMenuRow
 									active={!category}
+									navigates
 									onClick={() => choose('')}
 								>
 									<span className="truncate">
@@ -162,6 +164,7 @@ export function CatalogCategoryMenu({
 									&& category === row.slug
 								}
 								key={row.id}
+								navigates={row.children.length === 0}
 								onClick={() => {
 									if(row.children.length > 0) {
 										setStack((currentStack) => [...currentStack, row]);

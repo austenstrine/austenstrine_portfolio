@@ -24,6 +24,7 @@ import {
 	CatalogMenuSurface,
 	useCatalogFloatingMenu,
 } from './CatalogMenu';
+import { NavigateHoverArrow } from './NavigateHoverArrow';
 
 /** Shopping-side account links (purchases keep buyer chrome). */
 const buyerLinks = [
@@ -492,10 +493,10 @@ export function AccountMenu({
 											: notifications.map((item) => (
 												<a
 													className="
+														group
 														flex
 														w-full
 														items-center
-														gap-3
 														rounded-full
 														bg-asgreen/10
 														px-3.5
@@ -511,9 +512,10 @@ export function AccountMenu({
 													onClick={closeMenu}
 													role="menuitem"
 												>
-													<span className="block min-w-0 truncate">
+													<span className="block min-w-0 flex-1 truncate">
 														{item.title}
 													</span>
+													<NavigateHoverArrow className="text-sky/70" />
 												</a>
 											))
 									}

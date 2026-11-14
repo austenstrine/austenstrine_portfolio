@@ -15,6 +15,7 @@ import {
 import type { CatalogCategoryRow } from '../../lib/catalog-api';
 import { ChevronLeftIcon } from '../icons/ChevronLeftIcon';
 import { ChevronRightIcon } from '../icons/ChevronRightIcon';
+import { NavigateHoverArrow } from './NavigateHoverArrow';
 
 const CHIP_STAGGER_MS = 36;
 
@@ -64,11 +65,53 @@ function DepartmentScrollFade({
 	);
 }
 
+function chipClassName({
+	active,
+	typewriter,
+}: {
+	active: boolean;
+	typewriter: boolean;
+}) {
+	const motion = typewriter ? 'catalog-subcat-chip' : '';
+	if(active) {
+		return `
+			${motion}
+			group
+			inline-flex
+			h-8
+			shrink-0
+			items-center
+			whitespace-nowrap
+			rounded-full
+			bg-asgreen/15
+			px-3
+			leading-none
+			text-asgreen
+		`.trim();
+	}
+	return `
+		${motion}
+		group
+		inline-flex
+		h-8
+		shrink-0
+		items-center
+		whitespace-nowrap
+		rounded-full
+		px-3
+		leading-none
+		text-slate-600
+		hover:bg-frost
+		hover:text-ink
+	`.trim();
+}
+
 function CategoryChip({
 	active = false,
 	ariaLabel,
 	children,
 	drills = false,
+	navigates = false,
 	onClick,
 	typewriter = false,
 	typewriterDelayMs = 0,
@@ -77,6 +120,8 @@ function CategoryChip({
 	ariaLabel?: string;
 	children: ReactNode;
 	drills?: boolean;
+	/** Leaf / All-X choose: hover-in shafted arrow (not drill Back). */
+	navigates?: boolean;
 	onClick: () => void;
 	typewriter?: boolean;
 	typewriterDelayMs?: number;
@@ -91,67 +136,10 @@ function CategoryChip({
 		<button
 			aria-current={active ? true : undefined}
 			aria-label={ariaLabel}
-			className={
-				active
-					? typewriter
-						? `
-							catalog-subcat-chip
-							inline-flex
-							h-8
-							shrink-0
-							items-center
-							gap-1.5
-							whitespace-nowrap
-							rounded-full
-							bg-asgreen/15
-							px-3
-							leading-none
-							text-asgreen
-						`
-						: `
-							inline-flex
-							h-8
-							shrink-0
-							items-center
-							gap-1.5
-							whitespace-nowrap
-							rounded-full
-							bg-asgreen/15
-							px-3
-							leading-none
-							text-asgreen
-						`
-					: typewriter
-						? `
-							catalog-subcat-chip
-							inline-flex
-							h-8
-							shrink-0
-							items-center
-							gap-1.5
-							whitespace-nowrap
-							rounded-full
-							px-3
-							leading-none
-							text-slate-600
-							hover:bg-frost
-							hover:text-ink
-						`
-						: `
-							inline-flex
-							h-8
-							shrink-0
-							items-center
-							gap-1.5
-							whitespace-nowrap
-							rounded-full
-							px-3
-							leading-none
-							text-slate-600
-							hover:bg-frost
-							hover:text-ink
-						`
-			}
+			className={chipClassName({
+				active,
+				typewriter,
+			})}
 			onClick={onClick}
 			style={style}
 			type="button"
@@ -161,6 +149,7 @@ function CategoryChip({
 				? (
 					<ChevronRightIcon
 						className="
+							ml-1.5
 							h-3.5
 							w-3.5
 							shrink-0
@@ -168,7 +157,17 @@ function CategoryChip({
 						"
 					/>
 				)
-				: null
+				: navigates
+					? (
+						<NavigateHoverArrow
+							className={
+								active
+									? 'text-asgreen'
+									: 'text-slate-400'
+							}
+						/>
+					)
+					: null
 			}
 		</button>
 	);
@@ -388,6 +387,7 @@ export function CatalogCategoryBar({
 									>
 										<CategoryChip
 											active={category === current.slug}
+											navigates
 											onClick={() => onChoose(current.slug)}
 											typewriter={chipMotion}
 											typewriterDelayMs={0}
@@ -402,6 +402,7 @@ export function CatalogCategoryBar({
 												}
 												drills={row.children.length > 0}
 												key={row.id}
+												navigates={row.children.length === 0}
 												onClick={() => chooseOrDrill(row)}
 												typewriter={chipMotion}
 												typewriterDelayMs={(index + 1) * CHIP_STAGGER_MS}
@@ -420,6 +421,7 @@ export function CatalogCategoryBar({
 									}
 									drills={row.children.length > 0}
 									key={row.id}
+									navigates={row.children.length === 0}
 									onClick={() => chooseOrDrill(row)}
 									typewriter={chipMotion}
 									typewriterDelayMs={index * CHIP_STAGGER_MS}

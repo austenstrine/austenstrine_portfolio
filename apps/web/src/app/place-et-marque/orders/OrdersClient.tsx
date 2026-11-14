@@ -23,7 +23,7 @@ import {
 	filterOrders,
 	type OrderStatusFilter,
 } from '../../../components/orders/order-display';
-import { ArrowRightIcon } from '../../../components/icons/ArrowRightIcon';
+import { NavigateHoverArrow } from '../../../components/catalog/NavigateHoverArrow';
 
 const BUYER_STATUS_FILTERS: Array<{
 	id: OrderStatusFilter;
@@ -190,6 +190,7 @@ function OrdersContent() {
 										<li key={order.id}>
 											<Link
 												className="
+													group
 													flex
 													flex-wrap
 													items-start
@@ -221,19 +222,15 @@ function OrdersContent() {
 													className="
 														flex
 														items-start
-														gap-2
 													"
 												>
 													<OrderMoneySummary
 														order={order}
 														perspective="buyer"
 													/>
-													<ArrowRightIcon
+													<NavigateHoverArrow
 														className="
 															mt-1
-															h-3.5
-															w-3.5
-															shrink-0
 															text-slate-400
 														"
 													/>

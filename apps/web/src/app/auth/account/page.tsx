@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { Suspense } from 'react';
 import { AuthCard } from '../../../components/auth/AuthCard';
 import { RequireAccess } from '../../../components/auth/RequireAccess';
-import { ArrowRightIcon } from '../../../components/icons/ArrowRightIcon';
+import { NavigateHoverArrow } from '../../../components/catalog/NavigateHoverArrow';
 import { useSession } from '../../../lib/useSession';
 
 const hubLinks = [
@@ -47,10 +47,9 @@ function AccountHub() {
 					<Link
 						key={link.href}
 						className="
+							group
 							flex
 							items-center
-							justify-between
-							gap-3
 							rounded-lg
 							px-2
 							py-2.5
@@ -62,15 +61,10 @@ function AccountHub() {
 						"
 						href={link.href}
 					>
-						{link.label}
-						<ArrowRightIcon
-							className="
-								h-3.5
-								w-3.5
-								shrink-0
-								text-slate-400
-							"
-						/>
+						<span className="min-w-0 flex-1">
+							{link.label}
+						</span>
+						<NavigateHoverArrow className="text-slate-400" />
 					</Link>
 				))}
 			</nav>

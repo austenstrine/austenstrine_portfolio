@@ -14,7 +14,7 @@ import {
 	widgetPrefsUserKey,
 } from '../../lib/widget-prefs';
 import { useSession } from '../../lib/useSession';
-import { ArrowRightIcon } from '../icons/ArrowRightIcon';
+import { NavigateHoverArrow } from './NavigateHoverArrow';
 import { CaretDownIcon } from '../icons/CaretDownIcon';
 import { CloseIcon } from '../icons/CloseIcon';
 import { MoreVerticalIcon } from '../icons/MoreVerticalIcon';
@@ -234,11 +234,10 @@ export function CollapsibleWidget({
 									</CatalogMenuRow>
 									<Link
 										className="
+											group
 											flex
 											w-full
 											items-center
-											justify-between
-											gap-3
 											rounded-full
 											px-3.5
 											py-2
@@ -251,17 +250,10 @@ export function CollapsibleWidget({
 										onClick={() => setMenuOpen(false)}
 										role="menuitem"
 									>
-										<span className="truncate">
+										<span className="min-w-0 flex-1 truncate">
 											Manage all preferences
 										</span>
-										<ArrowRightIcon
-											className="
-												h-3.5
-												w-3.5
-												shrink-0
-												text-slate-400
-											"
-										/>
+										<NavigateHoverArrow className="text-slate-400" />
 									</Link>
 								</CatalogMenuSurface>
 							)
