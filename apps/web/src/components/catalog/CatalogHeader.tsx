@@ -60,7 +60,12 @@ function HeaderSearch({
 const HEADER_SCROLL_DELTA = 8;
 const HEADER_SHOW_TOP = 16;
 
-export function CatalogHeader() {
+export function CatalogHeader({
+	initialCartCount = 0,
+}: {
+	/** SSR cart line count so the badge does not pop in after paint (PEM-373). */
+	initialCartCount?: number;
+} = {}) {
 	const pathname = usePathname();
 	const {
 		applyCategory,
@@ -80,7 +85,7 @@ export function CatalogHeader() {
 		ready: editableVendorsReady,
 		setEditTier,
 	} = useEditableVendors();
-	const [cartCount, setCartCount] = useState(0);
+	const [cartCount, setCartCount] = useState(initialCartCount);
 	const [headerHeight, setHeaderHeight] = useState(0);
 	const [bannerOffset, setBannerOffset] = useState(0);
 	const [headerHidden, setHeaderHidden] = useState(false);
