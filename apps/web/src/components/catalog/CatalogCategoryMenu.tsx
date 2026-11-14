@@ -7,8 +7,8 @@ import {
 	type NestedCategory,
 } from '../../lib/category-tree';
 import type { CatalogCategoryRow } from '../../lib/catalog-api';
-import { ArrowLeftIcon } from '../icons/ArrowLeftIcon';
 import { CaretDownIcon } from '../icons/CaretDownIcon';
+import { ChevronLeftIcon } from '../icons/ChevronLeftIcon';
 import { ChevronRightIcon } from '../icons/ChevronRightIcon';
 import {
 	CatalogMenuRow,
@@ -128,7 +128,7 @@ export function CatalogCategoryMenu({
 												gap-2
 											"
 										>
-											<ArrowLeftIcon className="h-3.5 w-3.5 shrink-0" />
+											<ChevronLeftIcon className="h-3.5 w-3.5 shrink-0" />
 											<span className="truncate">
 												Back
 											</span>

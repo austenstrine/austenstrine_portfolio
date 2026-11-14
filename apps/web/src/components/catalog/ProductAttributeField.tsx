@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import type { CatalogAttributeDefinition } from '../../lib/catalog-api';
-import { ArrowLeftIcon } from '../icons/ArrowLeftIcon';
+import { ChevronLeftIcon } from '../icons/ChevronLeftIcon';
 import { ChevronRightIcon } from '../icons/ChevronRightIcon';
 
 type ProductAttributeFieldProps = {
@@ -280,7 +280,7 @@ export function ProductAttributeField({
 									setQuery('');
 								}}
 							>
-								<ArrowLeftIcon
+								<ChevronLeftIcon
 									className="h-3.5 w-3.5"
 								/>
 								All attributes
