@@ -477,7 +477,15 @@ export function CvDocument() {
 					</div>
 					<ul>
 						<li>
-							Paid mentor and cast member in a dual-performance production (mentors-only and mentees-only cast).
+							Paid mentor and cast member in a dual-performance production (mentors-only and mentees-only cast). Event:
+							{' '}
+							<a
+								href="https://events.humanitix.com/white-christmas-at-impac-student-cast"
+								target="_blank"
+								rel="noopener noreferrer"
+							>
+								Humanitix
+							</a>
 						</li>
 						<li>
 							Roles: Mike; Ed Sullivan Announcer; Train Conductor; Varius Ensemble.
