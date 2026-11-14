@@ -22,9 +22,9 @@ import { BackLink } from '../../../../../components/BackLink';
 import { PageBottomPanePortal } from '../../../../../components/catalog/CatalogSearchContext';
 import { OrderConfirmActions } from '../../../../../components/orders/OrderConfirmActions';
 import { OrderMoneySummary } from '../../../../../components/orders/OrderMoneySummary';
+import { OrdersListFilters } from '../../../../../components/orders/OrdersListFilters';
 import { OrderSupportCode } from '../../../../../components/orders/OrderSupportCode';
 import {
-	ORDER_STATUS_FILTERS,
 	ORDERS_LIST_SHELL_CLASSNAME,
 	countOrdersNeedingShip,
 	displayOrderStatus,
@@ -36,18 +36,6 @@ import {
 import { RefundIcon } from '../../../../../components/icons/RefundIcon';
 import { TruckIcon } from '../../../../../components/icons/TruckIcon';
 import { useSession } from '../../../../../lib/useSession';
-
-const frostControlClassName = `
-	rounded-full
-	border
-	border-slate-300
-	bg-white
-	px-2.5
-	py-1.5
-	text-sm
-	font-semibold
-	text-ink
-`;
 
 function VendorOrdersPageContent() {
 	const params = useParams<{ vendorId: string }>();
@@ -168,65 +156,13 @@ function VendorOrdersPageContent() {
 			"
 		>
 			<PageBottomPanePortal>
-				<label
-					className="
-						inline-flex
-						min-w-[9rem]
-						max-w-[14rem]
-						flex-1
-						flex-col
-						gap-0.5
-						text-[11px]
-						font-medium
-						text-slate-500
-					"
-				>
-					<span>
-						Filter
-					</span>
-					<input
-						aria-label="Filter orders"
-						className={frostControlClassName}
-						onChange={(event) => setFilterText(event.target.value)}
-						placeholder="Buyer, product, place"
-						type="search"
-						value={filterText}
-					/>
-				</label>
-				<label
-					className="
-						inline-flex
-						flex-col
-						gap-0.5
-						text-[11px]
-						font-medium
-						text-slate-500
-					"
-				>
-					<span>
-						Status
-					</span>
-					<select
-						aria-label="Order status filter"
-						className={frostControlClassName}
-						onChange={(event) => {
-							const next = event.target.value as OrderStatusFilter;
-							if(ORDER_STATUS_FILTERS.some((row) => row.id === next)) {
-								setStatusFilter(next);
-							}
-						}}
-						value={statusFilter}
-					>
-						{ORDER_STATUS_FILTERS.map((row) => (
-							<option
-								key={row.id}
-								value={row.id}
-							>
-								{row.label}
-							</option>
-						))}
-					</select>
-				</label>
+				<OrdersListFilters
+					filterPlaceholder="Buyer, product, place"
+					filterText={filterText}
+					onFilterTextChange={setFilterText}
+					onStatusFilterChange={setStatusFilter}
+					statusFilter={statusFilter}
+				/>
 			</PageBottomPanePortal>
 
 			<BackLink href={`/place-et-marque/vendors/${vendorSlug}`}>
@@ -390,6 +326,7 @@ function VendorOrdersPageContent() {
 																		justify-end
 																		gap-2
 																	"
+																	data-pem-actions
 																>
 																	{canShip
 																		? (

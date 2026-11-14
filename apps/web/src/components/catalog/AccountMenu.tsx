@@ -19,9 +19,10 @@ import {
 	useCatalogFloatingMenu,
 } from './CatalogMenu';
 
+/** Shopping-side account links (purchases keep buyer chrome). */
 const buyerLinks = [
 	{ href: '/auth/account', label: 'Account' },
-	{ href: '/place-et-marque/orders', label: 'Orders' },
+	{ href: '/place-et-marque/orders', label: 'Your orders' },
 ];
 
 const sellerToolLinks = [
@@ -190,11 +191,13 @@ export function AccountMenu({
 		setOpen(false);
 	}
 
+	// Seller chrome still links purchases as "Your orders" so dual-role
+	// teammates leave Selling for shopping chrome without a second label.
 	const primaryLinks = sellerChrome
 		? [
 			{ href: '/auth/account', label: 'Account' },
 			...sellerToolLinks,
-			{ href: '/place-et-marque/orders', label: 'Orders' },
+			{ href: '/place-et-marque/orders', label: 'Your orders' },
 		]
 		: [
 			...buyerLinks,

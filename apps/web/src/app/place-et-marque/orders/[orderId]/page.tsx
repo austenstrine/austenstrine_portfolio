@@ -241,6 +241,7 @@ export default function OrderDetailPage() {
 								<div
 									className="
 										mt-6
+										ml-auto
 										flex
 										flex-col
 										items-end
@@ -249,6 +250,7 @@ export default function OrderDetailPage() {
 										border-slate-100
 										pt-4
 									"
+									data-pem-actions
 								>
 									{confirmCancel
 										? (
