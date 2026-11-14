@@ -1,0 +1,195 @@
+#!/usr/bin/env bash
+# dssh land — opposite of dssh launch: tear down the Place et Marque local stack.
+#
+# Wired from consumer .dsshrc as dssh_land_local (generic dssh global-action hook).
+# Stops rlog, dssh.image app containers, compose infra, and port-broadcast hop
+# listeners so a later `dssh launch` can relaunch tabs.
+#
+# Usage:
+#   dssh land
+#   dssh land --dry-run
+#   dssh land --containers-only
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+CONFIG="${DSSH_LAND_CONFIG:-$ROOT/scripts/port-broadcast-stack.conf}"
+DSSH_BIN="${DSSH_BIN:-$ROOT/dssh}"
+
+BIND=127.0.0.1
+BASE_PORT=4591
+TABS=6
+
+DRY_RUN=0
+CONTAINERS_ONLY=0
+
+usage() {
+	cat <<'EOF'
+Usage: dssh land [--dry-run] [--containers-only] [-h|--help]
+
+  Tear down the Place et Marque local stack brought up by `dssh launch`:
+  rlog off, stop dssh app containers + compose infra (same as `dssh stop`),
+  and clear port-broadcast hop listeners (4591–4596 by default) so the next
+  `dssh launch` can open fresh Terminal tabs.
+
+  Does not close the Ptyxis/Terminal window itself — close leftover tabs by
+  hand if they stay open after hops die.
+
+Options:
+  --dry-run           Print planned steps; change nothing
+  --containers-only   Skip hop listener teardown (rlog + containers/infra only)
+  -h, --help          Show this help
+EOF
+}
+
+die() {
+	echo "dssh-land: $*" >&2
+	exit 1
+}
+
+port_listening() {
+	local port="$1"
+	ss -ltn "( sport = :$port )" 2>/dev/null | grep -q ":${port} "
+}
+
+load_stack_conf() {
+	[[ -f "$CONFIG" ]] || die "missing stack config: $CONFIG"
+	local line key val
+	while IFS= read -r line || [[ -n "$line" ]]; do
+		line="${line%%#*}"
+		line="${line#"${line%%[![:space:]]*}"}"
+		line="${line%"${line##*[![:space:]]}"}"
+		[[ -z "$line" ]] && continue
+		key="${line%%=*}"
+		val="${line#*=}"
+		case "$key" in
+			tabs) TABS="$val" ;;
+			base-port|base_port) BASE_PORT="$val" ;;
+			bind) BIND="$val" ;;
+		esac
+	done < "$CONFIG"
+}
+
+# PIDs listening on BIND:PORT (ss -ltnp). Best-effort; empty if unavailable.
+listener_pids_for_port() {
+	local port="$1"
+	local line pid
+	line="$(ss -ltnp "( sport = :$port )" 2>/dev/null | grep ":${port} " || true)"
+	[[ -z "$line" ]] && return 0
+	# users:(("nc",pid=123,fd=3))
+	while [[ "$line" =~ pid=([0-9]+) ]]; do
+		pid="${BASH_REMATCH[1]}"
+		printf '%s\n' "$pid"
+		line="${line#*pid=${pid}}"
+	done
+}
+
+# Kill hop nc listeners (and prefer the port-broadcast-shell process group).
+stop_hop_listeners() {
+	local i port pid pgid killed=0
+	local -A seen=()
+	for ((i = 0; i < TABS; i++)); do
+		port=$((BASE_PORT + i))
+		if ! port_listening "$port"; then
+			continue
+		fi
+		while IFS= read -r pid; do
+			[[ -z "$pid" || -n "${seen[$pid]:-}" ]] && continue
+			seen[$pid]=1
+			# Climb to port-broadcast-shell when present so the tab hop exits cleanly.
+			local target="$pid" cmd
+			cmd="$(ps -o cmd= -p "$pid" 2>/dev/null || true)"
+			if [[ "$cmd" == *' nc '* || "$cmd" == nc\ * ]]; then
+				local ppid
+				ppid="$(ps -o ppid= -p "$pid" 2>/dev/null | tr -d ' ' || true)"
+				while [[ -n "$ppid" && "$ppid" != "1" && "$ppid" != "0" ]]; do
+					cmd="$(ps -o cmd= -p "$ppid" 2>/dev/null || true)"
+					if [[ "$cmd" == *port-broadcast-shell* ]]; then
+						target="$ppid"
+						break
+					fi
+					ppid="$(ps -o ppid= -p "$ppid" 2>/dev/null | tr -d ' ' || true)"
+				done
+			fi
+			if [[ "$DRY_RUN" == "1" ]]; then
+				echo "dssh-land: dry-run would stop hop :$port (pid $target)" >&2
+				killed=1
+				continue
+			fi
+			pgid="$(ps -o pgid= -p "$target" 2>/dev/null | tr -d ' ' || true)"
+			if [[ -n "$pgid" && "$pgid" != "0" && "$pgid" != "1" ]]; then
+				kill -TERM -- "-$pgid" 2>/dev/null || kill -TERM "$target" 2>/dev/null || true
+			else
+				kill -TERM "$target" 2>/dev/null || true
+			fi
+			# Fallback: ensure the listen port is gone.
+			if port_listening "$port"; then
+				while IFS= read -r pid; do
+					[[ -z "$pid" ]] && continue
+					kill -TERM "$pid" 2>/dev/null || true
+				done < <(listener_pids_for_port "$port")
+			fi
+			echo "dssh-land: stopped hop :$port" >&2
+			killed=1
+		done < <(listener_pids_for_port "$port")
+	done
+	if [[ "$killed" != "1" ]]; then
+		echo "dssh-land: no hop listeners on ${BIND}:${BASE_PORT}–$((BASE_PORT + TABS - 1))" >&2
+	fi
+}
+
+while [[ $# -gt 0 ]]; do
+	case "$1" in
+		-h|--help)
+			usage
+			exit 0
+			;;
+		--dry-run)
+			DRY_RUN=1
+			shift
+			;;
+		--containers-only)
+			CONTAINERS_ONLY=1
+			shift
+			;;
+		*)
+			die "unknown option: $1 (see --help)"
+			;;
+	esac
+done
+
+[[ -x "$DSSH_BIN" || -f "$DSSH_BIN" ]] || die "missing dssh entry: $DSSH_BIN"
+load_stack_conf
+
+echo "dssh-land: tearing down local stack (opposite of dssh launch)" >&2
+
+if [[ "$DRY_RUN" == "1" ]]; then
+	echo "dssh-land: dry-run would: dssh rlog off" >&2
+	echo "dssh-land: dry-run would: dssh stop  # app containers + compose infra" >&2
+	if [[ "$CONTAINERS_ONLY" != "1" ]]; then
+		echo "dssh-land: dry-run would: clear hops ${BIND}:${BASE_PORT}–$((BASE_PORT + TABS - 1))" >&2
+		stop_hop_listeners
+	fi
+	echo "dssh-land: dry-run complete (nothing changed for rlog/containers)" >&2
+	exit 0
+fi
+
+# 1) rlog off (launch starts it via `dssh rlog up`)
+if "$DSSH_BIN" rlog status >/dev/null 2>&1; then
+	"$DSSH_BIN" rlog off || true
+else
+	# status may print "off"; still try off for idempotency
+	"$DSSH_BIN" rlog off >/dev/null 2>&1 || true
+fi
+echo "dssh-land: rlog off" >&2
+
+# 2) app containers + compose infra (same path as `dssh stop` on local)
+"$DSSH_BIN" stop
+echo "dssh-land: containers + infra stopped" >&2
+
+# 3) hop listeners so the next `dssh launch` does not skip relaunch
+if [[ "$CONTAINERS_ONLY" != "1" ]]; then
+	stop_hop_listeners
+fi
+
+echo "dssh-land: done. Bring back with: dssh launch" >&2
+echo "dssh-land: close leftover Terminal tabs by hand if they remain open." >&2

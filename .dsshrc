@@ -53,6 +53,8 @@ dssh_migrate_target=backend
 #   dssh_launch_local=<host command>
 #     Local stack bring-up: 6 Terminal tabs via port-broadcast (rlog/proxy/cdn/
 #     backend/frontend/crm). Prefer `dssh launch` over calling the launcher by hand.
+#   dssh_land_local=<host command>
+#     Opposite of launch: stop rlog + app containers + compose infra + hop listeners.
 #
 # Resource logger (`dssh rlog`):
 #   dssh_rlog_containers=<comma-separated target aliases>
@@ -77,6 +79,7 @@ dssh_publish_local="./ops/deploy/live.sh"
 # See docs/port-broadcast.md. Map → Project internal/port-broadcast-stack-map.md
 # (and ops/diagnostics/port-broadcast-stack-map.md, gitignored).
 dssh_launch_local="./scripts/dssh-launch"
+dssh_land_local="./scripts/dssh-land"
 dssh_env_backup_relpath=ops/tooling/env-backup.sh
 dssh_rlog_containers=backend,frontend,crm,proxy,cdn
 dssh_rlog_dir=./ops/diagnostics
