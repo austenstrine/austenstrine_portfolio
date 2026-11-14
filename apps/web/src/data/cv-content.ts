@@ -57,8 +57,9 @@ export const CV_CERTIFICATES: CvCertificate[] = [
 		],
 	},
 	{
-		title: 'High School',
+		title: 'High School Diploma',
 		org: 'Chico Sr. High School',
+		dates: '2005–2009',
 		location: 'Chico, CA',
 		bullets: [],
 	},
