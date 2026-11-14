@@ -5,7 +5,9 @@ alwaysApply: true
 
 # Code style
 
-Keep in sync with `docs/code-style-preferences.md`. Preferences, not build errors. Prefer format-on-save over a failing build.
+Keep in sync with `docs/code-style-preferences.md`.
+
+Preferences, not build errors. Prefer format-on-save over a failing build.
 
 ## JSX / TSX
 

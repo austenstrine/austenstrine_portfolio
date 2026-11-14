@@ -38,8 +38,10 @@ Rule ids: `portfolio-prefs/<kebab-name>`. Do not fork a second plugin.
 - `data-pem-action` — individual action control
 - `data-pem-allow-micromobile-px` — escape hatch for allowed micromobile `px-*`
 
-## Smoke
+## RuleTester (fail-closed)
+
+Wired into `npm run lint:eslint-prefs` / `ops/tooling/prefs-lint/run-eslint-prefs.mjs`.
 
 ```bash
-node packages/eslint-plugin-portfolio-prefs/tests/run-rule-smoke.js
+node packages/eslint-plugin-portfolio-prefs/tests/run-rule-tester.js
 ```

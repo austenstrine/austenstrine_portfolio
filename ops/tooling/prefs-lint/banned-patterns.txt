@@ -1,13 +1,25 @@
-# Machine rows for principles/banned.md — one regex per line (# comments ignored).
-# Scanned against README / PR template / chat-ish markdown paths only.
+# Machine rows for Place et Marque principles/banned.md — one regex per line (# comments ignored).
+# Keep in sync with that store doc (F-C-004). Scanned against README / PR template / chat-ish markdown.
+# ban-1 Quietly
 \b[Qq]uietly\b
+# ban-2 It's not X, it's Y
 \b[Ii]t'?s not\b.+\b[Ii]t'?s\b
+# ban-3 Fake deadline
 \bbefore Monday\b
 \bthis weekend\b
+# ban-4 Crowd talk
 \bMost people\b
+# ban-5 like a pro / fake price comps
 \blike a pro\b
 \$[0-9]+(/| per )hour
+# ban-6 Fake-deep closer
 \bThat'?s the whole game\b
+# ban-7 Triads up top ("Write. Edit. Ship.")
+\b[A-Z][a-z]{1,12}\.\s+[A-Z][a-z]{1,12}\.\s+[A-Z][a-z]{1,12}\.
+# ban-8 Adjective piles
 \bpowerful,\s*seamless\b
 \bgame-changing\b
+# ban-9 Sirens / ALL CAPS / ↓ arrows
 \bBREAKING\b
+↓
+🚨

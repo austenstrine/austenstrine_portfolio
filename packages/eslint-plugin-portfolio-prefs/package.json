@@ -11,7 +11,7 @@
 		"eslint": ">=9"
 	},
 	"scripts": {
-		"test": "node tests/run-rule-smoke.js",
-		"smoke": "node tests/run-rule-smoke.js"
+		"test": "node tests/run-rule-tester.js",
+		"smoke": "node tests/run-rule-tester.js"
 	}
 }
