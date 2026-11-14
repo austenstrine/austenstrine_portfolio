@@ -23,7 +23,7 @@ Keep in sync with `docs/git-commit-preferences.md`. Portfolio repo only — sibl
 ## Commits / landing
 
 - Clear, focused commits; match recent `git log` on `development`.
-- Local-first: prefer Austen’s machine checkout; after pushing `development`, sync his local checked-out `development`.
+- Local-first: prefer Austen’s machine checkout; after pushing `development`, sync his local checked-out `development`. Full rule: `.cursor/rules/local-first.mdc`.
 - Do not open unnecessary feature PRs when prefs say merge to `development` directly.
 
 ## PR text (when needed)

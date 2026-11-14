@@ -21,6 +21,7 @@ Commands (default: orient):
   docker    Compose services + dssh/.dsshrc pointers (alias: dssh).
   seed      Prisma schema/seed/seed-sync paths + commands.
   helpers   Sibling tool-repo consumption status (detected from this tree).
+  lint      Fail-closed prefs + ESLint prefs + workspace typecheck (same as npm run lint).
 
 Flags:
   --json    Machine-readable object (where implemented).
@@ -54,7 +55,7 @@ else
 fi
 case "$CMD" in
   orient|default|"") CMD=orient ;;
-  layout|scripts|env|seed|helpers) ;;
+  layout|scripts|env|seed|helpers|lint) ;;
   docker|dssh) CMD=docker ;;
   *) die "unknown command: $CMD (try --help)" ;;
 esac
@@ -519,6 +520,14 @@ next
 EOF
 }
 
+cmd_lint() {
+  if [[ "$JSON" -eq 1 ]]; then
+    die "lint --json is not supported (run without --json; exit code is the signal)"
+  fi
+  # Same fail-closed path agents and CI must hit (root package.json "lint").
+  npm run lint
+}
+
 case "$CMD" in
   orient)  cmd_orient ;;
   layout)  cmd_layout ;;
@@ -527,4 +536,5 @@ case "$CMD" in
   docker)  cmd_docker ;;
   seed)    cmd_seed ;;
   helpers) cmd_helpers ;;
+  lint)    cmd_lint ;;
 esac

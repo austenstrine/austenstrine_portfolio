@@ -1,0 +1,17 @@
+{
+	"name": "eslint-plugin-portfolio-prefs",
+	"version": "0.1.0",
+	"private": true,
+	"description": "Portfolio preference ESLint rules (Angle B). Single plugin \u2014 do not fork.",
+	"main": "src/index.js",
+	"exports": {
+		".": "./src/index.js"
+	},
+	"peerDependencies": {
+		"eslint": ">=9"
+	},
+	"scripts": {
+		"test": "node tests/run-rule-smoke.js",
+		"smoke": "node tests/run-rule-smoke.js"
+	}
+}

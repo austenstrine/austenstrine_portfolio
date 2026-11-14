@@ -1,0 +1,13 @@
+# Machine rows for principles/banned.md — one regex per line (# comments ignored).
+# Scanned against README / PR template / chat-ish markdown paths only.
+\b[Qq]uietly\b
+\b[Ii]t'?s not\b.+\b[Ii]t'?s\b
+\bbefore Monday\b
+\bthis weekend\b
+\bMost people\b
+\blike a pro\b
+\$[0-9]+(/| per )hour
+\bThat'?s the whole game\b
+\bpowerful,\s*seamless\b
+\bgame-changing\b
+\bBREAKING\b

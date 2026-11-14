@@ -455,7 +455,9 @@ function VendorDetailContent() {
 						</a>
 					</li>
 					<li aria-hidden="true">
-						›
+						<ArrowRightIcon
+							className="h-3.5 w-3.5"
+						/>
 					</li>
 					<li
 						className="
