@@ -40,7 +40,8 @@ export const CV_SKILL_GROUPS: CvSkillGroup[] = [
 export type CvCertificate = {
 	title: string;
 	org: string;
-	dates: string;
+	/** Omit when unknown (do not invent a year). */
+	dates?: string;
 	location: string;
 	bullets: string[];
 };
@@ -54,5 +55,11 @@ export const CV_CERTIFICATES: CvCertificate[] = [
 		bullets: [
 			'Certified proficiency in C++, Python, Java, and Swift.',
 		],
+	},
+	{
+		title: 'High School',
+		org: 'Chico Sr. High School',
+		location: 'Chico, CA',
+		bullets: [],
 	},
 ];

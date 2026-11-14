@@ -87,9 +87,13 @@ export function ExperiencePrintSheet({
 							<span className="experience-print-job-title">
 								{role.title}
 							</span>
-							<span className="experience-print-job-dates">
-								{role.dates}
-							</span>
+							{role.dates
+								? (
+									<span className="experience-print-job-dates">
+										{role.dates}
+									</span>
+								)
+								: null}
 						</div>
 						<p className="experience-print-job-org">
 							{role.organization}

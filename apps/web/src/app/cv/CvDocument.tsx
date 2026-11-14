@@ -419,9 +419,13 @@ export function CvDocument() {
 							<span className="cv-job-title">
 								{certificate.title}
 							</span>
-							<span className="cv-job-dates">
-								{certificate.dates}
-							</span>
+							{certificate.dates
+								? (
+									<span className="cv-job-dates">
+										{certificate.dates}
+									</span>
+								)
+								: null}
 						</div>
 						<div className="cv-job-company">
 							{certificate.org}
@@ -429,13 +433,17 @@ export function CvDocument() {
 						<div className="cv-job-meta">
 							{certificate.location}
 						</div>
-						<ul>
-							{certificate.bullets.map((bullet) => (
-								<li key={bullet}>
-									{bullet}
-								</li>
-							))}
-						</ul>
+						{certificate.bullets.length > 0
+							? (
+								<ul>
+									{certificate.bullets.map((bullet) => (
+										<li key={bullet}>
+											{bullet}
+										</li>
+									))}
+								</ul>
+							)
+							: null}
 					</div>
 				))}
 			</section>

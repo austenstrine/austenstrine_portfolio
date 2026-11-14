@@ -1,11 +1,19 @@
 export type ExperienceKind = 'software' | 'non-software';
 
+/** Timeline facet separate from software/non-software; AND’d with kind filters. */
+export type ExperienceCategory =
+	| 'professional'
+	| 'education'
+	| 'extracurricular';
+
 export type ExperienceRole = {
 	id: string;
 	kind: ExperienceKind;
+	category: ExperienceCategory;
 	title: string;
 	organization: string;
-	dates: string;
+	/** Omit when unknown (do not invent a year). */
+	dates?: string;
 	location?: string;
 	bullets: string[];
 };
@@ -14,6 +22,7 @@ export const professionalExperience: ExperienceRole[] = [
 	{
 		id: 'timberline',
 		kind: 'non-software',
+		category: 'professional',
 		title: 'Door Builder',
 		organization: 'Timberline Cabinets (via Express Employment Professionals)',
 		dates: 'Jul 2026 – Sep 2026 · 3 mos',
@@ -26,6 +35,7 @@ export const professionalExperience: ExperienceRole[] = [
 	{
 		id: 'burger-king',
 		kind: 'non-software',
+		category: 'professional',
 		title: 'Team Member',
 		organization: 'Burger King (New Era Management, LLC)',
 		dates: 'Aug 2025 – May 2026 · 10 mos',
@@ -38,6 +48,7 @@ export const professionalExperience: ExperienceRole[] = [
 	{
 		id: 'lumber',
 		kind: 'software',
+		category: 'professional',
 		title: 'Full-stack Developer',
 		organization: 'Lumber Marketplace',
 		dates: 'Jan 2024 – Jun 2025 · 1 yr 6 mos',
@@ -54,6 +65,7 @@ export const professionalExperience: ExperienceRole[] = [
 	{
 		id: 'impac-white-christmas',
 		kind: 'non-software',
+		category: 'extracurricular',
 		title: 'Mentor / Cast Member',
 		organization: 'White Christmas · IMPAC',
 		dates: 'December 2023',
@@ -67,6 +79,7 @@ export const professionalExperience: ExperienceRole[] = [
 	{
 		id: 'gogreen',
 		kind: 'software',
+		category: 'professional',
 		title: 'Senior Application Developer',
 		organization: 'GO Green Enterprises',
 		dates: 'Nov 2018 – Nov 2023 · 5 yrs 1 mo',
@@ -83,6 +96,7 @@ export const professionalExperience: ExperienceRole[] = [
 	{
 		id: 'care-and-share',
 		kind: 'non-software',
+		category: 'extracurricular',
 		title: 'Warehouse Volunteer',
 		organization: 'Iron County Care and Share',
 		dates: '2018',
@@ -94,6 +108,7 @@ export const professionalExperience: ExperienceRole[] = [
 	{
 		id: 'anderson',
 		kind: 'non-software',
+		category: 'professional',
 		title: 'Territory Sales Lead',
 		organization: 'Anderson Merchandisers',
 		dates: 'Jul–Nov 2018',
@@ -104,6 +119,7 @@ export const professionalExperience: ExperienceRole[] = [
 	{
 		id: 'edu-swatc',
 		kind: 'software',
+		category: 'education',
 		title: 'Technical Certificate, Computer Science',
 		organization:
 			'Southwest Applied Technology College (now Southwest Technical College)',
@@ -116,6 +132,7 @@ export const professionalExperience: ExperienceRole[] = [
 	{
 		id: 'vivint',
 		kind: 'non-software',
+		category: 'professional',
 		title: 'Smart Secure Specialist',
 		organization: 'Vivint Smart Home',
 		dates: 'Oct–Dec 2017',
@@ -126,6 +143,7 @@ export const professionalExperience: ExperienceRole[] = [
 	{
 		id: 'usher-usf',
 		kind: 'non-software',
+		category: 'extracurricular',
 		title: 'Usher',
 		organization: 'Utah Shakespeare Festival',
 		dates: '2016–2017',
@@ -136,6 +154,7 @@ export const professionalExperience: ExperienceRole[] = [
 	{
 		id: 'infowest',
 		kind: 'software',
+		category: 'professional',
 		title: 'Tech Support',
 		organization: 'Infowest Inc.',
 		dates: 'Mar 2016 – Oct 2017 · 1 yr 7 mos',
@@ -148,6 +167,7 @@ export const professionalExperience: ExperienceRole[] = [
 	{
 		id: 'wedding-singer',
 		kind: 'non-software',
+		category: 'extracurricular',
 		title: 'Glen Guglia',
 		organization: 'The Wedding Singer · Cedar Valley Community Theatre',
 		dates: 'Late 2015 – early 2016',
@@ -158,6 +178,7 @@ export const professionalExperience: ExperienceRole[] = [
 	{
 		id: 'edu-suu',
 		kind: 'non-software',
+		category: 'education',
 		title: 'Musical Theater — pursued',
 		organization: 'Southern Utah University (SUU)',
 		dates: '2015–2016',
@@ -169,6 +190,7 @@ export const professionalExperience: ExperienceRole[] = [
 	{
 		id: 'shakespeare',
 		kind: 'non-software',
+		category: 'professional',
 		title: 'House Manager',
 		organization: 'Utah Shakespeare Festival',
 		dates: 'Jun–Nov 2015',
@@ -180,6 +202,7 @@ export const professionalExperience: ExperienceRole[] = [
 	{
 		id: 'centros',
 		kind: 'non-software',
+		category: 'professional',
 		title: 'Dishwasher',
 		organization: "Centro's Woodfired Pizza",
 		dates: 'May–August 2015',
@@ -194,6 +217,7 @@ export const professionalExperience: ExperienceRole[] = [
 	{
 		id: 'convergys',
 		kind: 'non-software',
+		category: 'professional',
 		title: 'Customer Service Representative',
 		organization: 'Convergys',
 		dates: '2014',
@@ -205,6 +229,7 @@ export const professionalExperience: ExperienceRole[] = [
 	{
 		id: 'local-verifications',
 		kind: 'non-software',
+		category: 'professional',
 		title: 'Sales Associate',
 		organization: 'Local Verifications',
 		dates: '2014',
@@ -215,6 +240,7 @@ export const professionalExperience: ExperienceRole[] = [
 	{
 		id: 'gateway',
 		kind: 'non-software',
+		category: 'professional',
 		title: 'Sales Representative',
 		organization: 'Gateway Management Group',
 		dates: 'Oct 2013–Jun 2014',
@@ -225,6 +251,7 @@ export const professionalExperience: ExperienceRole[] = [
 	{
 		id: 'les-mis',
 		kind: 'non-software',
+		category: 'extracurricular',
 		title: 'Marius (lead)',
 		organization: 'Les Misérables · California Regional Theatre',
 		dates: 'Oct 2013',
@@ -235,6 +262,7 @@ export const professionalExperience: ExperienceRole[] = [
 	{
 		id: 'anything-goes',
 		kind: 'non-software',
+		category: 'extracurricular',
 		title: 'Billy Crocker (lead)',
 		organization: 'Anything Goes · Chico Theater Company',
 		dates: 'Jul–Aug 2013',
@@ -245,6 +273,7 @@ export const professionalExperience: ExperienceRole[] = [
 	{
 		id: 'ccc-theater-worship',
 		kind: 'non-software',
+		category: 'extracurricular',
 		title: 'Theater & Worship leadership',
 		organization: 'Campus City Connection',
 		dates: '2012–2013',
@@ -255,6 +284,7 @@ export const professionalExperience: ExperienceRole[] = [
 	{
 		id: 'ccc-community-service',
 		kind: 'non-software',
+		category: 'extracurricular',
 		title: 'Community service',
 		organization: 'Campus City Connection',
 		dates: '2011–2013',
@@ -265,6 +295,7 @@ export const professionalExperience: ExperienceRole[] = [
 	{
 		id: 'edu-simpson',
 		kind: 'non-software',
+		category: 'education',
 		title: 'B.S. in Music (Composition) — pursued',
 		organization: 'Simpson University',
 		dates: '2010–2013',
@@ -277,6 +308,7 @@ export const professionalExperience: ExperienceRole[] = [
 	{
 		id: 'old-navy',
 		kind: 'non-software',
+		category: 'professional',
 		title: 'Salesman / Cashier',
 		organization: 'Gap Inc. / Old Navy',
 		dates: 'Oct 2012–Jan 2013',
@@ -288,6 +320,7 @@ export const professionalExperience: ExperienceRole[] = [
 	{
 		id: 'chartwells',
 		kind: 'non-software',
+		category: 'professional',
 		title: 'Dishwasher / Floor man',
 		organization: 'Chartwells',
 		dates: '2012',
@@ -298,6 +331,7 @@ export const professionalExperience: ExperienceRole[] = [
 	{
 		id: 'choir-tours',
 		kind: 'non-software',
+		category: 'extracurricular',
 		title: 'Choir tours',
 		organization: 'High school and college',
 		dates: '2007–2012',
@@ -308,6 +342,7 @@ export const professionalExperience: ExperienceRole[] = [
 	{
 		id: 'drama-club-simpson',
 		kind: 'non-software',
+		category: 'extracurricular',
 		title: 'Drama Club President',
 		organization: 'Simpson University',
 		dates: '2010–2011',
@@ -318,6 +353,7 @@ export const professionalExperience: ExperienceRole[] = [
 	{
 		id: 'taming-of-the-shrew',
 		kind: 'non-software',
+		category: 'extracurricular',
 		title: 'Petruchio',
 		organization: 'The Taming of the Shrew · Simpson University Drama Club',
 		dates: '2011',
@@ -328,6 +364,7 @@ export const professionalExperience: ExperienceRole[] = [
 	{
 		id: 'john-his-story',
 		kind: 'non-software',
+		category: 'extracurricular',
 		title: 'John and Jesus',
 		organization: 'John, His Story · Simpson University Drama Club',
 		dates: '2011',
@@ -336,8 +373,18 @@ export const professionalExperience: ExperienceRole[] = [
 		],
 	},
 	{
+		id: 'edu-chico-hs',
+		kind: 'non-software',
+		category: 'education',
+		title: 'High School',
+		organization: 'Chico Sr. High School',
+		location: 'Chico, CA',
+		bullets: [],
+	},
+	{
 		id: 'high-school-choir',
 		kind: 'non-software',
+		category: 'extracurricular',
 		title: 'High school choir',
 		organization: 'High school',
 		dates: 'High school',

@@ -4,6 +4,7 @@ import { useLayoutEffect, useRef, useState } from 'react';
 import { PrinterIcon } from '../icons/PrinterIcon';
 import {
 	professionalExperience,
+	type ExperienceCategory,
 	type ExperienceKind,
 	type ExperienceRole,
 } from '../../data/experience';
@@ -18,6 +19,15 @@ const SOFTWARE_COUNT = professionalExperience.filter(
 const NON_SOFTWARE_COUNT = professionalExperience.filter(
 	(role) => role.kind === 'non-software',
 ).length;
+const PROFESSIONAL_COUNT = professionalExperience.filter(
+	(role) => role.category === 'professional',
+).length;
+const EDUCATION_COUNT = professionalExperience.filter(
+	(role) => role.category === 'education',
+).length;
+const EXTRACURRICULAR_COUNT = professionalExperience.filter(
+	(role) => role.category === 'extracurricular',
+).length;
 const ROLE_COUNT = professionalExperience.length;
 const PIN_MS = 360;
 
@@ -25,12 +35,27 @@ function snapCssPixel(value: number) {
 	return Math.round(value);
 }
 
-function splitRoleDates(dates: string) {
+function splitRoleDates(dates: string | undefined) {
+	if(!dates) {
+		return {
+			range: '',
+			duration: null as string | null,
+		};
+	}
+
 	const [range, duration] = dates.split(' · ');
 	return {
 		range,
 		duration: duration ?? null,
 	};
+}
+
+/** Empty selection in a group = all values in that group. */
+function matchesFacetGroup<T extends string>(
+	selected: T[],
+	value: T,
+) {
+	return selected.length === 0 || selected.includes(value);
 }
 
 function DateConnector({
@@ -290,24 +315,28 @@ function ExperienceRoleCard({
 					</p>
 				)
 				: null}
-			<ul
-				className="
-					mt-4
-					list-disc
-					space-y-2
-					pl-5
-					text-sm
-					leading-relaxed
-					text-slate-700
-					max-[399px]:pl-4
-				"
-			>
-				{role.bullets.map((bullet) => (
-					<li key={bullet}>
-						{bullet}
-					</li>
-				))}
-			</ul>
+			{role.bullets.length > 0
+				? (
+					<ul
+						className="
+							mt-4
+							list-disc
+							space-y-2
+							pl-5
+							text-sm
+							leading-relaxed
+							text-slate-700
+							max-[399px]:pl-4
+						"
+					>
+						{role.bullets.map((bullet) => (
+							<li key={bullet}>
+								{bullet}
+							</li>
+						))}
+					</ul>
+				)
+				: null}
 		</article>
 	);
 }
@@ -446,6 +475,9 @@ export function ExperienceSection() {
 	const [selectedKinds, setSelectedKinds] = useState<ExperienceKind[]>([
 		'software',
 	]);
+	const [selectedCategories, setSelectedCategories] = useState<
+		ExperienceCategory[]
+	>([]);
 	const [peekedIds, setPeekedIds] = useState<string[]>([]);
 	const [filtersOpen, setFiltersOpen] = useState(true);
 	const sectionRef = useRef<HTMLElement>(null);
@@ -656,12 +688,16 @@ export function ExperienceSection() {
 			observer.disconnect();
 			window.clearTimeout(timer);
 		};
-	}, [selectedKinds, peekedIds]);
+	}, [selectedKinds, selectedCategories, peekedIds]);
 
-	const hasFilter = selectedKinds.length > 0;
+	const hasFilter =
+		selectedKinds.length > 0 || selectedCategories.length > 0;
 
-	function inScope(kind: ExperienceKind) {
-		return selectedKinds.includes(kind);
+	function inScope(role: ExperienceRole) {
+		return (
+			matchesFacetGroup(selectedKinds, role.kind)
+			&& matchesFacetGroup(selectedCategories, role.category)
+		);
 	}
 
 	function toggleKind(kind: ExperienceKind) {
@@ -670,6 +706,15 @@ export function ExperienceSection() {
 			current.includes(kind)
 				? current.filter((row) => row !== kind)
 				: [...current, kind]
+		));
+	}
+
+	function toggleCategory(category: ExperienceCategory) {
+		pinFromSticky();
+		setSelectedCategories((current) => (
+			current.includes(category)
+				? current.filter((row) => row !== category)
+				: [...current, category]
 		));
 	}
 
@@ -695,10 +740,68 @@ export function ExperienceSection() {
 	}
 
 	const expandedRoles = professionalExperience.filter((role) => (
-		inScope(role.kind) || peekedIds.includes(role.id)
+		inScope(role) || peekedIds.includes(role.id)
 	));
 	const selectedForPrintCount = expandedRoles.length;
 	const canPrintSelected = selectedForPrintCount > 0;
+
+	const kindFacetRow = (
+		<div
+			className="
+				flex
+				min-w-0
+				flex-wrap
+				items-center
+				gap-x-4
+				gap-y-1
+			"
+		>
+			<FacetCheck
+				checked={selectedKinds.includes('software')}
+				count={SOFTWARE_COUNT}
+				label="Software"
+				onChange={() => toggleKind('software')}
+			/>
+			<FacetCheck
+				checked={selectedKinds.includes('non-software')}
+				count={NON_SOFTWARE_COUNT}
+				label="Non-software"
+				onChange={() => toggleKind('non-software')}
+			/>
+		</div>
+	);
+
+	const categoryFacetRow = (
+		<div
+			className="
+				flex
+				min-w-0
+				flex-wrap
+				items-center
+				gap-x-4
+				gap-y-1
+			"
+		>
+			<FacetCheck
+				checked={selectedCategories.includes('professional')}
+				count={PROFESSIONAL_COUNT}
+				label="Professional Experience"
+				onChange={() => toggleCategory('professional')}
+			/>
+			<FacetCheck
+				checked={selectedCategories.includes('education')}
+				count={EDUCATION_COUNT}
+				label="Education"
+				onChange={() => toggleCategory('education')}
+			/>
+			<FacetCheck
+				checked={selectedCategories.includes('extracurricular')}
+				count={EXTRACURRICULAR_COUNT}
+				label="Extra-Curricular"
+				onChange={() => toggleCategory('extracurricular')}
+			/>
+		</div>
+	);
 
 	return (
 		<section
@@ -777,43 +880,112 @@ export function ExperienceSection() {
 				<div
 					className="
 						flex
-						h-11
-						flex-nowrap
-						items-center
-						justify-between
-						gap-3
+						flex-col
+						gap-2
+						py-1
 						md:hidden
 					"
 				>
+					<div
+						className="
+							flex
+							min-h-11
+							flex-nowrap
+							items-center
+							justify-between
+							gap-3
+						"
+					>
+						{filtersOpen
+							? (
+								<div className="min-w-0 flex-1">
+									{kindFacetRow}
+								</div>
+							)
+							: (
+								<p
+									aria-live="polite"
+									className="
+										truncate
+										text-sm
+										text-slate-600
+									"
+								>
+									{hasFilter
+										? `${selectedForPrintCount} of ${ROLE_COUNT} selected for print`
+										: `${ROLE_COUNT} roles`}
+								</p>
+							)}
+						<div
+							className="
+								flex
+								shrink-0
+								items-center
+								gap-2
+							"
+						>
+							<SaveSelectedPdfButton
+								disabled={!canPrintSelected}
+								onClick={printSelectedExperience}
+							/>
+							<button
+								className="
+									shrink-0
+									text-sm
+									font-semibold
+									text-ink
+								"
+								onClick={() => setFiltersOpen((open) => !open)}
+								type="button"
+							>
+								{filtersOpen
+									? 'Hide filters'
+									: 'View filters'}
+							</button>
+						</div>
+					</div>
 					{filtersOpen
 						? (
 							<div
 								className="
-									flex
-									min-w-0
-									items-center
-									gap-x-4
+									border-t
+									border-slate-100
+									pt-2
 								"
 							>
-								<FacetCheck
-									checked={selectedKinds.includes('software')}
-									count={SOFTWARE_COUNT}
-									label="Software"
-									onChange={() => toggleKind('software')}
-								/>
-								<FacetCheck
-									checked={selectedKinds.includes('non-software')}
-									count={NON_SOFTWARE_COUNT}
-									label="Non-software"
-									onChange={() => toggleKind('non-software')}
-								/>
+								{categoryFacetRow}
 							</div>
 						)
-						: (
+						: null}
+				</div>
+				<div
+					className="
+						hidden
+						flex-col
+						gap-2
+						py-1
+						md:flex
+					"
+				>
+					<div
+						className="
+							flex
+							items-center
+							justify-between
+							gap-x-4
+						"
+					>
+						{kindFacetRow}
+						<div
+							className="
+								flex
+								items-center
+								gap-3
+							"
+						>
 							<p
 								aria-live="polite"
 								className="
-									truncate
 									text-sm
 									text-slate-600
 								"
@@ -822,86 +994,20 @@ export function ExperienceSection() {
 									? `${selectedForPrintCount} of ${ROLE_COUNT} selected for print`
 									: `${ROLE_COUNT} roles`}
 							</p>
-						)}
-					<div
-						className="
-							flex
-							shrink-0
-							items-center
-							gap-2
-						"
-					>
-						<SaveSelectedPdfButton
-							disabled={!canPrintSelected}
-							onClick={printSelectedExperience}
-						/>
-						<button
-							className="
-								shrink-0
-								text-sm
-								font-semibold
-								text-ink
-							"
-							onClick={() => setFiltersOpen((open) => !open)}
-							type="button"
-						>
-							{filtersOpen
-								? 'Hide filters'
-								: 'View filters'}
-						</button>
-					</div>
-				</div>
-				<div
-					className="
-						hidden
-						items-center
-						justify-between
-						gap-x-4
-						md:flex
-					"
-				>
-					<div
-						className="
-							flex
-							items-center
-							gap-x-5
-						"
-					>
-						<FacetCheck
-							checked={selectedKinds.includes('software')}
-							count={SOFTWARE_COUNT}
-							label="Software"
-							onChange={() => toggleKind('software')}
-						/>
-						<FacetCheck
-							checked={selectedKinds.includes('non-software')}
-							count={NON_SOFTWARE_COUNT}
-							label="Non-software"
-							onChange={() => toggleKind('non-software')}
-						/>
+							<SaveSelectedPdfButton
+								disabled={!canPrintSelected}
+								onClick={printSelectedExperience}
+							/>
+						</div>
 					</div>
 					<div
 						className="
-							flex
-							items-center
-							gap-3
+							border-t
+							border-slate-100
+							pt-2
 						"
 					>
-						<p
-							aria-live="polite"
-							className="
-								text-sm
-								text-slate-600
-							"
-						>
-							{hasFilter
-								? `${selectedForPrintCount} of ${ROLE_COUNT} selected for print`
-								: `${ROLE_COUNT} roles`}
-						</p>
-						<SaveSelectedPdfButton
-							disabled={!canPrintSelected}
-							onClick={printSelectedExperience}
-						/>
+						{categoryFacetRow}
 					</div>
 				</div>
 			</div>
@@ -927,9 +1033,10 @@ export function ExperienceSection() {
 					"
 				/>
 				{professionalExperience.map((role) => {
-					const scoped = inScope(role.kind);
+					const scoped = inScope(role);
 					const peeked = peekedIds.includes(role.id);
 					const expanded = scoped || peeked;
+					const dateRange = splitRoleDates(role.dates).range;
 					const markClass = `
 						flex
 						h-4
@@ -1081,7 +1188,7 @@ export function ExperienceSection() {
 										<PeekToggle
 											expanded={expanded}
 											onClick={() => togglePeek(role.id)}
-											range={splitRoleDates(role.dates).range}
+											range={dateRange || role.organization}
 											title={role.title}
 										/>
 									)
@@ -1095,10 +1202,10 @@ export function ExperienceSection() {
 									}
 								>
 									<div className="timeline-fold-inner">
-										{scoped
+										{scoped && dateRange
 											? (
 												<DateConnector
-													range={splitRoleDates(role.dates).range}
+													range={dateRange}
 												/>
 											)
 											: (
