@@ -12,7 +12,6 @@ import {
 import { ArrowRightIcon } from '../icons/ArrowRightIcon';
 import { CaretDownIcon } from '../icons/CaretDownIcon';
 import { EyeIcon } from '../icons/EyeIcon';
-import { PencilIcon } from '../icons/PencilIcon';
 import { TrashIcon } from '../icons/TrashIcon';
 import {
 	CatalogMenuRow,
@@ -179,9 +178,6 @@ export function ManageProductRowActions({
 						})}
 						tabIndex={deleteBusy ? -1 : undefined}
 					>
-						<PencilIcon
-							className="h-3.5 w-3.5 shrink-0"
-						/>
 						<span>
 							Edit
 						</span>
@@ -296,7 +292,7 @@ export function ManageProductRowActions({
 					})}
 					tabIndex={deleteBusy ? -1 : undefined}
 				>
-					<PencilIcon
+					<ArrowRightIcon
 						className="h-3.5 w-3.5 shrink-0"
 					/>
 				</a>

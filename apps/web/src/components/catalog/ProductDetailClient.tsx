@@ -40,6 +40,7 @@ import {
 } from './InPlaceProductFields';
 import { BackLink } from '../BackLink';
 import { ArrowRightIcon } from '../icons/ArrowRightIcon';
+import { MarketplaceBreadcrumb } from './MarketplaceBreadcrumb';
 import { ProductCard } from './ProductCard';
 import { ProductMobileStickyCta } from './ProductMobileStickyCta';
 import { TermHint } from './TermHint';
@@ -774,72 +775,33 @@ export function ProductDetailClient({
 
 	return (
 		<div className="flex flex-col gap-10 pb-24 lg:pb-0">
-			<nav className="text-[12px] text-slate-500" aria-label="Breadcrumb">
-				<ol className="flex flex-wrap items-center gap-2">
-					<li>
-						<a
-							className="
-								font-semibold
-								text-sky
-								underline
-								underline-offset-2
-							"
-							href="/place-et-marque"
-						>
-							Place et Marque
-						</a>
-					</li>
-					<li aria-hidden="true">
-						/
-					</li>
-					<li>
-						<Link
-							className="
-								font-semibold
-								text-sky
-								underline
-								underline-offset-2
-							"
-							href="/place-et-marque/search"
-						>
-							Shop
-						</Link>
-					</li>
-					{product.category
-						? (
-							<>
-								<li aria-hidden="true">
-									/
-								</li>
-								<li>
-									<Link
-										className="
-											font-semibold
-											text-sky
-											underline
-											underline-offset-2
-										"
-										href={searchHref}
-									>
-										{product.category.name}
-									</Link>
-								</li>
-							</>
-						)
-						: null}
-					<li aria-hidden="true">
-						/
-					</li>
-					<li
-						className="
-							font-semibold
-							text-ink
-						"
-					>
-						{product.title}
-					</li>
-				</ol>
-			</nav>
+			<MarketplaceBreadcrumb
+				crumbs={[
+					{
+						key: 'home',
+						label: 'Place et Marque',
+						href: '/place-et-marque',
+					},
+					{
+						key: 'shop',
+						label: 'Shop',
+						href: '/place-et-marque/search',
+					},
+					...(product.category
+						? [
+							{
+								key: 'category',
+								label: product.category.name,
+								href: searchHref,
+							},
+						]
+						: []),
+					{
+						key: 'product',
+						label: product.title,
+					},
+				]}
+			/>
 
 			<div>
 				<p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">

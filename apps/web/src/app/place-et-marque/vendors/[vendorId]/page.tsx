@@ -27,6 +27,7 @@ import {
 import { useSession } from '../../../../lib/useSession';
 import { RequireAccess } from '../../../../components/auth/RequireAccess';
 import { CollapsibleWidget } from '../../../../components/catalog/CollapsibleWidget';
+import { MarketplaceBreadcrumb } from '../../../../components/catalog/MarketplaceBreadcrumb';
 import { UrlSlugField } from '../../../../components/catalog/UrlSlugField';
 import { VendorMembersPanel } from '../../../../components/catalog/VendorMembersPanel';
 import { ArrowRightIcon } from '../../../../components/icons/ArrowRightIcon';
@@ -428,47 +429,19 @@ function VendorDetailContent() {
 				gap-6
 			"
 		>
-			<nav
-				aria-label="Breadcrumb"
-				className="
-					text-sm
-					text-slate-500
-				"
-			>
-				<ol
-					className="
-						flex
-						flex-wrap
-						items-center
-						gap-2
-					"
-				>
-					<li>
-						<a
-							className="
-								font-semibold
-								text-sky
-								underline
-								underline-offset-2
-							"
-							href="/place-et-marque/vendors"
-						>
-							Vendors
-						</a>
-					</li>
-					<li aria-hidden="true">
-						/
-					</li>
-					<li
-						className="
-							font-semibold
-							text-ink
-						"
-					>
-						{vendor?.name ?? 'Organization'}
-					</li>
-				</ol>
-			</nav>
+			<MarketplaceBreadcrumb
+				crumbs={[
+					{
+						key: 'vendors',
+						label: 'Vendors',
+						href: '/place-et-marque/vendors',
+					},
+					{
+						key: 'vendor',
+						label: vendor?.name ?? 'Organization',
+					},
+				]}
+			/>
 
 			{sessionLoading || loading
 				? (

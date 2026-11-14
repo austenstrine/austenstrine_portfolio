@@ -4,6 +4,7 @@ import { GlobeIcon } from '../icons/GlobeIcon';
 import { MapPinIcon } from '../icons/MapPinIcon';
 import { PhoneIcon } from '../icons/PhoneIcon';
 import type { PublicVendor } from '../../lib/public-vendor-api';
+import { MarketplaceBreadcrumb } from './MarketplaceBreadcrumb';
 
 function websiteLabel(url: string): string {
 	try {
@@ -76,20 +77,19 @@ export function VendorStorefrontProfile({ vendor }: VendorStorefrontProfileProps
 			"
 		>
 			<div className="mx-auto min-w-0 max-w-full">
-				<nav className="text-[12px] text-slate-500" aria-label="Breadcrumb">
-					<ol className="flex flex-wrap items-center gap-2">
-						<li>
-							<a
-								className="hover:text-ink"
-								href="/place-et-marque"
-							>
-								Place et Marque
-							</a>
-						</li>
-						<li aria-hidden="true">/</li>
-						<li className="text-ink">{vendor.name}</li>
-					</ol>
-				</nav>
+				<MarketplaceBreadcrumb
+					crumbs={[
+						{
+							key: 'home',
+							label: 'Place et Marque',
+							href: '/place-et-marque',
+						},
+						{
+							key: 'vendor',
+							label: vendor.name,
+						},
+					]}
+				/>
 
 				<div className="mt-5 min-w-0 max-w-3xl">
 					<p

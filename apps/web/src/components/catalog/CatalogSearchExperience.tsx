@@ -16,6 +16,10 @@ import {
 	useCatalogSearch,
 } from './CatalogSearchContext';
 import { CatalogSortMenu } from './CatalogSortMenu';
+import {
+	MarketplaceBreadcrumb,
+	type MarketplaceBreadcrumbCrumb,
+} from './MarketplaceBreadcrumb';
 import { ProductCard } from './ProductCard';
 
 const PAGE_SIZE = 24;
@@ -425,6 +429,58 @@ export function CatalogSearchExperience({
 		: 'h1';
 	const HeadingTag = headingTag;
 
+	const breadcrumbCrumbs: MarketplaceBreadcrumbCrumb[] = [
+		{
+			key: 'home',
+			label: 'Place et Marque',
+			href: '/place-et-marque',
+		},
+	];
+	if(lockedVendor) {
+		if(selectedCategory || committedQuery.trim()) {
+			breadcrumbCrumbs.push({
+				key: 'vendor',
+				label: lockedVendor.name,
+				onClick: () => {
+					setQuery('');
+					commit({
+						q: '',
+						category: '',
+						page: 1,
+					});
+				},
+			});
+		}
+		else {
+			breadcrumbCrumbs.push({
+				key: 'vendor',
+				label: lockedVendor.name,
+			});
+		}
+	}
+	else if(selectedCategory) {
+		breadcrumbCrumbs.push({
+			key: 'shop',
+			label: 'Shop',
+			onClick: () => commit({
+				category: '',
+				page: 1,
+			}),
+		});
+	}
+	else {
+		breadcrumbCrumbs.push({
+			key: 'shop',
+			label: 'Shop',
+		});
+	}
+	if(selectedCategory) {
+		breadcrumbCrumbs.push({
+			key: 'category',
+			label: selectedCategory.name,
+		});
+	}
+
 	return (
 		<div
 			/* No max-w-full: it fights -mx-gutter and widens the right gap. */
@@ -433,77 +489,9 @@ export function CatalogSearchExperience({
 			<div className="mx-auto min-w-0 max-w-full">
 				{!hideVendorIdentityChrome
 					? (
-						<nav className="text-[12px] text-slate-500" aria-label="Breadcrumb">
-							<ol className="flex flex-wrap items-center gap-2">
-								<li>
-									<a
-										className="hover:text-ink"
-										href="/place-et-marque"
-									>
-										Place et Marque
-									</a>
-								</li>
-								<li aria-hidden="true">/</li>
-								{lockedVendor
-									? (
-										<>
-											<li>
-												{selectedCategory || committedQuery.trim()
-													? (
-														<button
-															type="button"
-															className="hover:text-ink"
-															onClick={() => {
-																setQuery('');
-																commit({
-																	q: '',
-																	category: '',
-																	page: 1,
-																});
-															}}
-														>
-															{lockedVendor.name}
-														</button>
-													)
-													: (
-														<span className="text-ink">
-															{lockedVendor.name}
-														</span>
-													)}
-											</li>
-											{selectedCategory
-												? (
-													<>
-														<li aria-hidden="true">/</li>
-														<li className="text-ink">{selectedCategory.name}</li>
-													</>
-												)
-												: null}
-										</>
-									)
-									: (
-										<>
-											<li>
-												{selectedCategory
-													? (
-														<button type="button" className="hover:text-ink" onClick={() => commit({ category: '', page: 1 })}>
-															Shop
-														</button>
-													)
-													: <span className="text-ink">Shop</span>}
-											</li>
-											{selectedCategory
-												? (
-													<>
-														<li aria-hidden="true">/</li>
-														<li className="text-ink">{selectedCategory.name}</li>
-													</>
-												)
-												: null}
-										</>
-									)}
-							</ol>
-						</nav>
+						<MarketplaceBreadcrumb
+							crumbs={breadcrumbCrumbs}
+						/>
 					)
 					: null}
 

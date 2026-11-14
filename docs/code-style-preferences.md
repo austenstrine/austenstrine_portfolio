@@ -67,9 +67,9 @@ Preferences, not build errors. Prefer format-on-save over a failing build.
 - No raw `<svg>` in pages or HTML. Put SVG in `apps/web/src/components/icons/` with a `className` prop.
 - Directional / action cues (follow common menu & link conventions):
 	- `ArrowLeftIcon` / `ArrowRightIcon` (shafted) — route navigation (and result-list pager that changes page/query).
-	- `ChevronLeftIcon` / `ChevronRightIcon` (shaftless) — in-place only: hierarchy de-drill/drill, and image-carousel slide. Never reuse for page navigation. Breadcrumb separators use a plain `/` character (not chevrons/carets), so drill cues stay reserved for hierarchy UI.
+	- `ChevronLeftIcon` / `ChevronRightIcon` (shaftless) — in-place only: hierarchy de-drill/drill, and image-carousel slide. Never reuse for page navigation. Breadcrumbs: always use shared `MarketplaceBreadcrumb` (PDP, vendor, search, etc.) — separators are `/` (not chevrons/carets); do not hand-roll breadcrumb markup.
 	- `CaretDownIcon` — open a dropdown / expand-collapse toggle (not left/right direction).
-	- `PencilIcon` — in-place edit affordance only (tier toggle / field edit). Never on a control that navigates to another page; full-editor navigate uses `ArrowRightIcon` (e.g. PDP “Full edit”), not a second pencil.
+	- `PencilIcon` — in-place edit affordance only (tier toggle / field edit). Never on a control that navigates to another page; full-editor navigate uses `ArrowRightIcon` (e.g. PDP “Full edit”, manage-list Edit), not Pencil — including icon-only mobile edit buttons.
 	- Navigate chrome — pick **one** style per control by context (do not mix for the same job):
 		- **Inline / in-text navigators** (a link inside a sentence, footer link list, glossary jump, “Sold by …”, cart-message “View cart”): traditional link — `text-sky underline underline-offset-2`. Underlines are fine here; no navigate arrow required.
 		- **Separate controls** (standalone section-header action, buy-box secondary, filled/outline CTA — not inline prose): either a clear whole-card / contextual navigate surface, **or** a shafted navigate icon (`ArrowRightIcon` forward / `ArrowLeftIcon` back). Do **not** use bare underlined text that only pretends to be a button. Examples: section “View all” / “All categories” (text + `ArrowRight`), standalone PDP “View cart” under Add to cart (text + `ArrowRight`), Checkout / Shop products CTAs.
