@@ -471,7 +471,7 @@ export function CvDocument() {
 							Roles: Mike; Ed Sullivan Announcer; Train Conductor; Varius Ensemble.
 						</li>
 						<li>
-							Guided acting technique, character development, and performance skills; IMPAC thanked mentors for an outstanding production and successful educational experience.
+							Guided the acting technique, character development, and performance skills of my mentee; it was an outstanding production and a successful educational experience.
 						</li>
 					</ul>
 				</div>
