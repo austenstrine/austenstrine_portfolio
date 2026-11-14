@@ -466,4 +466,101 @@ describe('checkout payment guards (PEM-196)', () => {
 			}
 		});
 	});
+
+	describe('confirmDemoPayment', () => {
+		it('finalizes AWAITING_PAYMENT checkout when bypass is on', async () => {
+			const prevBypass = process.env.CHECKOUT_DEV_BYPASS;
+			process.env.CHECKOUT_DEV_BYPASS = '1';
+
+			const checkoutUpdate = jest.fn();
+			const orderUpdate = jest.fn();
+			const clearCart = jest.fn().mockResolvedValue(undefined);
+			const createPayoutForPaidOrder = jest.fn().mockResolvedValue(undefined);
+
+			const { service } = buildService({
+				stripe: { enabled: false },
+				cart: { clearCart },
+				payouts: { createPayoutForPaidOrder },
+				prisma: {
+					checkout: {
+						findUnique: jest
+							.fn()
+							.mockResolvedValueOnce({
+								id: 'co_demo',
+								buyerId: 'buyer_1',
+								status: CheckoutStatus.AWAITING_PAYMENT,
+								stripePaymentIntentId: null,
+								totalCents: 1999,
+								currency: 'USD',
+							})
+							.mockResolvedValueOnce({
+								id: 'co_demo',
+								status: CheckoutStatus.AWAITING_PAYMENT,
+								buyerId: 'buyer_1',
+								orders: [],
+							}),
+						findUniqueOrThrow: jest.fn().mockResolvedValue({
+							id: 'co_demo',
+							status: CheckoutStatus.PAID,
+							totalCents: 1999,
+							currency: 'USD',
+						}),
+						update: checkoutUpdate,
+					},
+					placeEtMarqueOrder: {
+						findMany: jest.fn().mockResolvedValue([
+							{ id: 'ord_1' },
+						]),
+						update: orderUpdate,
+					},
+				},
+			});
+
+			const result = await service.confirmDemoPayment('buyer_1', 'co_demo');
+
+			expect(result).toEqual({
+				checkoutId: 'co_demo',
+				status: CheckoutStatus.PAID,
+				totalCents: 1999,
+				currency: 'USD',
+			});
+			expect(checkoutUpdate).toHaveBeenCalledWith({
+				where: { id: 'co_demo' },
+				data: { status: CheckoutStatus.PAID },
+			});
+			expect(orderUpdate).toHaveBeenCalledWith({
+				where: { id: 'ord_1' },
+				data: { status: PlaceEtMarqueOrderStatus.PAID },
+			});
+			expect(createPayoutForPaidOrder).toHaveBeenCalledWith('ord_1');
+			expect(clearCart).toHaveBeenCalledWith('buyer_1');
+
+			if(prevBypass === undefined) {
+				delete process.env.CHECKOUT_DEV_BYPASS;
+			}
+			else {
+				process.env.CHECKOUT_DEV_BYPASS = prevBypass;
+			}
+		});
+
+		it('rejects when Stripe is enabled', async () => {
+			const prevBypass = process.env.CHECKOUT_DEV_BYPASS;
+			process.env.CHECKOUT_DEV_BYPASS = '1';
+
+			const { service } = buildService({
+				stripe: { enabled: true },
+			});
+
+			await expect(
+				service.confirmDemoPayment('buyer_1', 'co_demo'),
+			).rejects.toBeInstanceOf(BadRequestException);
+
+			if(prevBypass === undefined) {
+				delete process.env.CHECKOUT_DEV_BYPASS;
+			}
+			else {
+				process.env.CHECKOUT_DEV_BYPASS = prevBypass;
+			}
+		});
+	});
 });

@@ -89,6 +89,15 @@ export class CheckoutController {
 		return this.checkout.createSession(req.user!.id, dto);
 	}
 
+	@UseGuards(JwtAuthGuard)
+	@Post('sessions/:checkoutId/demo-pay')
+	confirmDemoPayment(
+		@Req() req: AuthedRequest,
+		@Param('checkoutId') checkoutId: string,
+	) {
+		return this.checkout.confirmDemoPayment(req.user!.id, checkoutId);
+	}
+
 	@Post('webhooks/stripe')
 	async stripeWebhook(
 		@Req() req: RawBodyRequest,

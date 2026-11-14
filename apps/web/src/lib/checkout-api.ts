@@ -72,9 +72,17 @@ export type CheckoutSession = {
 	checkoutId: string;
 	clientSecret: string | null;
 	publishableKey: string | null;
+	demoPayment?: boolean;
 	totalCents: number;
 	currency: string;
 	expiresAt: string | null;
+};
+
+export type DemoPaymentResult = {
+	checkoutId: string;
+	status: string;
+	totalCents: number;
+	currency: string;
 };
 
 export type PlaceEtMarqueOrderRefund = {
@@ -236,6 +244,13 @@ export function createCheckoutSession(payload: {
 	return checkoutRequest<CheckoutSession>('/sessions', {
 		method: 'POST',
 		body: JSON.stringify(payload),
+	});
+}
+
+export function confirmDemoPayment(checkoutId: string): Promise<DemoPaymentResult> {
+	return checkoutRequest<DemoPaymentResult>(`/sessions/${checkoutId}/demo-pay`, {
+		method: 'POST',
+		body: JSON.stringify({}),
 	});
 }
 
