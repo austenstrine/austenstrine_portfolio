@@ -525,6 +525,26 @@ html:has(.cv-page) body {
 		page-break-inside: avoid;
 	}
 
+	/* Education may split when Education+Skills exceeds a page. Blanket
+	   .cv-section { page-break-inside: avoid } would otherwise keep Education
+	   intact and orphan Skills on the next page. Pair glue is avoid-after /
+	   avoid-before between the two sections — not section-level avoid. */
+	.cv-page .cv-edu-skills .cv-section--education,
+	.cv-page .cv-edu-skills .cv-section--skills {
+		break-inside: auto;
+		page-break-inside: auto;
+	}
+
+	.cv-page .cv-section--education {
+		break-after: avoid-page;
+		page-break-after: avoid;
+	}
+
+	.cv-page .cv-section--skills {
+		break-before: avoid-page;
+		page-break-before: avoid;
+	}
+
 	.cv-page .cv-photo {
 		print-color-adjust: exact;
 		-webkit-print-color-adjust: exact;

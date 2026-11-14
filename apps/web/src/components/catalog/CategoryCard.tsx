@@ -1,6 +1,5 @@
 import type { CatalogCategoryRow, CatalogProductSummary } from '../../lib/catalog-api';
 import type { NestedCategory } from '../../lib/category-tree';
-import { ArrowRightIcon } from '../icons/ArrowRightIcon';
 import { CatalogCover } from './CatalogCover';
 
 export type CategoryCardVariant = 'hero' | 'wide' | 'compact';
@@ -453,11 +452,7 @@ export function CategoryCard({
 						? `
 							relative
 							mt-auto
-							flex
 							w-[min(100%,calc(100%-6.5rem))]
-							items-end
-							justify-between
-							gap-3
 							p-4
 							sm:p-5
 						`
@@ -465,20 +460,12 @@ export function CategoryCard({
 							? `
 								relative
 								mt-auto
-								flex
 								w-[min(100%,calc(100%-5.5rem))]
-								items-end
-								justify-between
-								gap-3
 								p-4
 							`
 							: `
 								relative
 								mt-auto
-								flex
-								items-end
-								justify-between
-								gap-2
 								p-3
 							`
 				}
@@ -539,25 +526,6 @@ export function CategoryCard({
 							: null
 					}
 				</div>
-				<ArrowRightIcon
-					className={
-						variant === 'compact'
-							? `
-								mb-0.5
-								h-3.5
-								w-3.5
-								shrink-0
-								text-asgreen
-							`
-							: `
-								mb-1
-								h-4
-								w-4
-								shrink-0
-								text-asgreen
-							`
-					}
-				/>
 			</div>
 		</a>
 	);

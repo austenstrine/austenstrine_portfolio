@@ -71,7 +71,7 @@ export const professionalExperience: ExperienceRole[] = [
 		dates: 'December 2023',
 		location: 'Cedar City',
 		bullets: [
-			'Paid mentor and cast member in a dual-performance production (mentors-only and mentees-only cast).',
+			'Paid mentor and cast member in a dual-performance production (mentors-only and mentees-only cast). Event: https://events.humanitix.com/white-christmas-at-impac-student-cast',
 			'Roles: Mike; Ed Sullivan Announcer; Train Conductor; Varius Ensemble.',
 			'Guided the acting technique, character development, and performance skills of my mentee; it was an outstanding production and a successful educational experience.',
 		],
@@ -135,7 +135,7 @@ export const professionalExperience: ExperienceRole[] = [
 		category: 'education',
 		title: 'Introductory Web Development — Refcode (pilot student)',
 		organization: 'Refcode',
-		dates: 'approx. August–November 2016',
+		dates: 'August–November 2016',
 		bullets: [
 			'First student of brother Brenton Strine\'s Refcode coding bootcamp (used to test curriculum flow and identify common beginner questions and difficulties).',
 			'Core project: rock-paper-scissors web game (posted to GitHub November 2016).',
