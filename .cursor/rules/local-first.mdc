@@ -1,0 +1,24 @@
+---
+description: Prefer Austen’s local portfolio checkout; sync development after push
+alwaysApply: true
+---
+
+# Local-first
+
+Keep in sync with Place et Marque Project preferences (`preferences.md` local-first bullet) and `docs/git-commit-preferences.md`.
+
+## Prefer
+
+- Do portfolio work on Austen’s machine checkout (`~/Development/austenstrine_portfolio` or the shared worktree for this task), then push from that local tip.
+- After any push/merge that updates `development`, sync Austen’s main checked-out `development` (`git fetch` + fast-forward/pull) so the site he runs locally is not stale.
+- Same-VM multi-agent edits: `git worktree add`, not mutating a shared checkout in place.
+
+## Host load
+
+- Hammering the host is fine when a test needs it. Require **recoverability**: bounded run, stoppable, postmortem under Project `internal/` if it dies, then continue.
+- After a crash/freeze: stop local turns, write a short postmortem, update prefs/principles if it is a new pattern — do not abandon local-first.
+
+## Do not
+
+- Default to remote-first / cloud-only landings that leave his local `development` behind until a manual pull.
+- Treat “never stress the CPU” as the rule after a crash — learning + recoverability is the rule.
