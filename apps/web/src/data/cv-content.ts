@@ -42,7 +42,8 @@ export type CvCertificate = {
 	org: string;
 	/** Omit when unknown (do not invent a year). */
 	dates?: string;
-	location: string;
+	/** Omit when unknown (do not invent a place). */
+	location?: string;
 	bullets: string[];
 };
 
@@ -54,6 +55,17 @@ export const CV_CERTIFICATES: CvCertificate[] = [
 		location: 'Cedar City, UT',
 		bullets: [
 			'Certified proficiency in C++, Python, Java, and Swift.',
+		],
+	},
+	{
+		title: 'Introductory Web Development — Refcode (pilot student)',
+		org: 'Refcode',
+		dates: 'approx. August–November 2016',
+		bullets: [
+			'First student of brother Brenton Strine\'s Refcode coding bootcamp (used to test curriculum flow and identify common beginner questions and difficulties).',
+			'Core project: rock-paper-scissors web game (posted to GitHub November 2016).',
+			'Covered foundational HTML, CSS, JavaScript, Git/GitHub, and related web-development practices.',
+			'By early 2017 had progressed to formal C++ coursework and fluent technical discussion.',
 		],
 	},
 	{

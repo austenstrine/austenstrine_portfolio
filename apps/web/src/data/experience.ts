@@ -130,6 +130,20 @@ export const professionalExperience: ExperienceRole[] = [
 		],
 	},
 	{
+		id: 'edu-refcode',
+		kind: 'software',
+		category: 'education',
+		title: 'Introductory Web Development — Refcode (pilot student)',
+		organization: 'Refcode',
+		dates: 'approx. August–November 2016',
+		bullets: [
+			'First student of brother Brenton Strine\'s Refcode coding bootcamp (used to test curriculum flow and identify common beginner questions and difficulties).',
+			'Core project: rock-paper-scissors web game (posted to GitHub November 2016).',
+			'Covered foundational HTML, CSS, JavaScript, Git/GitHub, and related web-development practices.',
+			'By early 2017 had progressed to formal C++ coursework and fluent technical discussion.',
+		],
+	},
+	{
 		id: 'vivint',
 		kind: 'non-software',
 		category: 'professional',
