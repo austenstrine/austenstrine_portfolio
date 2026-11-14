@@ -31,7 +31,6 @@ import { UrlSlugField } from '../../../../components/catalog/UrlSlugField';
 import { VendorMembersPanel } from '../../../../components/catalog/VendorMembersPanel';
 import { ArrowRightIcon } from '../../../../components/icons/ArrowRightIcon';
 import { CaretDownIcon } from '../../../../components/icons/CaretDownIcon';
-import { ChevronRightIcon } from '../../../../components/icons/ChevronRightIcon';
 import { CloseIcon } from '../../../../components/icons/CloseIcon';
 import { DocumentIcon } from '../../../../components/icons/DocumentIcon';
 import { EyeIcon } from '../../../../components/icons/EyeIcon';
@@ -458,13 +457,7 @@ function VendorDetailContent() {
 						</a>
 					</li>
 					<li aria-hidden="true">
-						<ChevronRightIcon
-							className="
-								h-3.5
-								w-3.5
-								text-slate-400
-							"
-						/>
+						/
 					</li>
 					<li
 						className="
@@ -911,8 +904,8 @@ function VendorDetailContent() {
 											className="
 												font-semibold
 												text-sky
+												underline
 												underline-offset-2
-												hover:underline
 											"
 											href={vendorViewHref(vendor.slug)}
 										>
@@ -1402,7 +1395,8 @@ function VendorDetailContent() {
 																				<a
 																					className="
 																						text-sky
-																						hover:underline
+																						underline
+																						underline-offset-2
 																					"
 																					href={`/place-et-marque/vendors/${vendor.slug}/orders#${encodeURIComponent(row.orderId)}`}
 																				>

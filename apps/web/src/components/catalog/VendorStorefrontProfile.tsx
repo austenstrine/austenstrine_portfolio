@@ -171,8 +171,8 @@ export function VendorStorefrontProfile({ vendor }: VendorStorefrontProfileProps
 														gap-2
 														font-medium
 														text-sky
+														underline
 														underline-offset-2
-														hover:underline
 													"
 													href={row.href}
 													{...(row.key === 'website'

@@ -27,6 +27,8 @@ import {
 	uomIdForCode,
 } from '../../lib/inplace-product-edit';
 import { productEditHref } from '../../lib/vendor-ref';
+import { ArrowRightIcon } from '../icons/ArrowRightIcon';
+import { CaretDownIcon } from '../icons/CaretDownIcon';
 import { PencilIcon } from '../icons/PencilIcon';
 import { PlusIcon } from '../icons/PlusIcon';
 import { TrashIcon } from '../icons/TrashIcon';
@@ -976,7 +978,6 @@ export function InPlaceFullEditLink({
 				text-xs
 				font-semibold
 				text-sky
-				hover:underline
 				${className}
 			`}
 			href={productEditHref({
@@ -984,8 +985,14 @@ export function InPlaceFullEditLink({
 				productSlug: product.slug,
 			})}
 		>
-			<PencilIcon className="h-3.5 w-3.5 shrink-0" />
 			Full edit
+			<ArrowRightIcon
+				className="
+					h-3.5
+					w-3.5
+					shrink-0
+				"
+			/>
 		</a>
 	);
 }
@@ -1052,6 +1059,24 @@ export function InPlaceEditToggle({
 					? `Edit · ${activeLabel}`
 					: 'Edit'
 				}
+				<CaretDownIcon
+					className={
+						open
+							? `
+								h-3
+								w-3
+								shrink-0
+								rotate-180
+								transition
+							`
+							: `
+								h-3
+								w-3
+								shrink-0
+								transition
+							`
+					}
+				/>
 			</button>
 			{open
 				? (

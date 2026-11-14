@@ -7,7 +7,6 @@ import {
 	useStripe,
 } from '@stripe/react-stripe-js';
 import { loadStripe, type Stripe } from '@stripe/stripe-js';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -20,7 +19,7 @@ import {
 import { useSession } from '../../../lib/useSession';
 import { RequireAccess } from '../../../components/auth/RequireAccess';
 import { DemoPaymentForm } from '../../../components/checkout/DemoPaymentForm';
-import { ArrowRightIcon } from '../../../components/icons/ArrowRightIcon';
+import { BackLink } from '../../../components/BackLink';
 import { LockIcon } from '../../../components/icons/LockIcon';
 
 const REQUIRED_ADDRESS_FIELDS = [
@@ -340,7 +339,7 @@ function CheckoutContent() {
 						<p className="text-xl font-semibold text-ink">
 							Your cart is empty
 						</p>
-						<Link
+						<BackLink
 							className="
 								mt-6
 								inline-flex
@@ -358,14 +357,7 @@ function CheckoutContent() {
 							href="/place-et-marque/cart"
 						>
 							Back to cart
-							<ArrowRightIcon
-								className="
-									h-3.5
-									w-3.5
-									shrink-0
-								"
-							/>
-						</Link>
+						</BackLink>
 					</div>
 				)
 				: null

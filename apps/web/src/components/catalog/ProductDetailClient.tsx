@@ -38,7 +38,8 @@ import {
 	InPlaceUomSelect,
 	useInPlaceProductEdit,
 } from './InPlaceProductFields';
-import { ChevronRightIcon } from '../icons/ChevronRightIcon';
+import { BackLink } from '../BackLink';
+import { ArrowRightIcon } from '../icons/ArrowRightIcon';
 import { ProductCard } from './ProductCard';
 import { ProductMobileStickyCta } from './ProductMobileStickyCta';
 import { TermHint } from './TermHint';
@@ -668,7 +669,14 @@ export function ProductDetailClient({
 							aria-live="polite"
 						>
 							{cartMessage}.{' '}
-							<Link href="/place-et-marque/cart" className="underline underline-offset-2">
+							<Link
+								href="/place-et-marque/cart"
+								className="
+									text-sky
+									underline
+									underline-offset-2
+								"
+							>
 								View cart
 							</Link>
 						</p>
@@ -709,15 +717,23 @@ export function ProductDetailClient({
 					<Link
 						href="/place-et-marque/cart"
 						className="
-							text-center
+							inline-flex
+							items-center
+							justify-center
+							gap-1.5
 							text-sm
 							font-semibold
-							text-asgreen
-							underline-offset-4
-							hover:underline
+							text-sky
 						"
 					>
 						View cart
+						<ArrowRightIcon
+							className="
+								h-3.5
+								w-3.5
+								shrink-0
+							"
+						/>
 					</Link>
 				</div>
 
@@ -728,8 +744,9 @@ export function ProductDetailClient({
 							href={vendorHref}
 							className="
 								font-semibold
-								text-asgreen
-								hover:underline
+								text-sky
+								underline
+								underline-offset-2
 							"
 						>
 							{product.vendor.name}
@@ -773,13 +790,7 @@ export function ProductDetailClient({
 						</a>
 					</li>
 					<li aria-hidden="true">
-						<ChevronRightIcon
-							className="
-								h-3.5
-								w-3.5
-								text-slate-400
-							"
-						/>
+						/
 					</li>
 					<li>
 						<Link
@@ -798,13 +809,7 @@ export function ProductDetailClient({
 						? (
 							<>
 								<li aria-hidden="true">
-									<ChevronRightIcon
-										className="
-											h-3.5
-											w-3.5
-											text-slate-400
-										"
-									/>
+									/
 								</li>
 								<li>
 									<Link
@@ -823,13 +828,7 @@ export function ProductDetailClient({
 						)
 						: null}
 					<li aria-hidden="true">
-						<ChevronRightIcon
-							className="
-								h-3.5
-								w-3.5
-								text-slate-400
-							"
-						/>
+						/
 					</li>
 					<li
 						className="
@@ -1361,19 +1360,34 @@ export function ProductDetailClient({
 						: null}
 
 					<p className="text-sm text-slate-500">
-						<Link
-							className="
-								font-semibold
-								text-asgreen
-								underline-offset-4
-								hover:underline
-							"
-							href={searchHref}
-						>
-							{product.category
-								? `More in ${product.category.name}`
-								: 'Back to the catalog'}
-						</Link>
+						{product.category
+							? (
+								<Link
+									className="
+										inline-flex
+										items-center
+										gap-1.5
+										font-semibold
+										text-sky
+									"
+									href={searchHref}
+								>
+									More in {product.category.name}
+									<ArrowRightIcon
+										className="
+											h-3.5
+											w-3.5
+											shrink-0
+										"
+									/>
+								</Link>
+							)
+							: (
+								<BackLink href={searchHref}>
+									Back to the catalog
+								</BackLink>
+							)
+						}
 					</p>
 				</div>
 
@@ -1393,15 +1407,23 @@ export function ProductDetailClient({
 							</h2>
 							<Link
 								className="
+									inline-flex
+									items-center
+									gap-1.5
 									text-sm
 									font-semibold
-									text-asgreen
-									underline-offset-4
-									hover:underline
+									text-sky
 								"
 								href={searchHref}
 							>
 								View all
+								<ArrowRightIcon
+									className="
+										h-3.5
+										w-3.5
+										shrink-0
+									"
+								/>
 							</Link>
 						</div>
 						<div className="mt-5 grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-3">

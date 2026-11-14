@@ -415,8 +415,7 @@ function NotificationsInboxInner() {
 																		gap-1.5
 																		text-sm
 																		font-semibold
-																		text-asgreen
-																		hover:underline
+																		text-sky
 																	"
 																	href={item.href}
 																>

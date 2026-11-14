@@ -134,7 +134,8 @@ export function TermHint({ termId }: TermHintProps) {
 								text-sm
 								font-semibold
 								text-sky
-								hover:underline
+								underline
+								underline-offset-2
 							"
 							href={href}
 							onClick={(event) => {

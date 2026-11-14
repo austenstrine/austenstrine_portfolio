@@ -103,16 +103,21 @@ export default async function PlaceEtMarqueHomePage() {
 								className="
 									inline-flex
 									items-center
-									gap-1
+									gap-1.5
 									text-sm
 									font-semibold
-									text-ink
-									hover:underline
+									text-sky
 								"
 								href="/place-et-marque/search"
 							>
 								All categories
-								<ArrowRightIcon className="h-3.5 w-3.5" />
+								<ArrowRightIcon
+									className="
+										h-3.5
+										w-3.5
+										shrink-0
+									"
+								/>
 							</a>
 						</div>
 						<div
@@ -247,16 +252,21 @@ export default async function PlaceEtMarqueHomePage() {
 								className="
 									inline-flex
 									items-center
-									gap-1
+									gap-1.5
 									text-sm
 									font-semibold
-									text-ink
-									hover:underline
+									text-sky
 								"
 								href="/place-et-marque/search"
 							>
 								View all
-								<ArrowRightIcon className="h-3.5 w-3.5" />
+								<ArrowRightIcon
+									className="
+										h-3.5
+										w-3.5
+										shrink-0
+									"
+								/>
 							</a>
 						)
 						: null

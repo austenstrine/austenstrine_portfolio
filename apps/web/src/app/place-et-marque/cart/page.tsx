@@ -222,8 +222,9 @@ function CartContent() {
 											className="
 												text-base
 												font-semibold
-												text-ink
-												hover:underline
+												text-sky
+												underline
+												underline-offset-2
 											"
 											href={`/place-et-marque/${encodeURIComponent(group.slug)}`}
 										>
@@ -256,8 +257,9 @@ function CartContent() {
 														<Link
 															className="
 																font-semibold
-																text-ink
-																hover:underline
+																text-sky
+																underline
+																underline-offset-2
 															"
 															href={`/place-et-marque/${line.vendor.slug}/${line.productSlug}`}
 														>
@@ -419,16 +421,25 @@ function CartContent() {
 							<Link
 								className="
 									mt-3
-									flex
+									inline-flex
+									w-full
+									items-center
 									justify-end
+									gap-1.5
 									text-sm
+									font-semibold
 									text-sky
-									underline
-									underline-offset-2
 								"
 								href="/place-et-marque/search"
 							>
 								Continue shopping
+								<ArrowRightIcon
+									className="
+										h-3.5
+										w-3.5
+										shrink-0
+									"
+								/>
 							</Link>
 						</aside>
 					</div>
