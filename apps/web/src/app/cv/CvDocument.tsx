@@ -468,6 +468,9 @@ export function CvDocument() {
 							Paid mentor and cast member in a dual-performance production (mentors-only and mentees/student cast).
 						</li>
 						<li>
+							Roles: Mike (Stage Manager; sometimes Mike Nulty); Ed Sullivan Announcer (Radio Announcer, often double-cast with Mike), plus Regency Room Announcer offstage; Train Conductor (small supporting, often double-cast).
+						</li>
+						<li>
 							Guided acting technique, character development, and performance skills; IMPAC thanked mentors for an outstanding production and successful educational experience.
 						</li>
 					</ul>
