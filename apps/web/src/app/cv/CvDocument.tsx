@@ -447,6 +447,34 @@ export function CvDocument() {
 				<div className="cv-job">
 					<div className="cv-job-header">
 						<span className="cv-job-title">
+							Mentor / Cast Member
+						</span>
+						<span className="cv-job-dates">
+							December 2023
+						</span>
+					</div>
+					<div className="cv-job-company">
+						<em>
+							White Christmas
+						</em>
+						{' '}
+						· IMPAC
+					</div>
+					<div className="cv-job-meta">
+						Cedar City
+					</div>
+					<ul>
+						<li>
+							Paid mentor and cast member in a dual-performance production (mentors-only and mentees/student cast).
+						</li>
+						<li>
+							Guided acting technique, character development, and performance skills; IMPAC thanked mentors for an outstanding production and successful educational experience.
+						</li>
+					</ul>
+				</div>
+				<div className="cv-job">
+					<div className="cv-job-header">
+						<span className="cv-job-title">
 							Glen Guglia
 						</span>
 						<span className="cv-job-dates">
