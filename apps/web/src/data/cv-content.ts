@@ -57,6 +57,25 @@ export const CV_CERTIFICATES: CvCertificate[] = [
 		],
 	},
 	{
+		title: 'Musical Theater — pursued',
+		org: 'Southern Utah University (SUU)',
+		dates: '2015–2016',
+		location: 'Cedar City, UT',
+		bullets: [
+			'Pursued Musical Theater. Withdrew August 2016 — did not complete the degree.',
+		],
+	},
+	{
+		title: 'B.S. in Music (Composition) — pursued',
+		org: 'Simpson University',
+		dates: '2010–2013',
+		location: 'Redding, CA',
+		bullets: [
+			'Pursued B.S. in Music with emphasis in Composition and minor in Psychology. Did not complete the degree.',
+			'University Chorale and Drama Club (VP 2010, President 2011).',
+		],
+	},
+	{
 		title: 'High School Diploma',
 		org: 'Chico Sr. High School',
 		dates: '2005–2009',
