@@ -29,13 +29,15 @@ type ProductCardImageCarouselProps = {
 /**
  * In-place slide carets — shaftless chevron, not navigate Arrow.
  * Stay mounted; fade/slide via opacity+transform (not display) so hover
- * does not pop. Rest: opacity-0 + pointer-events-none. Reveal only under
- * `@media (hover: hover)` + group-hover when `enabled` (not at range end).
+ * does not pop. Below `md` (site desktop): always visible (touch has no
+ * hover); enabled = full + clickable, end-of-range = faded. At `md+`:
+ * rest opacity-0; reveal under `@media (hover: hover)` + group-hover when
+ * enabled.
  */
 function carouselSlideClassName(side: 'left' | 'right', enabled: boolean) {
-	const restShift = side === 'left'
-		? '-translate-x-0.5'
-		: 'translate-x-0.5';
+	const desktopRestShift = side === 'left'
+		? 'md:-translate-x-0.5'
+		: 'md:translate-x-0.5';
 	return `
 		absolute
 		top-1/2
@@ -44,28 +46,35 @@ function carouselSlideClassName(side: 'left' | 'right', enabled: boolean) {
 		h-8
 		w-8
 		-translate-y-1/2
+		translate-x-0
 		items-center
 		justify-center
 		rounded-full
 		bg-white/90
 		text-sky
 		shadow-[0_2px_10px_rgba(13,27,42,0.22)]
-		opacity-0
-		pointer-events-none
-		${restShift}
 		transition-[opacity,transform]
 		duration-200
 		ease-out
 		motion-reduce:transition-none
 		hover:bg-white
 		${side === 'left' ? 'left-2' : 'right-2'}
+		${desktopRestShift}
 		${enabled
 			? `
+				opacity-100
+				pointer-events-auto
+				md:opacity-0
+				md:pointer-events-none
 				[@media(hover:hover)]:md:group-hover/carousel:pointer-events-auto
 				[@media(hover:hover)]:md:group-hover/carousel:translate-x-0
 				[@media(hover:hover)]:md:group-hover/carousel:opacity-100
 			`
-			: ''}
+			: `
+				opacity-40
+				pointer-events-none
+				md:opacity-0
+			`}
 	`;
 }
 
@@ -309,15 +318,14 @@ export function ProductCardImageCarousel({
 														h-1.5
 														w-1.5
 														rounded-full
-														bg-sky
-														shadow-[0_0_0_1px_rgba(255,255,255,0.7)]
+														bg-white
 													`
 													: `
 														h-1.5
 														w-1.5
 														rounded-full
-														bg-frost
-														shadow-[0_0_0_1px_rgba(255,255,255,0.45)]
+														bg-transparent
+														shadow-[0_0_0_1px_rgba(255,255,255,0.85)]
 													`
 											}
 										/>
