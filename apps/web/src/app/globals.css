@@ -180,7 +180,7 @@ body {
 @media print {
   @page {
     size: letter;
-    margin: 0.55in 0.65in;
+    margin: 0.45in 0.55in;
   }
 
   html.experience-print-selection,
@@ -212,45 +212,49 @@ body {
 
   .experience-print-header {
     border-bottom: 1px solid #257257;
-    padding-bottom: 0.55rem;
-    margin-bottom: 0.85rem;
+    padding-bottom: 0.4rem;
+    margin-bottom: 0.55rem;
   }
 
   .experience-print-header h1 {
     margin: 0;
-    font-size: 20pt;
+    font-size: 18pt;
     font-weight: 700;
     letter-spacing: -0.02em;
     line-height: 1.1;
   }
 
   .experience-print-headline {
-    margin: 0.25rem 0 0;
-    font-size: 10pt;
+    margin: 0.15rem 0 0;
+    font-size: 9.5pt;
     font-weight: 500;
     color: #1b263b;
   }
 
   .experience-print-contact {
-    margin: 0.4rem 0 0;
-    font-size: 9pt;
+    margin: 0.25rem 0 0;
+    font-size: 8.5pt;
     color: #475569;
   }
 
   .experience-print-section {
-    margin-top: 0.85rem;
+    margin-top: 0.55rem;
   }
 
   .experience-print-sheet > .experience-print-section:first-of-type {
     margin-top: 0;
   }
 
-  /* Last page content: Skills (no Skills-first / orphan blanks). */
+  /* Skills alone stays with Experience (too small for its own page).
+     Education + Skills may start the last page as one closing block. */
   .experience-print-closing {
-    break-before: page;
-    page-break-before: always;
     break-inside: avoid;
     page-break-inside: avoid;
+  }
+
+  .experience-print-closing--with-education {
+    break-before: page;
+    page-break-before: always;
   }
 
   .experience-print-closing > .experience-print-section:first-child {
@@ -258,8 +262,8 @@ body {
   }
 
   .experience-print-section h2 {
-    margin: 0 0 0.5rem;
-    font-size: 10.5pt;
+    margin: 0 0 0.3rem;
+    font-size: 9.5pt;
     font-weight: 700;
     letter-spacing: 0.08em;
     text-transform: uppercase;
@@ -267,9 +271,9 @@ body {
   }
 
   .experience-print-summary {
-    margin: 0 0 0.35rem;
-    font-size: 9pt;
-    line-height: 1.4;
+    margin: 0 0 0.25rem;
+    font-size: 8.5pt;
+    line-height: 1.3;
     color: #334155;
   }
 
@@ -280,7 +284,11 @@ body {
   .experience-print-job {
     break-inside: avoid;
     page-break-inside: avoid;
-    margin-bottom: 0.7rem;
+    margin-bottom: 0.45rem;
+  }
+
+  .experience-print-job:last-child {
+    margin-bottom: 0;
   }
 
   .experience-print-job-header {
@@ -291,43 +299,43 @@ body {
   }
 
   .experience-print-job-title {
-    font-size: 10.5pt;
+    font-size: 10pt;
     font-weight: 700;
   }
 
   .experience-print-job-dates {
     flex-shrink: 0;
-    font-size: 9pt;
+    font-size: 8.5pt;
     color: #64748b;
   }
 
   .experience-print-job-org {
-    margin: 0.1rem 0 0;
-    font-size: 9.5pt;
+    margin: 0.05rem 0 0;
+    font-size: 9pt;
     font-weight: 600;
     color: #1b263b;
   }
 
   .experience-print-job ul {
-    margin: 0.3rem 0 0;
-    padding-left: 1.05rem;
+    margin: 0.2rem 0 0;
+    padding-left: 1rem;
   }
 
   .experience-print-job li {
-    margin: 0.12rem 0;
-    font-size: 9pt;
-    line-height: 1.35;
+    margin: 0.06rem 0;
+    font-size: 8.5pt;
+    line-height: 1.28;
     color: #334155;
   }
 
   .experience-print-skills {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 0.35rem 1.25rem;
+    gap: 0.25rem 1rem;
   }
 
   .experience-print-skill-label {
-    font-size: 8pt;
+    font-size: 7.5pt;
     font-weight: 700;
     letter-spacing: 0.06em;
     text-transform: uppercase;
@@ -335,9 +343,9 @@ body {
   }
 
   .experience-print-skill-list {
-    margin-top: 0.08rem;
-    font-size: 9pt;
-    line-height: 1.35;
+    margin-top: 0.04rem;
+    font-size: 8.5pt;
+    line-height: 1.28;
     color: #334155;
   }
 }

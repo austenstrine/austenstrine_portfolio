@@ -17,6 +17,46 @@ import {
 	SITE_URL,
 } from '../../lib/site';
 
+function PrintRoleArticle({
+	role,
+}: {
+	role: ExperienceRole;
+}) {
+	return (
+		<article className="experience-print-job">
+			<div className="experience-print-job-header">
+				<span className="experience-print-job-title">
+					{role.title}
+				</span>
+				{role.dates
+					? (
+						<span className="experience-print-job-dates">
+							{role.dates}
+						</span>
+					)
+					: null}
+			</div>
+			<p className="experience-print-job-org">
+				{role.organization}
+				{role.location
+					? ` · ${role.location}`
+					: null}
+			</p>
+			{role.bullets.length > 0
+				? (
+					<ul>
+						{role.bullets.map((bullet) => (
+							<li key={bullet}>
+								{bullet}
+							</li>
+						))}
+					</ul>
+				)
+				: null}
+		</article>
+	);
+}
+
 export function ExperiencePrintSheet({
 	roles,
 }: {
@@ -24,6 +64,9 @@ export function ExperiencePrintSheet({
 }) {
 	const [mounted, setMounted] = useState(false);
 	const siteHost = SITE_URL.replace(/^https?:\/\//, '');
+	const workRoles = roles.filter((role) => role.category !== 'education');
+	const educationRoles = roles.filter((role) => role.category === 'education');
+	const closingHasEducation = educationRoles.length > 0;
 
 	useEffect(() => {
 		setMounted(true);
@@ -74,49 +117,44 @@ export function ExperiencePrintSheet({
 				))}
 			</section>
 
-			<section className="experience-print-section">
-				<h2>
-					Experience
-				</h2>
-				{roles.map((role) => (
-					<article
-						className="experience-print-job"
-						key={role.id}
-					>
-						<div className="experience-print-job-header">
-							<span className="experience-print-job-title">
-								{role.title}
-							</span>
-							{role.dates
-								? (
-									<span className="experience-print-job-dates">
-										{role.dates}
-									</span>
-								)
-								: null}
-						</div>
-						<p className="experience-print-job-org">
-							{role.organization}
-							{role.location
-								? ` · ${role.location}`
-								: null}
-						</p>
-						{role.bullets.length > 0
-							? (
-								<ul>
-									{role.bullets.map((bullet) => (
-										<li key={bullet}>
-											{bullet}
-										</li>
-									))}
-								</ul>
-							)
-							: null}
-					</article>
-				))}
-			</section>
+			{workRoles.length > 0
+				? (
+					<section className="experience-print-section">
+						<h2>
+							Experience
+						</h2>
+						{workRoles.map((role) => (
+							<PrintRoleArticle
+								key={role.id}
+								role={role}
+							/>
+						))}
+					</section>
+				)
+				: null}
 
-			<div className="experience-print-closing">
+			<div
+				className={
+					closingHasEducation
+						? 'experience-print-closing experience-print-closing--with-education'
+						: 'experience-print-closing'
+				}
+			>
+				{closingHasEducation
+					? (
+						<section className="experience-print-section">
+							<h2>
+								Education
+							</h2>
+							{educationRoles.map((role) => (
+								<PrintRoleArticle
+									key={role.id}
+									role={role}
+								/>
+							))}
+						</section>
+					)
+					: null}
 				<section className="experience-print-section">
 					<h2>
 						Skills
