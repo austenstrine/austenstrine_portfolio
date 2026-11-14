@@ -1198,6 +1198,8 @@ export function ProductDetailClient({
 								<div className="flex gap-2 overflow-x-auto">
 									{gallery.map((src, index) => (
 										<button
+											aria-label={`Show image ${index + 1} of ${gallery.length}`}
+											aria-pressed={index === activeImage}
 											key={`${src}-${index}`}
 											type="button"
 											onClick={() => setActiveImage(index)}

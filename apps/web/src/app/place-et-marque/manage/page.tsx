@@ -671,6 +671,15 @@ function PlaceEtMarqueManageContent() {
 							>
 								New product
 							</span>
+							<ArrowRightIcon
+								className="
+									hidden
+									h-3.5
+									w-3.5
+									shrink-0
+									sm:inline
+								"
+							/>
 						</a>
 					)
 					: null

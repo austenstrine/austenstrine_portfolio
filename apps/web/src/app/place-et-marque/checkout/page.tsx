@@ -20,6 +20,7 @@ import {
 import { useSession } from '../../../lib/useSession';
 import { RequireAccess } from '../../../components/auth/RequireAccess';
 import { DemoPaymentForm } from '../../../components/checkout/DemoPaymentForm';
+import { ArrowRightIcon } from '../../../components/icons/ArrowRightIcon';
 import { LockIcon } from '../../../components/icons/LockIcon';
 
 const REQUIRED_ADDRESS_FIELDS = [
@@ -343,6 +344,8 @@ function CheckoutContent() {
 							className="
 								mt-6
 								inline-flex
+								items-center
+								gap-1.5
 								rounded-full
 								bg-sky
 								px-5
@@ -355,6 +358,13 @@ function CheckoutContent() {
 							href="/place-et-marque/cart"
 						>
 							Back to cart
+							<ArrowRightIcon
+								className="
+									h-3.5
+									w-3.5
+									shrink-0
+								"
+							/>
 						</Link>
 					</div>
 				)

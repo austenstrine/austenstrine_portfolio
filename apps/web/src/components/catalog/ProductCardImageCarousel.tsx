@@ -8,12 +8,16 @@ import {
 	type ReactNode,
 	type UIEvent,
 } from 'react';
-import { ArrowLeftIcon } from '../icons/ArrowLeftIcon';
-import { ArrowRightIcon } from '../icons/ArrowRightIcon';
+import { ChevronLeftIcon } from '../icons/ChevronLeftIcon';
+import { ChevronRightIcon } from '../icons/ChevronRightIcon';
 import { CatalogCover } from './CatalogCover';
 
 type ProductCardImageCarouselProps = {
-	/** Omit when the image plane should not navigate (seller in-place edit). */
+	/**
+	 * When set, the image plane is a navigate backdrop to the product page.
+	 * Slide carets/dots stay in-place only (stopPropagation).
+	 * Omit when the plane must not navigate (seller in-place edit).
+	 */
 	href?: string;
 	images: string[];
 	alt: string;
@@ -22,7 +26,8 @@ type ProductCardImageCarouselProps = {
 	editable?: boolean;
 };
 
-function carouselCaretClassName(side: 'left' | 'right') {
+/** In-place slide controls — shaftless chevron, not navigate Arrow. */
+function carouselSlideClassName(side: 'left' | 'right') {
 	return `
 		absolute
 		top-1/2
@@ -199,30 +204,28 @@ export function ProductCardImageCarousel({
 						{active > 0
 							? (
 								<button
-									aria-hidden="true"
-									className={carouselCaretClassName('left')}
+									aria-label="Previous image"
+									className={carouselSlideClassName('left')}
 									onClick={
 										(event) => onCaretClick(event, active - 1)
 									}
-									tabIndex={-1}
 									type="button"
 								>
-									<ArrowLeftIcon className="h-4 w-4" />
+									<ChevronLeftIcon className="h-4 w-4" />
 								</button>
 							)
 							: null}
 						{active < urls.length - 1
 							? (
 								<button
-									aria-hidden="true"
-									className={carouselCaretClassName('right')}
+									aria-label="Next image"
+									className={carouselSlideClassName('right')}
 									onClick={
 										(event) => onCaretClick(event, active + 1)
 									}
-									tabIndex={-1}
 									type="button"
 								>
-									<ArrowRightIcon className="h-4 w-4" />
+									<ChevronRightIcon className="h-4 w-4" />
 								</button>
 							)
 							: null}
@@ -240,7 +243,6 @@ export function ProductCardImageCarousel({
 							"
 						/>
 						<div
-							aria-hidden="true"
 							className="
 								absolute
 								inset-x-0
@@ -249,6 +251,8 @@ export function ProductCardImageCarousel({
 								flex
 								justify-center
 							"
+							role="tablist"
+							aria-label="Product images"
 						>
 							<div
 								className="
@@ -262,6 +266,8 @@ export function ProductCardImageCarousel({
 							>
 								{urls.map((_, index) => (
 									<button
+										aria-label={`Show image ${index + 1} of ${urls.length}`}
+										aria-selected={index === active}
 										key={index}
 										className="
 											flex
@@ -273,7 +279,7 @@ export function ProductCardImageCarousel({
 										onClick={
 											(event) => onDotClick(event, index)
 										}
-										tabIndex={-1}
+										role="tab"
 										type="button"
 									>
 										<span
