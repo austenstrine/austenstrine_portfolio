@@ -406,51 +406,73 @@ export function CvDocument() {
 				</table>
 			</section>
 
-			<section className="cv-section">
-				<h2 className="cv-section-title">
-					Education
-				</h2>
-				{CV_CERTIFICATES.map((certificate) => (
-					<div
-						className="cv-job"
-						key={certificate.title}
-					>
-						<div className="cv-job-header">
-							<span className="cv-job-title">
-								{certificate.title}
-							</span>
-							{certificate.dates
+			<div className="cv-edu-skills">
+				<section className="cv-section cv-section--education">
+					<h2 className="cv-section-title">
+						Education
+					</h2>
+					{CV_CERTIFICATES.map((certificate) => (
+						<div
+							className="cv-job"
+							key={certificate.title}
+						>
+							<div className="cv-job-header">
+								<span className="cv-job-title">
+									{certificate.title}
+								</span>
+								{certificate.dates
+									? (
+										<span className="cv-job-dates">
+											{certificate.dates}
+										</span>
+									)
+									: null}
+							</div>
+							<div className="cv-job-company">
+								{certificate.org}
+							</div>
+							{certificate.location
 								? (
-									<span className="cv-job-dates">
-										{certificate.dates}
-									</span>
+									<div className="cv-job-meta">
+										{certificate.location}
+									</div>
+								)
+								: null}
+							{certificate.bullets.length > 0
+								? (
+									<ul>
+										{certificate.bullets.map((bullet) => (
+											<li key={bullet}>
+												{bullet}
+											</li>
+										))}
+									</ul>
 								)
 								: null}
 						</div>
-						<div className="cv-job-company">
-							{certificate.org}
-						</div>
-						{certificate.location
-							? (
-								<div className="cv-job-meta">
-									{certificate.location}
+					))}
+				</section>
+				<section className="cv-section cv-section--skills">
+					<h2 className="cv-section-title">
+						Skills
+					</h2>
+					<div className="cv-skills-grid">
+						{CV_SKILL_GROUPS.map((group) => (
+							<div
+								className="cv-skill-group"
+								key={group.label}
+							>
+								<div className="cv-skill-label">
+									{group.label}
 								</div>
-							)
-							: null}
-						{certificate.bullets.length > 0
-							? (
-								<ul>
-									{certificate.bullets.map((bullet) => (
-										<li key={bullet}>
-											{bullet}
-										</li>
-									))}
-								</ul>
-							)
-							: null}
+								<div className="cv-skill-list">
+									{group.list}
+								</div>
+							</div>
+						))}
 					</div>
-				))}
-			</section>
+				</section>
+			</div>
 
 			<section className="cv-section">
 				<h2 className="cv-section-title">
@@ -778,27 +800,6 @@ export function CvDocument() {
 						</tr>
 					</tbody>
 				</table>
-			</section>
-
-			<section className="cv-section">
-				<h2 className="cv-section-title">
-					Skills
-				</h2>
-				<div className="cv-skills-grid">
-					{CV_SKILL_GROUPS.map((group) => (
-						<div
-							className="cv-skill-group"
-							key={group.label}
-						>
-							<div className="cv-skill-label">
-								{group.label}
-							</div>
-							<div className="cv-skill-list">
-								{group.list}
-							</div>
-						</div>
-					))}
-				</div>
 			</section>
 
 			<section className="cv-section">

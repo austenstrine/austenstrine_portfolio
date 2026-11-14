@@ -302,20 +302,26 @@ body {
     margin-top: 0;
   }
 
-  /* Skills alone stays with Experience (too small for its own page).
-     Education + Skills may start the last page as one closing block. */
+  /* Education + Skills stay one closing unit. Do not force break-before:page
+     here — that fought break-inside:avoid in Chromium and left Skills alone
+     on the following page after Education. */
   .experience-print-closing {
     break-inside: avoid;
     page-break-inside: avoid;
   }
 
-  .experience-print-closing--with-education {
-    break-before: page;
-    page-break-before: always;
-  }
-
   .experience-print-closing > .experience-print-section:first-child {
     margin-top: 0;
+  }
+
+  .experience-print-closing .experience-print-section--education {
+    break-after: avoid-page;
+    page-break-after: avoid;
+  }
+
+  .experience-print-closing .experience-print-section--skills {
+    break-before: avoid-page;
+    page-break-before: avoid;
   }
 
   .experience-print-section h2 {

@@ -133,16 +133,10 @@ export function ExperiencePrintSheet({
 				)
 				: null}
 
-			<div
-				className={
-					closingHasEducation
-						? 'experience-print-closing experience-print-closing--with-education'
-						: 'experience-print-closing'
-				}
-			>
+			<div className="experience-print-closing">
 				{closingHasEducation
 					? (
-						<section className="experience-print-section">
+						<section className="experience-print-section experience-print-section--education">
 							<h2>
 								Education
 							</h2>
@@ -155,7 +149,7 @@ export function ExperiencePrintSheet({
 						</section>
 					)
 					: null}
-				<section className="experience-print-section">
+				<section className="experience-print-section experience-print-section--skills">
 					<h2>
 						Skills
 					</h2>

@@ -525,6 +525,22 @@ html:has(.cv-page) body {
 		page-break-inside: avoid;
 	}
 
+	/* Education + Skills stay one unit (no Skills-only page after Education). */
+	.cv-page .cv-edu-skills {
+		break-inside: avoid;
+		page-break-inside: avoid;
+	}
+
+	.cv-page .cv-section--education {
+		break-after: avoid-page;
+		page-break-after: avoid;
+	}
+
+	.cv-page .cv-section--skills {
+		break-before: avoid-page;
+		page-break-before: avoid;
+	}
+
 	.cv-page .cv-photo {
 		print-color-adjust: exact;
 		-webkit-print-color-adjust: exact;
