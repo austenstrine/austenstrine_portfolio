@@ -13,7 +13,7 @@ import {
 	type NestedCategory,
 } from '../../lib/category-tree';
 import type { CatalogCategoryRow } from '../../lib/catalog-api';
-import { ArrowLeftIcon } from '../icons/ArrowLeftIcon';
+import { ChevronLeftIcon } from '../icons/ChevronLeftIcon';
 import { ChevronRightIcon } from '../icons/ChevronRightIcon';
 
 const CHIP_STAGGER_MS = 36;
@@ -214,7 +214,7 @@ function PinnedBack({
 							gap-1.5
 						"
 					>
-						<ArrowLeftIcon
+						<ChevronLeftIcon
 							className="
 								h-3.5
 								w-3.5

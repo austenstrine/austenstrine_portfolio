@@ -2,7 +2,7 @@
 
 /**
  * Directional glyphs / unnamed caret-chevron components are banned.
- * Use portfolio icons: ArrowLeft/Right (nav/back), ChevronRightIcon (in-place drill).
+ * Use portfolio icons: ArrowLeft/Right (navigate), ChevronLeft/RightIcon (in-place de-drill/drill).
  */
 const BANNED_ICON = /^(Caret(Left|Right)|Chevron(Left|Right)|Arrow(Left|Right)?Caret)$/;
 const BANNED_GLYPH = /[←→›]/;
@@ -30,14 +30,14 @@ module.exports = {
 		type: 'problem',
 		docs: {
 			description:
-				'Use ArrowLeftIcon/ArrowRightIcon/ChevronRightIcon — not raw caret/chevron/←→›',
+				'Use ArrowLeft/RightIcon or ChevronLeft/RightIcon — not raw caret/chevron/←→›',
 		},
 		schema: [],
 		messages: {
 			useArrowIcons:
-				'Use ArrowLeftIcon / ArrowRightIcon / ChevronRightIcon for directional UI (no raw ←→›).',
+				'Use ArrowLeftIcon / ArrowRightIcon / ChevronLeftIcon / ChevronRightIcon (no raw ←→›).',
 			bannedIcon:
-				'Do not use {{name}}. Prefer ArrowLeftIcon, ArrowRightIcon, or ChevronRightIcon.',
+				'Do not use {{name}}. Prefer Arrow*Icon (navigate) or Chevron*Icon (in-place drill).',
 		},
 	},
 	create(context) {
