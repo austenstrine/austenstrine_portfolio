@@ -589,7 +589,10 @@ export function ExperienceSection() {
 
 			// Apply sticky width first, then measure the full rendered
 			// bar (includes + count + print) so the spacer matches.
-			// offsetHeight ignores translateY; spacer uses 0 when hidden.
+			// offsetHeight ignores translateY. Keep spacer at full bar
+			// height while hidden — collapsing it to 0 shifts layout
+			// under the stick point and scroll-anchors fight auto-hide
+			// (show → grow spacer → +scrollY → hide → shrink → …).
 			barEl.setAttribute('data-stuck', '');
 			barEl.setAttribute(
 				'data-hidden',
@@ -601,13 +604,7 @@ export function ExperienceSection() {
 			write(barEl, 'left', `${box.left}px`);
 			write(barEl, 'width', `${box.width}px`);
 			const height = barEl.offsetHeight;
-			write(
-				slotEl,
-				'height',
-				`${barHidden
-					? 0
-					: height}px`,
-			);
+			write(slotEl, 'height', `${height}px`);
 			write(barEl, 'top', `${
 				snapCssPixel(Math.min(0, sectionRect.bottom - height))
 			}px`);
