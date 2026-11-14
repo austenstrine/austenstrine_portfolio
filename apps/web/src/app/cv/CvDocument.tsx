@@ -525,6 +525,66 @@ export function CvDocument() {
 						</li>
 					</ul>
 				</div>
+				<div className="cv-job">
+					<div className="cv-job-header">
+						<span className="cv-job-title">
+							John and Jesus
+						</span>
+						<span className="cv-job-dates">
+							2011
+						</span>
+					</div>
+					<div className="cv-job-company">
+						<em>
+							John, His Story
+						</em>
+						{' '}
+						· Simpson University Drama Club
+					</div>
+					<ul>
+						<li>
+							Roles as John and Jesus; video:
+							{' '}
+							<a
+								href="https://www.youtube.com/playlist?list=PL02749288672392F2"
+								target="_blank"
+								rel="noopener noreferrer"
+							>
+								YouTube playlist
+							</a>
+						</li>
+					</ul>
+				</div>
+				<div className="cv-job">
+					<div className="cv-job-header">
+						<span className="cv-job-title">
+							Petruchio
+						</span>
+						<span className="cv-job-dates">
+							2011
+						</span>
+					</div>
+					<div className="cv-job-company">
+						<em>
+							The Taming of the Shrew
+						</em>
+						{' '}
+						· Simpson University Drama Club
+					</div>
+					<ul>
+						<li>
+							Role as Petruchio; video:
+							{' '}
+							<a
+								href="https://www.youtube.com/playlist?list=PLF38A98137436629F"
+								target="_blank"
+								rel="noopener noreferrer"
+							>
+								YouTube playlist
+							</a>
+						</li>
+					</ul>
+				</div>
 				<table className="cv-additional">
 					<tbody>
 						<tr>
