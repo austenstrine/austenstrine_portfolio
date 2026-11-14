@@ -1,0 +1,11 @@
+# Default text to LF. Tiny-copy surgeries that touch existing CRLF must preserve EOL
+# (enforced by scripts/prefs-lint/tiny-copy-verify.sh), not rewrite via this attribute alone.
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.gif binary
+*.ico binary
+*.xz binary
+*.woff2 binary
