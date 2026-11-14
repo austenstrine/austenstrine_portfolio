@@ -30,6 +30,7 @@ Flags:
 Same-VM note: edit via git worktree; do not mutate /agent/repos/* in place.
 Integrate on development (based on master). Feature: feature/<user>/development/<name>.
 Sibling remotes: check git ls-remote (often master).
+Lint note: use ./bin/agent-cli lint or root npm run lint. Workspace npm run lint -w apps/* is tsc-only and skips prefs.
 EOF
 }
 
@@ -516,6 +517,7 @@ EOF
 
 next
   ./bin/agent-cli layout|scripts|env|docker|seed|helpers [--json]
+  ./bin/agent-cli lint   # prefs + eslint-prefs + tsc (not npm run lint -w …)
   sibling remotes: git ls-remote --symref origin HEAD  (do not trust local branch name alone)
 EOF
 }

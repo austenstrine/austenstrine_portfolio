@@ -52,22 +52,17 @@ if ! grep -qE 'dssh launch|dssh-launch\.mdc' AGENTS.md; then
 	echo "agent-behavior-mdc-present: AGENTS.md must point at dssh launch / dssh-launch.mdc" >&2
 	fail=1
 fi
-if ! grep -q 'show-dont-tell.mdc' AGENTS.md; then
-	echo "agent-behavior-mdc-present: AGENTS.md must point at show-dont-tell.mdc" >&2
-	fail=1
-fi
-if ! grep -q 'tiny-copy-doer-adversary.mdc' AGENTS.md; then
-	echo "agent-behavior-mdc-present: AGENTS.md must point at tiny-copy-doer-adversary.mdc" >&2
-	fail=1
-fi
-if ! grep -q 'out-of-scope-handoff.mdc' AGENTS.md; then
-	echo "agent-behavior-mdc-present: AGENTS.md must point at out-of-scope-handoff.mdc" >&2
-	fail=1
-fi
-if ! grep -q 'shell-timing-hooks.mdc' AGENTS.md; then
-	echo "agent-behavior-mdc-present: AGENTS.md must point at shell-timing-hooks.mdc" >&2
-	fail=1
-fi
+
+# Every required alwaysApply .mdc basename must appear in AGENTS.md (start-here pointers).
+for path in "${required[@]}"; do
+	if [[ "$path" =~ ^\.cursor/rules/(.+\.mdc)$ ]]; then
+		base="${BASH_REMATCH[1]}"
+		if ! grep -qF "$base" AGENTS.md; then
+			echo "agent-behavior-mdc-present: AGENTS.md must point at $base" >&2
+			fail=1
+		fi
+	fi
+done
 
 if [[ "$fail" -ne 0 ]]; then
 	exit 1

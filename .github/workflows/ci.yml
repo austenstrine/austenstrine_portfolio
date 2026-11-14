@@ -6,6 +6,7 @@ on:
     branches:
       - master
       - main
+      - development
 
 jobs:
   test-and-build:
