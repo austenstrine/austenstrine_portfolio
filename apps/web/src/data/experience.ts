@@ -387,10 +387,11 @@ export const professionalExperience: ExperienceRole[] = [
 		kind: 'non-software',
 		category: 'extracurricular',
 		title: 'High school choir',
-		organization: 'High school',
-		dates: 'High school',
+		organization: 'Chico Sr. High School',
+		dates: '2005–2009',
+		location: 'Chico, CA',
 		bullets: [
-			'Madrigals, a cappella, and Sac Street Boys.',
+			'Sang bass and baritone in Madrigals, a cappella, and Sac Street Boys.',
 		],
 	},
 ];

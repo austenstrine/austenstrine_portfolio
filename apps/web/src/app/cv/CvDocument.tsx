@@ -692,12 +692,15 @@ export function CvDocument() {
 								<div>
 									High school choir
 								</div>
+								<div className="cv-additional-org">
+									Chico Sr. High School
+								</div>
 							</td>
 							<td>
-								Madrigals, a cappella, and Sac Street Boys
+								Sang bass and baritone in Madrigals, a cappella, and Sac Street Boys
 							</td>
 							<td>
-								High school
+								2005–2009
 							</td>
 						</tr>
 						<tr>

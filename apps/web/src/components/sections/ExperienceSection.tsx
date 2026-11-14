@@ -530,7 +530,6 @@ export function ExperienceSection() {
 		function dock() {
 			const sentinelRect = sentinelEl.getBoundingClientRect();
 			const sectionRect = sectionEl.getBoundingClientRect();
-			const height = barEl.offsetHeight;
 
 			if(sentinelRect.bottom <= 0) {
 				stuck = true;
@@ -548,11 +547,14 @@ export function ExperienceSection() {
 				measureBox();
 			}
 
-			write(slotEl, 'height', `${height}px`);
+			// Apply sticky width first, then measure the full rendered
+			// bar (includes + count + print) so the spacer matches.
 			barEl.setAttribute('data-stuck', '');
 			write(barEl, 'position', 'fixed');
 			write(barEl, 'left', `${box.left}px`);
 			write(barEl, 'width', `${box.width}px`);
+			const height = barEl.offsetHeight;
+			write(slotEl, 'height', `${height}px`);
 			write(barEl, 'top', `${
 				snapCssPixel(Math.min(0, sectionRect.bottom - height))
 			}px`);
@@ -582,6 +584,7 @@ export function ExperienceSection() {
 		window.addEventListener('resize', onResize);
 		const observer = new ResizeObserver(onResize);
 		observer.observe(sectionEl);
+		observer.observe(barEl);
 
 		return () => {
 			if(frame !== 0) {
@@ -890,8 +893,8 @@ export function ExperienceSection() {
 							type="button"
 						>
 							{filtersOpen
-								? 'Hide filters'
-								: 'View filters'}
+								? 'Hide'
+								: 'View'}
 						</button>
 					</div>
 				</div>
