@@ -60,7 +60,7 @@ export function HeroSection() {
 							text-white/80
 						"
 					>
-						Parowan, Utah · Murray in December 2026
+						Parowan, Utah · Murray in January 2027
 					</p>
 					<h1
 						className="
@@ -95,7 +95,7 @@ export function HeroSection() {
 						software engineer developing several production e-commerce sites. I live
 						in Parowan, Utah. I&apos;m
 						in Murray Mondays and Tuesdays, and I&apos;m moving there full-time in
-						December 2026. I&apos;m open to on-site and hybrid roles in the Salt
+						January 2027. I&apos;m open to on-site and hybrid roles in the Salt
 						Lake Valley.
 					</p>
 					<div

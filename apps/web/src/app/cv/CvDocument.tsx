@@ -85,7 +85,7 @@ export function CvDocument() {
 							·
 						</span>
 						<span>
-							relocating full-time December 2026
+							relocating full-time January 2027
 						</span>
 					</p>
 				</div>
