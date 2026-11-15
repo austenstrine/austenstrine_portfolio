@@ -35,12 +35,42 @@ describe('app-origins', () => {
 	});
 
 	it('corsAllowedOrigins includes web and CRM', () => {
+		const prevNodeEnv = process.env.NODE_ENV;
+		process.env.NODE_ENV = 'production';
 		process.env.WEB_URL = 'https://www.austenstrine.dev';
 		process.env.CRM_URL = 'https://crm.austenstrine.dev';
 		expect(corsAllowedOrigins().sort()).toEqual([
 			'https://crm.austenstrine.dev',
 			'https://www.austenstrine.dev',
 		]);
+		if(prevNodeEnv === undefined) {
+			delete process.env.NODE_ENV;
+		}
+		else {
+			process.env.NODE_ENV = prevNodeEnv;
+		}
+	});
+
+	it('corsAllowedOrigins adds HTTP localhost in non-production', () => {
+		const prevNodeEnv = process.env.NODE_ENV;
+		process.env.NODE_ENV = 'development';
+		process.env.WEB_URL = 'https://local.austenstrine.dev';
+		process.env.CRM_URL = 'https://crm.local.austenstrine.dev';
+		const origins = corsAllowedOrigins();
+		expect(origins).toEqual(expect.arrayContaining([
+			'https://local.austenstrine.dev',
+			'https://crm.local.austenstrine.dev',
+			'http://localhost:3000',
+			'http://127.0.0.1:3000',
+			'http://localhost:3001',
+			'http://127.0.0.1:3001',
+		]));
+		if(prevNodeEnv === undefined) {
+			delete process.env.NODE_ENV;
+		}
+		else {
+			process.env.NODE_ENV = prevNodeEnv;
+		}
 	});
 
 	it('detects CRM vs web origins from Origin and Referer', () => {

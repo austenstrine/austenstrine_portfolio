@@ -4,8 +4,25 @@ import { FormEvent, useState } from 'react';
 import { FormField } from '../auth/FormField';
 import { ErrorText } from '../auth/ErrorText';
 import { PILL_CTA_MOTION_CLASS } from './pillCta';
-import { submitRoadmapSuggestion } from '../../lib/roadmap-api';
+import {
+	RoadmapApiError,
+	submitRoadmapSuggestion,
+} from '../../lib/roadmap-api';
 import { useSession } from '../../lib/useSession';
+
+function suggestionErrorMessage(error: unknown) {
+	if(error instanceof RoadmapApiError && error.status === 429) {
+		return 'Too many suggestions — wait a minute and try again.';
+	}
+	const raw = error instanceof Error ? error.message.trim() : '';
+	if(
+		!raw
+		|| /failed to fetch|networkerror|load failed|aborterror|timeout/i.test(raw)
+	) {
+		return 'Could not send — try again in a minute.';
+	}
+	return raw;
+}
 
 export function RoadmapSuggestionForm() {
 	const { user } = useSession();
@@ -38,11 +55,7 @@ export function RoadmapSuggestionForm() {
 			setWebsite('');
 		}
 		catch(submitError) {
-			setError(
-				submitError instanceof Error
-					? submitError.message
-					: 'Could not send suggestion.',
-			);
+			setError(suggestionErrorMessage(submitError));
 		}
 		finally {
 			setBusy(false);

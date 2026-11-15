@@ -1,7 +1,9 @@
+import { RoadmapCompletedSections } from '../../../components/catalog/RoadmapCompletedSections';
 import { RoadmapSuggestionForm } from '../../../components/catalog/RoadmapSuggestionForm';
 import {
 	ROADMAP_PLANNED,
 	completedByArea,
+	completedHighlights,
 } from '../../../data/place-et-marque-roadmap';
 
 const sectionNav = [
@@ -10,8 +12,17 @@ const sectionNav = [
 	{ id: 'suggestions', label: 'Suggestions' },
 ] as const;
 
+/** Clear sticky catalog header (+ any top banners baked into the token). */
+const sectionScrollClassName = `
+	scroll-mt-[calc(var(--catalog-header-h)+0.75rem)]
+	flex
+	flex-col
+	gap-4
+`;
+
 export default function PlaceEtMarqueRoadmapPage() {
 	const completedGroups = completedByArea();
+	const highlights = completedHighlights();
 
 	return (
 		<div
@@ -68,8 +79,8 @@ export default function PlaceEtMarqueRoadmapPage() {
 				className="
 					flex
 					flex-wrap
-					gap-x-4
-					gap-y-2
+					gap-x-1
+					gap-y-1
 					text-sm
 					font-semibold
 				"
@@ -77,9 +88,14 @@ export default function PlaceEtMarqueRoadmapPage() {
 				{sectionNav.map((item) => (
 					<a
 						className="
+							inline-flex
+							min-h-11
+							items-center
+							px-3
 							text-sky
 							underline
 							underline-offset-2
+							max-[399px]:px-2
 						"
 						key={item.id}
 						href={`#${item.id}`}
@@ -90,12 +106,7 @@ export default function PlaceEtMarqueRoadmapPage() {
 			</nav>
 
 			<section
-				className="
-					scroll-mt-28
-					flex
-					flex-col
-					gap-4
-				"
+				className={sectionScrollClassName}
 				id="planned"
 			>
 				<div>
@@ -185,12 +196,10 @@ export default function PlaceEtMarqueRoadmapPage() {
 			</section>
 
 			<section
-				className="
-					scroll-mt-28
-					flex
-					flex-col
+				className={`
+					${sectionScrollClassName}
 					gap-6
-				"
+				`}
 				id="completed"
 			>
 				<div>
@@ -211,64 +220,20 @@ export default function PlaceEtMarqueRoadmapPage() {
 							text-slate-600
 						"
 					>
-						Curated from recent shipping history and feature landings.
-						Titles stay human-readable; a small helper can propose new
-						rows from git later.
+						Highlights first, then the full list by area — open an
+						area to see everything that has landed.
 					</p>
 				</div>
 
-				{completedGroups.map((group) => (
-					<div
-						className="
-							flex
-							flex-col
-							gap-3
-						"
-						key={group.area}
-					>
-						<h3
-							className="
-								text-sm
-								font-semibold
-								uppercase
-								tracking-[0.14em]
-								text-slate-500
-							"
-						>
-							{group.label}
-						</h3>
-						<ul
-							className="
-								columns-1
-								gap-x-8
-								sm:columns-2
-							"
-						>
-							{group.items.map((item) => (
-								<li
-									className="
-										mb-2
-										break-inside-avoid
-										border-l-2
-										border-asgreen
-										pl-3
-										text-sm
-										leading-snug
-										text-slate-800
-									"
-									key={item.id}
-								>
-									{item.title}
-								</li>
-							))}
-						</ul>
-					</div>
-				))}
+				<RoadmapCompletedSections
+					groups={completedGroups}
+					highlights={highlights}
+				/>
 			</section>
 
 			<section
-				className="
-					scroll-mt-28
+				className={`
+					${sectionScrollClassName}
 					max-w-2xl
 					rounded-2xl
 					border
@@ -276,7 +241,7 @@ export default function PlaceEtMarqueRoadmapPage() {
 					bg-white
 					p-5
 					sm:p-6
-				"
+				`}
 				id="suggestions"
 			>
 				<h2

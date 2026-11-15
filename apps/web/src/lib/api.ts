@@ -42,16 +42,44 @@ function internalApiBaseUrl() {
 	return publicUrl;
 }
 
+/**
+ * When the page is plain HTTP on a local host, Chromium cannot call the local
+ * HTTPS API base (net::ERR_FAILED). Prefer loopback HTTP for fetches only —
+ * OAuth / absolute links still use PUBLIC_API_BASE_URL.
+ */
+function browserFetchApiBaseUrl() {
+	const configured = publicApiBaseUrl();
+	if(typeof window === 'undefined') {
+		return configured;
+	}
+	const { protocol, hostname } = window.location;
+	if(protocol !== 'http:' || !isLocalHostname(hostname)) {
+		return configured;
+	}
+	try {
+		const url = new URL(configured);
+		if(url.protocol === 'https:' && isLocalHostname(url.hostname)) {
+			const path = trimSlash(url.pathname) || '/api';
+			return `http://127.0.0.1:4000${path}`;
+		}
+	}
+	catch {
+		return configured;
+	}
+	return configured;
+}
+
 /** Browser-facing API origin (OAuth redirects, download links, webhook docs). */
 export const PUBLIC_API_BASE_URL = publicApiBaseUrl();
 
 /**
  * Fetch origin. Next SSR cannot verify the local nginx TLS cert, so the server
- * talks to the API over HTTP on loopback. The browser still uses the public URL.
+ * talks to the API over HTTP on loopback. The browser uses the public URL on
+ * HTTPS pages, and loopback HTTP when the page itself is HTTP localhost.
  */
 export const API_BASE_URL = typeof window === 'undefined'
 	? internalApiBaseUrl()
-	: PUBLIC_API_BASE_URL;
+	: browserFetchApiBaseUrl();
 
 export async function getProjects(): Promise<Project[]> {
 	try {
