@@ -103,6 +103,9 @@ export function MarketplaceFooter() {
 					<FooterNavLink href="/place-et-marque/guide">
 						Guide
 					</FooterNavLink>
+					<FooterNavLink href="/place-et-marque/roadmap">
+						Roadmap
+					</FooterNavLink>
 					<FooterNavLink href="/place-et-marque/manage">
 						Sell
 					</FooterNavLink>
