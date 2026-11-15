@@ -7,9 +7,9 @@ import {
 	type NestedCategory,
 } from '../../lib/category-tree';
 import type { CatalogCategoryRow } from '../../lib/catalog-api';
-import { ArrowLeftIcon } from '../icons/ArrowLeftIcon';
-import { ArrowRightIcon } from '../icons/ArrowRightIcon';
 import { CaretDownIcon } from '../icons/CaretDownIcon';
+import { ChevronLeftIcon } from '../icons/ChevronLeftIcon';
+import { ChevronRightIcon } from '../icons/ChevronRightIcon';
 import {
 	CatalogMenuRow,
 	CatalogMenuSurface,
@@ -71,12 +71,16 @@ export function CatalogCategoryMenu({
 						: 'Category'
 				}
 				className="
+					group
 					flex
 					h-full
 					items-center
 					border-r
 					border-slate-200
 					text-ink
+					transition
+					hover:bg-frost
+					hover:text-asgreen
 				"
 				onClick={() => setOpen((wasOpen) => !wasOpen)}
 				ref={triggerRef}
@@ -99,13 +103,28 @@ export function CatalogCategoryMenu({
 					{selectedLabel}
 				</span>
 				<CaretDownIcon
-					className="
-						mr-2
-						h-3
-						w-3
-						shrink-0
-						text-slate-500
-					"
+					className={
+						open
+							? `
+								mr-2
+								h-3
+								w-3
+								shrink-0
+								rotate-180
+								text-slate-500
+								transition
+								group-hover:text-asgreen
+							`
+							: `
+								mr-2
+								h-3
+								w-3
+								shrink-0
+								text-slate-500
+								transition
+								group-hover:text-asgreen
+							`
+					}
 				/>
 			</button>
 			{open && panelBox
@@ -128,7 +147,7 @@ export function CatalogCategoryMenu({
 												gap-2
 											"
 										>
-											<ArrowLeftIcon className="h-3.5 w-3.5 shrink-0" />
+											<ChevronLeftIcon className="h-3.5 w-3.5 shrink-0" />
 											<span className="truncate">
 												Back
 											</span>
@@ -136,6 +155,7 @@ export function CatalogCategoryMenu({
 									</CatalogMenuRow>
 									<CatalogMenuRow
 										active={category === current.slug}
+										navigates
 										onClick={() => choose(current.slug)}
 									>
 										<span className="truncate">
@@ -147,6 +167,7 @@ export function CatalogCategoryMenu({
 							: (
 								<CatalogMenuRow
 									active={!category}
+									navigates
 									onClick={() => choose('')}
 								>
 									<span className="truncate">
@@ -162,6 +183,7 @@ export function CatalogCategoryMenu({
 									&& category === row.slug
 								}
 								key={row.id}
+								navigates={row.children.length === 0}
 								onClick={() => {
 									if(row.children.length > 0) {
 										setStack((currentStack) => [...currentStack, row]);
@@ -175,7 +197,7 @@ export function CatalogCategoryMenu({
 								</span>
 								{row.children.length > 0
 									? (
-										<ArrowRightIcon
+										<ChevronRightIcon
 											className="
 												h-3.5
 												w-3.5

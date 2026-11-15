@@ -1,4 +1,6 @@
 import { CdnImg } from '../CdnImg';
+import { NavigatePersistentArrow } from '../catalog/NavigatePersistentArrow';
+import { PILL_CTA_BASE_CLASS } from '../catalog/pillCta';
 import { SITE_HEADLINE } from '../../lib/site';
 
 export function HeroSection() {
@@ -112,66 +114,54 @@ export function HeroSection() {
 						"
 					>
 						<a
-							className="
-								inline-block
-								rounded-full
+							className={`
+								${PILL_CTA_BASE_CLASS}
 								bg-white
 								px-6
 								py-3
 								text-center
-								text-sm
-								font-semibold
 								text-ink
-								transition
-								hover:-translate-y-0.5
 								hover:bg-frost
 								max-[399px]:px-4
-							"
+							`}
 							href="/cv.html"
 						>
 							View CV
+							<NavigatePersistentArrow />
 						</a>
 						<a
-							className="
-								inline-block
-								rounded-full
+							className={`
+								${PILL_CTA_BASE_CLASS}
 								border
 								border-white/60
 								px-6
 								py-3
 								text-center
-								text-sm
-								font-semibold
 								text-white
-								transition
-								hover:-translate-y-0.5
 								hover:bg-white/10
 								max-[399px]:px-4
-							"
+							`}
 							href="#featured-build"
 						>
 							Explore a demo of my skills
+							<NavigatePersistentArrow />
 						</a>
 						<a
-							className="
-								inline-block
-								rounded-full
+							className={`
+								${PILL_CTA_BASE_CLASS}
 								border
 								border-white/60
 								px-6
 								py-3
 								text-center
-								text-sm
-								font-semibold
 								text-white
-								transition
-								hover:-translate-y-0.5
 								hover:bg-white/10
 								max-[399px]:px-4
-							"
+							`}
 							href="#contact"
 						>
 							Contact
+							<NavigatePersistentArrow />
 						</a>
 					</div>
 				</div>

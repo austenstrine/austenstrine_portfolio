@@ -4,10 +4,12 @@ import {
 	useEffect,
 	useRef,
 	useState,
+	useSyncExternalStore,
 	type ReactNode,
 	type RefObject,
 } from 'react';
 import { createPortal } from 'react-dom';
+import { NavigateHoverArrow } from './NavigateHoverArrow';
 
 export type CatalogMenuBox = {
 	left: number;
@@ -15,12 +17,36 @@ export type CatalogMenuBox = {
 	width: number;
 };
 
+/** Phones (viewport ≤639): account/sort/category menus open as a bottom drawer. */
+const CATALOG_MENU_DRAWER_MQ = '(max-width: 639px)';
+
+function subscribeCatalogMenuDrawer(onStoreChange: () => void) {
+	const media = window.matchMedia(CATALOG_MENU_DRAWER_MQ);
+	media.addEventListener('change', onStoreChange);
+	return () => media.removeEventListener('change', onStoreChange);
+}
+
+function getCatalogMenuDrawerSnapshot() {
+	return window.matchMedia(CATALOG_MENU_DRAWER_MQ).matches;
+}
+
+function getCatalogMenuDrawerServerSnapshot() {
+	return false;
+}
+
+export function useCatalogMenuDrawer() {
+	return useSyncExternalStore(
+		subscribeCatalogMenuDrawer,
+		getCatalogMenuDrawerSnapshot,
+		getCatalogMenuDrawerServerSnapshot,
+	);
+}
+
 const menuRowActiveClass = `
+	group
 	flex
 	w-full
 	items-center
-	justify-between
-	gap-3
 	rounded-full
 	bg-asgreen/15
 	px-3.5
@@ -32,11 +58,10 @@ const menuRowActiveClass = `
 `;
 
 const menuRowIdleClass = `
+	group
 	flex
 	w-full
 	items-center
-	justify-between
-	gap-3
 	rounded-full
 	px-3.5
 	py-2
@@ -46,13 +71,33 @@ const menuRowIdleClass = `
 	hover:bg-frost
 `;
 
+function menuRowBody(children: ReactNode) {
+	return (
+		<span
+			className="
+				flex
+				min-w-0
+				flex-1
+				items-center
+				justify-between
+				gap-3
+			"
+		>
+			{children}
+		</span>
+	);
+}
+
 export function CatalogMenuRow({
 	active = false,
 	children,
+	navigates = false,
 	onClick,
 }: {
 	active?: boolean;
 	children: ReactNode;
+	/** Whole-row choose/navigate: hover-in shafted arrow (not drill / Sign out). */
+	navigates?: boolean;
 	onClick: () => void;
 }) {
 	return (
@@ -65,7 +110,19 @@ export function CatalogMenuRow({
 			role="menuitem"
 			type="button"
 		>
-			{children}
+			{menuRowBody(children)}
+			{navigates
+				? (
+					<NavigateHoverArrow
+						className={
+							active
+								? 'text-asgreen'
+								: 'text-slate-400'
+						}
+					/>
+				)
+				: null
+			}
 		</button>
 	);
 }
@@ -75,11 +132,14 @@ export function CatalogMenuLink({
 	children,
 	href,
 	onClick,
+	/** When false, caller supplies its own cue (e.g. already has an icon). Default: hover-in →. */
+	showNavigateCue = true,
 }: {
 	active?: boolean;
 	children: ReactNode;
 	href: string;
 	onClick?: () => void;
+	showNavigateCue?: boolean;
 }) {
 	return (
 		<a
@@ -91,30 +151,63 @@ export function CatalogMenuLink({
 			onClick={onClick}
 			role="menuitem"
 		>
-			{children}
+			{menuRowBody(children)}
+			{showNavigateCue
+				? (
+					<NavigateHoverArrow
+						className={
+							active
+								? 'text-asgreen'
+								: 'text-slate-400'
+						}
+					/>
+				)
+				: null
+			}
 		</a>
 	);
 }
 
+const catalogMenuBodyClassName = `
+	max-h-[80vh]
+	space-y-0.5
+	overflow-y-auto
+	scrollbar-thin-quiet
+`;
+
+const catalogMenuFloatingPanelClassName = `
+	fixed
+	z-50
+	rounded-2xl
+	border
+	border-slate-200
+	bg-white
+	p-2
+	shadow-lg
+`;
+
+const catalogMenuDrawerPanelClassName = `
+	fixed
+	inset-x-0
+	bottom-0
+	z-50
+	max-h-[80vh]
+	overflow-y-auto
+	rounded-t-2xl
+	border
+	border-slate-200
+	bg-white
+	p-2
+	pb-[max(0.5rem,env(safe-area-inset-bottom))]
+	shadow-lg
+	scrollbar-thin-quiet
+`;
+
 export function CatalogMenuSurface({
-	bodyClassName = `
-		max-h-80
-		space-y-0.5
-		overflow-y-auto
-		scrollbar-thin-quiet
-	`,
+	bodyClassName = catalogMenuBodyClassName,
 	children,
 	panelBox,
-	panelClassName = `
-		fixed
-		z-50
-		rounded-2xl
-		border
-		border-slate-200
-		bg-white
-		p-2
-		shadow-lg
-	`,
+	panelClassName = catalogMenuFloatingPanelClassName,
 	panelRef,
 }: {
 	bodyClassName?: string;
@@ -123,8 +216,36 @@ export function CatalogMenuSurface({
 	panelClassName?: string;
 	panelRef: RefObject<HTMLDivElement | null>;
 }) {
+	const drawer = useCatalogMenuDrawer();
+
 	if(typeof document === 'undefined') {
 		return null;
+	}
+
+	if(drawer) {
+		return createPortal(
+			<>
+				<div
+					aria-hidden
+					className="
+						fixed
+						inset-0
+						z-50
+						bg-sky/40
+					"
+				/>
+				<div
+					className={catalogMenuDrawerPanelClassName}
+					ref={panelRef as RefObject<HTMLDivElement>}
+					role="menu"
+				>
+					<div className="space-y-0.5">
+						{children}
+					</div>
+				</div>
+			</>,
+			document.body,
+		);
 	}
 
 	return createPortal(

@@ -19,11 +19,80 @@ import { RequireAccess } from '../../../components/auth/RequireAccess';
 import {
 	PageBottomPanePortal,
 	SellerTopContextPortal,
+	useCatalogSearch,
 } from '../../../components/catalog/CatalogSearchContext';
+import { FrostSelectMenu } from '../../../components/catalog/FrostSelectMenu';
 import { ManageProductRowActions } from '../../../components/catalog/ManageProductRowActions';
-import { ArrowLeftIcon } from '../../../components/icons/ArrowLeftIcon';
-import { ArrowRightIcon } from '../../../components/icons/ArrowRightIcon';
+import { NavigateHoverArrow } from '../../../components/catalog/NavigateHoverArrow';
+import { NavigatePersistentArrow } from '../../../components/catalog/NavigatePersistentArrow';
+import { PILL_CTA_MOTION_CLASS } from '../../../components/catalog/pillCta';
 import { PlusIcon } from '../../../components/icons/PlusIcon';
+
+const PAGER_NAV_CLASS = `
+	flex
+	flex-wrap
+	items-center
+	justify-center
+	gap-1
+`;
+
+const BOTTOM_ACTIONS_ROW_CLASS = `
+	grid
+	w-full
+	grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]
+	items-center
+	gap-x-2
+	gap-y-2
+`;
+
+/** Match SellerTopContextPortal L/C/R so on-page ↔ pinned stays put. */
+const LIST_CONTROLS_ROW_CLASS = `
+	grid
+	w-full
+	grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]
+	items-center
+	gap-x-3
+	gap-y-2
+`;
+
+const LIST_CONTROLS_LEFT_CLASS = `
+	flex
+	min-w-0
+	flex-wrap
+	items-center
+	justify-start
+	gap-x-3
+	gap-y-2
+`;
+
+const LIST_CONTROLS_CLUSTER_CLASS = `
+	flex
+	min-w-0
+	flex-wrap
+	items-center
+	justify-center
+	gap-x-3
+	gap-y-2
+`;
+
+const LIST_CONTROLS_RIGHT_CLASS = `
+	flex
+	min-w-0
+	flex-wrap
+	items-center
+	justify-end
+	gap-x-3
+	gap-y-2
+`;
+
+const PAGE_SUMMARY_CLASS = `
+	w-fit
+	max-w-full
+	shrink-0
+	text-right
+	text-xs
+	text-slate-500
+`;
 
 /** Match catalog-search hard cap (`Math.min(..., 96)`); 100 never returns a full page. */
 const PAGE_SIZE_OPTIONS = [24, 48, 96] as const;
@@ -171,6 +240,7 @@ function PagerButton({
 			className={
 				active
 					? `
+						group
 						inline-flex
 						min-w-8
 						items-center
@@ -188,6 +258,7 @@ function PagerButton({
 						focus-visible:outline-asgreen
 					`
 					: `
+						group
 						inline-flex
 						min-w-8
 						items-center
@@ -221,8 +292,324 @@ function PagerButton({
 	);
 }
 
+function ManagePagination({
+	className,
+	onPageChange,
+	page,
+	pageCount,
+}: {
+	className: string;
+	onPageChange: (page: number) => void;
+	page: number;
+	pageCount: number;
+}) {
+	return (
+		<nav
+			aria-label="Pagination"
+			className={className}
+		>
+			<PagerButton
+				ariaLabel="Previous page"
+				disabled={page <= 1}
+				onClick={() => onPageChange(Math.max(1, page - 1))}
+			>
+				<NavigatePersistentArrow
+					direction="left"
+					iconClassName="h-4 w-4"
+				/>
+			</PagerButton>
+			{pageItems(page, pageCount).map((item, index) =>
+				item === 'gap'
+					? (
+						<span
+							className="px-1 text-slate-400"
+							key={`gap-${index}`}
+						>
+							…
+						</span>
+					)
+					: (
+						<PagerButton
+							active={item === page}
+							ariaCurrent={item === page ? 'page' : undefined}
+							key={item}
+							onClick={() => onPageChange(item)}
+						>
+							{item}
+						</PagerButton>
+					))}
+			<PagerButton
+				ariaLabel="Next page"
+				disabled={page >= pageCount}
+				onClick={() => onPageChange(Math.min(pageCount, page + 1))}
+			>
+				<NavigatePersistentArrow
+					iconClassName="h-4 w-4"
+				/>
+			</PagerButton>
+		</nav>
+	);
+}
+
+/** Read a CSS length var as px; missing/cleared/0 → 0 (never invent a stale inset). */
+function cssVarPx(name: string): number {
+	if(typeof document === 'undefined') {
+		return 0;
+	}
+	const raw = getComputedStyle(document.documentElement)
+		.getPropertyValue(name)
+		.trim();
+	const parsed = Number.parseFloat(raw);
+	if(Number.isFinite(parsed) && parsed > 0) {
+		return Math.ceil(parsed);
+	}
+	return 0;
+}
+
+function manageBottomPaneInsetPx(): number {
+	return cssVarPx('--seller-bottom-pane-stack');
+}
+
+function manageTopChromeInsetPx(): number {
+	const measured = cssVarPx('--catalog-header-h');
+	if(measured > 0) {
+		return measured;
+	}
+	return cssVarPx('--catalog-header-h-base');
+}
+
+function ManageListControls({
+	filterText,
+	onFilterTextChange,
+	onPageSizeChange,
+	onSortChange,
+	onStockFilterChange,
+	pageSize,
+	sort,
+	stockFilter,
+}: {
+	filterText: string;
+	onFilterTextChange: (value: string) => void;
+	onPageSizeChange: (value: PageSize) => void;
+	onSortChange: (value: ManageSort) => void;
+	onStockFilterChange: (value: StockFilter) => void;
+	pageSize: PageSize;
+	sort: ManageSort;
+	stockFilter: StockFilter;
+}) {
+	return (
+		<>
+			<label
+				className="
+					inline-flex
+					min-w-[9rem]
+					max-w-[14rem]
+					flex-none
+					flex-col
+					gap-0.5
+					text-[11px]
+					font-medium
+					text-slate-500
+				"
+			>
+				<span>
+					Filter
+				</span>
+				<input
+					aria-label="Filter products"
+					className={frostControlClassName}
+					onChange={(event) => onFilterTextChange(event.target.value)}
+					placeholder="Name or SKU"
+					type="search"
+					value={filterText}
+				/>
+			</label>
+			<div
+				className="
+					inline-flex
+					flex-col
+					gap-0.5
+					text-[11px]
+					font-medium
+					text-slate-500
+				"
+			>
+				<span>
+					Stock
+				</span>
+				<FrostSelectMenu
+					ariaLabel="Stock filter"
+					onChange={onStockFilterChange}
+					options={STOCK_FILTERS}
+					value={stockFilter}
+				/>
+			</div>
+			<div
+				className="
+					inline-flex
+					flex-col
+					gap-0.5
+					text-[11px]
+					font-medium
+					text-slate-500
+				"
+			>
+				<span>
+					Sort
+				</span>
+				<FrostSelectMenu
+					ariaLabel="Sort products"
+					onChange={onSortChange}
+					options={MANAGE_SORTS}
+					value={sort}
+				/>
+			</div>
+			<div
+				className="
+					inline-flex
+					flex-col
+					gap-0.5
+					text-[11px]
+					font-medium
+					text-slate-500
+				"
+			>
+				<span>
+					Show
+				</span>
+				<FrostSelectMenu
+					ariaLabel="Products per page"
+					onChange={
+						(next) => {
+							onPageSizeChange(Number(next) as PageSize);
+						}
+					}
+					options={PAGE_SIZE_OPTIONS.map((size) => ({
+						id: String(size),
+						label: `${size} per page`,
+					}))}
+					value={String(pageSize)}
+				/>
+			</div>
+		</>
+	);
+}
+
+function ManageNewProductLink({
+	href,
+	title,
+}: {
+	href: string;
+	title: string;
+}) {
+	return (
+		<a
+			aria-label="New product"
+			className={`
+				group
+				relative
+				inline-flex
+				h-10
+				w-10
+				shrink-0
+				items-center
+				justify-center
+				rounded-full
+				bg-asgreen
+				text-sm
+				font-semibold
+				text-white
+				${PILL_CTA_MOTION_CLASS}
+				hover:bg-asgreen/90
+				sm:w-auto
+				sm:justify-center
+				sm:pl-3.5
+				sm:pr-8
+			`}
+			href={href}
+			title={title}
+		>
+			<span
+				className="
+					inline-flex
+					items-center
+					gap-1.5
+				"
+			>
+				<PlusIcon
+					className="
+						h-4
+						w-4
+						shrink-0
+					"
+				/>
+				<span
+					className="
+						hidden
+						whitespace-nowrap
+						sm:inline
+					"
+				>
+					New product
+				</span>
+			</span>
+			{/*
+				Arrow is out of flow + right pad reserves its slot so hover
+				max-width/margin reveal cannot grow the CTA box (PEM-395).
+			*/}
+			<span
+				aria-hidden
+				className="
+					pointer-events-none
+					absolute
+					right-2.5
+					top-1/2
+					hidden
+					-translate-y-1/2
+					sm:inline-flex
+				"
+			>
+				<NavigateHoverArrow />
+			</span>
+		</a>
+	);
+}
+
+function ManageBottomActionsRow({
+	newProduct,
+	pager,
+}: {
+	newProduct: ReactNode;
+	pager: ReactNode;
+}) {
+	return (
+		<div className={BOTTOM_ACTIONS_ROW_CLASS}>
+			<div />
+			<div
+				className="
+					flex
+					min-w-0
+					justify-center
+				"
+			>
+				{pager}
+			</div>
+			<div
+				className="
+					flex
+					min-w-0
+					justify-end
+				"
+			>
+				{newProduct}
+			</div>
+		</div>
+	);
+}
+
 function PlaceEtMarqueManageContent() {
 	const { user } = useSession();
+	const { pageBottomPaneHostEl } = useCatalogSearch();
 	const [products, setProducts] = useState<CatalogProductSummary[]>([]);
 	const [vendors, setVendors] = useState<VendorSummary[]>([]);
 	const [selectedVendorId, setSelectedVendorId] = useState('');
@@ -242,7 +629,14 @@ function PlaceEtMarqueManageContent() {
 	const newProductVendorName = newProductVendor?.name ?? null;
 	const showPager = vendorsReady && !loadingProducts && pageCount > 1 && products.length > 0;
 	const showListControls = vendorsReady && vendors.length > 0;
+	const showBottomActions = showPager || Boolean(newProductVendor);
 	const activeFilterQuery = deferredFilterText.trim();
+	const [listControlsEl, setListControlsEl] = useState<HTMLDivElement | null>(null);
+	const [listEndEl, setListEndEl] = useState<HTMLDivElement | null>(null);
+	/** Filter–Show + page summary pin into top bar C/R once their on-page row scrolls away. */
+	const [listControlsPinned, setListControlsPinned] = useState(false);
+	/** Pagination + New product stay on-page at list end until this is false (scrolled away → bottom bar). */
+	const [bottomActionsInline, setBottomActionsInline] = useState(true);
 
 	useEffect(() => {
 		if(!user) {
@@ -350,332 +744,260 @@ function PlaceEtMarqueManageContent() {
 		stockFilter,
 	]);
 
+	useEffect(() => {
+		if(!showListControls || !listControlsEl) {
+			setListControlsPinned(false);
+			return;
+		}
+
+		let observer: IntersectionObserver | null = null;
+		let raf = 0;
+		const connect = () => {
+			observer?.disconnect();
+			const topInset = manageTopChromeInsetPx();
+			observer = new IntersectionObserver(
+				([entry]) => {
+					setListControlsPinned(!entry?.isIntersecting);
+				},
+				{
+					root: null,
+					rootMargin: `-${topInset}px 0px 0px 0px`,
+					threshold: 0,
+				},
+			);
+			observer.observe(listControlsEl);
+		};
+		const scheduleConnect = () => {
+			cancelAnimationFrame(raf);
+			raf = requestAnimationFrame(connect);
+		};
+
+		scheduleConnect();
+		window.addEventListener('resize', scheduleConnect);
+		const styleWatcher = new MutationObserver(scheduleConnect);
+		styleWatcher.observe(document.documentElement, {
+			attributes: true,
+			attributeFilter: ['style'],
+		});
+		return () => {
+			cancelAnimationFrame(raf);
+			window.removeEventListener('resize', scheduleConnect);
+			styleWatcher.disconnect();
+			observer?.disconnect();
+		};
+	}, [
+		showListControls,
+		listControlsEl,
+		products.length,
+		page,
+		pageSize,
+	]);
+
+	useEffect(() => {
+		if(!showBottomActions || !listEndEl) {
+			setBottomActionsInline(true);
+			return;
+		}
+
+		let observer: IntersectionObserver | null = null;
+		let raf = 0;
+		const connect = () => {
+			observer?.disconnect();
+			// Hidden/cleared stack publishes 0px — use that, never a stale fallback.
+			const bottomInset = manageBottomPaneInsetPx();
+			observer = new IntersectionObserver(
+				([entry]) => {
+					setBottomActionsInline(Boolean(entry?.isIntersecting));
+				},
+				{
+					root: null,
+					rootMargin: `0px 0px -${bottomInset}px 0px`,
+					threshold: 0,
+				},
+			);
+			observer.observe(listEndEl);
+		};
+		const scheduleConnect = () => {
+			cancelAnimationFrame(raf);
+			raf = requestAnimationFrame(connect);
+		};
+
+		scheduleConnect();
+		window.addEventListener('resize', scheduleConnect);
+		const styleWatcher = new MutationObserver(scheduleConnect);
+		styleWatcher.observe(document.documentElement, {
+			attributes: true,
+			attributeFilter: ['style'],
+		});
+		let paneWatcher: MutationObserver | null = null;
+		let paneResize: ResizeObserver | null = null;
+		if(pageBottomPaneHostEl) {
+			paneWatcher = new MutationObserver(scheduleConnect);
+			paneWatcher.observe(pageBottomPaneHostEl, {
+				attributes: true,
+				attributeFilter: ['data-hidden', 'style', 'class'],
+			});
+			paneResize = new ResizeObserver(scheduleConnect);
+			paneResize.observe(pageBottomPaneHostEl);
+		}
+		return () => {
+			cancelAnimationFrame(raf);
+			window.removeEventListener('resize', scheduleConnect);
+			styleWatcher.disconnect();
+			paneWatcher?.disconnect();
+			paneResize?.disconnect();
+			observer?.disconnect();
+		};
+	}, [
+		showBottomActions,
+		listEndEl,
+		pageBottomPaneHostEl,
+		products.length,
+		page,
+		pageSize,
+	]);
+
+	let vendorTopLeft: ReactNode = null;
+	if(vendorsReady && vendors.length > 0) {
+		vendorTopLeft = (
+			<div
+				className="
+					flex
+					min-w-[12rem]
+					max-w-full
+					flex-1
+					flex-col
+					gap-0.5
+					text-[11px]
+					font-medium
+					text-slate-500
+					sm:max-w-sm
+					sm:flex-none
+				"
+			>
+				<span className="leading-tight">
+					Show products for vendor:
+				</span>
+				<FrostSelectMenu
+					ariaLabel="Show products for vendor"
+					fullWidth
+					minWidth={192}
+					onChange={setSelectedVendorId}
+					options={[
+						{
+							id: '',
+							label: 'All vendors',
+						},
+						...vendors.map((vendor) => ({
+							id: vendor.id,
+							label: vendor.name,
+						})),
+					]}
+					preferredWidth={288}
+					value={selectedVendorId}
+				/>
+			</div>
+		);
+	}
+	else if(vendorsReady && vendors.length === 0) {
+		vendorTopLeft = (
+			<p
+				className="
+					text-xs
+					text-slate-500
+				"
+			>
+				No vendor memberships yet.
+			</p>
+		);
+	}
+
+	const listControls = showListControls
+		? (
+			<ManageListControls
+				filterText={filterText}
+				onFilterTextChange={setFilterText}
+				onPageSizeChange={setPageSize}
+				onSortChange={setSort}
+				onStockFilterChange={setStockFilter}
+				pageSize={pageSize}
+				sort={sort}
+				stockFilter={stockFilter}
+			/>
+		)
+		: null;
+
+	const productsTitle = (
+		<h2 className="text-lg font-semibold">
+			Your products
+		</h2>
+	);
+
+	const pageSummary =
+		vendorsReady && !loadingProducts && total > 0
+			? (
+				<p className={PAGE_SUMMARY_CLASS}>
+					{selectedVendor
+						? `Showing ${((page - 1) * pageSize + 1).toLocaleString()}–${Math.min(page * pageSize, total).toLocaleString()} of ${total.toLocaleString()}`
+						: `Page ${page} of ${pageCount} · ${total.toLocaleString()} product${total === 1 ? '' : 's'}`
+					}
+				</p>
+			)
+			: null;
+
+	const newProductLink = newProductVendor
+		? (
+			<ManageNewProductLink
+				href={productCreateHref({ vendor: newProductVendor })}
+				title={
+					selectedVendor
+						? 'New product'
+						: `Creates under ${newProductVendorName}`
+				}
+			/>
+		)
+		: null;
+
+	const pagerNav = showPager
+		? (
+			<ManagePagination
+				className={PAGER_NAV_CLASS}
+				onPageChange={setPage}
+				page={page}
+				pageCount={pageCount}
+			/>
+		)
+		: null;
+
 	return (
 		<div
 			className="
 				flex
 				flex-col
 				gap-6
+				pb-[max(4rem,var(--seller-bottom-pane-stack,0px))]
 			"
 		>
-			<SellerTopContextPortal>
-				{vendorsReady && vendors.length > 0
-					? (
-						<label
-							className="
-								flex
-								min-w-[12rem]
-								max-w-full
-								flex-1
-								flex-col
-								gap-0.5
-								sm:max-w-sm
-								sm:flex-none
-							"
-						>
-							<span
-								className="
-									text-[11px]
-									font-medium
-									leading-tight
-									text-slate-500
-								"
-							>
-								Show products for vendor:
-							</span>
-							<select
-								className="
-									w-full
-									rounded-full
-									border
-									border-slate-300
-									bg-white
-									px-3
-									py-1.5
-									text-sm
-								"
-								value={selectedVendorId}
-								onChange={(event) => setSelectedVendorId(event.target.value)}
-							>
-								<option value="">
-									All vendors
-								</option>
-								{vendors.map((vendor) => (
-									<option
-										key={vendor.id}
-										value={vendor.id}
-									>
-										{vendor.name}
-									</option>
-								))}
-							</select>
-						</label>
-					)
-					: null
-				}
-				{vendorsReady && vendors.length === 0
-					? (
-						<p
-							className="
-								text-xs
-								text-slate-500
-							"
-						>
-							No vendor memberships yet.
-						</p>
-					)
-					: null
-				}
-			</SellerTopContextPortal>
+			<SellerTopContextPortal
+				center={listControlsPinned ? listControls : null}
+				left={vendorTopLeft}
+				reserveEmpty
+				right={listControlsPinned ? pageSummary : null}
+			/>
 
-			<PageBottomPanePortal>
-				{showListControls
-					? (
-						<>
-							<label
-								className="
-									inline-flex
-									min-w-[9rem]
-									max-w-[14rem]
-									flex-1
-									flex-col
-									gap-0.5
-									text-[11px]
-									font-medium
-									text-slate-500
-								"
-							>
-								<span>
-									Filter
-								</span>
-								<input
-									aria-label="Filter products"
-									className={frostControlClassName}
-									onChange={
-										(event) => setFilterText(event.target.value)
-									}
-									placeholder="Name or SKU"
-									type="search"
-									value={filterText}
-								/>
-							</label>
-							<label
-								className="
-									inline-flex
-									flex-col
-									gap-0.5
-									text-[11px]
-									font-medium
-									text-slate-500
-								"
-							>
-								<span>
-									Stock
-								</span>
-								<select
-									aria-label="Stock filter"
-									className={frostControlClassName}
-									onChange={
-										(event) => {
-											const next = event.target.value as StockFilter;
-											if(STOCK_FILTERS.some((row) => row.id === next)) {
-												setStockFilter(next);
-											}
-										}
-									}
-									value={stockFilter}
-								>
-									{STOCK_FILTERS.map((row) => (
-										<option
-											key={row.id}
-											value={row.id}
-										>
-											{row.label}
-										</option>
-									))}
-								</select>
-							</label>
-							<label
-								className="
-									inline-flex
-									flex-col
-									gap-0.5
-									text-[11px]
-									font-medium
-									text-slate-500
-								"
-							>
-								<span>
-									Sort
-								</span>
-								<select
-									aria-label="Sort products"
-									className={frostControlClassName}
-									onChange={
-										(event) => {
-											const next = event.target.value as ManageSort;
-											if(MANAGE_SORTS.some((row) => row.id === next)) {
-												setSort(next);
-											}
-										}
-									}
-									value={sort}
-								>
-									{MANAGE_SORTS.map((row) => (
-										<option
-											key={row.id}
-											value={row.id}
-										>
-											{row.label}
-										</option>
-									))}
-								</select>
-							</label>
-							<label
-								className="
-									inline-flex
-									flex-col
-									gap-0.5
-									text-[11px]
-									font-medium
-									text-slate-500
-								"
-							>
-								<span>
-									Show
-								</span>
-								<select
-									aria-label="Products per page"
-									className={frostControlClassName}
-									onChange={
-										(event) => {
-											const next = Number(event.target.value) as PageSize;
-											if((PAGE_SIZE_OPTIONS as readonly number[]).includes(next)) {
-												setPageSize(next);
-											}
-										}
-									}
-									value={pageSize}
-								>
-									{PAGE_SIZE_OPTIONS.map((size) => (
-										<option
-											key={size}
-											value={size}
-										>
-											{size} per page
-										</option>
-									))}
-								</select>
-							</label>
-						</>
-					)
-					: null
+			<PageBottomPanePortal
+				center={
+					!bottomActionsInline
+						? pagerNav
+						: null
 				}
-				{showPager
-					? (
-						<nav
-							aria-label="Pagination"
-							className="
-								flex
-								flex-wrap
-								items-center
-								justify-end
-								gap-1
-							"
-						>
-							<PagerButton
-								ariaLabel="Previous page"
-								disabled={page <= 1}
-								onClick={() => setPage((current) => Math.max(1, current - 1))}
-							>
-								<ArrowLeftIcon
-									className="h-4 w-4"
-								/>
-							</PagerButton>
-							{pageItems(page, pageCount).map((item, index) =>
-								item === 'gap'
-									? (
-										<span
-											className="px-1 text-slate-400"
-											key={`gap-${index}`}
-										>
-											…
-										</span>
-									)
-									: (
-										<PagerButton
-											active={item === page}
-											ariaCurrent={item === page ? 'page' : undefined}
-											key={item}
-											onClick={() => setPage(item)}
-										>
-											{item}
-										</PagerButton>
-									))}
-							<PagerButton
-								ariaLabel="Next page"
-								disabled={page >= pageCount}
-								onClick={() => setPage((current) => Math.min(pageCount, current + 1))}
-							>
-								<ArrowRightIcon
-									className="h-4 w-4"
-								/>
-							</PagerButton>
-						</nav>
-					)
-					: null
+				reserveEmpty
+				right={
+					!bottomActionsInline
+						? newProductLink
+						: null
 				}
-				{newProductVendor
-					? (
-						<a
-							aria-label="New product"
-							className="
-								inline-flex
-								h-10
-								w-10
-								shrink-0
-								items-center
-								justify-center
-								gap-1.5
-								rounded-full
-								bg-asgreen
-								text-sm
-								font-semibold
-								text-white
-								hover:bg-asgreen/90
-								sm:h-auto
-								sm:w-auto
-								sm:px-3.5
-								sm:py-1.5
-							"
-							href={productCreateHref({ vendor: newProductVendor })}
-							title={
-								selectedVendor
-									? 'New product'
-									: `Creates under ${newProductVendorName}`
-							}
-						>
-							<PlusIcon
-								className="
-									h-4
-									w-4
-									shrink-0
-								"
-							/>
-							<span
-								className="
-									hidden
-									whitespace-nowrap
-									sm:inline
-								"
-							>
-								New product
-							</span>
-						</a>
-					)
-					: null
-				}
-			</PageBottomPanePortal>
+			/>
 
 			<div>
 				<h1
@@ -712,6 +1034,45 @@ function PlaceEtMarqueManageContent() {
 				}
 			</div>
 
+			{showListControls
+				? (
+					<div
+						className={
+							listControlsPinned
+								? `
+									${LIST_CONTROLS_ROW_CLASS}
+									min-h-[4.5rem]
+								`
+								: LIST_CONTROLS_ROW_CLASS
+						}
+						ref={setListControlsEl}
+					>
+						<div className={LIST_CONTROLS_LEFT_CLASS}>
+							{productsTitle}
+						</div>
+						{listControlsPinned
+							? (
+								<>
+									<div />
+									<div />
+								</>
+							)
+							: (
+								<>
+									<div className={LIST_CONTROLS_CLUSTER_CLASS}>
+										{listControls}
+									</div>
+									<div className={LIST_CONTROLS_RIGHT_CLASS}>
+										{pageSummary}
+									</div>
+								</>
+							)
+						}
+					</div>
+				)
+				: productsTitle
+			}
+
 			<section
 				className="
 					flex
@@ -720,9 +1081,6 @@ function PlaceEtMarqueManageContent() {
 					gap-3
 				"
 			>
-				<h2 className="text-lg font-semibold">
-					Your products
-				</h2>
 				{!vendorsReady || loadingProducts
 					? (
 						<p className="text-sm text-slate-500">
@@ -741,17 +1099,6 @@ function PlaceEtMarqueManageContent() {
 									: selectedVendor
 										? 'No products yet for this vendor.'
 										: 'No products yet for your vendors.'
-							}
-						</p>
-					)
-					: null
-				}
-				{vendorsReady && !loadingProducts && total > 0
-					? (
-						<p className="text-xs text-slate-500">
-							{selectedVendor
-								? `Showing ${((page - 1) * pageSize + 1).toLocaleString()}–${Math.min(page * pageSize, total).toLocaleString()} of ${total.toLocaleString()}`
-								: `Page ${page} of ${pageCount} · ${total.toLocaleString()} product${total === 1 ? '' : 's'} across your vendors`
 							}
 						</p>
 					)
@@ -809,10 +1156,50 @@ function PlaceEtMarqueManageContent() {
 										setTotal((current) => Math.max(0, current - 1));
 									}
 								}
+								onRestored={
+									(restored) => {
+										setProducts((current) =>
+											current.map((row) =>
+												row.id === product.id
+													? {
+														...row,
+														...restored,
+														id: restored.id,
+													}
+													: row
+											),
+										);
+									}
+								}
 								product={product}
 							/>
 						</div>
 					))
+					: null
+				}
+				{showBottomActions
+					? (
+						<>
+							<div
+								aria-hidden
+								className="
+									h-px
+									w-full
+									shrink-0
+								"
+								ref={setListEndEl}
+							/>
+							{bottomActionsInline
+								? (
+									<ManageBottomActionsRow
+										newProduct={newProductLink}
+										pager={pagerNav}
+									/>
+								)
+								: null
+							}
+						</>
+					)
 					: null
 				}
 			</section>

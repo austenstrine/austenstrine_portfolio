@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react';
 import { listMyVendors } from '../../lib/catalog-api';
 import { useSession } from '../../lib/useSession';
+import { NavigatePersistentArrow } from './NavigatePersistentArrow';
+import { PILL_CTA_BASE_CLASS } from './pillCta';
 
 export function CatalogEmptyActions() {
 	const { user, loading } = useSession();
@@ -55,41 +57,37 @@ export function CatalogEmptyActions() {
 				{showCreateVendor
 					? (
 						<a
-							className="
-								inline-flex
-								rounded-full
+							className={`
+								${PILL_CTA_BASE_CLASS}
 								bg-sky
 								px-4
 								py-2
-								text-sm
-								font-semibold
 								text-white
 								hover:bg-sky/90
-							"
+							`}
 							href="/place-et-marque/vendors"
 						>
 							Create a vendor
+							<NavigatePersistentArrow />
 						</a>
 					)
 					: null
 				}
 				<a
-					className="
-						inline-flex
-						rounded-full
+					className={`
+						${PILL_CTA_BASE_CLASS}
 						border
 						border-slate-300
 						px-4
 						py-2
-						text-sm
-						font-semibold
 						text-ink
 						hover:border-sky
 						hover:text-sky
-					"
+					`}
 					href="/place-et-marque/products/new"
 				>
 					New product
+					<NavigatePersistentArrow />
 				</a>
 			</div>
 		</>

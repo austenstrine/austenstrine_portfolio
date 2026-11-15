@@ -12,6 +12,8 @@ import {
 import { useSession } from '../../../lib/useSession';
 import { RequireAccess } from '../../../components/auth/RequireAccess';
 import { CompoundQtyField } from '../../../components/catalog/CompoundQtyField';
+import { NavigatePersistentArrow } from '../../../components/catalog/NavigatePersistentArrow';
+import { PILL_CTA_MOTION_CLASS } from '../../../components/catalog/pillCta';
 import { formatAvailableQty } from '../../../lib/uom-qty';
 
 function CartContent() {
@@ -151,9 +153,12 @@ function CartContent() {
 							Your cart is empty
 						</p>
 						<Link
-							className="
+							className={`
+								group
 								mt-6
 								inline-flex
+								items-center
+								gap-1.5
 								rounded-full
 								bg-sky
 								px-5
@@ -161,11 +166,13 @@ function CartContent() {
 								text-sm
 								font-semibold
 								text-white
+								${PILL_CTA_MOTION_CLASS}
 								hover:bg-sky/90
-							"
+							`}
 							href="/place-et-marque/search"
 						>
 							Shop products
+							<NavigatePersistentArrow />
 						</Link>
 					</div>
 				)
@@ -212,8 +219,9 @@ function CartContent() {
 											className="
 												text-base
 												font-semibold
-												text-ink
-												hover:underline
+												text-sky
+												underline
+												underline-offset-2
 											"
 											href={`/place-et-marque/${encodeURIComponent(group.slug)}`}
 										>
@@ -246,8 +254,9 @@ function CartContent() {
 														<Link
 															className="
 																font-semibold
-																text-ink
-																hover:underline
+																text-sky
+																underline
+																underline-offset-2
 															"
 															href={`/place-et-marque/${line.vendor.slug}/${line.productSlug}`}
 														>
@@ -379,12 +388,14 @@ function CartContent() {
 								</span>
 							</div>
 							<Link
-								className="
+								className={`
+									group
 									mt-5
 									flex
 									w-full
 									items-center
 									justify-center
+									gap-1.5
 									rounded-full
 									bg-sky
 									px-4
@@ -392,25 +403,31 @@ function CartContent() {
 									text-sm
 									font-semibold
 									text-white
+									${PILL_CTA_MOTION_CLASS}
 									hover:bg-sky/90
-								"
+								`}
 								href="/place-et-marque/checkout"
 							>
 								Checkout
+								<NavigatePersistentArrow />
 							</Link>
 							<Link
 								className="
+									group
 									mt-3
-									flex
+									inline-flex
+									w-full
+									items-center
 									justify-end
+									gap-1.5
 									text-sm
 									font-semibold
-									text-ink
-									hover:underline
+									text-sky
 								"
 								href="/place-et-marque/search"
 							>
 								Continue shopping
+								<NavigatePersistentArrow />
 							</Link>
 						</aside>
 					</div>

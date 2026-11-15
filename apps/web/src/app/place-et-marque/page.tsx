@@ -5,6 +5,7 @@ import {
 	nestedCategoryImages,
 } from '../../components/catalog/CategoryCard';
 import { DemoIntro } from '../../components/catalog/DemoIntro';
+import { NavigateHoverArrow } from '../../components/catalog/NavigateHoverArrow';
 import { ProductCard } from '../../components/catalog/ProductCard';
 import {
 	listCatalogCategories,
@@ -14,7 +15,7 @@ import {
 	type CatalogTermFacet,
 } from '../../lib/catalog-api';
 import { nestCategoryTree, type NestedCategory } from '../../lib/category-tree';
-import { ArrowRightIcon } from '../../components/icons/ArrowRightIcon';
+import { NavigatePersistentArrow } from '../../components/catalog/NavigatePersistentArrow';
 
 function titleCaseSlug(slug: string) {
 	return slug
@@ -101,18 +102,18 @@ export default async function PlaceEtMarqueHomePage() {
 							</div>
 							<a
 								className="
+									group
 									inline-flex
 									items-center
-									gap-1
+									gap-1.5
 									text-sm
 									font-semibold
-									text-ink
-									hover:underline
+									text-sky
 								"
 								href="/place-et-marque/search"
 							>
 								All categories
-								<ArrowRightIcon className="h-3.5 w-3.5" />
+								<NavigatePersistentArrow />
 							</a>
 						</div>
 						<div
@@ -172,6 +173,9 @@ export default async function PlaceEtMarqueHomePage() {
 							{vendors.map((row) => (
 								<a
 									className="
+										group
+										inline-flex
+										items-center
 										rounded-full
 										border
 										border-slate-200
@@ -186,17 +190,20 @@ export default async function PlaceEtMarqueHomePage() {
 									href={`/place-et-marque/${encodeURIComponent(row.slug)}`}
 									key={row.slug}
 								>
-									{titleCaseSlug(row.slug)}
-									<span
-										className="
-											ml-2
-											text-[12px]
-											font-medium
-											text-slate-500
-										"
-									>
-										{row.count.toLocaleString()}
+									<span>
+										{titleCaseSlug(row.slug)}
+										<span
+											className="
+												ml-2
+												text-[12px]
+												font-medium
+												text-slate-500
+											"
+										>
+											{row.count.toLocaleString()}
+										</span>
 									</span>
+									<NavigateHoverArrow className="text-slate-400" />
 								</a>
 							))}
 						</div>
@@ -245,18 +252,18 @@ export default async function PlaceEtMarqueHomePage() {
 						? (
 							<a
 								className="
+									group
 									inline-flex
 									items-center
-									gap-1
+									gap-1.5
 									text-sm
 									font-semibold
-									text-ink
-									hover:underline
+									text-sky
 								"
 								href="/place-et-marque/search"
 							>
 								View all
-								<ArrowRightIcon className="h-3.5 w-3.5" />
+								<NavigatePersistentArrow />
 							</a>
 						)
 						: null

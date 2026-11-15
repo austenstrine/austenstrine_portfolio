@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { headers } from 'next/headers';
 import {
 	maintenanceBannerMessage,
@@ -37,7 +38,21 @@ export async function PardonOurDustBanner() {
 			data-maintenance-banner=""
 			role="status"
 		>
-			{maintenanceBannerMessage()}
+			<span>
+				{maintenanceBannerMessage()}
+			</span>
+			{' '}
+			<Link
+				className="
+					underline
+					underline-offset-2
+					transition
+					hover:text-white/90
+				"
+				href="/place-et-marque/roadmap"
+			>
+				See the roadmap
+			</Link>
 		</div>
 	);
 }

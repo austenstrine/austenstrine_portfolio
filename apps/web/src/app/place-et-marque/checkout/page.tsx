@@ -7,7 +7,6 @@ import {
 	useStripe,
 } from '@stripe/react-stripe-js';
 import { loadStripe, type Stripe } from '@stripe/stripe-js';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -19,6 +18,9 @@ import {
 } from '../../../lib/checkout-api';
 import { useSession } from '../../../lib/useSession';
 import { RequireAccess } from '../../../components/auth/RequireAccess';
+import { DemoPaymentForm } from '../../../components/checkout/DemoPaymentForm';
+import { BackLink } from '../../../components/BackLink';
+import { LockIcon } from '../../../components/icons/LockIcon';
 
 const REQUIRED_ADDRESS_FIELDS = [
 	['name', 'Name'],
@@ -85,6 +87,10 @@ function PaymentForm({
 			<PaymentElement />
 			<button
 				className="
+					inline-flex
+					items-center
+					justify-center
+					gap-2
 					self-end
 					rounded-full
 					bg-sky
@@ -95,15 +101,30 @@ function PaymentForm({
 					text-white
 					hover:bg-sky/90
 					disabled:opacity-60
+					max-sm:h-11
+					max-sm:w-11
+					max-sm:px-0
 					max-lg:mr-14
 				"
 				type="submit"
 				disabled={!stripe || submitting}
-			>
-				{submitting
-					? 'Working…'
-					: `Pay ${amountLabel}`
+				aria-label={
+					submitting
+						? 'Working…'
+						: `Pay ${amountLabel}`
 				}
+			>
+				<LockIcon className="h-4 w-4 shrink-0" />
+				<span
+					className="
+						max-sm:sr-only
+					"
+				>
+					{submitting
+						? 'Working…'
+						: `Pay ${amountLabel}`
+					}
+				</span>
 			</button>
 		</form>
 	);
@@ -120,7 +141,6 @@ function firstEmptyRequired(address: Record<RequiredAddressKey, string>): Requir
 
 function CheckoutContent() {
 	const { user, loading: sessionLoading } = useSession();
-	const router = useRouter();
 	const [preview, setPreview] = useState<CheckoutPreview | null>(null);
 	const [rateByGroup, setRateByGroup] = useState<Record<string, string>>({});
 	const [address, setAddress] = useState({
@@ -133,12 +153,14 @@ function CheckoutContent() {
 		country: 'US',
 	});
 	const [clientSecret, setClientSecret] = useState<string | null>(null);
+	const [demoCheckoutId, setDemoCheckoutId] = useState<string | null>(null);
 	const [publishableKey, setPublishableKey] = useState('');
 	const [totalCents, setTotalCents] = useState(0);
 	const [error, setError] = useState<string | null>(null);
 	const [fieldError, setFieldError] = useState<RequiredAddressKey | null>(null);
 	const [busy, setBusy] = useState(false);
 	const fieldRefs = useRef<Partial<Record<RequiredAddressKey, HTMLInputElement | null>>>({});
+	const paymentReady = Boolean(clientSecret || demoCheckoutId);
 
 	useEffect(() => {
 		if(!user) {
@@ -229,16 +251,22 @@ function CheckoutContent() {
 					rateId: rateByGroup[group.groupKey],
 				})),
 			});
-			if(!session.clientSecret) {
-				// CHECKOUT_DEV_BYPASS finalizes to PAID without Stripe.
-				router.push('/place-et-marque/orders?paid=1');
+			setTotalCents(session.totalCents);
+			if(session.clientSecret) {
+				setDemoCheckoutId(null);
+				setClientSecret(session.clientSecret);
+				setPublishableKey(
+					session.publishableKey || stripePublishableKeyFallback(),
+				);
 				return;
 			}
-			setClientSecret(session.clientSecret);
-			setPublishableKey(
-				session.publishableKey || stripePublishableKeyFallback(),
-			);
-			setTotalCents(session.totalCents);
+			if(session.demoPayment === true) {
+				setClientSecret(null);
+				setPublishableKey('');
+				setDemoCheckoutId(session.checkoutId);
+				return;
+			}
+			throw new Error('Could not start payment.');
 		}
 		catch(sessionError) {
 			setError(
@@ -311,10 +339,12 @@ function CheckoutContent() {
 						<p className="text-xl font-semibold text-ink">
 							Your cart is empty
 						</p>
-						<Link
+						<BackLink
 							className="
 								mt-6
 								inline-flex
+								items-center
+								gap-1.5
 								rounded-full
 								bg-sky
 								px-5
@@ -327,7 +357,7 @@ function CheckoutContent() {
 							href="/place-et-marque/cart"
 						>
 							Back to cart
-						</Link>
+						</BackLink>
 					</div>
 				)
 				: null
@@ -572,7 +602,7 @@ function CheckoutContent() {
 									preview.currency,
 								)}
 							</p>
-							{!clientSecret
+							{!paymentReady
 								? (
 									<button
 										className="
@@ -623,6 +653,30 @@ function CheckoutContent() {
 											onError={(message) => setError(message || null)}
 										/>
 									</Elements>
+								</section>
+							)
+							: null
+						}
+
+						{demoCheckoutId && !clientSecret
+							? (
+								<section
+									className="
+										rounded-2xl
+										border
+										border-slate-200
+										bg-white
+										p-5
+									"
+								>
+									<h2 className="text-lg font-semibold">
+										Payment
+									</h2>
+									<DemoPaymentForm
+										checkoutId={demoCheckoutId}
+										amountLabel={amountLabel}
+										onError={(message) => setError(message || null)}
+									/>
 								</section>
 							)
 							: null

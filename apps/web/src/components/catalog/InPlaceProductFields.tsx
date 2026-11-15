@@ -27,6 +27,8 @@ import {
 	uomIdForCode,
 } from '../../lib/inplace-product-edit';
 import { productEditHref } from '../../lib/vendor-ref';
+import { NavigatePersistentArrow } from './NavigatePersistentArrow';
+import { CaretDownIcon } from '../icons/CaretDownIcon';
 import { PencilIcon } from '../icons/PencilIcon';
 import { PlusIcon } from '../icons/PlusIcon';
 import { TrashIcon } from '../icons/TrashIcon';
@@ -244,7 +246,6 @@ export function useInPlaceProductEdit({
 			cancelled = true;
 		};
 		// Seed once per product identity; offering changes sync in a separate effect.
-		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [enabled, product.id, product.slug, product.vendor.id, product.vendor.slug]);
 
 	useEffect(() => {
@@ -971,13 +972,13 @@ export function InPlaceFullEditLink({
 	return (
 		<a
 			className={`
+				group
 				inline-flex
 				items-center
 				gap-1.5
 				text-xs
 				font-semibold
 				text-sky
-				hover:underline
 				${className}
 			`}
 			href={productEditHref({
@@ -985,8 +986,8 @@ export function InPlaceFullEditLink({
 				productSlug: product.slug,
 			})}
 		>
-			<PencilIcon className="h-3.5 w-3.5 shrink-0" />
 			Full edit
+			<NavigatePersistentArrow />
 		</a>
 	);
 }
@@ -1053,6 +1054,24 @@ export function InPlaceEditToggle({
 					? `Edit · ${activeLabel}`
 					: 'Edit'
 				}
+				<CaretDownIcon
+					className={
+						open
+							? `
+								h-3
+								w-3
+								shrink-0
+								rotate-180
+								transition
+							`
+							: `
+								h-3
+								w-3
+								shrink-0
+								transition
+							`
+					}
+				/>
 			</button>
 			{open
 				? (

@@ -466,4 +466,380 @@ describe('checkout payment guards (PEM-196)', () => {
 			}
 		});
 	});
+
+	describe('createSession bypass demo payment', () => {
+		it('returns demoPayment and stays AWAITING_PAYMENT without finalize', async () => {
+			const prevBypass = process.env.CHECKOUT_DEV_BYPASS;
+			const prevNodeEnv = process.env.NODE_ENV;
+			process.env.CHECKOUT_DEV_BYPASS = '1';
+			process.env.NODE_ENV = 'test';
+
+			const checkoutUpdate = jest.fn();
+			const orderUpdate = jest.fn();
+			const createClaim = jest.fn().mockResolvedValue({ id: 'claim_1' });
+
+			const { service } = buildService({
+				stripe: { enabled: false },
+				cart: {
+					getCart: jest.fn().mockResolvedValue({
+						lines: [
+							{
+								offeringId: 'off_1',
+								quantity: '1',
+								unitPriceCents: 1000,
+								lineTotalCents: 1000,
+								title: 'Widget',
+								sku: 'W-1',
+								offeringKey: 'pack',
+								availableQty: '2',
+								currency: 'USD',
+								shippingProfileId: 'sp_1',
+								vendor: { id: 'vend_1', name: 'Acme' },
+							},
+						],
+					}),
+				},
+				shipping: {
+					ensureVendorDefaults: jest.fn().mockResolvedValue({
+						standard: { id: 'sp_1' },
+					}),
+				},
+				inventory: { createClaim },
+				prisma: {
+					user: {
+						findUniqueOrThrow: jest.fn().mockResolvedValue({
+							email: 'buyer@example.com',
+						}),
+					},
+					checkout: {
+						create: jest.fn().mockResolvedValue({
+							id: 'co_demo',
+							currency: 'USD',
+							expiresAt: new Date(Date.now() + 60_000),
+						}),
+						update: checkoutUpdate,
+					},
+					checkoutShipment: {
+						create: jest.fn(),
+						findMany: jest.fn().mockResolvedValue([
+							{
+								id: 'ship_1',
+								vendorId: 'vend_1',
+								shippingProfileId: 'sp_1',
+								selectedRateLabel: 'Ground',
+								merchandiseCents: 1000,
+								shippingCents: 999,
+								shipName: 'Jane',
+								shipLine1: '1 Main',
+								shipLine2: null,
+								shipCity: 'Portland',
+								shipRegion: 'OR',
+								shipPostal: '97201',
+								shipCountry: 'US',
+								lines: [
+									{
+										offeringId: 'off_1',
+										quantity: new Decimal(1),
+										unitPriceCents: 1000,
+										lineTotalCents: 1000,
+										titleSnapshot: 'Widget',
+										skuSnapshot: 'W-1',
+										offeringKeySnapshot: 'pack',
+									},
+								],
+							},
+						]),
+					},
+					shippingProfile: {
+						findUnique: jest.fn().mockResolvedValue({
+							payoutTrigger: 'ON_PAYMENT',
+							shipsSeparately: false,
+							code: 'STANDARD',
+						}),
+						findUniqueOrThrow: jest.fn().mockResolvedValue({
+							id: 'sp_1',
+							code: 'STANDARD',
+							name: 'Standard',
+							shipsSeparately: false,
+							rates: [
+								{
+									id: 'rate_1',
+									label: 'Ground',
+									amountCents: 999,
+									minSubtotalCents: null,
+									maxSubtotalCents: null,
+								},
+							],
+						}),
+					},
+					placeEtMarqueOrder: {
+						findUnique: jest.fn().mockResolvedValue(null),
+						create: jest.fn().mockResolvedValue({
+							id: 'ord_hold',
+							orderRef: 'Jane · 1 · Portland, OR · 12:00 PM PT',
+						}),
+						update: orderUpdate,
+					},
+					productOffering: {
+						findUnique: jest.fn().mockResolvedValue({
+							availableQty: new Decimal(2),
+						}),
+					},
+					orderLine: {
+						create: jest.fn(),
+					},
+				},
+			});
+
+			const finalizeSpy = jest.spyOn(
+				service as unknown as {
+					finalizePaidCheckout: (id: string) => Promise<void>;
+				},
+				'finalizePaidCheckout',
+			);
+
+			const result = await service.createSession('buyer_1', {
+				address: {
+					name: 'Jane',
+					line1: '1 Main',
+					city: 'Portland',
+					region: 'OR',
+					postal: '97201',
+					country: 'US',
+				},
+				shipments: [{ groupKey: 'vend_1:sp_1', rateId: 'rate_1' }],
+			});
+
+			expect(result).toMatchObject({
+				checkoutId: 'co_demo',
+				clientSecret: null,
+				demoPayment: true,
+				totalCents: 1999,
+			});
+			expect(checkoutUpdate).toHaveBeenCalledWith({
+				where: { id: 'co_demo' },
+				data: {
+					status: CheckoutStatus.AWAITING_PAYMENT,
+					merchandiseCents: 1000,
+					shippingCents: 999,
+					totalCents: 1999,
+				},
+			});
+			expect(finalizeSpy).not.toHaveBeenCalled();
+			expect(orderUpdate).not.toHaveBeenCalled();
+			expect(createClaim).toHaveBeenCalled();
+
+			finalizeSpy.mockRestore();
+			if(prevBypass === undefined) {
+				delete process.env.CHECKOUT_DEV_BYPASS;
+			}
+			else {
+				process.env.CHECKOUT_DEV_BYPASS = prevBypass;
+			}
+			if(prevNodeEnv === undefined) {
+				delete process.env.NODE_ENV;
+			}
+			else {
+				process.env.NODE_ENV = prevNodeEnv;
+			}
+		});
+
+		it('refuses bypass when NODE_ENV is production', async () => {
+			const prevBypass = process.env.CHECKOUT_DEV_BYPASS;
+			const prevNodeEnv = process.env.NODE_ENV;
+			process.env.CHECKOUT_DEV_BYPASS = '1';
+			process.env.NODE_ENV = 'production';
+
+			const { service } = buildService({
+				stripe: { enabled: false },
+			});
+
+			await expect(
+				service.createSession('buyer_1', {
+					address: {
+						name: 'Jane',
+						line1: '1 Main',
+						city: 'Portland',
+						region: 'OR',
+						postal: '97201',
+					},
+					shipments: [{ groupKey: 'vend_1:sp_1', rateId: 'rate_1' }],
+				}),
+			).rejects.toBeInstanceOf(BadRequestException);
+
+			if(prevBypass === undefined) {
+				delete process.env.CHECKOUT_DEV_BYPASS;
+			}
+			else {
+				process.env.CHECKOUT_DEV_BYPASS = prevBypass;
+			}
+			if(prevNodeEnv === undefined) {
+				delete process.env.NODE_ENV;
+			}
+			else {
+				process.env.NODE_ENV = prevNodeEnv;
+			}
+		});
+	});
+
+	describe('confirmDemoPayment', () => {
+		it('finalizes AWAITING_PAYMENT checkout when bypass is on', async () => {
+			const prevBypass = process.env.CHECKOUT_DEV_BYPASS;
+			process.env.CHECKOUT_DEV_BYPASS = '1';
+
+			const checkoutUpdate = jest.fn();
+			const orderUpdate = jest.fn();
+			const clearCart = jest.fn().mockResolvedValue(undefined);
+			const createPayoutForPaidOrder = jest.fn().mockResolvedValue(undefined);
+
+			const { service } = buildService({
+				stripe: { enabled: false },
+				cart: { clearCart },
+				payouts: { createPayoutForPaidOrder },
+				prisma: {
+					checkout: {
+						findUnique: jest
+							.fn()
+							.mockResolvedValueOnce({
+								id: 'co_demo',
+								buyerId: 'buyer_1',
+								status: CheckoutStatus.AWAITING_PAYMENT,
+								stripePaymentIntentId: null,
+								totalCents: 1999,
+								currency: 'USD',
+							})
+							.mockResolvedValueOnce({
+								id: 'co_demo',
+								status: CheckoutStatus.AWAITING_PAYMENT,
+								buyerId: 'buyer_1',
+								orders: [],
+							}),
+						findUniqueOrThrow: jest.fn().mockResolvedValue({
+							id: 'co_demo',
+							status: CheckoutStatus.PAID,
+							totalCents: 1999,
+							currency: 'USD',
+						}),
+						update: checkoutUpdate,
+					},
+					placeEtMarqueOrder: {
+						findMany: jest.fn().mockResolvedValue([
+							{ id: 'ord_1' },
+						]),
+						update: orderUpdate,
+					},
+				},
+			});
+
+			const result = await service.confirmDemoPayment('buyer_1', 'co_demo');
+
+			expect(result).toEqual({
+				checkoutId: 'co_demo',
+				status: CheckoutStatus.PAID,
+				totalCents: 1999,
+				currency: 'USD',
+			});
+			expect(checkoutUpdate).toHaveBeenCalledWith({
+				where: { id: 'co_demo' },
+				data: { status: CheckoutStatus.PAID },
+			});
+			expect(orderUpdate).toHaveBeenCalledWith({
+				where: { id: 'ord_1' },
+				data: { status: PlaceEtMarqueOrderStatus.PAID },
+			});
+			expect(createPayoutForPaidOrder).toHaveBeenCalledWith('ord_1');
+			expect(clearCart).toHaveBeenCalledWith('buyer_1');
+
+			if(prevBypass === undefined) {
+				delete process.env.CHECKOUT_DEV_BYPASS;
+			}
+			else {
+				process.env.CHECKOUT_DEV_BYPASS = prevBypass;
+			}
+		});
+
+		it('rejects when Stripe is enabled', async () => {
+			const prevBypass = process.env.CHECKOUT_DEV_BYPASS;
+			const prevNodeEnv = process.env.NODE_ENV;
+			process.env.CHECKOUT_DEV_BYPASS = '1';
+			process.env.NODE_ENV = 'test';
+
+			const { service } = buildService({
+				stripe: { enabled: true },
+			});
+
+			await expect(
+				service.confirmDemoPayment('buyer_1', 'co_demo'),
+			).rejects.toBeInstanceOf(BadRequestException);
+
+			if(prevBypass === undefined) {
+				delete process.env.CHECKOUT_DEV_BYPASS;
+			}
+			else {
+				process.env.CHECKOUT_DEV_BYPASS = prevBypass;
+			}
+			if(prevNodeEnv === undefined) {
+				delete process.env.NODE_ENV;
+			}
+			else {
+				process.env.NODE_ENV = prevNodeEnv;
+			}
+		});
+
+		it('rejects when bypass is unset', async () => {
+			const prevBypass = process.env.CHECKOUT_DEV_BYPASS;
+			const prevNodeEnv = process.env.NODE_ENV;
+			delete process.env.CHECKOUT_DEV_BYPASS;
+			process.env.NODE_ENV = 'test';
+
+			const { service } = buildService({
+				stripe: { enabled: false },
+			});
+
+			await expect(
+				service.confirmDemoPayment('buyer_1', 'co_demo'),
+			).rejects.toBeInstanceOf(BadRequestException);
+
+			if(prevBypass === undefined) {
+				delete process.env.CHECKOUT_DEV_BYPASS;
+			}
+			else {
+				process.env.CHECKOUT_DEV_BYPASS = prevBypass;
+			}
+			if(prevNodeEnv === undefined) {
+				delete process.env.NODE_ENV;
+			}
+			else {
+				process.env.NODE_ENV = prevNodeEnv;
+			}
+		});
+
+		it('rejects when NODE_ENV is production', async () => {
+			const prevBypass = process.env.CHECKOUT_DEV_BYPASS;
+			const prevNodeEnv = process.env.NODE_ENV;
+			process.env.CHECKOUT_DEV_BYPASS = '1';
+			process.env.NODE_ENV = 'production';
+
+			const { service } = buildService({
+				stripe: { enabled: false },
+			});
+
+			await expect(
+				service.confirmDemoPayment('buyer_1', 'co_demo'),
+			).rejects.toBeInstanceOf(BadRequestException);
+
+			if(prevBypass === undefined) {
+				delete process.env.CHECKOUT_DEV_BYPASS;
+			}
+			else {
+				process.env.CHECKOUT_DEV_BYPASS = prevBypass;
+			}
+			if(prevNodeEnv === undefined) {
+				delete process.env.NODE_ENV;
+			}
+			else {
+				process.env.NODE_ENV = prevNodeEnv;
+			}
+		});
+	});
 });

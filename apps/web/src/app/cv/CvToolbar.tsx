@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import { ArrowLeftIcon } from '../../components/icons/ArrowLeftIcon';
+import { NavigatePersistentArrow } from '../../components/catalog/NavigatePersistentArrow';
 import { PrinterIcon } from '../../components/icons/PrinterIcon';
 import { SITE_CV_PRINT_TITLE } from '../../lib/site';
 
@@ -40,7 +40,7 @@ export function CvToolbar() {
 	return (
 		<div className="screen-toolbar">
 			<button
-				className="back-btn"
+				className="group back-btn"
 				id="back-btn"
 				type="button"
 				onClick={() => {
@@ -57,8 +57,8 @@ export function CvToolbar() {
 					}
 				}}
 			>
-				<ArrowLeftIcon
-					className="h-3.5 w-3.5"
+				<NavigatePersistentArrow
+					direction="left"
 				/>
 				Back to portfolio
 			</button>

@@ -5,7 +5,8 @@
   "workspaces": [
     "apps/api",
     "apps/web",
-    "apps/crm"
+    "apps/crm",
+    "packages/eslint-plugin-portfolio-prefs"
   ],
   "scripts": {
     "dev": "npm run dev -w apps/api & npm run dev -w apps/web & npm run dev -w apps/crm",
@@ -14,13 +15,18 @@
     "dev:crm": "npm run dev -w apps/crm",
     "prepare:api-types": "npm run prisma:generate -w apps/api",
     "build": "npm run prepare:api-types && npm run build -w apps/api && npm run build -w apps/web && npm run build -w apps/crm",
-    "lint": "npm run prepare:api-types && npm run lint -w apps/api && npm run lint -w apps/web && npm run lint -w apps/crm",
+    "prefs-lint": "bash ops/tooling/prefs-lint/run.sh",
+    "lint:eslint-prefs": "node ops/tooling/prefs-lint/run-eslint-prefs.mjs",
+    "lint": "npm run prefs-lint && npm run lint:eslint-prefs && npm run prepare:api-types && npm run lint -w apps/api && npm run lint -w apps/web && npm run lint -w apps/crm",
     "test": "npm run prepare:api-types && npm run test -w apps/api"
   },
   "overrides": {
     "typescript": "5.8.3"
   },
   "devDependencies": {
+    "@typescript-eslint/parser": "^8.72.2",
+    "eslint": "^9.39.1",
+    "eslint-plugin-portfolio-prefs": "file:packages/eslint-plugin-portfolio-prefs",
     "typescript": "5.8.3"
   }
 }

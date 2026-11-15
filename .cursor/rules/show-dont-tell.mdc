@@ -1,0 +1,30 @@
+---
+description: Ban GUI coaching copy; fix unclear UX instead of instructing the user
+alwaysApply: true
+---
+
+# Show, don’t tell
+
+Keep in sync with Place et Marque `preferences.md` (show-don’t-tell bullet).
+
+## Ban (user-facing UI copy)
+
+Do not paper over unclear UX with coaching such as:
+
+- “Open X first…”
+- “More options appear when…”
+- “Click here to reveal…”
+- Step-by-step GUI how-tos that exist only because the control is hidden or unlabeled
+
+If the interaction is unclear, **fix the GUI**.
+
+## Allowed
+
+- Field helpers that explain what a **value** means (e.g. Product URL / “name in the link”).
+- Domain/glossary affordances (e.g. TermHint) that are not progressive-disclosure coaching.
+
+## Enforcement
+
+- Agents: apply on every UX change and audit.
+- Static phrase gate: `ops/tooling/prefs-lint/show-dont-tell-static.check.sh` (high-confidence patterns).
+- AST/UI layout rules (icons, alignment, cart chrome) stay with ESLint `portfolio-prefs/*` (Angle B) — do not duplicate those here.

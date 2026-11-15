@@ -180,12 +180,21 @@ export function pathRequiresVendor(path: string): boolean {
 
 /**
  * Seller chrome: hide category bar + cart; show Selling chip; bottom pane = page actions.
- * Buyer storefronts (/place-et-marque/<slug>) and product detail stay on buyer chrome.
+ * Buyer storefronts (/place-et-marque/<slug>), product detail, and buyer orders
+ * (/place-et-marque/orders) stay on shopping chrome — cart stays visible.
+ * Seller fulfillment lives under /place-et-marque/vendors/<id>/orders.
  */
 export function pathUsesSellerChrome(path: string): boolean {
 	const pathname = path.split('?')[0] ?? path;
 	// Buyer vendor pages are never seller chrome — even for org members browsing.
 	if(pathIsBuyerVendorStorefront(pathname)) {
+		return false;
+	}
+	// Buyer purchase history is shopping chrome (not Selling).
+	if(
+		pathname === '/place-et-marque/orders'
+		|| pathname.startsWith('/place-et-marque/orders/')
+	) {
 		return false;
 	}
 	if(
@@ -198,8 +207,6 @@ export function pathUsesSellerChrome(path: string): boolean {
 		|| pathname.startsWith('/place-et-marque/attributes/')
 		|| pathname === '/place-et-marque/categories'
 		|| pathname.startsWith('/place-et-marque/categories/')
-		|| pathname === '/place-et-marque/orders'
-		|| pathname.startsWith('/place-et-marque/orders/')
 		|| pathname === '/place-et-marque/products/new'
 		|| pathname === '/place-et-marque/products/configure'
 	) {
@@ -211,17 +218,45 @@ export function pathUsesSellerChrome(path: string): boolean {
 	return PRODUCT_SLUG_EDITOR_PATH.test(pathname);
 }
 
-/**
- * Buyer + seller order *lists* mount frost filter controls into the bottom
- * pane. Reserve pane geometry on these paths so empty:hidden cannot late-show
- * the FOOTER-attributed chrome (order detail has no pane portal).
- */
-export function pathReservesOrdersListBottomPane(path: string): boolean {
+/** Vendor seller order list (`…/vendors/:id/orders`). */
+export function pathIsVendorOrdersList(path: string): boolean {
 	const pathname = path.split('?')[0] ?? path;
-	if(pathname === '/place-et-marque/orders') {
-		return true;
-	}
 	return /^\/place-et-marque\/vendors\/[^/]+\/orders\/?$/.test(pathname);
+}
+
+/**
+ * Vendor order lists pin Filter/Status into the top context bar on scroll
+ * (PEM-445). Reserve top host geometry before paint so empty:hidden cannot
+ * late-show chrome when controls harvest up (buyer orders stay inline).
+ */
+export function pathReservesOrdersListTopContext(path: string): boolean {
+	return pathIsVendorOrdersList(path);
+}
+
+/**
+ * Manage reserves top + bottom context chrome before paint (PEM-440), like
+ * the landing department bar (PEM-370/377): presence is a path decision, not
+ * a post-load mount. Top host stays open (no empty:hidden pop); bottom harvest
+ * pane stays mounted transparent until controls pin in. Other seller routes
+ * keep empty:hidden.
+ */
+export function pathReservesManageContextBars(path: string): boolean {
+	const pathname = path.split('?')[0] ?? path;
+	return pathname === '/place-et-marque/manage';
+}
+
+/**
+ * Top seller context host stays reserved before paint (manage + vendor orders).
+ * Bottom pane harvest remains manage-only.
+ */
+export function pathReservesSellerTopContext(path: string): boolean {
+	return pathReservesManageContextBars(path)
+		|| pathReservesOrdersListTopContext(path);
+}
+
+/** @see pathReservesManageContextBars */
+export function pathKeepsManageBottomPane(path: string): boolean {
+	return pathReservesManageContextBars(path);
 }
 
 export function buildLoginUrl(options: {

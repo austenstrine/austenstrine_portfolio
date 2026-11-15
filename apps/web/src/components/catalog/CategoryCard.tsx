@@ -479,6 +479,9 @@ export function CategoryCard({
 									font-semibold
 									tracking-tight
 									text-white
+									underline-offset-4
+									group-hover:underline
+									group-hover:decoration-white/50
 									sm:text-3xl
 								`
 								: variant === 'wide'
@@ -487,6 +490,9 @@ export function CategoryCard({
 										font-semibold
 										tracking-tight
 										text-white
+										underline-offset-4
+										group-hover:underline
+										group-hover:decoration-white/50
 										sm:text-xl
 									`
 									: `
@@ -494,6 +500,9 @@ export function CategoryCard({
 										text-sm
 										font-semibold
 										text-white
+										underline-offset-4
+										group-hover:underline
+										group-hover:decoration-white/50
 									`
 						}
 					>

@@ -124,12 +124,13 @@ export function countOrdersNeedingShip(orders: PlaceEtMarqueOrder[]): number {
  * Orders list shell: keep MarketplaceFooter below the first fold so async
  * order cards / empty copy cannot CLS the site footer (PEM-213 host FAIL).
  * Height is 100dvh minus the fixed-header spacer only — main py-* then pushes
- * the footer past the viewport. pb-24 clears the frost filter pane without
- * waiting on --seller-bottom-pane-stack (avoids pad CLS when the stack lands).
+ * the footer past the viewport. pb-24 clears the seller frost filter pane
+ * without waiting on --seller-bottom-pane-stack (avoids pad CLS when the
+ * stack lands); buyer lists keep the same floor for a stable fold.
  */
 export const ORDERS_LIST_SHELL_CLASSNAME = `
 	flex
-	min-h-[calc(100dvh-var(--catalog-header-h,4.5rem))]
+	min-h-[calc(100dvh-var(--catalog-header-h,var(--catalog-header-h-base)))]
 	flex-col
 	gap-6
 	pb-24

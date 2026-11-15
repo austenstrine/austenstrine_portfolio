@@ -9,14 +9,16 @@ import {
 	type CatalogSearchResult,
 	type CatalogTermFacet,
 } from '../../lib/catalog-api';
-import { vendorViewHref } from '../../lib/vendor-ref';
-import { ArrowLeftIcon } from '../icons/ArrowLeftIcon';
-import { ArrowRightIcon } from '../icons/ArrowRightIcon';
 import {
 	SearchExtrasPortal,
 	useCatalogSearch,
 } from './CatalogSearchContext';
+import { NavigatePersistentArrow } from './NavigatePersistentArrow';
 import { CatalogSortMenu } from './CatalogSortMenu';
+import {
+	MarketplaceBreadcrumb,
+	type MarketplaceBreadcrumbCrumb,
+} from './MarketplaceBreadcrumb';
 import { ProductCard } from './ProductCard';
 
 const PAGE_SIZE = 24;
@@ -340,7 +342,10 @@ export function CatalogSearchExperience({
 									count={row.count}
 									active={vendor === row.slug}
 									onClick={() => {
-										router.push(vendorViewHref(row.slug));
+										commit({
+											vendor: row.slug,
+											page: 1,
+										});
 									}}
 								/>
 							))}
@@ -423,82 +428,69 @@ export function CatalogSearchExperience({
 		: 'h1';
 	const HeadingTag = headingTag;
 
+	const breadcrumbCrumbs: MarketplaceBreadcrumbCrumb[] = [
+		{
+			key: 'home',
+			label: 'Place et Marque',
+			href: '/place-et-marque',
+		},
+	];
+	if(lockedVendor) {
+		if(selectedCategory || committedQuery.trim()) {
+			breadcrumbCrumbs.push({
+				key: 'vendor',
+				label: lockedVendor.name,
+				onClick: () => {
+					setQuery('');
+					commit({
+						q: '',
+						category: '',
+						page: 1,
+					});
+				},
+			});
+		}
+		else {
+			breadcrumbCrumbs.push({
+				key: 'vendor',
+				label: lockedVendor.name,
+			});
+		}
+	}
+	else if(selectedCategory) {
+		breadcrumbCrumbs.push({
+			key: 'shop',
+			label: 'Shop',
+			onClick: () => commit({
+				category: '',
+				page: 1,
+			}),
+		});
+	}
+	else {
+		breadcrumbCrumbs.push({
+			key: 'shop',
+			label: 'Shop',
+		});
+	}
+	if(selectedCategory) {
+		breadcrumbCrumbs.push({
+			key: 'category',
+			label: selectedCategory.name,
+		});
+	}
+
 	return (
-		<div className="-mx-gutter min-w-0 max-w-full overflow-x-hidden px-gutter">
+		<div
+			/* No max-w-full: it fights -mx-gutter and widens the right gap. */
+			className="-mx-gutter min-w-0 overflow-x-hidden px-gutter"
+		>
 			<div className="mx-auto min-w-0 max-w-full">
 				{!hideVendorIdentityChrome
 					? (
-						<nav className="text-[12px] text-slate-500" aria-label="Breadcrumb">
-							<ol className="flex flex-wrap items-center gap-2">
-								<li>
-									<a
-										className="hover:text-ink"
-										href="/place-et-marque"
-									>
-										Place et Marque
-									</a>
-								</li>
-								<li aria-hidden="true">/</li>
-								{lockedVendor
-									? (
-										<>
-											<li>
-												{selectedCategory || committedQuery.trim()
-													? (
-														<button
-															type="button"
-															className="hover:text-ink"
-															onClick={() => {
-																setQuery('');
-																commit({
-																	q: '',
-																	category: '',
-																	page: 1,
-																});
-															}}
-														>
-															{lockedVendor.name}
-														</button>
-													)
-													: (
-														<span className="text-ink">
-															{lockedVendor.name}
-														</span>
-													)}
-											</li>
-											{selectedCategory
-												? (
-													<>
-														<li aria-hidden="true">/</li>
-														<li className="text-ink">{selectedCategory.name}</li>
-													</>
-												)
-												: null}
-										</>
-									)
-									: (
-										<>
-											<li>
-												{selectedCategory
-													? (
-														<button type="button" className="hover:text-ink" onClick={() => commit({ category: '', page: 1 })}>
-															Shop
-														</button>
-													)
-													: <span className="text-ink">Shop</span>}
-											</li>
-											{selectedCategory
-												? (
-													<>
-														<li aria-hidden="true">/</li>
-														<li className="text-ink">{selectedCategory.name}</li>
-													</>
-												)
-												: null}
-										</>
-									)}
-							</ol>
-						</nav>
+						<MarketplaceBreadcrumb
+							crumbs={breadcrumbCrumbs}
+						/>
 					)
 					: null}
 
@@ -787,8 +779,9 @@ export function CatalogSearchExperience({
 										disabled={page <= 1}
 										onClick={() => commit({ page: Math.max(1, page - 1) })}
 									>
-										<ArrowLeftIcon
-											className="h-4 w-4"
+										<NavigatePersistentArrow
+											direction="left"
+											iconClassName="h-4 w-4"
 										/>
 									</PagerButton>
 									{pageItems(page, pageCount).map((item, index) =>
@@ -816,8 +809,8 @@ export function CatalogSearchExperience({
 										disabled={page >= pageCount}
 										onClick={() => commit({ page: Math.min(pageCount, page + 1) })}
 									>
-										<ArrowRightIcon
-											className="h-4 w-4"
+										<NavigatePersistentArrow
+											iconClassName="h-4 w-4"
 										/>
 									</PagerButton>
 								</nav>
@@ -872,6 +865,7 @@ function PagerButton({
 			className={
 				active
 					? `
+						group
 						inline-flex
 						min-w-10
 						items-center
@@ -889,6 +883,7 @@ function PagerButton({
 						focus-visible:outline-asgreen
 					`
 					: `
+						group
 						inline-flex
 						min-w-10
 						items-center

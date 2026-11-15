@@ -6,15 +6,24 @@ import { useEffect, useMemo, useState } from 'react';
 import {
 	deleteCatalogProduct,
 	getCatalogProduct,
+	getCatalogProductById,
+	restoreArchivedCatalogProduct,
 	type CatalogOfferingDetail,
 	type CatalogProductDetail,
 	type CatalogProductSummary,
 } from '../../lib/catalog-api';
-import { upsertCartLine } from '../../lib/checkout-api';
+import { DestructiveConfirmActions } from '../ui/DestructiveConfirmActions';
+import {
+	getCart,
+	removeCartLine,
+	upsertCartLine,
+	type CartDto,
+} from '../../lib/checkout-api';
 import { accessReason, buildLoginUrl } from '../../lib/accessGate';
 import { useSession } from '../../lib/useSession';
 import { vendorViewHref } from '../../lib/vendor-ref';
 import { CatalogCover } from './CatalogCover';
+import { BuyBoxCartCta } from './BuyBoxCartCta';
 import {
 	fieldEditOpen,
 	inPlaceFieldKey,
@@ -38,15 +47,27 @@ import {
 	InPlaceUomSelect,
 	useInPlaceProductEdit,
 } from './InPlaceProductFields';
+import { BackLink } from '../BackLink';
+import { NavigatePersistentArrow } from './NavigatePersistentArrow';
+import { MarketplaceBreadcrumb } from './MarketplaceBreadcrumb';
 import { ProductCard } from './ProductCard';
 import { ProductMobileStickyCta } from './ProductMobileStickyCta';
 import { TermHint } from './TermHint';
 import { CompoundQtyField } from './CompoundQtyField';
 import { formatAvailableQty } from '../../lib/uom-qty';
 
+export type ProductDetailCartLineSeed = {
+	offeringId: string;
+	quantity: string;
+};
+
 type ProductDetailClientProps = {
 	initialProduct: CatalogProductDetail;
 	relatedProducts?: CatalogProductSummary[];
+	/** SSR cart line for this product when already in cart (PEM-372). */
+	initialCartLine?: ProductDetailCartLineSeed | null;
+	/** True when SSR probed cart (even if empty) so client must not flash Add→spinner. */
+	cartSeeded?: boolean;
 };
 
 function formatPrice(cents: number, currency = 'USD') {
@@ -184,19 +205,43 @@ function specGroups(product: CatalogProductDetail, selectedSku?: string) {
 export function ProductDetailClient({
 	initialProduct,
 	relatedProducts = [],
+	initialCartLine = null,
+	cartSeeded = false,
 }: ProductDetailClientProps) {
 	const router = useRouter();
 	const { user, loading: sessionLoading } = useSession();
 	const [product, setProduct] = useState(initialProduct);
-	const [deleteBusy, setDeleteBusy] = useState(false);
+	const [deleteBusyMode, setDeleteBusyMode] = useState<'archive' | 'permanent' | 'undo' | null>(null);
+	const [deleteConfirmMode, setDeleteConfirmMode] = useState<'archive' | 'permanent' | null>(null);
 	const [deleteError, setDeleteError] = useState<string | null>(null);
 	const [deletedNotice, setDeletedNotice] = useState<string | null>(null);
+	const [archivedProductId, setArchivedProductId] = useState<string | null>(null);
 	const [activeImage, setActiveImage] = useState(0);
-	const [selectedOfferingId, setSelectedOfferingId] = useState(() => firstBuyableId(initialProduct));
-	const [cartQty, setCartQty] = useState('1');
+	const [selectedOfferingId, setSelectedOfferingId] = useState(() => (
+		initialCartLine?.offeringId
+		&& initialProduct.offerings.some((row) => row.id === initialCartLine.offeringId)
+			? initialCartLine.offeringId
+			: firstBuyableId(initialProduct)
+	));
+	const [cartQty, setCartQty] = useState(() => initialCartLine?.quantity ?? '1');
+	const [lineInCart, setLineInCart] = useState(() => Boolean(initialCartLine));
+	const [cartSnapshot, setCartSnapshot] = useState<CartDto | null>(null);
 	const [cartBusy, setCartBusy] = useState(false);
 	const [cartMessage, setCartMessage] = useState<string | null>(null);
 	const [cartError, setCartError] = useState<string | null>(null);
+
+	function applyCartLine(offeringId: string, cart: CartDto | null, resetQtyWhenAbsent = true) {
+		const line = cart?.lines.find((row) => row.offeringId === offeringId);
+		if(line) {
+			setLineInCart(true);
+			setCartQty(line.quantity);
+			return;
+		}
+		setLineInCart(false);
+		if(resetQtyWhenAbsent) {
+			setCartQty('1');
+		}
+	}
 
 	// SSR catalog fetch may omit canEdit when access_token was not forwarded;
 	// re-fetch once the browser session is known so seller chrome can appear.
@@ -226,6 +271,36 @@ export function ProductDetailClient({
 		sessionLoading,
 		user,
 	]);
+
+	// Refresh cart snapshot; SSR seed already set first paint (no Add→spinner flash).
+	useEffect(() => {
+		if(sessionLoading) {
+			return;
+		}
+		if(!user || !selectedOfferingId) {
+			if(!user && !cartSeeded) {
+				setLineInCart(false);
+			}
+			return;
+		}
+		let cancelled = false;
+		getCart()
+			.then((cart) => {
+				if(cancelled) {
+					return;
+				}
+				setCartSnapshot(cart);
+				applyCartLine(selectedOfferingId, cart);
+			})
+			.catch(() => {
+				if(!cancelled && !cartSeeded) {
+					setLineInCart(false);
+				}
+			});
+		return () => {
+			cancelled = true;
+		};
+	}, [sessionLoading, user, selectedOfferingId, cartSeeded]);
 
 	const {
 		editTier,
@@ -312,9 +387,20 @@ export function ProductDetailClient({
 
 	function selectOffering(id: string) {
 		setSelectedOfferingId(id);
-		setCartQty('1');
 		setCartMessage(null);
 		setCartError(null);
+		// Apply snapshot immediately so offering switches do not flash Add↔spinner.
+		if(cartSnapshot) {
+			applyCartLine(id, cartSnapshot);
+		}
+		else if(initialCartLine && id === initialCartLine.offeringId) {
+			setLineInCart(true);
+			setCartQty(initialCartLine.quantity);
+		}
+		else if(cartSeeded || !user) {
+			setLineInCart(false);
+			setCartQty('1');
+		}
 	}
 
 	async function onAddToCart() {
@@ -335,7 +421,10 @@ export function ProductDetailClient({
 		setCartError(null);
 		setCartMessage(null);
 		try {
-			await upsertCartLine(selectedOfferingId, cartQty || '1');
+			const qty = cartQty || '1';
+			const cart = await upsertCartLine(selectedOfferingId, qty);
+			setCartSnapshot(cart);
+			applyCartLine(selectedOfferingId, cart);
 			setCartMessage('Added to cart');
 		}
 		catch(error) {
@@ -346,31 +435,148 @@ export function ProductDetailClient({
 		}
 	}
 
-	async function onDelete() {
-		const confirmed = window.confirm(
-			`Delete "${product.title}"? Live rows are removed, a CSV receipt is emailed to vendor owners, and an archive copy is kept for 6 months.`,
-		);
-		if(!confirmed) {
+	async function setCartLineQty(nextRaw: string) {
+		if(!selectedOfferingId) {
+			return;
+		}
+		if(!user) {
+			router.push(
+				buildLoginUrl({
+					next: window.location.pathname,
+					reason: accessReason('cart', false),
+				}),
+			);
 			return;
 		}
 
-		setDeleteBusy(true);
+		const next = Number(nextRaw);
+		setCartBusy(true);
+		setCartError(null);
+		setCartMessage(null);
+		try {
+			if(!Number.isFinite(next) || next <= 0) {
+				const cart = await removeCartLine(selectedOfferingId);
+				setCartSnapshot(cart);
+				setLineInCart(false);
+				setCartQty('1');
+				setCartMessage(null);
+				return;
+			}
+			const available = Number(selectedOffering?.availableQty);
+			const clamped = Number.isFinite(available)
+				? Math.min(next, available)
+				: next;
+			const cart = await upsertCartLine(selectedOfferingId, String(clamped));
+			setCartSnapshot(cart);
+			applyCartLine(selectedOfferingId, cart);
+		}
+		catch(error) {
+			setCartError(
+				error instanceof Error ? error.message : 'Could not update cart.',
+			);
+		}
+		finally {
+			setCartBusy(false);
+		}
+	}
+
+	function onIncrementCartQty() {
+		const current = Number(cartQty);
+		const base = Number.isFinite(current) ? current : 0;
+		void setCartLineQty(String(base + 1));
+	}
+
+	function onDecrementCartQty() {
+		const current = Number(cartQty);
+		const base = Number.isFinite(current) ? current : 0;
+		void setCartLineQty(String(base - 1));
+	}
+
+	async function onArchiveProduct() {
+		setDeleteBusyMode('archive');
 		setDeleteError(null);
 		try {
 			const result = await deleteCatalogProduct(product.id);
 			const emailed = result.emailedTo.length > 0
 				? ` Receipt emailed to ${result.emailedTo.join(', ')}.`
 				: ' No owner email was available for the CSV receipt.';
-			setDeletedNotice(`Deleted. Archive batch ${result.archiveBatchId.slice(0, 8)}.${emailed}`);
+			const archiveId = result.archivedProductIds[0] ?? null;
+			setArchivedProductId(archiveId);
+			setDeleteConfirmMode(null);
+			setDeletedNotice(
+				`Archived.${result.archiveBatchId
+					? ` Batch ${result.archiveBatchId.slice(0, 8)}.`
+					: ''
+				}${emailed}`,
+			);
+			if(!archiveId) {
+				window.setTimeout(() => {
+					router.push('/place-et-marque/manage');
+				}, 1800);
+			}
+		}
+		catch(error) {
+			setDeleteError(
+				error instanceof Error
+					? error.message
+					: 'Could not archive product.',
+			);
+		}
+		finally {
+			setDeleteBusyMode(null);
+		}
+	}
+
+	async function onPermanentDeleteProduct() {
+		setDeleteBusyMode('permanent');
+		setDeleteError(null);
+		try {
+			const result = await deleteCatalogProduct(product.id, { permanent: true });
+			const emailed = result.emailedTo.length > 0
+				? ` Receipt emailed to ${result.emailedTo.join(', ')}.`
+				: ' No owner email was available for the CSV receipt.';
+			setArchivedProductId(null);
+			setDeleteConfirmMode(null);
+			setDeletedNotice(`Permanently deleted.${emailed}`);
 			window.setTimeout(() => {
 				router.push('/place-et-marque/manage');
 			}, 1800);
 		}
 		catch(error) {
-			setDeleteError(error instanceof Error ? error.message : 'Could not delete product.');
+			setDeleteError(
+				error instanceof Error
+					? error.message
+					: 'Could not delete product.',
+			);
 		}
 		finally {
-			setDeleteBusy(false);
+			setDeleteBusyMode(null);
+		}
+	}
+
+	async function onUndoArchive() {
+		if(!archivedProductId) {
+			return;
+		}
+		setDeleteBusyMode('undo');
+		setDeleteError(null);
+		try {
+			const restored = await restoreArchivedCatalogProduct(archivedProductId);
+			const refreshed = await getCatalogProductById(restored.productId);
+			setProduct(refreshed);
+			setArchivedProductId(null);
+			setDeletedNotice(null);
+			setDeleteConfirmMode(null);
+		}
+		catch(error) {
+			setDeleteError(
+				error instanceof Error
+					? error.message
+					: 'Could not undo archive.',
+			);
+		}
+		finally {
+			setDeleteBusyMode(null);
 		}
 	}
 
@@ -644,81 +850,59 @@ export function ProductDetailClient({
 					)
 					: null}
 
+				{/* Always mounted — unmounting on lineInCart caused ~60px jump (PEM-372). */}
 				<CompoundQtyField
 					label="Quantity"
 					uomCode={selectedOffering.uom.code}
 					value={cartQty}
 					onChange={setCartQty}
-					disabled={!stock.inStock}
+					disabled={!stock.inStock || lineInCart || cartBusy}
 				/>
 
-				{cartMessage
-					? (
-						<p
-							className="
-								rounded-lg
-								bg-asgreen/15
-								px-3
-								py-2
-								text-sm
-								font-medium
-								text-asgreen
-							"
-							aria-live="polite"
-						>
-							{cartMessage}.{' '}
-							<Link href="/place-et-marque/cart" className="underline underline-offset-2">
-								View cart
-							</Link>
-						</p>
-					)
-					: null}
-				{cartError
-					? (
-						<p className="text-sm text-red-700" aria-live="polite">
-							{cartError}
-						</p>
-					)
-					: null}
-
-				<div className="flex flex-col gap-2">
-					<button
-						type="button"
-						disabled={cartBusy || !stock.inStock}
-						onClick={() => void onAddToCart()}
-						className="
-							w-full
-							rounded-full
-							bg-asgreen
-							px-5
-							py-3
-							text-sm
-							font-semibold
-							text-white
-							hover:bg-asgreen/90
-							disabled:opacity-40
-						"
-					>
-						{cartBusy
-							? 'Adding…'
-							: stock.inStock
-								? 'Add to cart'
-								: 'Unavailable'}
-					</button>
-					<Link
-						href="/place-et-marque/cart"
-						className="
-							text-center
-							text-sm
-							font-semibold
-							text-asgreen
-							underline-offset-4
-							hover:underline
-						"
-					>
-						View cart
-					</Link>
+				{/* Reserved slot so status never shifts Add / spinner. */}
+				<div
+					className="min-h-[2.75rem]"
+					aria-live="polite"
+				>
+					{cartError
+						? (
+							<p className="text-sm text-red-700">
+								{cartError}
+							</p>
+						)
+						: null}
+					{!cartError && cartMessage
+						? (
+							<p
+								className="
+									rounded-lg
+									bg-asgreen/15
+									px-3
+									py-2
+									text-sm
+									font-medium
+									text-asgreen
+								"
+							>
+								{cartMessage}
+							</p>
+						)
+						: null}
 				</div>
+
+				<BuyBoxCartCta
+					lineInCart={lineInCart}
+					cartBusy={cartBusy}
+					inStock={stock.inStock}
+					cartQty={cartQty}
+					incrementDisabled={
+						Number.isFinite(Number(selectedOffering.availableQty))
+						&& Number(cartQty) >= Number(selectedOffering.availableQty)
+					}
+					onAddToCart={() => void onAddToCart()}
+					onDecrementQty={() => void onDecrementCartQty()}
+					onIncrementQty={() => void onIncrementCartQty()}
+				/>
 
 				<div className="border-t border-slate-100 pt-4 text-[12px] leading-5 text-slate-500">
 					<p>
@@ -727,8 +911,9 @@ export function ProductDetailClient({
 							href={vendorHref}
 							className="
 								font-semibold
-								text-asgreen
-								hover:underline
+								text-sky
+								underline
+								underline-offset-2
 							"
 						>
 							{product.vendor.name}
@@ -756,44 +941,33 @@ export function ProductDetailClient({
 
 	return (
 		<div className="flex flex-col gap-10 pb-24 lg:pb-0">
-			<nav className="text-[12px] text-slate-500" aria-label="Breadcrumb">
-				<ol className="flex flex-wrap items-center gap-2">
-					<li>
-						<a
-							className="hover:text-asgreen"
-							href="/place-et-marque"
-						>
-							Place et Marque
-						</a>
-					</li>
-					<li aria-hidden="true">/</li>
-					<li>
-						<Link
-							className="hover:text-asgreen"
-							href="/place-et-marque/search"
-						>
-							Shop
-						</Link>
-					</li>
-					{product.category
-						? (
-							<>
-								<li aria-hidden="true">/</li>
-								<li>
-									<Link
-										className="hover:text-asgreen"
-										href={searchHref}
-									>
-										{product.category.name}
-									</Link>
-								</li>
-							</>
-						)
-						: null}
-					<li aria-hidden="true">/</li>
-					<li className="text-ink">{product.title}</li>
-				</ol>
-			</nav>
+			<MarketplaceBreadcrumb
+				crumbs={[
+					{
+						key: 'home',
+						label: 'Place et Marque',
+						href: '/place-et-marque',
+					},
+					{
+						key: 'shop',
+						label: 'Shop',
+						href: '/place-et-marque/search',
+					},
+					...(product.category
+						? [
+							{
+								key: 'category',
+								label: product.category.name,
+								href: searchHref,
+							},
+						]
+						: []),
+					{
+						key: 'product',
+						label: product.title,
+					},
+				]}
+			/>
 
 			<div>
 				<p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
@@ -1151,6 +1325,8 @@ export function ProductDetailClient({
 								<div className="flex gap-2 overflow-x-auto">
 									{gallery.map((src, index) => (
 										<button
+											aria-label={`Show image ${index + 1} of ${gallery.length}`}
+											aria-pressed={index === activeImage}
 											key={`${src}-${index}`}
 											type="button"
 											onClick={() => setActiveImage(index)}
@@ -1312,19 +1488,29 @@ export function ProductDetailClient({
 						: null}
 
 					<p className="text-sm text-slate-500">
-						<Link
-							className="
-								font-semibold
-								text-asgreen
-								underline-offset-4
-								hover:underline
-							"
-							href={searchHref}
-						>
-							{product.category
-								? `More in ${product.category.name}`
-								: 'Back to the catalog'}
-						</Link>
+						{product.category
+							? (
+								<Link
+									className="
+										group
+										inline-flex
+										items-center
+										gap-1.5
+										font-semibold
+										text-sky
+									"
+									href={searchHref}
+								>
+									More in {product.category.name}
+									<NavigatePersistentArrow />
+								</Link>
+							)
+							: (
+								<BackLink href={searchHref}>
+									Back to the catalog
+								</BackLink>
+							)
+						}
 					</p>
 				</div>
 
@@ -1344,15 +1530,18 @@ export function ProductDetailClient({
 							</h2>
 							<Link
 								className="
+									group
+									inline-flex
+									items-center
+									gap-1.5
 									text-sm
 									font-semibold
-									text-asgreen
-									underline-offset-4
-									hover:underline
+									text-sky
 								"
 								href={searchHref}
 							>
 								View all
+								<NavigatePersistentArrow />
 							</Link>
 						</div>
 						<div className="mt-5 grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-3">
@@ -1364,7 +1553,7 @@ export function ProductDetailClient({
 				)
 				: null}
 
-			{bulkEditing
+			{bulkEditing && !deletedNotice
 				? (
 					<details
 						className="
@@ -1374,6 +1563,7 @@ export function ProductDetailClient({
 							bg-white
 							p-5
 						"
+						open={deleteConfirmMode !== null || undefined}
 					>
 						<summary
 							className="
@@ -1383,12 +1573,106 @@ export function ProductDetailClient({
 								text-red-700
 							"
 						>
-							Delete
+							Archive or delete
 						</summary>
 						<div className="mt-4">
-							<p className="text-sm text-slate-600">
-								Archives the listing, emails owners a CSV, and prunes the archive after 6 months.
-							</p>
+							{deleteConfirmMode === 'permanent'
+								? (
+									<DestructiveConfirmActions
+										prompt={`Permanently delete "${product.title}"?`}
+										detail="No archive copy will be kept."
+										irreversible
+										confirmLabel="Delete permanently"
+										busy={deleteBusyMode === 'permanent'}
+										busyLabel="Deleting…"
+										onConfirm={
+											() => {
+												void onPermanentDeleteProduct();
+											}
+										}
+										onDismiss={
+											() => {
+												if(!deleteBusyMode) {
+													setDeleteConfirmMode('archive');
+													setDeleteError(null);
+												}
+											}
+										}
+									/>
+								)
+								: deleteConfirmMode === 'archive'
+									? (
+										<DestructiveConfirmActions
+											prompt={`Archive "${product.title}"?`}
+											detail="Live listing is removed. An archive copy is kept for 6 months and can be restored. Owners get a CSV receipt."
+											confirmLabel="Archive"
+											busy={deleteBusyMode === 'archive'}
+											busyLabel="Archiving…"
+											onConfirm={
+												() => {
+													void onArchiveProduct();
+												}
+											}
+											onDismiss={
+												() => {
+													if(!deleteBusyMode) {
+														setDeleteConfirmMode(null);
+														setDeleteError(null);
+													}
+												}
+											}
+											secondaryConfirmLabel="Delete permanently…"
+											onSecondaryConfirm={
+												() => {
+													if(!deleteBusyMode) {
+														setDeleteConfirmMode('permanent');
+														setDeleteError(null);
+													}
+												}
+											}
+										/>
+									)
+									: (
+										<>
+											<p className="text-sm text-slate-600">
+												Archive keeps a copy for 6 months (undoable). Permanent delete is irreversible.
+											</p>
+											<div
+												className="
+													mt-3
+													flex
+													justify-end
+												"
+											>
+												<button
+													type="button"
+													disabled={deleteBusyMode !== null}
+													onClick={
+														() => {
+															setDeleteConfirmMode('archive');
+															setDeleteError(null);
+														}
+													}
+													className="
+														rounded-full
+														border
+														border-red-300
+														bg-white
+														px-4
+														py-2
+														text-sm
+														font-semibold
+														text-red-700
+														hover:border-red-500
+														disabled:opacity-60
+													"
+												>
+													Archive or delete…
+												</button>
+											</div>
+										</>
+									)
+							}
 							{deleteError
 								? (
 									<p className="mt-2 text-sm text-red-700">
@@ -1397,46 +1681,20 @@ export function ProductDetailClient({
 								)
 								: null
 							}
-							<div
-								className="
-									mt-3
-									flex
-									justify-end
-								"
-							>
-								<button
-									type="button"
-									disabled={deleteBusy}
-									onClick={() => void onDelete()}
-									className="
-										rounded-full
-										border
-										border-red-300
-										bg-white
-										px-4
-										py-2
-										text-sm
-										font-semibold
-										text-red-700
-										hover:border-red-500
-										disabled:opacity-60
-									"
-								>
-									{deleteBusy
-										? 'Deleting…'
-										: 'Delete product'
-									}
-								</button>
-							</div>
 						</div>
 					</details>
 				)
-				: null}
+				: null
+			}
 
 			{deletedNotice
 				? (
-					<p
+					<div
 						className="
+							flex
+							flex-col
+							items-end
+							gap-3
 							rounded-2xl
 							border
 							border-asgreen/30
@@ -1446,11 +1704,53 @@ export function ProductDetailClient({
 							text-asgreen
 						"
 					>
-						{deletedNotice}
-					</p>
+						<p className="w-full">
+							{deletedNotice}
+						</p>
+						{archivedProductId
+							? (
+								<button
+									type="button"
+									disabled={deleteBusyMode === 'undo'}
+									onClick={
+										() => {
+											void onUndoArchive();
+										}
+									}
+									className="
+										rounded-full
+										border
+										border-asgreen
+										bg-white
+										px-4
+										py-2
+										text-sm
+										font-semibold
+										text-asgreen
+										hover:bg-asgreen/10
+										disabled:opacity-60
+									"
+								>
+									{deleteBusyMode === 'undo'
+										? 'Restoring…'
+										: 'Undo archive'
+									}
+								</button>
+							)
+							: null
+						}
+						{deleteError
+							? (
+								<p className="w-full text-red-700">
+									{deleteError}
+								</p>
+							)
+							: null
+						}
+					</div>
 				)
-				: null}
-
+				: null
+			}
 			{selectedOffering && !deletedNotice
 				? (
 					<ProductMobileStickyCta
@@ -1460,7 +1760,15 @@ export function ProductDetailClient({
 						stockTone={stock.tone}
 						cartBusy={cartBusy}
 						inStock={stock.inStock}
+						lineInCart={lineInCart}
+						cartQty={cartQty}
+						incrementDisabled={
+							Number.isFinite(Number(selectedOffering.availableQty))
+							&& Number(cartQty) >= Number(selectedOffering.availableQty)
+						}
 						onAddToCart={() => void onAddToCart()}
+						onDecrementQty={() => void onDecrementCartQty()}
+						onIncrementQty={() => void onIncrementCartQty()}
 					/>
 				)
 				: null}

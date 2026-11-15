@@ -12,6 +12,7 @@ import { safeNextPath } from '../../../lib/accessGate';
 import { RequireAccess } from '../../../components/auth/RequireAccess';
 import { DisclosurePrompt } from '../../../components/catalog/DisclosurePrompt';
 import { UrlSlugField } from '../../../components/catalog/UrlSlugField';
+import { NavigateHoverArrow } from '../../../components/catalog/NavigateHoverArrow';
 import { PlusIcon } from '../../../components/icons/PlusIcon';
 
 function slugify(value: string): string {
@@ -241,6 +242,7 @@ function VendorManageContent() {
 				{vendors.map((vendor) => (
 					<a
 						className="
+							group
 							rounded-xl
 							border
 							border-slate-200
@@ -260,9 +262,19 @@ function VendorManageContent() {
 								gap-2
 							"
 						>
-							<div>
-								<p className="font-semibold">
-									{vendor.name}
+							<div className="min-w-0 flex-1">
+								<p
+									className="
+										inline-flex
+										max-w-full
+										items-center
+										font-semibold
+									"
+								>
+									<span className="min-w-0 truncate">
+										{vendor.name}
+									</span>
+									<NavigateHoverArrow className="text-slate-400" />
 								</p>
 								<p className="text-sm text-slate-600">
 									/place-et-marque/{vendor.slug}

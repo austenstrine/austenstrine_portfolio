@@ -3,7 +3,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import {
-	pathReservesOrdersListBottomPane,
+	pathReservesManageContextBars,
 	pathUsesSellerChrome,
 } from '../../lib/accessGate';
 import { useCatalogSearch } from './CatalogSearchContext';
@@ -12,23 +12,51 @@ const STACK_VAR = '--seller-bottom-pane-stack';
 const STACK_GAP_PX = 8;
 const PANE_SCROLL_DELTA = 8;
 const PANE_SHOW_TOP = 16;
-/** Matches orders filter labels + controls (+ pane pad) before portal fill. */
-const ORDERS_PANE_RESERVE_CLASSNAME = `
-	min-h-[4.75rem]
-	empty:pointer-events-none
-	empty:border-transparent
-	empty:bg-transparent
-	empty:shadow-none
-	empty:backdrop-blur-none
+
+/**
+ * Manage-only: keep geometry mounted while empty (transparent clickthrough).
+ * When portal marks data-pane-filled=true, opacity fades up and pointer-events
+ * turn on immediately (Tailwind has-; not gated on transition end).
+ */
+const MANAGE_HARVEST_PANE_CLASSNAME = `
+	min-h-[3.5rem]
+	border-transparent
+	bg-transparent
+	opacity-0
+	pointer-events-none
+	shadow-none
+	transition-[opacity,background-color,border-color,box-shadow,transform]
+	duration-200
+	ease-out
+	motion-reduce:transition-none
+	has-[[data-pane-filled=true]]:border-slate-200
+	has-[[data-pane-filled=true]]:bg-white/95
+	has-[[data-pane-filled=true]]:opacity-100
+	has-[[data-pane-filled=true]]:pointer-events-auto
+	has-[[data-pane-filled=true]]:shadow-[0_-2px_12px_rgba(13,27,42,0.04)]
+`;
+
+const FILLED_PANE_CHROME_CLASSNAME = `
+	border-slate-200
+	bg-white/95
+	shadow-[0_-2px_12px_rgba(13,27,42,0.04)]
 `;
 
 /**
- * Compact right-aligned lightly frosted bottom pane for page-specific seller
- * actions. Docked bottom-right (bottom:0, right:0); only the top-left corner
- * is rounded. Not full-width. Site-wide context such as the vendor picker
- * stays in the top bar. Blocks click-through; frost stays faint.
- * Hides on scroll-down / shows on scroll-up like the top bar.
- * Publishes --seller-bottom-pane-stack so JumpToTop can sit above this pane.
+ * Full-width bottom pane for page-specific seller actions (pagination,
+ * New product, save). Solid white with a tiny alpha — no frosted blur, no
+ * corner radius. Site-wide context and page-level list controls (vendor
+ * picker, Filter/Stock/Sort/Show, vendor-order Filter/Status) live in the
+ * top bar. Hides on scroll-down / shows on scroll-up like the top bar.
+ * Publishes --seller-bottom-pane-stack so JumpToTop can mid-align over
+ * the bar (New product stays clear via the side margin+gutter rail) and
+ * dock observers can clear the pane. While scroll-hidden, publishes 0px
+ * (not removed) so IntersectionObserver rootMargins treat inset as gone.
+ *
+ * Manage reserves the bar before paint (PEM-440; pathReservesManageContextBars)
+ * so harvested controls pin into already-present chrome — no post-load pop.
+ * Host is always full viewport width; portal padding aligns controls with
+ * page content. Other seller routes still use empty:hidden.
  *
  * Stack height uses layout metrics (offsetHeight + CSS bottom), not
  * getBoundingClientRect, so CSS hide/show transforms do not collapse the
@@ -41,7 +69,7 @@ export function SellerPageActionPane() {
 	const lastScrollY = useRef(0);
 	const [paneHidden, setPaneHidden] = useState(false);
 	const sellerChrome = pathUsesSellerChrome(pathname);
-	const reserveOrdersPane = pathReservesOrdersListBottomPane(pathname);
+	const keepManagePane = pathReservesManageContextBars(pathname);
 
 	useEffect(() => {
 		if(!sellerChrome) {
@@ -85,13 +113,15 @@ export function SellerPageActionPane() {
 		const sync = () => {
 			const style = getComputedStyle(host);
 			if(paneHidden || style.display === 'none') {
-				document.documentElement.style.removeProperty(STACK_VAR);
+				// Keep the var published at 0 so dock observers reconnect to
+				// inset 0 instead of a stale positive rootMargin (PEM-404).
+				document.documentElement.style.setProperty(STACK_VAR, '0px');
 				return;
 			}
 			// Transform-safe: offsetHeight ignores translateY used for hide/show.
 			const height = host.offsetHeight;
 			if(height < 1) {
-				document.documentElement.style.removeProperty(STACK_VAR);
+				document.documentElement.style.setProperty(STACK_VAR, '0px');
 				return;
 			}
 			const bottomInset = Number.parseFloat(style.bottom) || 0;
@@ -116,7 +146,7 @@ export function SellerPageActionPane() {
 			host.removeEventListener('transitionend', sync);
 			document.documentElement.style.removeProperty(STACK_VAR);
 		};
-	}, [paneHidden, reserveOrdersPane, sellerChrome]);
+	}, [paneHidden, keepManagePane, sellerChrome]);
 
 	useEffect(() => {
 		return () => {
@@ -132,27 +162,22 @@ export function SellerPageActionPane() {
 		<div
 			className={
 				`
-					pointer-events-auto
 					fixed
 					bottom-0
-					right-0
 					z-30
-					max-w-[min(100%,52rem)]
-					rounded-tl-2xl
-					border
-					border-b-0
-					border-r-0
-					border-slate-200/40
-					bg-white/25
-					shadow-[0_4px_24px_rgba(13,27,42,0.06)]
-					backdrop-blur-[2px]
+					border-t
 					transition-transform
 					duration-200
 					ease-out
 					motion-reduce:transition-none
-					${reserveOrdersPane
-						? ORDERS_PANE_RESERVE_CLASSNAME
-						: 'empty:hidden'
+					inset-x-0
+					${keepManagePane
+						? MANAGE_HARVEST_PANE_CLASSNAME
+						: `
+							${FILLED_PANE_CHROME_CLASSNAME}
+							pointer-events-auto
+							empty:hidden
+						`
 					}
 				`
 			}

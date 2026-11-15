@@ -39,6 +39,20 @@ model ContactMessage {
   @@index([createdAt])
 }
 
+model RoadmapSuggestion {
+  id          String   @id @default(uuid())
+  body        String
+  name        String?
+  email       String?
+  userId      String?
+  userAgent   String?
+  createdAt   DateTime @default(now())
+  user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([createdAt])
+  @@index([userId])
+}
+
 model User {
   id                  String    @id @default(uuid())
   email               String    @unique
@@ -61,6 +75,7 @@ model User {
   placeEtMarqueOrders       PlaceEtMarqueOrder[]
   orderRefunds              OrderRefund[]
   notifications             Notification[]
+  roadmapSuggestions        RoadmapSuggestion[]
 
   @@index([createdAt])
 }

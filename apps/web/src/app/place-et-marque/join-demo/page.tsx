@@ -10,6 +10,8 @@ import {
 	accessReason,
 	buildLoginUrl,
 } from '../../../lib/accessGate';
+import { NavigatePersistentArrow } from '../../../components/catalog/NavigatePersistentArrow';
+import { PILL_CTA_MOTION_CLASS } from '../../../components/catalog/pillCta';
 import { useSession } from '../../../lib/useSession';
 
 export default function JoinDemoPage() {
@@ -267,7 +269,11 @@ export default function JoinDemoPage() {
 						{user
 							? (
 									<a
-										className="
+										className={`
+											group
+											inline-flex
+											items-center
+											gap-1.5
 											rounded-full
 											border
 											border-slate-300
@@ -276,17 +282,23 @@ export default function JoinDemoPage() {
 											text-sm
 											font-semibold
 											text-ink
+											${PILL_CTA_MOTION_CLASS}
 											hover:border-sky
 											hover:text-sky
-										"
+										`}
 										href={sellerWorkspaceHref}
 									>
 										Open seller workspace
+										<NavigatePersistentArrow />
 									</a>
 								)
 							: (
 									<a
-										className="
+										className={`
+											group
+											inline-flex
+											items-center
+											gap-1.5
 											rounded-full
 											border
 											border-slate-300
@@ -295,12 +307,14 @@ export default function JoinDemoPage() {
 											text-sm
 											font-semibold
 											text-ink
+											${PILL_CTA_MOTION_CLASS}
 											hover:border-sky
 											hover:text-sky
-										"
+										`}
 										href={signInHref}
 									>
 										Sign in
+										<NavigatePersistentArrow />
 									</a>
 								)
 						}
@@ -318,9 +332,9 @@ export default function JoinDemoPage() {
 				{' '}
 				<a
 					className="
-						font-semibold
 						text-sky
-						hover:underline
+						underline
+						underline-offset-2
 					"
 					href="/place-et-marque"
 				>

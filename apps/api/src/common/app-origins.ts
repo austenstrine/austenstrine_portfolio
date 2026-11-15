@@ -32,6 +32,16 @@ export function corsAllowedOrigins(): string[] {
 	if(crm) {
 		origins.add(crm);
 	}
+	// HTTP localhost Next (direct :3000 / :3001) must reach the API without
+	// going through local HTTPS — Chromium fails that path from an HTTP page.
+	if(process.env.NODE_ENV !== 'production') {
+		origins.add('http://localhost:3000');
+		origins.add('http://127.0.0.1:3000');
+		origins.add('http://[::1]:3000');
+		origins.add('http://localhost:3001');
+		origins.add('http://127.0.0.1:3001');
+		origins.add('http://[::1]:3001');
+	}
 	if(origins.size === 0) {
 		origins.add('http://localhost:3000');
 	}

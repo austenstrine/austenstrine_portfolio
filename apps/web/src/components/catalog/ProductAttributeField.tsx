@@ -2,7 +2,8 @@
 
 import { useMemo, useState } from 'react';
 import type { CatalogAttributeDefinition } from '../../lib/catalog-api';
-import { ArrowLeftIcon } from '../icons/ArrowLeftIcon';
+import { ChevronLeftIcon } from '../icons/ChevronLeftIcon';
+import { ChevronRightIcon } from '../icons/ChevronRightIcon';
 
 type ProductAttributeFieldProps = {
 	catalog: CatalogAttributeDefinition[];
@@ -279,7 +280,7 @@ export function ProductAttributeField({
 									setQuery('');
 								}}
 							>
-								<ArrowLeftIcon
+								<ChevronLeftIcon
 									className="h-3.5 w-3.5"
 								/>
 								All attributes
@@ -337,11 +338,30 @@ export function ProductAttributeField({
 														<span className="font-medium text-slate-800">
 															{attribute.name}
 														</span>
-														<span className="shrink-0 text-xs text-slate-500">
-															{selectedCount > 0
-																? `${selectedCount} selected · `
-																: ''}
-															{attribute.values.length} values
+														<span
+															className="
+																inline-flex
+																shrink-0
+																items-center
+																gap-1.5
+																text-xs
+																text-slate-500
+															"
+														>
+															<span>
+																{selectedCount > 0
+																	? `${selectedCount} selected · `
+																	: ''}
+																{attribute.values.length} values
+															</span>
+															<ChevronRightIcon
+																className="
+																	h-3.5
+																	w-3.5
+																	shrink-0
+																	text-slate-400
+																"
+															/>
 														</span>
 													</button>
 												</li>

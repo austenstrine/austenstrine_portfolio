@@ -1,4 +1,6 @@
 import { GUIDED_DEMO_PRODUCT } from '../../lib/site';
+import { NavigatePersistentArrow } from './NavigatePersistentArrow';
+import { PILL_CTA_BASE_CLASS } from './pillCta';
 
 export function DemoIntro() {
 	return (
@@ -48,35 +50,34 @@ export function DemoIntro() {
 				"
 			>
 				<a
-					className="
-						rounded-full
+					className={`
+						${PILL_CTA_BASE_CLASS}
 						bg-white
 						px-5
 						py-2.5
-						text-sm
-						font-semibold
 						text-ink
 						hover:bg-frost
-					"
+					`}
 					href="/place-et-marque/search"
 				>
 					Shop all products
+					<NavigatePersistentArrow />
 				</a>
 				<a
-					className="
-						rounded-full
+					className={`
+						${PILL_CTA_BASE_CLASS}
 						border
 						border-white/30
 						px-5
 						py-2.5
-						text-sm
-						font-semibold
 						text-white
+						hover:bg-white/10
 						hover:border-white
-					"
+					`}
 					href={GUIDED_DEMO_PRODUCT.href}
 				>
 					{GUIDED_DEMO_PRODUCT.title}
+					<NavigatePersistentArrow />
 				</a>
 			</div>
 		</section>

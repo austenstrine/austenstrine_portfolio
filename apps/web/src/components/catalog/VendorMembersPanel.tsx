@@ -18,6 +18,7 @@ import {
 import { CloseIcon } from '../icons/CloseIcon';
 import { PlusIcon } from '../icons/PlusIcon';
 import { TrashIcon } from '../icons/TrashIcon';
+import { DestructiveConfirmActions } from '../ui/DestructiveConfirmActions';
 
 export type VendorMembersChange = {
 	members: VendorDetail['members'];
@@ -69,6 +70,9 @@ export function VendorMembersPanel({
 	const [inviteError, setInviteError] = useState<string | null>(null);
 	const [memberBusyId, setMemberBusyId] = useState<string | null>(null);
 	const [memberError, setMemberError] = useState<string | null>(null);
+	const [confirmRemoveUserId, setConfirmRemoveUserId] = useState<string | null>(null);
+	const [confirmRevokeInviteId, setConfirmRevokeInviteId] = useState<string | null>(null);
+	const [revokeBusyId, setRevokeBusyId] = useState<string | null>(null);
 
 	const refreshInvites = async () => {
 		onInvitesChange(await listVendorInvites(vendor.id));
@@ -247,7 +251,9 @@ export function VendorMembersPanel({
 										)
 								}
 								{canRemoveRow
-									? (
+									? confirmRemoveUserId === member.userId
+										? null
+										: (
 											<button
 												type="button"
 												aria-label={`Remove ${member.email}`}
@@ -268,28 +274,9 @@ export function VendorMembersPanel({
 													disabled:opacity-50
 												"
 												onClick={() => {
-													setMemberBusyId(member.userId);
+													setConfirmRemoveUserId(member.userId);
+													setConfirmRevokeInviteId(null);
 													setMemberError(null);
-													removeVendorMember(vendor.id, member.userId)
-														.then(() => {
-															const members = vendor.members.filter(
-																(row) => row.userId !== member.userId,
-															);
-															emitMembers(members, {
-																leftOrganization: Boolean(
-																	viewerUserId
-																	&& member.userId === viewerUserId,
-																),
-															});
-														})
-														.catch((err) => {
-															setMemberError(
-																err instanceof Error
-																	? err.message
-																	: 'Could not remove member.',
-															);
-														})
-														.finally(() => setMemberBusyId(null));
 												}}
 											>
 												<TrashIcon className="h-3.5 w-3.5" />
@@ -298,6 +285,51 @@ export function VendorMembersPanel({
 									: null
 								}
 							</div>
+							{confirmRemoveUserId === member.userId
+								? (
+									<div className="w-full pt-2">
+										<DestructiveConfirmActions
+											prompt={`Remove ${member.email} from this organization?`}
+											detail="They lose manage access immediately."
+											irreversible
+											confirmLabel="Remove member"
+											busy={busy}
+											busyLabel="Removing…"
+											onConfirm={() => {
+												setMemberBusyId(member.userId);
+												setMemberError(null);
+												removeVendorMember(vendor.id, member.userId)
+													.then(() => {
+														const members = vendor.members.filter(
+															(row) => row.userId !== member.userId,
+														);
+														emitMembers(members, {
+															leftOrganization: Boolean(
+																viewerUserId
+																&& member.userId === viewerUserId,
+															),
+														});
+														setConfirmRemoveUserId(null);
+													})
+													.catch((err) => {
+														setMemberError(
+															err instanceof Error
+																? err.message
+																: 'Could not remove member.',
+														);
+													})
+													.finally(() => setMemberBusyId(null));
+											}}
+											onDismiss={() => {
+												if(!busy) {
+													setConfirmRemoveUserId(null);
+												}
+											}}
+										/>
+									</div>
+								)
+								: null
+							}
 						</li>
 					);
 				})}
@@ -329,36 +361,70 @@ export function VendorMembersPanel({
 										expires {new Date(invite.expiresAt).toLocaleDateString()}
 									</p>
 								</div>
-								<button
-									type="button"
-									aria-label={`Revoke invite for ${invite.email}`}
-									className="
-										inline-flex
-										h-8
-										items-center
-										gap-1.5
-										rounded-full
-										border
-										border-slate-200
-										px-2.5
-										text-xs
-										font-semibold
-										text-red-700
-										transition
-										hover:border-red-300
-										sm:px-3
-									"
-									onClick={() => {
-										revokeVendorInvite(vendor.id, invite.id)
-											.then(refreshInvites)
-											.catch(() => undefined);
-									}}
-								>
-									<span className="hidden sm:inline">
-										Revoke
-									</span>
-									<CloseIcon className="h-3 w-3 sm:hidden" />
-								</button>
+								{confirmRevokeInviteId === invite.id
+									? null
+									: (
+										<button
+											type="button"
+											aria-label={`Revoke invite for ${invite.email}`}
+											className="
+												inline-flex
+												h-8
+												items-center
+												gap-1.5
+												rounded-full
+												border
+												border-slate-200
+												px-2.5
+												text-xs
+												font-semibold
+												text-red-700
+												transition
+												hover:border-red-300
+												sm:px-3
+											"
+											onClick={() => {
+												setConfirmRevokeInviteId(invite.id);
+												setConfirmRemoveUserId(null);
+											}}
+										>
+											<span className="hidden sm:inline">
+												Revoke
+											</span>
+											<CloseIcon className="h-3 w-3 sm:hidden" />
+										</button>
+									)
+								}
+								{confirmRevokeInviteId === invite.id
+									? (
+										<div className="w-full pt-2">
+											<DestructiveConfirmActions
+												prompt={`Revoke invite for ${invite.email}?`}
+												detail="The invite link stops working."
+												irreversible
+												confirmLabel="Revoke invite"
+												busy={revokeBusyId === invite.id}
+												busyLabel="Revoking…"
+												onConfirm={() => {
+													setRevokeBusyId(invite.id);
+													revokeVendorInvite(vendor.id, invite.id)
+														.then(() => {
+															setConfirmRevokeInviteId(null);
+															return refreshInvites();
+														})
+														.catch(() => undefined)
+														.finally(() => setRevokeBusyId(null));
+												}}
+												onDismiss={() => {
+													if(revokeBusyId !== invite.id) {
+														setConfirmRevokeInviteId(null);
+													}
+												}}
+											/>
+										</div>
+									)
+									: null
+								}
 							</li>
 						))
 					: null

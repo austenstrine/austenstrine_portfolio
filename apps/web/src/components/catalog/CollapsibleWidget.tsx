@@ -14,7 +14,8 @@ import {
 	widgetPrefsUserKey,
 } from '../../lib/widget-prefs';
 import { useSession } from '../../lib/useSession';
-import { ArrowRightIcon } from '../icons/ArrowRightIcon';
+import { NavigateHoverArrow } from './NavigateHoverArrow';
+import { CaretDownIcon } from '../icons/CaretDownIcon';
 import { CloseIcon } from '../icons/CloseIcon';
 import { MoreVerticalIcon } from '../icons/MoreVerticalIcon';
 import {
@@ -104,11 +105,47 @@ export function CollapsibleWidget({
 	}, [userKey, widgetId]);
 
 	// Faint ⋮ is always painted (discovery + forward Tab). Alt / hover / focus
-	// only boost contrast — absolute slot + pr-10 gutter keep CLS at zero.
+	// only boost contrast — fixed h-8 w-8 in the right cluster keeps CLS at zero.
 	const prefsChromeEmphasized =
 		altHeld || menuOpen || headerFocused || headerHovered;
 	const isRemembering = rememberedOpen !== null;
 	const rememberMatches = isRemembering && rememberedOpen === open;
+	const prefsTriggerClassName = prefsChromeEmphasized
+		? `
+			inline-flex
+			h-8
+			w-8
+			shrink-0
+			items-center
+			justify-center
+			rounded-full
+			border
+			border-slate-200
+			bg-white
+			text-slate-600
+			opacity-100
+			transition
+			hover:border-sky
+			hover:text-sky
+		`
+		: `
+			inline-flex
+			h-8
+			w-8
+			shrink-0
+			items-center
+			justify-center
+			rounded-full
+			border
+			border-slate-200/70
+			bg-white/80
+			text-slate-500
+			opacity-40
+			transition
+			hover:border-sky
+			hover:text-sky
+			hover:opacity-100
+		`;
 
 	return (
 		<section
@@ -138,64 +175,29 @@ export function CollapsibleWidget({
 				onMouseEnter={() => setHeaderHovered(true)}
 				onMouseLeave={() => setHeaderHovered(false)}
 			>
+				<h2
+					className="
+						min-w-0
+						text-lg
+						font-semibold
+					"
+				>
+					{title}
+				</h2>
 				<div
 					className="
 						relative
-						min-w-0
-						pr-10
+						flex
+						shrink-0
+						items-center
+						gap-2
 					"
 				>
-					<h2 className="text-lg font-semibold">
-						{title}
-					</h2>
 					<button
 						aria-expanded={menuOpen}
 						aria-haspopup="menu"
 						aria-label={`Preferences for ${label}`}
-						className={
-							prefsChromeEmphasized
-								? `
-									absolute
-									-right-1
-									top-1/2
-									inline-flex
-									h-8
-									w-8
-									-translate-y-1/2
-									items-center
-									justify-center
-									rounded-full
-									border
-									border-slate-200
-									bg-white
-									text-slate-600
-									opacity-100
-									transition
-									hover:border-sky
-									hover:text-sky
-								`
-								: `
-									absolute
-									-right-1
-									top-1/2
-									inline-flex
-									h-8
-									w-8
-									-translate-y-1/2
-									items-center
-									justify-center
-									rounded-full
-									border
-									border-slate-200/70
-									bg-white/80
-									text-slate-500
-									opacity-40
-									transition
-									hover:border-sky
-									hover:text-sky
-									hover:opacity-100
-								`
-						}
+						className={prefsTriggerClassName}
 						onClick={() => setMenuOpen((current) => !current)}
 						ref={triggerRef}
 						title="Widget preferences (or hold Alt)"
@@ -233,11 +235,10 @@ export function CollapsibleWidget({
 									</CatalogMenuRow>
 									<Link
 										className="
+											group
 											flex
 											w-full
 											items-center
-											justify-between
-											gap-3
 											rounded-full
 											px-3.5
 											py-2
@@ -250,70 +251,73 @@ export function CollapsibleWidget({
 										onClick={() => setMenuOpen(false)}
 										role="menuitem"
 									>
-										Manage all preferences
+										<span className="min-w-0 flex-1 truncate">
+											Manage all preferences
+										</span>
+										<NavigateHoverArrow className="text-slate-400" />
 									</Link>
 								</CatalogMenuSurface>
 							)
 						: null
 					}
+					{open
+						? (
+								<button
+									aria-controls={panelId}
+									aria-expanded={true}
+									aria-label={collapseLabel === 'Close'
+										? `Close ${label}`
+										: collapseLabel
+									}
+									className={toggleClassName}
+									onClick={() => onOpenChange(false)}
+									type="button"
+								>
+									<CloseIcon
+										className="
+											h-3
+											w-3
+											shrink-0
+										"
+									/>
+									<span
+										className="
+											hidden
+											sm:inline
+										"
+									>
+										{collapseLabel}
+									</span>
+								</button>
+							)
+						: (
+								<button
+									aria-controls={panelId}
+									aria-expanded={false}
+									aria-label={expandLabel}
+									className={toggleClassName}
+									onClick={() => onOpenChange(true)}
+									type="button"
+								>
+									<span
+										className="
+											hidden
+											sm:inline
+										"
+									>
+										{expandLabel}
+									</span>
+									<CaretDownIcon
+										className="
+											h-3
+											w-3
+											shrink-0
+										"
+									/>
+								</button>
+							)
+					}
 				</div>
-				{open
-					? (
-							<button
-								aria-controls={panelId}
-								aria-expanded={true}
-								aria-label={collapseLabel === 'Close'
-									? `Close ${label}`
-									: collapseLabel
-								}
-								className={toggleClassName}
-								onClick={() => onOpenChange(false)}
-								type="button"
-							>
-								<CloseIcon
-									className="
-										h-3
-										w-3
-										shrink-0
-									"
-								/>
-								<span
-									className="
-										hidden
-										sm:inline
-									"
-								>
-									{collapseLabel}
-								</span>
-							</button>
-						)
-					: (
-							<button
-								aria-controls={panelId}
-								aria-expanded={false}
-								aria-label={expandLabel}
-								className={toggleClassName}
-								onClick={() => onOpenChange(true)}
-								type="button"
-							>
-								<span
-									className="
-										hidden
-										sm:inline
-									"
-								>
-									{expandLabel}
-								</span>
-								<ArrowRightIcon
-									className="
-										h-3
-										w-3
-										shrink-0
-									"
-								/>
-							</button>
-						)
-				}
 			</div>
 			<div
 				aria-hidden={!open}

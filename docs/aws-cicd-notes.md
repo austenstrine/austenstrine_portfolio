@@ -63,7 +63,7 @@ Deploy-on-box, not ECR/Fargate. Images build on the instance.
   | `JWT_ACCESS_SECRET` / `JWT_PENDING_SECRET` / `OTP_PEPPER` | distinct secrets |
   | `OPENSEARCH_PASSWORD` | matches compose OpenSearch admin password |
 
-  Leave `CHECKOUT_DEV_BYPASS` unset. Optional:
+  Leave `CHECKOUT_DEV_BYPASS` unset (`live.sh` exits if it is `1`). Optional:
   `CRM_NEXT_PUBLIC_API_BASE_URL=https://crm.austenstrine.dev/api`
   (compose default already). `WEB_URL` + `CRM_URL` feed Nest CORS and
   `CrmOriginGuard`; without them the API container exits and nginx returns 502.

@@ -27,14 +27,18 @@ import {
 import { useSession } from '../../../../lib/useSession';
 import { RequireAccess } from '../../../../components/auth/RequireAccess';
 import { CollapsibleWidget } from '../../../../components/catalog/CollapsibleWidget';
+import { MarketplaceBreadcrumb } from '../../../../components/catalog/MarketplaceBreadcrumb';
 import { UrlSlugField } from '../../../../components/catalog/UrlSlugField';
 import { VendorMembersPanel } from '../../../../components/catalog/VendorMembersPanel';
-import { ArrowRightIcon } from '../../../../components/icons/ArrowRightIcon';
-import { CartIcon } from '../../../../components/icons/CartIcon';
+import { NavigatePersistentArrow } from '../../../../components/catalog/NavigatePersistentArrow';
+import { PILL_CTA_MOTION_CLASS } from '../../../../components/catalog/pillCta';
+import { DestructiveConfirmActions } from '../../../../components/ui/DestructiveConfirmActions';
+import { CaretDownIcon } from '../../../../components/icons/CaretDownIcon';
 import { CloseIcon } from '../../../../components/icons/CloseIcon';
 import { DocumentIcon } from '../../../../components/icons/DocumentIcon';
 import { EyeIcon } from '../../../../components/icons/EyeIcon';
 import { PlusIcon } from '../../../../components/icons/PlusIcon';
+import { TruckIcon } from '../../../../components/icons/TruckIcon';
 import { useWidgetOpenState } from '../../../../hooks/useWidgetOpenState';
 import { productCreateHref, vendorViewHref } from '../../../../lib/vendor-ref';
 
@@ -114,6 +118,7 @@ function VendorDetailContent() {
 	const [createdToken, setCreatedToken] = useState<CreatedVendorAppPassword | null>(null);
 	const [passwordBusy, setPasswordBusy] = useState(false);
 	const [passwordError, setPasswordError] = useState<string | null>(null);
+	const [confirmRevokePasswordId, setConfirmRevokePasswordId] = useState<string | null>(null);
 	const [appPasswordsOpen, setAppPasswordsOpen] = useWidgetOpenState('vendor.app-passwords', false);
 	const [invites, setInvites] = useState<VendorInviteSummary[]>([]);
 	const [membersOpen, setMembersOpen] = useWidgetOpenState('vendor.members', false);
@@ -406,6 +411,7 @@ function VendorDetailContent() {
 		try {
 			await revokeVendorAppPassword(vendorId, passwordId);
 			setPasswords(await listVendorAppPasswords(vendorId));
+			setConfirmRevokePasswordId(null);
 		}
 		catch(revokeError) {
 			setPasswordError(
@@ -427,46 +433,19 @@ function VendorDetailContent() {
 				gap-6
 			"
 		>
-			<nav
-				aria-label="Breadcrumb"
-				className="
-					text-sm
-					text-slate-500
-				"
-			>
-				<ol
-					className="
-						flex
-						flex-wrap
-						items-center
-						gap-2
-					"
-				>
-					<li>
-						<a
-							className="
-								font-semibold
-								text-sky
-								hover:underline
-							"
-							href="/place-et-marque/vendors"
-						>
-							Vendors
-						</a>
-					</li>
-					<li aria-hidden="true">
-						›
-					</li>
-					<li
-						className="
-							font-semibold
-							text-ink
-						"
-					>
-						{vendor?.name ?? 'Organization'}
-					</li>
-				</ol>
-			</nav>
+			<MarketplaceBreadcrumb
+				crumbs={[
+					{
+						key: 'vendors',
+						label: 'Vendors',
+						href: '/place-et-marque/vendors',
+					},
+					{
+						key: 'vendor',
+						label: vendor?.name ?? 'Organization',
+					},
+				]}
+			/>
 
 			{sessionLoading || loading
 				? (
@@ -606,7 +585,7 @@ function VendorDetailContent() {
 																	>
 																		Change link name
 																	</span>
-																	<ArrowRightIcon
+																	<CaretDownIcon
 																		className="
 																			h-3
 																			w-3
@@ -902,8 +881,8 @@ function VendorDetailContent() {
 											className="
 												font-semibold
 												text-sky
+												underline
 												underline-offset-2
-												hover:underline
 											"
 											href={vendorViewHref(vendor.slug)}
 										>
@@ -1393,7 +1372,8 @@ function VendorDetailContent() {
 																				<a
 																					className="
 																						text-sky
-																						hover:underline
+																						underline
+																						underline-offset-2
 																					"
 																					href={`/place-et-marque/vendors/${vendor.slug}/orders#${encodeURIComponent(row.orderId)}`}
 																				>
@@ -1510,7 +1490,8 @@ function VendorDetailContent() {
 								{(vendor.myRole === 'OWNER' || vendor.myRole === 'EDITOR')
 									? (
 										<a
-											className="
+											className={`
+												group
 												inline-flex
 												items-center
 												gap-2
@@ -1520,9 +1501,9 @@ function VendorDetailContent() {
 												text-sm
 												font-semibold
 												text-sky
-												transition
+												${PILL_CTA_MOTION_CLASS}
 												hover:bg-sky/5
-											"
+											`}
 											href={productCreateHref({ vendor })}
 										>
 											<PlusIcon
@@ -1535,19 +1516,14 @@ function VendorDetailContent() {
 											<span className="min-w-0 flex-1 text-left">
 												New product
 											</span>
-											<ArrowRightIcon
-												className="
-													h-3.5
-													w-3.5
-													shrink-0
-												"
-											/>
+											<NavigatePersistentArrow />
 										</a>
 									)
 									: null
 								}
 								<a
-									className="
+									className={`
+										group
 										inline-flex
 										items-center
 										gap-2
@@ -1557,9 +1533,9 @@ function VendorDetailContent() {
 										text-sm
 										font-semibold
 										text-sky
-										transition
+										${PILL_CTA_MOTION_CLASS}
 										hover:bg-sky/5
-									"
+									`}
 									href={`/place-et-marque/${encodeURIComponent(vendor.slug)}`}
 								>
 									<EyeIcon
@@ -1572,16 +1548,11 @@ function VendorDetailContent() {
 									<span className="min-w-0 flex-1 text-left">
 										View storefront
 									</span>
-									<ArrowRightIcon
-										className="
-											h-3.5
-											w-3.5
-											shrink-0
-										"
-									/>
+									<NavigatePersistentArrow />
 								</a>
 								<a
-									className="
+									className={`
+										group
 										inline-flex
 										items-center
 										gap-2
@@ -1591,9 +1562,9 @@ function VendorDetailContent() {
 										text-sm
 										font-semibold
 										text-sky
-										transition
+										${PILL_CTA_MOTION_CLASS}
 										hover:bg-sky/5
-									"
+									`}
 									href={`/place-et-marque/vendors/${vendor.slug}/import`}
 								>
 									<DocumentIcon
@@ -1606,16 +1577,11 @@ function VendorDetailContent() {
 									<span className="min-w-0 flex-1 text-left">
 										Bulk CSV import
 									</span>
-									<ArrowRightIcon
-										className="
-											h-3.5
-											w-3.5
-											shrink-0
-										"
-									/>
+									<NavigatePersistentArrow />
 								</a>
 								<a
-									className="
+									className={`
+										group
 										inline-flex
 										items-center
 										gap-2
@@ -1625,12 +1591,12 @@ function VendorDetailContent() {
 										text-sm
 										font-semibold
 										text-sky
-										transition
+										${PILL_CTA_MOTION_CLASS}
 										hover:bg-sky/5
-									"
+									`}
 									href={`/place-et-marque/vendors/${vendor.slug}/orders`}
 								>
-									<CartIcon
+									<TruckIcon
 										className="
 											h-4
 											w-4
@@ -1640,13 +1606,7 @@ function VendorDetailContent() {
 									<span className="min-w-0 flex-1 text-left">
 										Orders to fulfill
 									</span>
-									<ArrowRightIcon
-										className="
-											h-3.5
-											w-3.5
-											shrink-0
-										"
-									/>
+									<NavigatePersistentArrow />
 								</a>
 							</nav>
 						</section>
@@ -1979,24 +1939,52 @@ function VendorDetailContent() {
 															</p>
 														</div>
 														{row.active
-															? (
-																<button
-																	className="
-																		text-sm
-																		font-semibold
-																		text-red-700
-																		hover:underline
-																		disabled:opacity-60
-																	"
-																	type="button"
-																	disabled={passwordBusy}
-																	onClick={() =>
-																		void onRevokePassword(row.id)
+															? confirmRevokePasswordId === row.id
+																? (
+																	<div className="w-full sm:w-auto">
+																		<DestructiveConfirmActions
+																			prompt={`Revoke app password "${row.name}"?`}
+																			detail="Integrations using this password stop working."
+																			irreversible
+																			confirmLabel="Revoke password"
+																			busy={passwordBusy}
+																			busyLabel="Revoking…"
+																			onConfirm={
+																				() => {
+																					void onRevokePassword(row.id);
+																				}
+																			}
+																			onDismiss={
+																				() => {
+																					if(!passwordBusy) {
+																						setConfirmRevokePasswordId(null);
+																					}
+																				}
+																			}
+																		/>
+																	</div>
+																)
+																: (
+																	<button
+																		className="
+																			text-sm
+																			font-semibold
+																			text-red-700
+																			hover:underline
+																			disabled:opacity-60
+																		"
+																		type="button"
+																		disabled={passwordBusy}
+																		onClick={
+																			() => {
+																				setConfirmRevokePasswordId(row.id);
+																				setPasswordError(null);
+																			}
 																		}
-																>
-																	Revoke
-																</button>
-															)
+																	>
+																		Revoke
+																	</button>
+																)
 															: null
 														}
 													</li>

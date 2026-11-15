@@ -1,0 +1,35 @@
+---
+description: Day-to-day local stack bring-up via dssh launch
+alwaysApply: true
+---
+
+# Local stack bring-up (`dssh launch`)
+
+Keep in sync with Place et Marque `workflows/dssh-launch-stack.md`.
+
+## Prefer
+
+```bash
+cd ~/Development/austenstrine_portfolio
+dssh launch                 # preferred
+dssh launch --dry-run       # map + launcher dry-run (no GUI)
+dssh launch --map-only      # refresh map only
+```
+
+- Consumer wiring: `.dsshrc` `dssh_launch_local=./scripts/dssh-launch` (portfolio paths stay in consumer config, not the generic dssh tool).
+- Port map: Project store `internal/port-broadcast-stack-map.md` (and local `ops/diagnostics/…`).
+- App `start`/`restart`: detach by default; follow with `dssh logs <target>` (global action form).
+
+## Six tabs
+
+`rlog` (`dssh rlog up; dssh logs rlog`), then `restart; logs` for `proxy` / `cdn` / `backend` / `frontend` / `crm`.
+
+## Backend / CRM replace
+
+Individual Nest/CRM restarts still follow `.cursor/rules/dssh-backend-ownership.mdc` (user Cursor terminal pattern).
+
+## Do not
+
+- Call the raw port-broadcast launcher by hand for routine bring-up when `dssh launch` works.
+- Bake portfolio stack paths into the generic dssh tool.
+- Leave a long-running watch after launch — refresh the map, then exit.

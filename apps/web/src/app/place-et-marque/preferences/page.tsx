@@ -1,8 +1,8 @@
 'use client';
 
-import Link from 'next/link';
 import { Suspense, useEffect, useState } from 'react';
 import { RequireAccess } from '../../../components/auth/RequireAccess';
+import { BackLink } from '../../../components/BackLink';
 import {
 	clearAllWidgetPrefs,
 	forgetWidgetState,
@@ -61,8 +61,9 @@ function WidgetPreferencesPanel() {
 				"
 			>
 				Remembered open or closed defaults for expandable sections.
-				Use the ⋮ next to a section title (faint until you hover, focus,
-				or hold Alt) to pin open or closed. Saved in this browser
+				Use the ⋮ on the right of a section header (faint until you
+				hover, focus, or hold Alt) to pin open or closed. Saved in this
+				browser
 				{user
 					? ` for ${user.email}`
 					: ' on this device'
@@ -165,17 +166,9 @@ function WidgetPreferencesPanel() {
 					gap-3
 				"
 			>
-				<Link
-					className="
-						text-sm
-						font-semibold
-						text-sky
-						hover:underline
-					"
-					href="/auth/account"
-				>
+				<BackLink href="/auth/account">
 					Back to account
-				</Link>
+				</BackLink>
 				{rows.length > 0
 					? (
 							<button

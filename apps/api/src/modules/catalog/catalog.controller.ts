@@ -458,8 +458,11 @@ export class CatalogController {
 	deleteProduct(
 		@Req() req: CatalogAuthedRequest,
 		@Param('productId') productId: string,
+		@Query('permanent') permanent?: string,
 	) {
-		return this.archive.deleteProductById(req.catalogActor!, productId);
+		return this.archive.deleteProductById(req.catalogActor!, productId, {
+			permanent: permanent === '1' || permanent === 'true',
+		});
 	}
 
 	@UseGuards(CatalogAuthGuard)
@@ -470,6 +473,30 @@ export class CatalogController {
 		@Body() dto: DeleteCatalogProductsDto,
 	) {
 		return this.archive.deleteProductsForVendor(req.catalogActor!, vendorId, dto);
+	}
+
+	@UseGuards(CatalogAuthGuard)
+	@Get('vendors/:vendorId/archives')
+	listVendorArchives(
+		@Req() req: CatalogAuthedRequest,
+		@Param('vendorId') vendorId: string,
+	) {
+		return this.archive.listArchivedProductsForVendor(
+			req.catalogActor!,
+			vendorId,
+		);
+	}
+
+	@UseGuards(CatalogAuthGuard)
+	@Post('archives/:archivedProductId/restore')
+	restoreArchivedProduct(
+		@Req() req: CatalogAuthedRequest,
+		@Param('archivedProductId') archivedProductId: string,
+	) {
+		return this.archive.restoreArchivedProduct(
+			req.catalogActor!,
+			archivedProductId,
+		);
 	}
 
 	@UseGuards(JwtAuthGuard)

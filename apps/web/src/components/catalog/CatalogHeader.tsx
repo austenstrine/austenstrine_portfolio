@@ -2,8 +2,12 @@
 
 import { useEffect, useLayoutEffect, useRef, useState, type RefObject } from 'react';
 import { usePathname } from 'next/navigation';
-import { pathUsesSellerChrome } from '../../lib/accessGate';
-import { getCart } from '../../lib/checkout-api';
+import {
+	pathReservesManageContextBars,
+	pathReservesSellerTopContext,
+	pathUsesSellerChrome,
+} from '../../lib/accessGate';
+import { CART_CHANGED_EVENT, getCart } from '../../lib/checkout-api';
 import { useSession } from '../../lib/useSession';
 import { CaretDownIcon } from '../icons/CaretDownIcon';
 import { CartIcon } from '../icons/CartIcon';
@@ -13,6 +17,8 @@ import { useEditableVendors } from './EditableVendorsProvider';
 import { HeaderPortraitLink } from './HeaderPortraitLink';
 import { InPlaceEditToggle } from './InPlaceProductFields';
 import { MarketplaceBrandLink } from './MarketplaceBrandLink';
+import { NavigatePersistentArrow } from './NavigatePersistentArrow';
+import { PILL_CTA_MOTION_CLASS } from './pillCta';
 import { SellerModeChip } from './SellerModeChip';
 import { syncSiteTopBanners } from '../../lib/site-top-banners';
 import { useCatalogSearch } from './CatalogSearchContext';
@@ -59,12 +65,16 @@ function HeaderSearch({
 const HEADER_SCROLL_DELTA = 8;
 const HEADER_SHOW_TOP = 16;
 
-export function CatalogHeader() {
+export function CatalogHeader({
+	initialCartCount = 0,
+}: {
+	/** SSR cart line count so the badge does not pop in after paint (PEM-373). */
+	initialCartCount?: number;
+} = {}) {
 	const pathname = usePathname();
 	const {
 		applyCategory,
 		categories,
-		categoriesReady,
 		category,
 		extrasHost,
 		headerDesktopRef,
@@ -80,30 +90,40 @@ export function CatalogHeader() {
 		ready: editableVendorsReady,
 		setEditTier,
 	} = useEditableVendors();
-	const [cartCount, setCartCount] = useState(0);
-	const [headerHeight, setHeaderHeight] = useState(0);
+	const [cartCount, setCartCount] = useState(initialCartCount);
 	const [bannerOffset, setBannerOffset] = useState(0);
 	const [headerHidden, setHeaderHidden] = useState(false);
 	const lastScrollY = useRef(0);
 	const sellerChrome = pathUsesSellerChrome(pathname);
+	// Manage: reserve top + bottom before paint (PEM-440). Vendor orders:
+	// reserve top only for Filter/Status harvest (PEM-445).
+	const reserveManageContext = pathReservesManageContextBars(pathname);
+	const reserveTopContext = pathReservesSellerTopContext(pathname);
 	const showInPlaceEditToggle = !sellerChrome
 		&& editableVendorsReady
 		&& editableVendorIds.size > 0;
 	// Buyer chrome (incl. /place-et-marque/<vendor>) keeps the department bar.
 	// Search hides it — filters live on the page instead.
-	const wantDepartmentBar =
-		!sellerChrome
-		&& pathname !== '/place-et-marque/search';
+	// Categories are SSR-seeded (PEM-370): show/hide is decided before paint.
+	// Spacer / --catalog-header-h use the same decision (PEM-377) so first
+	// paint matches bar present vs absent — no post-paint spacer jump.
+	// Seller top-context (manage + vendor orders) uses with-seller-context.
 	const showDepartmentBar =
-		wantDepartmentBar
+		!sellerChrome
+		&& pathname !== '/place-et-marque/search'
 		&& categories.length > 0;
-	// Hold the bar's height while categories load so the late insert does not
-	// shove main content. Collapse only after a settled empty fetch.
-	const reserveDepartmentBar =
-		wantDepartmentBar
-		&& !showDepartmentBar
-		&& !categoriesReady;
 	const headerRef = useRef<HTMLElement>(null);
+	const spacerRef = useRef<HTMLDivElement>(null);
+	const headerHeightVar = showDepartmentBar
+		? 'var(--catalog-header-h-with-bar)'
+		: reserveTopContext
+			? 'var(--catalog-header-h-with-seller-context)'
+			: 'var(--catalog-header-h-base)';
+	const spacerClassName = showDepartmentBar
+		? 'h-[var(--catalog-header-h-with-bar)]'
+		: reserveTopContext
+			? 'h-[var(--catalog-header-h-with-seller-context)]'
+			: 'h-[var(--catalog-header-h-base)]';
 
 	useLayoutEffect(() => {
 		const syncBanner = () => {
@@ -144,14 +164,19 @@ export function CatalogHeader() {
 		}
 		const sync = () => {
 			const height = header.offsetHeight;
-			setHeaderHeight(height);
 			// Sticky filters use viewport top — include banner band. Body
-			// padding-top already clears banners for in-flow content; spacer
-			// below is headerHeight only.
+			// padding-top already clears banners for in-flow content.
 			document.documentElement.style.setProperty(
 				'--catalog-header-h',
 				`${headerHidden ? 0 : height + bannerOffset}px`,
 			);
+			// Spacer is header-only (no banner). Track measured height so
+			// seller top-context rows (Filter/Stock/Sort/Show) clear the
+			// title — SSR tokens stay as the first-paint floor (PEM-377).
+			const spacer = spacerRef.current;
+			if(spacer) {
+				spacer.style.height = `${height}px`;
+			}
 		};
 		sync();
 		const observer = new ResizeObserver(sync);
@@ -159,8 +184,12 @@ export function CatalogHeader() {
 		return () => {
 			observer.disconnect();
 			document.documentElement.style.removeProperty('--catalog-header-h');
+			const spacer = spacerRef.current;
+			if(spacer) {
+				spacer.style.height = '';
+			}
 		};
-	}, [bannerOffset, headerHidden]);
+	}, [bannerOffset, headerHidden, showDepartmentBar, reserveTopContext]);
 
 	useEffect(() => {
 		lastScrollY.current = window.scrollY;
@@ -194,25 +223,42 @@ export function CatalogHeader() {
 			setCartCount(0);
 			return;
 		}
-		getCart()
-			.then((cart) => setCartCount(cart.lineCount ?? cart.lines.length))
-			.catch(() => setCartCount(0));
+		const refresh = () => {
+			getCart()
+				.then((cart) => setCartCount(cart.lineCount ?? cart.lines.length))
+				.catch(() => setCartCount(0));
+		};
+		refresh();
+		window.addEventListener(CART_CHANGED_EVENT, refresh);
+		return () => window.removeEventListener(CART_CHANGED_EVENT, refresh);
 	}, [user, sellerChrome]);
 
 	return (
 		<>
+			{/*
+				SSR with the category / manage context bar: pin --catalog-header-h
+				to the matching token before paint. Soft-nav updates with the
+				same presence decision (PEM-377 / PEM-440). Manage also pins the
+				bottom-pane stack floor so pad does not wait on layout sync.
+			*/}
+			<style
+				dangerouslySetInnerHTML={{
+					__html: reserveManageContext
+						? `:root{--catalog-header-h:${headerHeightVar};--seller-bottom-pane-stack:var(--seller-bottom-pane-stack-manage);}`
+						: `:root{--catalog-header-h:${headerHeightVar};}`,
+				}}
+			/>
 			<div
 				aria-hidden="true"
-				className={
-					headerHeight > 0
-						? undefined
-						: 'h-[var(--catalog-header-h)]'
+				className={spacerClassName}
+				data-catalog-header-spacer={
+					showDepartmentBar
+						? 'with-bar'
+						: reserveTopContext
+							? 'with-seller-context'
+							: 'base'
 				}
-				style={
-					headerHeight > 0
-						? { height: headerHeight }
-						: undefined
-				}
+				ref={spacerRef}
 			/>
 			<header
 				className="
@@ -374,17 +420,23 @@ export function CatalogHeader() {
 									)
 									: (
 										<a
-											className="
+											className={`
+												group
+												inline-flex
+												items-center
+												gap-1.5
 												rounded-full
 												bg-asgreen
 												px-3.5
 												py-2
 												text-white
+												${PILL_CTA_MOTION_CLASS}
 												hover:bg-asgreen/90
-											"
+											`}
 											href="/auth/login"
 										>
 											Sign in
+											<NavigatePersistentArrow />
 										</a>
 									)
 							}
@@ -421,12 +473,31 @@ export function CatalogHeader() {
 				{sellerChrome
 					? (
 						<div
-							className="
-								border-t
-								border-slate-100
-								bg-white
-								empty:hidden
-							"
+							className={
+								reserveTopContext
+									? `
+										min-h-[4rem]
+										border-t
+										border-slate-100
+										bg-white
+									`
+									: `
+										border-t
+										border-slate-100
+										bg-white
+										empty:hidden
+									`
+							}
+							data-manage-top-context={
+								reserveManageContext
+									? 'reserve'
+									: undefined
+							}
+							data-seller-top-context={
+								reserveTopContext
+									? 'reserve'
+									: undefined
+							}
 							ref={setSellerTopContextHost}
 						/>
 					)
@@ -438,21 +509,7 @@ export function CatalogHeader() {
 								onChoose={applyCategory}
 							/>
 						)
-						: reserveDepartmentBar
-							? (
-								<div
-									aria-hidden
-									className="
-										hidden
-										h-12
-										border-t
-										border-slate-100
-										bg-white
-										md:block
-									"
-								/>
-							)
-							: null
+						: null
 				}
 			</header>
 		</>

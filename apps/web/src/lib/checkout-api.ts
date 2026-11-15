@@ -72,9 +72,17 @@ export type CheckoutSession = {
 	checkoutId: string;
 	clientSecret: string | null;
 	publishableKey: string | null;
+	demoPayment?: boolean;
 	totalCents: number;
 	currency: string;
 	expiresAt: string | null;
+};
+
+export type DemoPaymentResult = {
+	checkoutId: string;
+	status: string;
+	totalCents: number;
+	currency: string;
 };
 
 export type PlaceEtMarqueOrderRefund = {
@@ -188,21 +196,35 @@ export type ConnectStatus = {
 	}>;
 };
 
+/** Fired after local cart mutations so header badge can refresh. */
+export const CART_CHANGED_EVENT = 'pem:cart-changed';
+
+export function notifyCartChanged() {
+	if(typeof window === 'undefined') {
+		return;
+	}
+	window.dispatchEvent(new Event(CART_CHANGED_EVENT));
+}
+
 export function getCart(): Promise<CartDto> {
 	return checkoutRequest<CartDto>('/cart');
 }
 
-export function upsertCartLine(offeringId: string, quantity: string): Promise<CartDto> {
-	return checkoutRequest<CartDto>('/cart/lines', {
+export async function upsertCartLine(offeringId: string, quantity: string): Promise<CartDto> {
+	const cart = await checkoutRequest<CartDto>('/cart/lines', {
 		method: 'PUT',
 		body: JSON.stringify({ offeringId, quantity }),
 	});
+	notifyCartChanged();
+	return cart;
 }
 
-export function removeCartLine(offeringId: string): Promise<CartDto> {
-	return checkoutRequest<CartDto>(`/cart/lines/${offeringId}`, {
+export async function removeCartLine(offeringId: string): Promise<CartDto> {
+	const cart = await checkoutRequest<CartDto>(`/cart/lines/${offeringId}`, {
 		method: 'DELETE',
 	});
+	notifyCartChanged();
+	return cart;
 }
 
 export function getCheckoutPreview(): Promise<CheckoutPreview> {
@@ -236,6 +258,13 @@ export function createCheckoutSession(payload: {
 	return checkoutRequest<CheckoutSession>('/sessions', {
 		method: 'POST',
 		body: JSON.stringify(payload),
+	});
+}
+
+export function confirmDemoPayment(checkoutId: string): Promise<DemoPaymentResult> {
+	return checkoutRequest<DemoPaymentResult>(`/sessions/${checkoutId}/demo-pay`, {
+		method: 'POST',
+		body: JSON.stringify({}),
 	});
 }
 

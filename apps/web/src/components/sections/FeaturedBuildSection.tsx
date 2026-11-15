@@ -3,7 +3,7 @@ import {
 	PLACE_ET_MARQUE_BLURB,
 	SITE_REPO,
 } from '../../lib/site';
-import { ArrowRightIcon } from '../icons/ArrowRightIcon';
+import { NavigatePersistentArrow } from '../catalog/NavigatePersistentArrow';
 
 const CATALOG_HREF = '/place-et-marque';
 
@@ -85,7 +85,7 @@ export function FeaturedBuildSection() {
 				className="
 					mt-8
 					grid
-					gap-4
+					gap-5
 					md:grid-cols-2
 				"
 			>
@@ -98,13 +98,14 @@ export function FeaturedBuildSection() {
 								h-full
 								flex-col
 								rounded-2xl
-								border
-								border-slate-200
-								bg-frost/60
+								border-2
+								border-slate-300
+								bg-white
 								p-inset
+								shadow-sm
 								transition
-								hover:border-ink
-								hover:bg-white
+								hover:border-sky
+								hover:shadow-md
 								focus-visible:outline-none
 								focus-visible:ring-2
 								focus-visible:ring-ink
@@ -114,7 +115,7 @@ export function FeaturedBuildSection() {
 						>
 							<p
 								className="
-									text-lg
+									text-xl
 									font-semibold
 									text-ink
 								"
@@ -123,9 +124,9 @@ export function FeaturedBuildSection() {
 							</p>
 							<p
 								className="
-									mt-2
+									mt-3
 									flex-1
-									text-sm
+									text-base
 									leading-relaxed
 									text-slate-600
 								"
@@ -134,65 +135,33 @@ export function FeaturedBuildSection() {
 							</p>
 							<span
 								className="
-									mt-5
+									mt-6
 									inline-flex
 									items-center
-									justify-end
-									gap-1
-									self-end
+									justify-center
+									gap-1.5
+									self-stretch
+									rounded-full
+									bg-sky
+									px-5
+									py-2.5
 									text-sm
 									font-semibold
-									text-ink
+									text-white
+									transition
+									group-hover:bg-sky/90
+									max-[399px]:px-3
 								"
 							>
 								{entry.cta}
-								<span
-									aria-hidden="true"
-									className="
-										transition-transform
-										group-hover:translate-x-0.5
-									"
-								>
-									<ArrowRightIcon
-										className="h-4 w-4"
-									/>
-								</span>
+								<NavigatePersistentArrow
+									iconClassName="h-4 w-4"
+								/>
 							</span>
 						</a>
 					</li>
 				))}
 			</ul>
-
-			<div
-				className="
-					mt-8
-					flex
-					justify-end
-				"
-			>
-				<a
-					className="
-						inline-flex
-						rounded-full
-						bg-sky
-						px-5
-						py-2.5
-						text-sm
-						font-semibold
-						text-white
-						transition
-						hover:bg-sky/90
-						max-[399px]:px-3
-						focus-visible:outline-none
-						focus-visible:ring-2
-						focus-visible:ring-ink
-						focus-visible:ring-offset-2
-					"
-					href={JOIN_DEMO_HREF}
-				>
-					Join the Place et Marque demo
-				</a>
-			</div>
 		</section>
 	);
 }

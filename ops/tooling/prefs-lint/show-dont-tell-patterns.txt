@@ -1,0 +1,8 @@
+# High-confidence GUI coaching phrases (case-insensitive). One regex per line.
+# Comments and blank lines ignored. Keep narrow — field-meaning helpers are allowed.
+more options appear
+open .+ first
+click .+ to (see|reveal|show|unlock)
+you('ll| will) need to (open|click|select)
+appears when you (click|open|select|hover)
+once you (open|click|select).+you (will|can) see

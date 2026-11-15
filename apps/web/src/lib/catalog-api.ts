@@ -895,25 +895,73 @@ export function catalogImportTemplateUrl(): string {
 }
 
 export type CatalogDeleteResult = {
-	archiveBatchId: string;
+	mode: 'archive' | 'permanent';
+	archiveBatchId: string | null;
+	archivedProductIds: string[];
 	deletedCount: number;
 	productSlugs: string[];
 	emailedTo: string[];
 	csvAttached: boolean;
+	reversible: boolean;
 };
 
-export function deleteCatalogProduct(productId: string): Promise<CatalogDeleteResult> {
-	return catalogRequest<CatalogDeleteResult>(`/products/${productId}`, {
+export type CatalogArchivedProduct = {
+	id: string;
+	archiveBatchId: string;
+	archivedAt: string;
+	originalId: string;
+	slug: string;
+	title: string;
+	vendorId: string;
+	vendorSlug: string;
+};
+
+export type CatalogRestoreResult = {
+	productId: string;
+	slug: string;
+	title: string;
+	restoredFromArchiveId: string;
+	archiveBatchId: string;
+};
+
+/** Archive (default) or permanently delete a live product. */
+export function deleteCatalogProduct(
+	productId: string,
+	options?: { permanent?: boolean },
+): Promise<CatalogDeleteResult> {
+	const permanent = options?.permanent
+		? '?permanent=true'
+		: '';
+	return catalogRequest<CatalogDeleteResult>(`/products/${productId}${permanent}`, {
 		method: 'DELETE',
 	});
 }
 
 export function deleteVendorCatalogProducts(
 	vendorId: string,
-	payload: { productIds?: string[]; productSlugs?: string[] },
+	payload: {
+		productIds?: string[];
+		productSlugs?: string[];
+		permanent?: boolean;
+	},
 ): Promise<CatalogDeleteResult> {
 	return catalogRequest<CatalogDeleteResult>(`/vendors/${vendorId}/products/delete`, {
 		method: 'POST',
 		body: JSON.stringify(payload),
 	});
+}
+
+export function listVendorArchivedProducts(
+	vendorId: string,
+): Promise<CatalogArchivedProduct[]> {
+	return catalogRequest<CatalogArchivedProduct[]>(`/vendors/${vendorId}/archives`);
+}
+
+export function restoreArchivedCatalogProduct(
+	archivedProductId: string,
+): Promise<CatalogRestoreResult> {
+	return catalogRequest<CatalogRestoreResult>(
+		`/archives/${archivedProductId}/restore`,
+		{ method: 'POST' },
+	);
 }

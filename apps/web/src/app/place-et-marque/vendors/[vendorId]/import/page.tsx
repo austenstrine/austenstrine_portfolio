@@ -15,6 +15,7 @@ import {
 import { RequireAccess } from '../../../../../components/auth/RequireAccess';
 import { BackLink } from '../../../../../components/BackLink';
 import { TermHint } from '../../../../../components/catalog/TermHint';
+import { NavigatePersistentArrow } from '../../../../../components/catalog/NavigatePersistentArrow';
 import { useSession } from '../../../../../lib/useSession';
 
 function VendorImportPageContent() {
@@ -240,14 +241,18 @@ function VendorImportPageContent() {
 							</a>
 							<a
 								className="
+									group
+									inline-flex
+									items-center
+									gap-1.5
 									text-sm
 									font-semibold
 									text-sky
-									hover:underline
 								"
 								href={`/place-et-marque/vendors/${vendorSlug}#app-passwords`}
 							>
 								Manage app passwords
+								<NavigatePersistentArrow />
 							</a>
 						</section>
 

@@ -2,7 +2,8 @@
 
 import { Suspense, useEffect, useRef, useState } from 'react';
 import { RequireAccess } from '../../../components/auth/RequireAccess';
-import { ArrowRightIcon } from '../../../components/icons/ArrowRightIcon';
+import { NavigatePersistentArrow } from '../../../components/catalog/NavigatePersistentArrow';
+import { ChevronRightIcon } from '../../../components/icons/ChevronRightIcon';
 import {
 	listNotifications,
 	markAllNotificationsRead,
@@ -336,16 +337,49 @@ function NotificationsInboxInner() {
 													>
 														{item.title}
 													</span>
-													<time
+													<span
 														className="
+															inline-flex
 															shrink-0
-															text-xs
-															text-slate-500
+															items-center
+															gap-2
 														"
-														dateTime={item.createdAt}
 													>
-														{formatCreatedAt(item.createdAt)}
-													</time>
+														<time
+															className="
+																text-xs
+																text-slate-500
+															"
+															dateTime={item.createdAt}
+														>
+															{formatCreatedAt(item.createdAt)}
+														</time>
+														{hasDetail
+															? (
+																<ChevronRightIcon
+																	className={
+																		isActive
+																			? `
+																				h-3.5
+																				w-3.5
+																				shrink-0
+																				rotate-90
+																				text-slate-400
+																				transition
+																			`
+																			: `
+																				h-3.5
+																				w-3.5
+																				shrink-0
+																				text-slate-400
+																				transition
+																			`
+																	}
+																/>
+															)
+															: null
+														}
+													</span>
 												</span>
 											</button>
 											{showDetail
@@ -376,24 +410,18 @@ function NotificationsInboxInner() {
 															? (
 																<a
 																	className="
+																		group
 																		inline-flex
 																		items-center
 																		gap-1.5
 																		text-sm
 																		font-semibold
-																		text-asgreen
-																		hover:underline
+																		text-sky
 																	"
 																	href={item.href}
 																>
 																	Open related
-																	<ArrowRightIcon
-																		className="
-																			h-3.5
-																			w-3.5
-																			shrink-0
-																		"
-																	/>
+																	<NavigatePersistentArrow />
 																</a>
 															)
 															: null

@@ -8,10 +8,16 @@ import {
 	type ReactNode,
 	type UIEvent,
 } from 'react';
+import { ChevronLeftIcon } from '../icons/ChevronLeftIcon';
+import { ChevronRightIcon } from '../icons/ChevronRightIcon';
 import { CatalogCover } from './CatalogCover';
 
 type ProductCardImageCarouselProps = {
-	/** Omit when the image plane should not navigate (seller in-place edit). */
+	/**
+	 * When set, the image plane is a navigate backdrop to the product page.
+	 * Slide carets/dots stay in-place only (stopPropagation).
+	 * Omit when the plane must not navigate (seller in-place edit).
+	 */
 	href?: string;
 	images: string[];
 	alt: string;
@@ -19,6 +25,58 @@ type ProductCardImageCarouselProps = {
 	/** Disable snap links; parent owns click targets. */
 	editable?: boolean;
 };
+
+/**
+ * In-place slide carets — shaftless chevron, not navigate Arrow.
+ * Stay mounted; fade/slide via opacity+transform (not display) so hover
+ * does not pop. Below `lg` (tablet and smaller): always visible (touch has
+ * no hover); enabled = full + clickable, end-of-range = faded. At `lg+`
+ * (desktop): rest opacity-0; reveal under `@media (hover: hover)` +
+ * group-hover when enabled.
+ */
+function carouselSlideClassName(side: 'left' | 'right', enabled: boolean) {
+	const desktopRestShift = side === 'left'
+		? 'lg:-translate-x-0.5'
+		: 'lg:translate-x-0.5';
+	return `
+		absolute
+		top-1/2
+		z-20
+		inline-flex
+		h-8
+		w-8
+		-translate-y-1/2
+		translate-x-0
+		items-center
+		justify-center
+		rounded-full
+		bg-white/90
+		text-sky
+		shadow-[0_2px_10px_rgba(13,27,42,0.22)]
+		transition-[opacity,transform]
+		duration-200
+		ease-out
+		motion-reduce:transition-none
+		hover:bg-white
+		${side === 'left' ? 'left-2' : 'right-2'}
+		${desktopRestShift}
+		${enabled
+			? `
+				opacity-100
+				pointer-events-auto
+				lg:opacity-0
+				lg:pointer-events-none
+				[@media(hover:hover)]:lg:group-hover/carousel:pointer-events-auto
+				[@media(hover:hover)]:lg:group-hover/carousel:translate-x-0
+				[@media(hover:hover)]:lg:group-hover/carousel:opacity-100
+			`
+			: `
+				opacity-40
+				pointer-events-none
+				lg:opacity-0
+			`}
+	`;
+}
 
 export function ProductCardImageCarousel({
 	href,
@@ -73,6 +131,15 @@ export function ProductCardImageCarousel({
 		goTo(index);
 	};
 
+	const onCaretClick = (
+		event: MouseEvent<HTMLButtonElement>,
+		index: number,
+	) => {
+		event.preventDefault();
+		event.stopPropagation();
+		goTo(index);
+	};
+
 	if(urls.length === 0) {
 		return (
 			<div className="absolute inset-0">
@@ -82,7 +149,7 @@ export function ProductCardImageCarousel({
 	}
 
 	return (
-		<div className="absolute inset-0">
+		<div className="group/carousel absolute inset-0">
 			<div
 				className="
 					flex
@@ -164,6 +231,33 @@ export function ProductCardImageCarousel({
 			{multi
 				? (
 					<>
+						<button
+							aria-hidden={true}
+							className={carouselSlideClassName('left', active > 0)}
+							onClick={
+								(event) => onCaretClick(event, active - 1)
+							}
+							tabIndex={-1}
+							type="button"
+						>
+							<ChevronLeftIcon className="h-4 w-4" />
+						</button>
+						<button
+							aria-hidden={true}
+							className={
+								carouselSlideClassName(
+									'right',
+									active < urls.length - 1,
+								)
+							}
+							onClick={
+								(event) => onCaretClick(event, active + 1)
+							}
+							tabIndex={-1}
+							type="button"
+						>
+							<ChevronRightIcon className="h-4 w-4" />
+						</button>
 						<div
 							aria-hidden="true"
 							className="
@@ -178,7 +272,6 @@ export function ProductCardImageCarousel({
 							"
 						/>
 						<div
-							aria-hidden="true"
 							className="
 								absolute
 								inset-x-0
@@ -187,6 +280,8 @@ export function ProductCardImageCarousel({
 								flex
 								justify-center
 							"
+							role="tablist"
+							aria-label="Product images"
 						>
 							<div
 								className="
@@ -200,6 +295,8 @@ export function ProductCardImageCarousel({
 							>
 								{urls.map((_, index) => (
 									<button
+										aria-label={`Show image ${index + 1} of ${urls.length}`}
+										aria-selected={index === active}
 										key={index}
 										className="
 											flex
@@ -211,7 +308,7 @@ export function ProductCardImageCarousel({
 										onClick={
 											(event) => onDotClick(event, index)
 										}
-										tabIndex={-1}
+										role="tab"
 										type="button"
 									>
 										<span
@@ -221,15 +318,14 @@ export function ProductCardImageCarousel({
 														h-1.5
 														w-1.5
 														rounded-full
-														bg-sky
-														shadow-[0_0_0_1px_rgba(255,255,255,0.7)]
+														bg-white
 													`
 													: `
 														h-1.5
 														w-1.5
 														rounded-full
-														bg-frost
-														shadow-[0_0_0_1px_rgba(255,255,255,0.45)]
+														bg-transparent
+														shadow-[0_0_0_1px_rgba(255,255,255,0.85)]
 													`
 											}
 										/>

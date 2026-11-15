@@ -8,6 +8,7 @@ import { CatalogModule } from './modules/catalog/catalog.module';
 import { CheckoutModule } from './modules/checkout/checkout.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { ProjectsModule } from './modules/projects/projects.module';
+import { RoadmapModule } from './modules/roadmap/roadmap.module';
 
 /** Default per-route ceiling. OTP/login keep tighter `@Throttle` on those handlers. */
 function defaultThrottleLimit(): number {
@@ -32,6 +33,7 @@ function defaultThrottleLimit(): number {
 		AuthModule,
 		HealthModule,
 		ProjectsModule,
+		RoadmapModule,
 		CatalogModule,
 		CheckoutModule,
 		NotificationsModule,

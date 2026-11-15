@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useLayoutEffect, useRef } from 'react';
+import { BuyBoxCartCta } from './BuyBoxCartCta';
 
 const STACK_VAR = '--product-sticky-cta-stack';
 const STACK_GAP_PX = 8;
@@ -12,12 +13,20 @@ type ProductMobileStickyCtaProps = {
 	stockTone: string;
 	cartBusy: boolean;
 	inStock: boolean;
+	/** When true, show qty spinner instead of Add to cart. */
+	lineInCart: boolean;
+	cartQty: string;
+	incrementDisabled?: boolean;
 	onAddToCart: () => void;
+	onDecrementQty: () => void;
+	onIncrementQty: () => void;
 };
 
 /**
- * Buyer PDP mobile sticky Add to cart. Publishes --product-sticky-cta-stack
- * so JumpToTop sits above this bar (same pattern as SellerPageActionPane).
+ * Buyer PDP mobile sticky Add to cart / in-cart qty spinner. Publishes
+ * --product-sticky-cta-stack so sitewide JumpToTop lifts above this bar
+ * (same pattern as SellerPageActionPane). CTA stacks Add+spinner for stable
+ * height (PEM-372).
  */
 export function ProductMobileStickyCta({
 	priceLabel,
@@ -26,7 +35,12 @@ export function ProductMobileStickyCta({
 	stockTone,
 	cartBusy,
 	inStock,
+	lineInCart,
+	cartQty,
+	incrementDisabled = false,
 	onAddToCart,
+	onDecrementQty,
+	onIncrementQty,
 }: ProductMobileStickyCtaProps) {
 	const hostRef = useRef<HTMLDivElement | null>(null);
 
@@ -89,7 +103,16 @@ export function ProductMobileStickyCta({
 				lg:hidden
 			"
 		>
-			<div className="mx-auto flex max-w-6xl items-center gap-3 px-3">
+			<div
+				className="
+					mx-auto
+					flex
+					max-w-6xl
+					items-center
+					gap-3
+					px-3
+				"
+			>
 				<div className="min-w-0 flex-1">
 					<p className="truncate text-sm font-semibold tabular-nums text-ink">
 						{priceLabel}
@@ -99,27 +122,17 @@ export function ProductMobileStickyCta({
 					</p>
 					<p className={`truncate text-xs ${stockTone}`}>{stockStatus}</p>
 				</div>
-				<button
-					type="button"
-					disabled={cartBusy || !inStock}
-					onClick={onAddToCart}
-					className="
-						rounded-full
-						bg-asgreen
-						px-5
-						py-2.5
-						text-sm
-						font-semibold
-						text-white
-						disabled:opacity-40
-					"
-				>
-					{cartBusy
-						? 'Adding…'
-						: inStock
-							? 'Add to cart'
-							: 'Unavailable'}
-				</button>
+				<BuyBoxCartCta
+					lineInCart={lineInCart}
+					cartBusy={cartBusy}
+					inStock={inStock}
+					cartQty={cartQty}
+					incrementDisabled={incrementDisabled}
+					compact
+					onAddToCart={onAddToCart}
+					onDecrementQty={onDecrementQty}
+					onIncrementQty={onIncrementQty}
+				/>
 			</div>
 		</div>
 	);

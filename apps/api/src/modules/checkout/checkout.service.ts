@@ -110,6 +110,11 @@ export class CheckoutService implements OnModuleInit, OnModuleDestroy {
 		},
 	) {
 		const unpaidDevBypass = process.env.CHECKOUT_DEV_BYPASS === '1';
+		if(unpaidDevBypass && process.env.NODE_ENV === 'production') {
+			throw new BadRequestException(
+				'CHECKOUT_DEV_BYPASS is refused when NODE_ENV=production.',
+			);
+		}
 		if(!this.stripe.enabled && !unpaidDevBypass) {
 			throw new BadRequestException(
 				'Stripe is not configured on the server (STRIPE_SECRET_KEY).',
@@ -117,7 +122,7 @@ export class CheckoutService implements OnModuleInit, OnModuleDestroy {
 		}
 		if(unpaidDevBypass && !this.stripe.enabled) {
 			this.logger.warn(
-				'CHECKOUT_DEV_BYPASS=1: completing checkout without Stripe payment.',
+				'CHECKOUT_DEV_BYPASS=1: demo payment step (no Stripe).',
 			);
 		}
 
@@ -304,11 +309,11 @@ export class CheckoutService implements OnModuleInit, OnModuleDestroy {
 					totalCents,
 				},
 			});
-			await this.finalizePaidCheckout(checkout.id);
 			return {
 				checkoutId: checkout.id,
 				clientSecret: null,
 				publishableKey: null,
+				demoPayment: true,
 				totalCents,
 				currency: checkout.currency,
 				expiresAt: checkout.expiresAt,
@@ -337,9 +342,72 @@ export class CheckoutService implements OnModuleInit, OnModuleDestroy {
 			checkoutId: checkout.id,
 			clientSecret: paymentIntent.client_secret,
 			publishableKey: process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY ?? null,
+			demoPayment: false,
 			totalCents,
 			currency: checkout.currency,
 			expiresAt: checkout.expiresAt,
+		};
+	}
+
+	/**
+	 * Local/demo path when CHECKOUT_DEV_BYPASS=1 and Stripe is unset.
+	 * Completes an AWAITING_PAYMENT checkout after the buyer submits the payment step.
+	 */
+	async confirmDemoPayment(buyerId: string, checkoutId: string) {
+		if(process.env.NODE_ENV === 'production') {
+			throw new BadRequestException(
+				'Demo payment is refused when NODE_ENV=production.',
+			);
+		}
+		const unpaidDevBypass = process.env.CHECKOUT_DEV_BYPASS === '1';
+		if(!unpaidDevBypass || this.stripe.enabled) {
+			throw new BadRequestException(
+				'Demo payment is only available when Stripe is unset and CHECKOUT_DEV_BYPASS=1.',
+			);
+		}
+
+		const checkout = await this.prisma.checkout.findUnique({
+			where: { id: checkoutId },
+		});
+		if(!checkout || checkout.buyerId !== buyerId) {
+			throw new NotFoundException('Checkout not found.');
+		}
+		if(checkout.stripePaymentIntentId) {
+			throw new BadRequestException(
+				'This checkout requires Stripe payment.',
+			);
+		}
+		if(checkout.status === CheckoutStatus.PAID) {
+			return {
+				checkoutId: checkout.id,
+				status: CheckoutStatus.PAID,
+				totalCents: checkout.totalCents,
+				currency: checkout.currency,
+			};
+		}
+		if(checkout.status !== CheckoutStatus.AWAITING_PAYMENT) {
+			throw new BadRequestException(
+				`Checkout cannot be paid in status ${checkout.status}.`,
+			);
+		}
+
+		await this.finalizePaidCheckout(checkout.id);
+
+		const paid = await this.prisma.checkout.findUniqueOrThrow({
+			where: { id: checkout.id },
+			select: {
+				id: true,
+				status: true,
+				totalCents: true,
+				currency: true,
+			},
+		});
+
+		return {
+			checkoutId: paid.id,
+			status: paid.status,
+			totalCents: paid.totalCents,
+			currency: paid.currency,
 		};
 	}
 

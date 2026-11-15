@@ -100,7 +100,8 @@ require_live_env() {
 		exit 1
 	fi
 	if grep -Eiq '^[[:space:]]*CHECKOUT_DEV_BYPASS[[:space:]]*=[[:space:]]*1[[:space:]]*$' "$ROOT/.env"; then
-		echo "live.sh: WARN CHECKOUT_DEV_BYPASS=1 on live — unset it" >&2
+		echo "live.sh: CHECKOUT_DEV_BYPASS=1 is refused on live — unset it" >&2
+		exit 1
 	fi
 }
 

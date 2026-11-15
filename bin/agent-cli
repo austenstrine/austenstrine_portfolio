@@ -21,6 +21,7 @@ Commands (default: orient):
   docker    Compose services + dssh/.dsshrc pointers (alias: dssh).
   seed      Prisma schema/seed/seed-sync paths + commands.
   helpers   Sibling tool-repo consumption status (detected from this tree).
+  lint      Fail-closed prefs + ESLint prefs + workspace typecheck (same as npm run lint).
 
 Flags:
   --json    Machine-readable object (where implemented).
@@ -29,6 +30,7 @@ Flags:
 Same-VM note: edit via git worktree; do not mutate /agent/repos/* in place.
 Integrate on development (based on master). Feature: feature/<user>/development/<name>.
 Sibling remotes: check git ls-remote (often master).
+Lint note: use ./bin/agent-cli lint or root npm run lint. Workspace npm run lint -w apps/* is tsc-only and skips prefs.
 EOF
 }
 
@@ -54,7 +56,7 @@ else
 fi
 case "$CMD" in
   orient|default|"") CMD=orient ;;
-  layout|scripts|env|seed|helpers) ;;
+  layout|scripts|env|seed|helpers|lint) ;;
   docker|dssh) CMD=docker ;;
   *) die "unknown command: $CMD (try --help)" ;;
 esac
@@ -515,8 +517,17 @@ EOF
 
 next
   ./bin/agent-cli layout|scripts|env|docker|seed|helpers [--json]
+  ./bin/agent-cli lint   # prefs + eslint-prefs + tsc (not npm run lint -w …)
   sibling remotes: git ls-remote --symref origin HEAD  (do not trust local branch name alone)
 EOF
+}
+
+cmd_lint() {
+  if [[ "$JSON" -eq 1 ]]; then
+    die "lint --json is not supported (run without --json; exit code is the signal)"
+  fi
+  # Same fail-closed path agents and CI must hit (root package.json "lint").
+  npm run lint
 }
 
 case "$CMD" in
@@ -527,4 +538,5 @@ case "$CMD" in
   docker)  cmd_docker ;;
   seed)    cmd_seed ;;
   helpers) cmd_helpers ;;
+  lint)    cmd_lint ;;
 esac

@@ -49,7 +49,11 @@ export default function PlaceEtMarqueGuidePage() {
 			>
 				{glossaryTerms.map((term) => (
 					<a
-						className="text-sky hover:underline"
+						className="
+							text-sky
+							underline
+							underline-offset-2
+						"
 						key={term.id}
 						href={`#${term.id}`}
 					>

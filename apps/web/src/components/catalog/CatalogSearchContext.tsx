@@ -15,10 +15,7 @@ import {
 import { createPortal } from 'react-dom';
 import { usePathname, useRouter } from 'next/navigation';
 import { pathIsBuyerVendorStorefront } from '../../lib/accessGate';
-import {
-	listCatalogCategories,
-	type CatalogCategoryRow,
-} from '../../lib/catalog-api';
+import type { CatalogCategoryRow } from '../../lib/catalog-api';
 import {
 	sortCategoryTree,
 	type CategoryTreeRow,
@@ -47,8 +44,6 @@ type CatalogSearchContextValue = {
 	syncCategory: (slug: string) => void;
 	applyCategory: (slug: string) => void;
 	categories: CatalogCategoryRow[];
-	/** False until the first categories fetch settles (success or failure). */
-	categoriesReady: boolean;
 	categoryTree: CategoryTreeRow<CatalogCategoryRow>[];
 	categoryOptions: CategoryTreeRow<CatalogCategoryRow>[];
 	headerDesktopRef: RefObject<HTMLInputElement | null>;
@@ -70,14 +65,21 @@ type CatalogSearchContextValue = {
 
 const CatalogSearchContext = createContext<CatalogSearchContextValue | null>(null);
 
-export function CatalogSearchProvider({ children }: { children: ReactNode }) {
+export function CatalogSearchProvider({
+	children,
+	initialCategories = [],
+}: {
+	children: ReactNode;
+	/** SSR categories so CatalogCategoryBar is present/absent in first HTML. */
+	initialCategories?: CatalogCategoryRow[];
+}) {
 	const router = useRouter();
 	const pathname = usePathname();
 	const [query, setQuery] = useState('');
 	const [committedQuery, setCommittedQuery] = useState('');
 	const [category, setCategoryState] = useState('');
-	const [categories, setCategories] = useState<CatalogCategoryRow[]>([]);
-	const [categoriesReady, setCategoriesReady] = useState(false);
+	// Seeded from layout SSR — no client fetch that can late-insert the bar.
+	const [categories] = useState<CatalogCategoryRow[]>(initialCategories);
 	const headerDesktopRef = useRef<HTMLInputElement>(null);
 	const headerMobileRef = useRef<HTMLInputElement>(null);
 	const [pageDock, setPageDock] = useState<HTMLElement | null>(null);
@@ -96,13 +98,6 @@ export function CatalogSearchProvider({ children }: { children: ReactNode }) {
 	);
 	const [desktop, setDesktop] = useState(false);
 	const categoryTree = useMemo(() => sortCategoryTree(categories), [categories]);
-
-	useEffect(() => {
-		listCatalogCategories()
-			.then((rows) => setCategories(rows))
-			.catch(() => undefined)
-			.finally(() => setCategoriesReady(true));
-	}, []);
 
 	useEffect(() => {
 		setExtrasHost(
@@ -246,7 +241,6 @@ export function CatalogSearchProvider({ children }: { children: ReactNode }) {
 		syncCategory,
 		applyCategory,
 		categories,
-		categoriesReady,
 		categoryTree,
 		categoryOptions: categoryTree,
 		headerDesktopRef,
@@ -273,7 +267,6 @@ export function CatalogSearchProvider({ children }: { children: ReactNode }) {
 		syncCategory,
 		applyCategory,
 		categories,
-		categoriesReady,
 		categoryTree,
 		extrasHost,
 		headerDesktopExtrasEl,
@@ -382,10 +375,107 @@ export function SearchExtrasPortal({ children }: { children: ReactNode }) {
 	return createPortal(content, target);
 }
 
-/** Seller context for the top bar (e.g. vendor picker). Not page actions. */
-export function SellerTopContextPortal({ children }: { children: ReactNode }) {
+type SellerPaneSlots = {
+	left?: ReactNode;
+	center?: ReactNode;
+	right?: ReactNode;
+	/** Legacy fill: top → left, bottom → right when no slots are set. */
+	children?: ReactNode;
+};
+
+function paneSlotPresent(node: ReactNode): boolean {
+	return node != null && node !== false;
+}
+
+function SellerPaneGroups({
+	left,
+	center,
+	right,
+	align = 'end',
+}: {
+	left?: ReactNode;
+	center?: ReactNode;
+	right?: ReactNode;
+	align?: 'end' | 'center';
+}) {
+	const itemsClass = align === 'center'
+		? 'items-center'
+		: 'items-end';
+	return (
+		<>
+			<div
+				className={`
+					flex
+					min-w-0
+					flex-wrap
+					${itemsClass}
+					justify-start
+					gap-x-3
+					gap-y-2
+				`}
+			>
+				{left}
+			</div>
+			<div
+				className={`
+					flex
+					min-w-0
+					flex-wrap
+					${itemsClass}
+					justify-center
+					gap-x-3
+					gap-y-2
+				`}
+			>
+				{center}
+			</div>
+			<div
+				className={`
+					flex
+					min-w-0
+					flex-wrap
+					${itemsClass}
+					justify-end
+					gap-x-3
+					gap-y-2
+				`}
+			>
+				{right}
+			</div>
+		</>
+	);
+}
+
+type SellerTopContextPortalProps = SellerPaneSlots & {
+	/**
+	 * Manage: keep an empty L/C/R shell mounted so the reserved top host stays
+	 * present before vendor/list data arrives (PEM-440). Other routes omit this.
+	 */
+	reserveEmpty?: boolean;
+};
+
+/** Seller context for the top bar: explicit left / center / right groups. */
+export function SellerTopContextPortal({
+	left,
+	center,
+	right,
+	children,
+	reserveEmpty = false,
+}: SellerTopContextPortalProps) {
 	const { sellerTopContextHostEl } = useCatalogSearch();
+	const leftNode = left !== undefined
+		? left
+		: (center === undefined && right === undefined
+			? children
+			: undefined);
+	const hasContent =
+		paneSlotPresent(leftNode)
+		|| paneSlotPresent(center)
+		|| paneSlotPresent(right);
 	if(!sellerTopContextHostEl) {
+		return null;
+	}
+	if(!hasContent && !reserveEmpty) {
 		return null;
 	}
 	return createPortal(
@@ -393,47 +483,93 @@ export function SellerTopContextPortal({ children }: { children: ReactNode }) {
 			aria-label="Seller context"
 			className="
 				mx-auto
-				flex
+				grid
+				min-h-[3.5rem]
+				w-full
 				max-w-7xl
-				flex-wrap
-				items-end
+				grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]
+				items-center
 				gap-x-3
 				gap-y-2
 				px-gutter
 				py-2
 			"
+			data-pane-filled={hasContent ? 'true' : 'false'}
 			role="region"
 		>
-			{children}
+			<SellerPaneGroups
+				align="center"
+				center={center}
+				left={leftNode}
+				right={right}
+			/>
 		</div>,
 		sellerTopContextHostEl,
 	);
 }
 
-/** Page-specific actions for the frosted bottom-right pane (e.g. New product on manage). */
-export function PageBottomPanePortal({ children }: { children: ReactNode }) {
+type PageBottomPanePortalProps = SellerPaneSlots & {
+	/**
+	 * Manage: keep an empty L/C/R shell mounted so the host bar stays present
+	 * (transparent clickthrough until data-pane-filled). Other routes omit this.
+	 */
+	reserveEmpty?: boolean;
+};
+
+/**
+ * Page actions for the full-width bottom pane: left / center / right groups.
+ * Host is viewport-wide; this shell uses max-w-7xl + px-gutter so controls
+ * match main / top-bar content (page gutter + centered content margin).
+ */
+export function PageBottomPanePortal({
+	left,
+	center,
+	right,
+	children,
+	reserveEmpty = false,
+}: PageBottomPanePortalProps) {
 	const { pageBottomPaneHostEl } = useCatalogSearch();
-	if(!pageBottomPaneHostEl || children == null || children === false) {
+	const rightNode = right !== undefined
+		? right
+		: (left === undefined && center === undefined
+			? children
+			: undefined);
+	const hasContent =
+		paneSlotPresent(left)
+		|| paneSlotPresent(center)
+		|| paneSlotPresent(rightNode);
+	if(!pageBottomPaneHostEl) {
+		return null;
+	}
+	if(!hasContent && !reserveEmpty) {
 		return null;
 	}
 	return createPortal(
 		<div
 			aria-label="Page actions"
 			className="
-				flex
-				flex-wrap
-				items-center
-				justify-end
+				mx-auto
+				grid
+				min-h-10
+				w-full
+				max-w-7xl
+				grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]
 				gap-x-2
 				gap-y-2
-				p-2
+				px-gutter
+				py-2
 				sm:gap-x-3
-				sm:px-3
 				sm:py-2.5
 			"
+			data-pane-filled={hasContent ? 'true' : 'false'}
 			role="region"
 		>
-			{children}
+			<SellerPaneGroups
+				align="center"
+				center={center}
+				left={left}
+				right={rightNode}
+			/>
 		</div>,
 		pageBottomPaneHostEl,
 	);

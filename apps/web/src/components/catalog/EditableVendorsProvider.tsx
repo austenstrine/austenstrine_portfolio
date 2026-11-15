@@ -66,6 +66,15 @@ const EditableVendorsContext = createContext<EditableVendorsContextValue | null>
 const EDITOR_ROLES = new Set(['OWNER', 'EDITOR']);
 const VALID_TIERS = new Set<InPlaceEditTier>(['off', 'page', 'card', 'element']);
 
+/** Vendor ids where the signed-in user can in-place edit (OWNER/EDITOR). */
+export function editableVendorIdsFromMine(
+	vendors: Array<{ id: string; myRole: string }>,
+): string[] {
+	return vendors
+		.filter((vendor) => EDITOR_ROLES.has(vendor.myRole))
+		.map((vendor) => vendor.id);
+}
+
 export function inPlaceFieldKey(
 	productId: string,
 	field: InPlaceFieldName,
@@ -167,12 +176,23 @@ function writeStoredEditTier(tier: InPlaceEditTier) {
 	}
 }
 
-export function EditableVendorsProvider({ children }: { children: ReactNode }) {
+export function EditableVendorsProvider({
+	children,
+	initialEditableVendorIds,
+}: {
+	children: ReactNode;
+	/**
+	 * When set (including `[]`), Edit chrome is decided before paint (PEM-373).
+	 * Omit only outside PeM SSR seeding.
+	 */
+	initialEditableVendorIds?: string[];
+}) {
 	const { user, loading: sessionLoading } = useSession();
+	const ssrSeeded = initialEditableVendorIds !== undefined;
 	const [editableVendorIds, setEditableVendorIds] = useState<ReadonlySet<string>>(
-		() => new Set(),
+		() => new Set(initialEditableVendorIds ?? []),
 	);
-	const [ready, setReady] = useState(false);
+	const [ready, setReady] = useState(() => ssrSeeded);
 	const [editTier, setEditTierState] = useState<InPlaceEditTier>('off');
 	const [activeCardId, setActiveCardId] = useState<string | null>(null);
 	const [activeFieldKey, setActiveFieldKey] = useState<string | null>(null);
@@ -199,18 +219,16 @@ export function EditableVendorsProvider({ children }: { children: ReactNode }) {
 		}
 
 		let cancelled = false;
-		setReady(false);
+		// SSR seed already decided presence; refresh quietly so Edit does not blink off.
+		if(!ssrSeeded) {
+			setReady(false);
+		}
 		listMyVendors()
 			.then((vendors) => {
 				if(cancelled) {
 					return;
 				}
-				const next = new Set(
-					vendors
-						.filter((vendor) => EDITOR_ROLES.has(vendor.myRole))
-						.map((vendor) => vendor.id),
-				);
-				setEditableVendorIds(next);
+				setEditableVendorIds(new Set(editableVendorIdsFromMine(vendors)));
 			})
 			.catch(() => {
 				if(!cancelled) {
@@ -226,7 +244,7 @@ export function EditableVendorsProvider({ children }: { children: ReactNode }) {
 		return () => {
 			cancelled = true;
 		};
-	}, [sessionLoading, user]);
+	}, [sessionLoading, ssrSeeded, user]);
 
 	const setEditTier = useCallback((tier: InPlaceEditTier) => {
 		setEditTierState(tier);
