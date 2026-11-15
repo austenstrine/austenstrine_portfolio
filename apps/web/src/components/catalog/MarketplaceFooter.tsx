@@ -9,6 +9,7 @@ const footerLinkClassName = `
 	group
 	inline-flex
 	items-center
+	px-2.5
 	text-sm
 	font-semibold
 	text-ink
@@ -81,9 +82,9 @@ export function MarketplaceFooter() {
 				</div>
 				<nav
 					className="
+						-mx-2.5
 						flex
 						flex-wrap
-						gap-x-5
 						gap-y-2
 					"
 				>
