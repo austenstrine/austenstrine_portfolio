@@ -10,6 +10,7 @@ import {
 	productEditHref,
 	productViewHref,
 } from '../../lib/vendor-ref';
+import { CaretDownIcon } from '../icons/CaretDownIcon';
 import { EyeIcon } from '../icons/EyeIcon';
 import { PencilIcon } from '../icons/PencilIcon';
 import { TrashIcon } from '../icons/TrashIcon';
@@ -54,6 +55,257 @@ const desktopCaretSlotClassName = `
 `;
 
 const UNDO_WINDOW_MS = 30_000;
+
+function PermanentDeleteMenu({
+	onPick,
+}: {
+	onPick: () => void;
+}) {
+	return (
+		<div
+			className="
+				absolute
+				right-0
+				top-full
+				z-20
+				mt-1
+				min-w-[12rem]
+				rounded-2xl
+				border
+				border-slate-200
+				bg-white
+				p-1.5
+				shadow-sm
+			"
+			role="menu"
+		>
+			<button
+				className="
+					flex
+					w-full
+					items-center
+					rounded-full
+					px-3.5
+					py-2
+					text-left
+					text-sm
+					font-semibold
+					text-red-700
+					hover:bg-red-50
+				"
+				onClick={onPick}
+				role="menuitem"
+				type="button"
+			>
+				Permanently delete
+			</button>
+		</div>
+	);
+}
+
+function ArchiveSplitControl({
+	busy,
+	layout,
+	productTitle,
+	onArchive,
+	onPermanent,
+}: {
+	busy: boolean;
+	layout: 'desktop' | 'mobile';
+	productTitle: string;
+	onArchive: () => void;
+	onPermanent: () => void;
+}) {
+	const [menuOpen, setMenuOpen] = useState(false);
+	const wrapRef = useRef<HTMLDivElement | null>(null);
+
+	useEffect(() => {
+		if(!menuOpen) {
+			return;
+		}
+		function onPointerDown(event: MouseEvent) {
+			const root = wrapRef.current;
+			if(root && !root.contains(event.target as Node)) {
+				setMenuOpen(false);
+			}
+		}
+		function onKeyDown(event: KeyboardEvent) {
+			if(event.key === 'Escape') {
+				setMenuOpen(false);
+			}
+		}
+		window.addEventListener('mousedown', onPointerDown);
+		window.addEventListener('keydown', onKeyDown);
+		return () => {
+			window.removeEventListener('mousedown', onPointerDown);
+			window.removeEventListener('keydown', onKeyDown);
+		};
+	}, [menuOpen]);
+
+	if(layout === 'mobile') {
+		return (
+			<div
+				className="relative"
+				ref={wrapRef}
+			>
+				<div
+					className="
+						inline-flex
+						h-9
+						overflow-hidden
+						rounded-full
+						border
+						border-red-300
+						bg-white
+						text-red-700
+						divide-x
+						divide-red-200
+					"
+				>
+					<button
+						aria-label={`Archive ${productTitle}`}
+						className="
+							inline-flex
+							h-9
+							w-9
+							items-center
+							justify-center
+							hover:bg-red-50
+							disabled:opacity-60
+						"
+						disabled={busy}
+						onClick={
+							() => {
+								setMenuOpen(false);
+								onArchive();
+							}
+						}
+						type="button"
+					>
+						<TrashIcon
+							className="h-3.5 w-3.5 shrink-0"
+						/>
+					</button>
+					<button
+						aria-expanded={menuOpen}
+						aria-haspopup="menu"
+						aria-label={`More remove options for ${productTitle}`}
+						className="
+							inline-flex
+							h-9
+							w-7
+							items-center
+							justify-center
+							hover:bg-red-50
+							disabled:opacity-60
+						"
+						disabled={busy}
+						onClick={
+							() => {
+								setMenuOpen((open) => !open);
+							}
+						}
+						type="button"
+					>
+						<CaretDownIcon
+							className="h-3.5 w-3.5"
+						/>
+					</button>
+				</div>
+				{menuOpen
+					? (
+						<PermanentDeleteMenu
+							onPick={
+								() => {
+									setMenuOpen(false);
+									onPermanent();
+								}
+							}
+						/>
+					)
+					: null
+				}
+			</div>
+		);
+	}
+
+	return (
+		<div
+			className="relative w-full"
+			ref={wrapRef}
+		>
+			<div
+				className={`
+					${desktopShellClassName}
+					divide-red-200
+					border-red-300
+					text-red-700
+					hover:border-red-500
+				`}
+			>
+				<button
+					aria-label={`Archive ${productTitle}`}
+					className={`
+						${desktopPrimaryClassName}
+						disabled:opacity-60
+						hover:bg-red-50
+						hover:text-red-800
+					`}
+					disabled={busy}
+					onClick={
+						() => {
+							setMenuOpen(false);
+							onArchive();
+						}
+					}
+					type="button"
+				>
+					<TrashIcon
+						className="h-3.5 w-3.5 shrink-0"
+					/>
+					<span>
+						Archive
+					</span>
+				</button>
+				<button
+					aria-expanded={menuOpen}
+					aria-haspopup="menu"
+					aria-label={`More remove options for ${productTitle}`}
+					className={`
+						${desktopCaretSlotClassName}
+						hover:bg-red-50
+						hover:text-red-800
+						disabled:opacity-60
+					`}
+					disabled={busy}
+					onClick={
+						() => {
+							setMenuOpen((open) => !open);
+						}
+					}
+					type="button"
+				>
+					<CaretDownIcon
+						className="h-3.5 w-3.5"
+					/>
+				</button>
+			</div>
+			{menuOpen
+				? (
+					<PermanentDeleteMenu
+						onPick={
+							() => {
+								setMenuOpen(false);
+								onPermanent();
+							}
+						}
+					/>
+				)
+				: null
+			}
+		</div>
+	);
+}
 
 export function ManageProductRowActions({
 	onDeleted,
@@ -294,7 +546,7 @@ export function ManageProductRowActions({
 					onDismiss={
 						() => {
 							if(!busyMode) {
-								setConfirmMode('archive');
+								setConfirmMode(null);
 								setError(null);
 							}
 						}
@@ -349,15 +601,6 @@ export function ManageProductRowActions({
 							}
 						}
 					}
-					secondaryConfirmLabel="Delete permanently…"
-					onSecondaryConfirm={
-						() => {
-							if(!busyMode) {
-								setConfirmMode('permanent');
-								setError(null);
-							}
-						}
-					}
 				/>
 				{error
 					? (
@@ -380,6 +623,16 @@ export function ManageProductRowActions({
 
 	const busy = busyMode !== null;
 
+	function openArchiveConfirm() {
+		setConfirmMode('archive');
+		setError(null);
+	}
+
+	function openPermanentConfirm() {
+		setConfirmMode('permanent');
+		setError(null);
+	}
+
 	return (
 		<div
 			className="
@@ -390,7 +643,7 @@ export function ManageProductRowActions({
 				gap-2
 			"
 		>
-			{/* Desktop: equal-width View / Edit / Archive stack; caret column reserved for icon alignment. */}
+			{/* Desktop: equal-width View / Edit / Archive split stack. */}
 			<div
 				className="
 					hidden
@@ -467,46 +720,15 @@ export function ManageProductRowActions({
 						/>
 					</span>
 				</a>
-				<button
-					aria-label={`Archive ${product.title}`}
-					className={`
-						${desktopShellClassName}
-						divide-transparent
-						border-red-300
-						text-red-700
-						hover:border-red-500
-						disabled:opacity-60
-					`}
-					disabled={busy}
-					onClick={
-						() => {
-							setConfirmMode('archive');
-							setError(null);
-						}
-					}
-					type="button"
-				>
-					<span
-						className={`
-							${desktopPrimaryClassName}
-							hover:bg-red-50
-							hover:text-red-800
-						`}
-					>
-						<TrashIcon
-							className="h-3.5 w-3.5 shrink-0"
-						/>
-						<span>
-							Archive
-						</span>
-					</span>
-					<span
-						aria-hidden
-						className={desktopCaretSlotClassName}
-					/>
-				</button>
+				<ArchiveSplitControl
+					busy={busy}
+					layout="desktop"
+					productTitle={product.title}
+					onArchive={openArchiveConfirm}
+					onPermanent={openPermanentConfirm}
+				/>
 			</div>
-			{/* Mobile: circular View / Edit / Archive in one horizontal row. */}
+			{/* Mobile: circular View / Edit / split Archive. */}
 			<div
 				className="
 					flex
@@ -571,35 +793,13 @@ export function ManageProductRowActions({
 						className="h-3.5 w-3.5 shrink-0"
 					/>
 				</a>
-				<button
-					aria-label={`Archive ${product.title}`}
-					className="
-						inline-flex
-						h-9
-						w-9
-						items-center
-						justify-center
-						rounded-full
-						border
-						border-red-300
-						bg-white
-						text-red-700
-						hover:border-red-500
-						disabled:opacity-60
-					"
-					disabled={busy}
-					onClick={
-						() => {
-							setConfirmMode('archive');
-							setError(null);
-						}
-					}
-					type="button"
-				>
-					<TrashIcon
-						className="h-3.5 w-3.5 shrink-0"
-					/>
-				</button>
+				<ArchiveSplitControl
+					busy={busy}
+					layout="mobile"
+					productTitle={product.title}
+					onArchive={openArchiveConfirm}
+					onPermanent={openPermanentConfirm}
+				/>
 			</div>
 			{error
 				? (
