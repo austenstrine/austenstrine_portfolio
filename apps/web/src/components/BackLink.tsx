@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import type { ReactNode } from 'react';
-import { ArrowLeftIcon } from './icons/ArrowLeftIcon';
+import { NavigatePersistentArrow } from './catalog/NavigatePersistentArrow';
 
 function canRollBackHistory(): boolean {
 	if(typeof window === 'undefined') {
@@ -44,7 +44,12 @@ export function BackLink({
 
 	return (
 		<a
-			className={className}
+			className={
+				`
+					group
+					${className}
+				`.trim()
+			}
 			href={href}
 			onClick={(event) => {
 				if(
@@ -64,8 +69,9 @@ export function BackLink({
 				router.back();
 			}}
 		>
-			<ArrowLeftIcon
-				className="
+			<NavigatePersistentArrow
+				direction="left"
+				iconClassName="
 					h-4
 					w-4
 					shrink-0

@@ -30,17 +30,18 @@ export function NavigateHoverArrow({
 					duration-200
 					ease-out
 					motion-reduce:transition-none
+					group-hover:translate-x-0.5
+					group-focus-visible:translate-x-0.5
 					lg:ml-0
 					lg:max-w-0
 					lg:translate-x-[-0.15rem]
 					lg:opacity-0
 					group-focus-visible:ml-1.5
 					group-focus-visible:max-w-4
-					group-focus-visible:translate-x-0
 					group-focus-visible:opacity-100
 					[@media(hover:hover)]:lg:group-hover:ml-1.5
 					[@media(hover:hover)]:lg:group-hover:max-w-4
-					[@media(hover:hover)]:lg:group-hover:translate-x-0
+					[@media(hover:hover)]:lg:group-hover:translate-x-0.5
 					[@media(hover:hover)]:lg:group-hover:opacity-100
 					${className}
 				`.trim()

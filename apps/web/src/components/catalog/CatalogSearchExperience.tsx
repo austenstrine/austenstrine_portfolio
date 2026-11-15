@@ -9,12 +9,11 @@ import {
 	type CatalogSearchResult,
 	type CatalogTermFacet,
 } from '../../lib/catalog-api';
-import { ArrowLeftIcon } from '../icons/ArrowLeftIcon';
-import { ArrowRightIcon } from '../icons/ArrowRightIcon';
 import {
 	SearchExtrasPortal,
 	useCatalogSearch,
 } from './CatalogSearchContext';
+import { NavigatePersistentArrow } from './NavigatePersistentArrow';
 import { CatalogSortMenu } from './CatalogSortMenu';
 import {
 	MarketplaceBreadcrumb,
@@ -780,8 +779,9 @@ export function CatalogSearchExperience({
 										disabled={page <= 1}
 										onClick={() => commit({ page: Math.max(1, page - 1) })}
 									>
-										<ArrowLeftIcon
-											className="h-4 w-4"
+										<NavigatePersistentArrow
+											direction="left"
+											iconClassName="h-4 w-4"
 										/>
 									</PagerButton>
 									{pageItems(page, pageCount).map((item, index) =>
@@ -809,8 +809,8 @@ export function CatalogSearchExperience({
 										disabled={page >= pageCount}
 										onClick={() => commit({ page: Math.min(pageCount, page + 1) })}
 									>
-										<ArrowRightIcon
-											className="h-4 w-4"
+										<NavigatePersistentArrow
+											iconClassName="h-4 w-4"
 										/>
 									</PagerButton>
 								</nav>
@@ -865,6 +865,7 @@ function PagerButton({
 			className={
 				active
 					? `
+						group
 						inline-flex
 						min-w-10
 						items-center
@@ -882,6 +883,7 @@ function PagerButton({
 						focus-visible:outline-asgreen
 					`
 					: `
+						group
 						inline-flex
 						min-w-10
 						items-center

@@ -23,8 +23,6 @@ import {
 import { ManageProductRowActions } from '../../../components/catalog/ManageProductRowActions';
 import { NavigatePersistentArrow } from '../../../components/catalog/NavigatePersistentArrow';
 import { PILL_CTA_MOTION_CLASS } from '../../../components/catalog/pillCta';
-import { ArrowLeftIcon } from '../../../components/icons/ArrowLeftIcon';
-import { ArrowRightIcon } from '../../../components/icons/ArrowRightIcon';
 import { PlusIcon } from '../../../components/icons/PlusIcon';
 
 /** Match catalog-search hard cap (`Math.min(..., 96)`); 100 never returns a full page. */
@@ -173,6 +171,7 @@ function PagerButton({
 			className={
 				active
 					? `
+						group
 						inline-flex
 						min-w-8
 						items-center
@@ -190,6 +189,7 @@ function PagerButton({
 						focus-visible:outline-asgreen
 					`
 					: `
+						group
 						inline-flex
 						min-w-8
 						items-center
@@ -590,8 +590,9 @@ function PlaceEtMarqueManageContent() {
 								disabled={page <= 1}
 								onClick={() => setPage((current) => Math.max(1, current - 1))}
 							>
-								<ArrowLeftIcon
-									className="h-4 w-4"
+								<NavigatePersistentArrow
+									direction="left"
+									iconClassName="h-4 w-4"
 								/>
 							</PagerButton>
 							{pageItems(page, pageCount).map((item, index) =>
@@ -619,8 +620,8 @@ function PlaceEtMarqueManageContent() {
 								disabled={page >= pageCount}
 								onClick={() => setPage((current) => Math.min(pageCount, current + 1))}
 							>
-								<ArrowRightIcon
-									className="h-4 w-4"
+								<NavigatePersistentArrow
+									iconClassName="h-4 w-4"
 								/>
 							</PagerButton>
 						</nav>
