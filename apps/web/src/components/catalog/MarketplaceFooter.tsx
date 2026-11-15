@@ -82,10 +82,11 @@ export function MarketplaceFooter() {
 				</div>
 				<nav
 					className="
-						-mx-2.5
+						-mx-2
 						flex
 						flex-wrap
 						gap-y-2
+						min-[400px]:-mx-2.5
 					"
 				>
 					<FooterNavLink href="/place-et-marque/search">
