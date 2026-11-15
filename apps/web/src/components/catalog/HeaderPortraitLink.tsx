@@ -8,9 +8,11 @@ const PORTFOLIO_HOME = 'https://austenstrine.dev/';
 
 /**
  * Hidden portfolio peek beside the Place et Marque mark.
- * Hovering the brand (logo hit area) or the peek reveals Austen’s photo
- * middled with and to the left of the PeM mark (back arrow left of the
- * icon, “Portfolio” underneath); click opens the portfolio site.
+ * A transparent hover pad spans the first header row from the top and left
+ * edges through the PeM logo (not logo-only). Hovering that pad, the brand,
+ * or the peek reveals Austen’s photo middled to the left of the mark (back
+ * arrow left of the icon, “Portfolio” underneath); click opens the portfolio
+ * site. The pad is clickthrough for the brand link beneath.
  */
 export function HeaderPortraitLink({ children }: { children: ReactNode }) {
 	return (
@@ -20,8 +22,24 @@ export function HeaderPortraitLink({ children }: { children: ReactNode }) {
 				relative
 				inline-flex
 				items-center
+				self-stretch
 			"
 		>
+			{/*
+			  Hover-only pad: viewport/header left + top py through PeM mark
+			  (2rem). Does not own clicks — brand stays above at z-[2].
+			*/}
+			<div
+				aria-hidden
+				className="
+					absolute
+					-top-3
+					bottom-0
+					left-[calc(-1*(max(0px,(100vw-80rem)/2)+var(--gutter)))]
+					z-[1]
+					w-[calc(max(0px,(100vw-80rem)/2)+var(--gutter)+2rem)]
+				"
+			/>
 			<a
 				aria-label={`${SITE_NAME} — austenstrine.dev`}
 				className="
@@ -97,7 +115,16 @@ export function HeaderPortraitLink({ children }: { children: ReactNode }) {
 					</span>
 				</span>
 			</a>
-			{children}
+			<div
+				className="
+					relative
+					z-[2]
+					inline-flex
+					items-center
+				"
+			>
+				{children}
+			</div>
 		</div>
 	);
 }
