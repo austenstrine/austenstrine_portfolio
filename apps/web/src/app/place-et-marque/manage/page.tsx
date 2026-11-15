@@ -45,12 +45,22 @@ const BOTTOM_ACTIONS_ROW_CLASS = `
 	gap-y-2
 `;
 
-/** Match SellerTopContextPortal center column so on-page ↔ pinned stays put. */
+/** Match SellerTopContextPortal L/C/R so on-page ↔ pinned stays put. */
 const LIST_CONTROLS_ROW_CLASS = `
 	grid
 	w-full
 	grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]
 	items-end
+	gap-x-3
+	gap-y-2
+`;
+
+const LIST_CONTROLS_LEFT_CLASS = `
+	flex
+	min-w-0
+	flex-wrap
+	items-end
+	justify-start
 	gap-x-3
 	gap-y-2
 `;
@@ -63,6 +73,25 @@ const LIST_CONTROLS_CLUSTER_CLASS = `
 	justify-center
 	gap-x-3
 	gap-y-2
+`;
+
+const LIST_CONTROLS_RIGHT_CLASS = `
+	flex
+	min-w-0
+	flex-wrap
+	items-end
+	justify-end
+	gap-x-3
+	gap-y-2
+`;
+
+const PAGE_SUMMARY_CLASS = `
+	w-fit
+	max-w-full
+	shrink-0
+	text-right
+	text-xs
+	text-slate-500
 `;
 
 /** Match catalog-search hard cap (`Math.min(..., 96)`); 100 never returns a full page. */
@@ -604,7 +633,7 @@ function PlaceEtMarqueManageContent() {
 	const activeFilterQuery = deferredFilterText.trim();
 	const [listControlsEl, setListControlsEl] = useState<HTMLDivElement | null>(null);
 	const [listEndEl, setListEndEl] = useState<HTMLDivElement | null>(null);
-	/** Filter–Show pinned into the top bar center once their on-page row scrolls away. */
+	/** Filter–Show + page summary pin into top bar C/R once their on-page row scrolls away. */
 	const [listControlsPinned, setListControlsPinned] = useState(false);
 	/** Pagination + New product stay on-page at list end until this is false (scrolled away → bottom bar). */
 	const [bottomActionsInline, setBottomActionsInline] = useState(true);
@@ -898,6 +927,24 @@ function PlaceEtMarqueManageContent() {
 		)
 		: null;
 
+	const productsTitle = (
+		<h2 className="text-lg font-semibold">
+			Your products
+		</h2>
+	);
+
+	const pageSummary =
+		vendorsReady && !loadingProducts && total > 0
+			? (
+				<p className={PAGE_SUMMARY_CLASS}>
+					{selectedVendor
+						? `Showing ${((page - 1) * pageSize + 1).toLocaleString()}–${Math.min(page * pageSize, total).toLocaleString()} of ${total.toLocaleString()}`
+						: `Page ${page} of ${pageCount} · ${total.toLocaleString()} product${total === 1 ? '' : 's'}`
+					}
+				</p>
+			)
+			: null;
+
 	const newProductLink = newProductVendor
 		? (
 			<ManageNewProductLink
@@ -919,26 +966,6 @@ function PlaceEtMarqueManageContent() {
 				page={page}
 				pageCount={pageCount}
 			/>
-		)
-		: null;
-
-	/** Right-aligned shrink-wrap count; pins with Filter–Show (Your products stays on-page). */
-	const pageSummary = vendorsReady && !loadingProducts && total > 0
-		? (
-			<p
-				className="
-					w-fit
-					shrink-0
-					text-right
-					text-xs
-					text-slate-500
-				"
-			>
-				{selectedVendor
-					? `Showing ${((page - 1) * pageSize + 1).toLocaleString()}–${Math.min(page * pageSize, total).toLocaleString()} of ${total.toLocaleString()}`
-					: `Page ${page} of ${pageCount} · ${total.toLocaleString()} product${total === 1 ? '' : 's'} across your vendors`
-				}
-			</p>
 		)
 		: null;
 
@@ -1012,28 +1039,37 @@ function PlaceEtMarqueManageContent() {
 						className={
 							listControlsPinned
 								? `
-									h-[4.5rem]
-									shrink-0
+									${LIST_CONTROLS_ROW_CLASS}
+									min-h-[4.5rem]
 								`
 								: LIST_CONTROLS_ROW_CLASS
 						}
 						ref={setListControlsEl}
 					>
+						<div className={LIST_CONTROLS_LEFT_CLASS}>
+							{productsTitle}
+						</div>
 						{listControlsPinned
-							? null
-							: (
+							? (
 								<>
 									<div />
+									<div />
+								</>
+							)
+							: (
+								<>
 									<div className={LIST_CONTROLS_CLUSTER_CLASS}>
 										{listControls}
 									</div>
-									<div />
+									<div className={LIST_CONTROLS_RIGHT_CLASS}>
+										{pageSummary}
+									</div>
 								</>
 							)
 						}
 					</div>
 				)
-				: null
+				: productsTitle
 			}
 
 			<section
@@ -1044,25 +1080,6 @@ function PlaceEtMarqueManageContent() {
 					gap-3
 				"
 			>
-				<div
-					className="
-						flex
-						min-w-0
-						flex-wrap
-						items-baseline
-						justify-between
-						gap-x-3
-						gap-y-1
-					"
-				>
-					<h2 className="text-lg font-semibold">
-						Your products
-					</h2>
-					{listControlsPinned
-						? null
-						: pageSummary
-					}
-				</div>
 				{!vendorsReady || loadingProducts
 					? (
 						<p className="text-sm text-slate-500">
