@@ -228,6 +228,16 @@ export function pathReservesOrdersListBottomPane(path: string): boolean {
 	return /^\/place-et-marque\/vendors\/[^/]+\/orders\/?$/.test(pathname);
 }
 
+/**
+ * Manage keeps an empty bottom pane mounted (transparent clickthrough) so
+ * harvested pagination / New product can pin into already-present chrome.
+ * Other seller routes keep empty:hidden and must not show blank bar chrome.
+ */
+export function pathKeepsManageBottomPane(path: string): boolean {
+	const pathname = path.split('?')[0] ?? path;
+	return pathname === '/place-et-marque/manage';
+}
+
 export function buildLoginUrl(options: {
 	next?: string;
 	reason?: string;

@@ -492,40 +492,59 @@ export function SellerTopContextPortal({
 	);
 }
 
-/** Page actions for the full-width bottom pane: left / center / right groups.
- * Keeps the shell mounted even when slots are empty so the bar stays present
- * for harvested controls to pin into.
- */
+type PageBottomPanePortalProps = SellerPaneSlots & {
+	/**
+	 * Manage: keep an empty L/C/R shell mounted so the host bar stays present
+	 * (transparent clickthrough until data-pane-filled). Other routes omit this.
+	 */
+	reserveEmpty?: boolean;
+};
+
+/** Page actions for the full-width bottom pane: left / center / right groups. */
 export function PageBottomPanePortal({
 	left,
 	center,
 	right,
 	children,
-}: SellerPaneSlots) {
+	reserveEmpty = false,
+}: PageBottomPanePortalProps) {
 	const { pageBottomPaneHostEl } = useCatalogSearch();
 	const rightNode = right !== undefined
 		? right
 		: (left === undefined && center === undefined
 			? children
 			: undefined);
+	const hasContent =
+		paneSlotPresent(left)
+		|| paneSlotPresent(center)
+		|| paneSlotPresent(rightNode);
 	if(!pageBottomPaneHostEl) {
+		return null;
+	}
+	if(!hasContent && !reserveEmpty) {
 		return null;
 	}
 	return createPortal(
 		<div
 			aria-label="Page actions"
-			className="
-				grid
-				min-h-10
-				w-full
-				grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]
-				gap-x-2
-				gap-y-2
-				px-gutter
-				py-2
-				sm:gap-x-3
-				sm:py-2.5
-			"
+			className={
+				`
+					grid
+					min-h-10
+					w-full
+					grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]
+					gap-x-2
+					gap-y-2
+					py-2
+					sm:gap-x-3
+					sm:py-2.5
+					${reserveEmpty
+						? 'px-2 sm:px-3'
+						: 'px-gutter'
+					}
+				`
+			}
+			data-pane-filled={hasContent ? 'true' : 'false'}
 			role="region"
 		>
 			<SellerPaneGroups

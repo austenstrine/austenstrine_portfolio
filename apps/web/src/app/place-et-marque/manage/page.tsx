@@ -994,6 +994,7 @@ function PlaceEtMarqueManageContent() {
 						? pagerNav
 						: null
 				}
+				reserveEmpty
 				right={
 					!bottomActionsInline
 						? newProductLink

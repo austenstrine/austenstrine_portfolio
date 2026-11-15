@@ -3,6 +3,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import {
+	pathKeepsManageBottomPane,
 	pathReservesOrdersListBottomPane,
 	pathUsesSellerChrome,
 } from '../../lib/accessGate';
@@ -22,6 +23,35 @@ const ORDERS_PANE_RESERVE_CLASSNAME = `
 `;
 
 /**
+ * Manage-only: keep geometry mounted while empty (transparent clickthrough).
+ * When portal marks data-pane-filled=true, opacity fades up and pointer-events
+ * turn on immediately (Tailwind has-; not gated on transition end).
+ */
+const MANAGE_HARVEST_PANE_CLASSNAME = `
+	min-h-[3.5rem]
+	border-transparent
+	bg-transparent
+	opacity-0
+	pointer-events-none
+	shadow-none
+	transition-[opacity,background-color,border-color,box-shadow,transform]
+	duration-200
+	ease-out
+	motion-reduce:transition-none
+	has-[[data-pane-filled=true]]:border-slate-200
+	has-[[data-pane-filled=true]]:bg-white/95
+	has-[[data-pane-filled=true]]:opacity-100
+	has-[[data-pane-filled=true]]:pointer-events-auto
+	has-[[data-pane-filled=true]]:shadow-[0_-2px_12px_rgba(13,27,42,0.04)]
+`;
+
+const FILLED_PANE_CHROME_CLASSNAME = `
+	border-slate-200
+	bg-white/95
+	shadow-[0_-2px_12px_rgba(13,27,42,0.04)]
+`;
+
+/**
  * Full-width bottom pane for page-specific seller actions (pagination,
  * New product, order filters, save). Solid white with a tiny alpha — no
  * frosted blur, no corner radius. Site-wide context and page-level list
@@ -30,8 +60,10 @@ const ORDERS_PANE_RESERVE_CLASSNAME = `
  * Publishes --seller-bottom-pane-stack so JumpToTop / dock observers can
  * clear the pane. While scroll-hidden, publishes 0px (not removed) so
  * IntersectionObserver rootMargins can treat the inset as gone.
- * Stays visible when empty (no empty:hidden) so harvested controls can
- * pin into an already-present bar.
+ *
+ * Manage keeps the bar mounted while empty (transparent clickthrough) with
+ * gutter side insets so harvested controls pin into already-present chrome.
+ * Other seller routes still use empty:hidden.
  *
  * Stack height uses layout metrics (offsetHeight + CSS bottom), not
  * getBoundingClientRect, so CSS hide/show transforms do not collapse the
@@ -45,6 +77,7 @@ export function SellerPageActionPane() {
 	const [paneHidden, setPaneHidden] = useState(false);
 	const sellerChrome = pathUsesSellerChrome(pathname);
 	const reserveOrdersPane = pathReservesOrdersListBottomPane(pathname);
+	const keepManagePane = pathKeepsManageBottomPane(pathname);
 
 	useEffect(() => {
 		if(!sellerChrome) {
@@ -121,7 +154,7 @@ export function SellerPageActionPane() {
 			host.removeEventListener('transitionend', sync);
 			document.documentElement.style.removeProperty(STACK_VAR);
 		};
-	}, [paneHidden, reserveOrdersPane, sellerChrome]);
+	}, [paneHidden, reserveOrdersPane, keepManagePane, sellerChrome]);
 
 	useEffect(() => {
 		return () => {
@@ -137,22 +170,31 @@ export function SellerPageActionPane() {
 		<div
 			className={
 				`
-					pointer-events-auto
 					fixed
-					inset-x-0
 					bottom-0
 					z-30
 					border-t
-					border-slate-200
-					bg-white/95
-					shadow-[0_-2px_12px_rgba(13,27,42,0.04)]
 					transition-transform
 					duration-200
 					ease-out
 					motion-reduce:transition-none
+					${keepManagePane
+						? 'left-gutter right-gutter'
+						: 'inset-x-0'
+					}
 					${reserveOrdersPane
-						? ORDERS_PANE_RESERVE_CLASSNAME
-						: 'min-h-[3.5rem]'
+						? `
+							${FILLED_PANE_CHROME_CLASSNAME}
+							pointer-events-auto
+							${ORDERS_PANE_RESERVE_CLASSNAME}
+						`
+						: keepManagePane
+							? MANAGE_HARVEST_PANE_CLASSNAME
+							: `
+								${FILLED_PANE_CHROME_CLASSNAME}
+								pointer-events-auto
+								empty:hidden
+							`
 					}
 				`
 			}
