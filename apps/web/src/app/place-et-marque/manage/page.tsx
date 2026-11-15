@@ -44,6 +44,26 @@ const BOTTOM_ACTIONS_ROW_CLASS = `
 	gap-y-2
 `;
 
+/** Match SellerTopContextPortal center column so on-page ↔ pinned stays put. */
+const LIST_CONTROLS_ROW_CLASS = `
+	grid
+	w-full
+	grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]
+	items-end
+	gap-x-3
+	gap-y-2
+`;
+
+const LIST_CONTROLS_CLUSTER_CLASS = `
+	flex
+	min-w-0
+	flex-wrap
+	items-end
+	justify-center
+	gap-x-3
+	gap-y-2
+`;
+
 /** Match catalog-search hard cap (`Math.min(..., 96)`); 100 never returns a full page. */
 const PAGE_SIZE_OPTIONS = [24, 48, 96] as const;
 type PageSize = (typeof PAGE_SIZE_OPTIONS)[number];
@@ -354,7 +374,7 @@ function ManageListControls({
 					inline-flex
 					min-w-[9rem]
 					max-w-[14rem]
-					flex-1
+					flex-none
 					flex-col
 					gap-0.5
 					text-[11px]
@@ -1022,19 +1042,21 @@ function PlaceEtMarqueManageContent() {
 									h-[4.5rem]
 									shrink-0
 								`
-								: `
-									flex
-									flex-wrap
-									items-end
-									gap-x-3
-									gap-y-2
-								`
+								: LIST_CONTROLS_ROW_CLASS
 						}
 						ref={setListControlsEl}
 					>
 						{listControlsPinned
 							? null
-							: listControls
+							: (
+								<>
+									<div />
+									<div className={LIST_CONTROLS_CLUSTER_CLASS}>
+										{listControls}
+									</div>
+									<div />
+								</>
+							)
 						}
 					</div>
 				)
