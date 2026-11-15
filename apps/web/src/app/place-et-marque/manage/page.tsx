@@ -655,6 +655,7 @@ function PlaceEtMarqueManageContent() {
 											z-10
 											inline-flex
 											h-10
+											min-h-10
 											w-10
 											shrink-0
 											items-center
@@ -667,6 +668,7 @@ function PlaceEtMarqueManageContent() {
 											${PILL_CTA_MOTION_CLASS}
 											hover:bg-asgreen/90
 											sm:h-auto
+											sm:min-h-10
 											sm:w-auto
 											sm:px-3.5
 											sm:py-1.5
