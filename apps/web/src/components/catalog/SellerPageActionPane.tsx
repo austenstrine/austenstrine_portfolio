@@ -57,9 +57,10 @@ const FILLED_PANE_CHROME_CLASSNAME = `
  * frosted blur, no corner radius. Site-wide context and page-level list
  * controls (vendor picker, Filter/Stock/Sort/Show) live in the top bar.
  * Hides on scroll-down / shows on scroll-up like the top bar.
- * Publishes --seller-bottom-pane-stack so JumpToTop (non-manage) / dock
- * observers can clear the pane. While scroll-hidden, publishes 0px (not
- * removed) so IntersectionObserver rootMargins can treat the inset as gone.
+ * Publishes --seller-bottom-pane-stack so JumpToTop can mid-align over
+ * the bar (New product stays clear via the side margin+gutter rail) and
+ * dock observers can clear the pane. While scroll-hidden, publishes 0px
+ * (not removed) so IntersectionObserver rootMargins treat inset as gone.
  *
  * Manage keeps the bar mounted while empty (transparent clickthrough) so
  * harvested controls pin into already-present chrome. Host is always

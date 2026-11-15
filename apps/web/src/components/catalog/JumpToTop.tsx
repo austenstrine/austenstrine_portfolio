@@ -1,25 +1,27 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { usePathname } from 'next/navigation';
-import { pathKeepsManageBottomPane } from '../../lib/accessGate';
+import { useEffect, useState, type CSSProperties } from 'react';
 import { ArrowUpIcon } from '../icons/ArrowUpIcon';
 
 const SHOW_AFTER_PX = 320;
+
+/** Outside max-w-7xl: content side margin + page gutter (right edge → content). */
+const SIDE_RAIL =
+	'calc(max(0px, (100vw - 80rem) / 2) + var(--gutter))';
 
 function prefersReducedMotion() {
 	return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 }
 
 /**
- * Sitewide: bottom of the right gutter, centered in a rail at least as wide as
- * the control (so it never clips off-screen), lifting live above seller /
- * sticky-CTA stacks. Manage: stationary bottom-right in the right gutter,
- * overlapping the full-bleed bottom pane whether scroll-hidden or not.
+ * Right side: centered in the combined page gutter + max-w-7xl content
+ * margin (not a gutter-only / min-3rem rail that eats into content). When
+ * that strip is narrower than the control, the rail hangs off-viewport so
+ * New product stays clear. Bottom: stays over the seller context bar and
+ * aligns near mid-bar via --seller-bottom-pane-stack; still clears the
+ * product sticky CTA stack.
  */
 export function JumpToTop() {
-	const pathname = usePathname();
-	const manageCorner = pathKeepsManageBottomPane(pathname);
 	const [visible, setVisible] = useState(false);
 
 	useEffect(() => {
@@ -37,32 +39,25 @@ export function JumpToTop() {
 
 	return (
 		<div
-			className={
-				manageCorner
-					? `
-						pointer-events-none
-						fixed
-						bottom-[max(12px,calc(var(--gutter)-12px))]
-						right-0
-						z-40
-						flex
-						w-[max(var(--gutter),3rem)]
-						justify-center
-					`
-					: `
-						pointer-events-none
-						fixed
-						bottom-[calc(max(12px,var(--gutter)-12px)+var(--seller-bottom-pane-stack,0px)+var(--product-sticky-cta-stack,0px))]
-						right-0
-						z-40
-						flex
-						w-[max(var(--gutter),3rem)]
-						justify-center
-						transition-[bottom]
-						duration-200
-						ease-out
-						motion-reduce:transition-none
-					`
+			className="
+				pointer-events-none
+				fixed
+				bottom-[calc(max(max(12px,var(--gutter)-12px),calc(var(--seller-bottom-pane-stack,0px)/2-1.5rem))+var(--product-sticky-cta-stack,0px))]
+				right-0
+				z-40
+				flex
+				w-[max(3rem,var(--jump-side-rail))]
+				justify-center
+				transition-[bottom]
+				duration-200
+				ease-out
+				motion-reduce:transition-none
+				mr-[min(0px,calc(var(--jump-side-rail)-3rem))]
+			"
+			style={
+				{
+					['--jump-side-rail']: SIDE_RAIL,
+				} as CSSProperties
 			}
 		>
 			<button
