@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { CdnImg } from '../CdnImg';
 import { SITE_NAME, SITE_OG_IMAGE } from '../../lib/site';
 
@@ -5,58 +6,44 @@ import { SITE_NAME, SITE_OG_IMAGE } from '../../lib/site';
 const PORTFOLIO_HOME = 'https://austenstrine.dev/';
 
 /**
- * Fixed top-left 5×5 transparent hover hitbox (not a link / clickthrough).
- * While the hitbox or portrait is hovered, the hitbox expands to half the
- * peek image size; on leave it shrinks back to 5×5. Hovering either surface
- * animates the image fully in; leaving both animates it out. Clicking the
- * portrait opens the portfolio site.
+ * Hidden portfolio peek beside the Place et Marque mark.
+ * Hovering the brand (logo hit area) or the portrait reveals Austen’s photo
+ * middled with and to the left of the PeM mark; click opens the portfolio site.
  */
-export function HeaderPortraitLink() {
+export function HeaderPortraitLink({ children }: { children: ReactNode }) {
 	return (
 		<div
 			className="
 				group/peek
-				pointer-events-none
-				fixed
-				left-0
-				top-0
-				z-40
+				relative
+				inline-flex
+				items-center
 			"
 		>
-			{/* Hover-only hitbox — not a control; clicks are not navigational. */}
-			<div
-				aria-hidden
-				className="
-					pointer-events-auto
-					absolute
-					left-0
-					top-0
-					z-10
-					size-[5px]
-					transition-[width,height]
-					duration-300
-					ease-out
-					group-hover/peek:size-5
-					motion-reduce:transition-none
-				"
-			/>
 			<a
 				aria-label={`${SITE_NAME} — austenstrine.dev`}
 				className="
-					pointer-events-auto
+					pointer-events-none
 					absolute
-					left-0
-					top-0
+					right-full
+					top-1/2
+					z-10
+					mr-1.5
 					block
 					size-10
-					-translate-x-full
+					-translate-x-2
+					-translate-y-1/2
+					opacity-0
 					outline-none
-					transition-transform
+					transition-[transform,opacity]
 					duration-300
 					ease-out
-					hover:translate-x-0
-					focus-visible:translate-x-0
+					group-hover/peek:pointer-events-auto
 					group-hover/peek:translate-x-0
+					group-hover/peek:opacity-100
+					focus-visible:pointer-events-auto
+					focus-visible:translate-x-0
+					focus-visible:opacity-100
 					motion-reduce:transition-none
 				"
 				href={PORTFOLIO_HOME}
@@ -80,6 +67,7 @@ export function HeaderPortraitLink() {
 					width={40}
 				/>
 			</a>
+			{children}
 		</div>
 	);
 }

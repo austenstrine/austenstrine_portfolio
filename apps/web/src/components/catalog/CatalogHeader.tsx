@@ -284,7 +284,6 @@ export function CatalogHeader({
 						: 'translateY(0)',
 				}}
 			>
-				<HeaderPortraitLink />
 				<div
 					className="
 						mx-auto
@@ -303,7 +302,9 @@ export function CatalogHeader({
 							gap-3
 						"
 					>
-						<MarketplaceBrandLink />
+						<HeaderPortraitLink>
+							<MarketplaceBrandLink />
+						</HeaderPortraitLink>
 						{sellerChrome
 							? <SellerModeChip />
 							: null
