@@ -492,10 +492,7 @@ export function SellerTopContextPortal({
 	);
 }
 
-/** Page actions for the full-width bottom pane: left / center / right groups.
- * Keeps the shell mounted even when slots are empty so the bar stays present
- * for harvested controls to pin into.
- */
+/** Page actions for the full-width bottom pane: left / center / right groups. */
 export function PageBottomPanePortal({
 	left,
 	center,
@@ -508,7 +505,11 @@ export function PageBottomPanePortal({
 		: (left === undefined && center === undefined
 			? children
 			: undefined);
-	if(!pageBottomPaneHostEl) {
+	const hasContent =
+		paneSlotPresent(left)
+		|| paneSlotPresent(center)
+		|| paneSlotPresent(rightNode);
+	if(!pageBottomPaneHostEl || !hasContent) {
 		return null;
 	}
 	return createPortal(
@@ -516,7 +517,6 @@ export function PageBottomPanePortal({
 			aria-label="Page actions"
 			className="
 				grid
-				min-h-10
 				w-full
 				grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]
 				gap-x-2
