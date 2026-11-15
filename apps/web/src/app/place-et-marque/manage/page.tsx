@@ -224,6 +224,80 @@ function PagerButton({
 	);
 }
 
+function ManagePagination({
+	className,
+	onPageChange,
+	page,
+	pageCount,
+}: {
+	className: string;
+	onPageChange: (page: number) => void;
+	page: number;
+	pageCount: number;
+}) {
+	return (
+		<nav
+			aria-label="Pagination"
+			className={className}
+		>
+			<PagerButton
+				ariaLabel="Previous page"
+				disabled={page <= 1}
+				onClick={() => onPageChange(Math.max(1, page - 1))}
+			>
+				<NavigatePersistentArrow
+					direction="left"
+					iconClassName="h-4 w-4"
+				/>
+			</PagerButton>
+			{pageItems(page, pageCount).map((item, index) =>
+				item === 'gap'
+					? (
+						<span
+							className="px-1 text-slate-400"
+							key={`gap-${index}`}
+						>
+							…
+						</span>
+					)
+					: (
+						<PagerButton
+							active={item === page}
+							ariaCurrent={item === page ? 'page' : undefined}
+							key={item}
+							onClick={() => onPageChange(item)}
+						>
+							{item}
+						</PagerButton>
+					))}
+			<PagerButton
+				ariaLabel="Next page"
+				disabled={page >= pageCount}
+				onClick={() => onPageChange(Math.min(pageCount, page + 1))}
+			>
+				<NavigatePersistentArrow
+					iconClassName="h-4 w-4"
+				/>
+			</PagerButton>
+		</nav>
+	);
+}
+
+/** Bottom inset for list-end docking; prefer stack var, fall back to bar chrome. */
+function manageBottomPaneInsetPx(): number {
+	if(typeof document === 'undefined') {
+		return 80;
+	}
+	const raw = getComputedStyle(document.documentElement)
+		.getPropertyValue('--seller-bottom-pane-stack')
+		.trim();
+	const parsed = Number.parseFloat(raw);
+	if(Number.isFinite(parsed) && parsed > 0) {
+		return Math.ceil(parsed);
+	}
+	return 80;
+}
+
 function PlaceEtMarqueManageContent() {
 	const { user } = useSession();
 	const [products, setProducts] = useState<CatalogProductSummary[]>([]);
@@ -246,6 +320,8 @@ function PlaceEtMarqueManageContent() {
 	const showPager = vendorsReady && !loadingProducts && pageCount > 1 && products.length > 0;
 	const showListControls = vendorsReady && vendors.length > 0;
 	const activeFilterQuery = deferredFilterText.trim();
+	const [listEndEl, setListEndEl] = useState<HTMLDivElement | null>(null);
+	const [pagerInline, setPagerInline] = useState(false);
 
 	useEffect(() => {
 		if(!user) {
@@ -353,12 +429,52 @@ function PlaceEtMarqueManageContent() {
 		stockFilter,
 	]);
 
+	useEffect(() => {
+		if(!showPager || !listEndEl) {
+			setPagerInline(false);
+			return;
+		}
+
+		let observer: IntersectionObserver | null = null;
+		const connect = () => {
+			observer?.disconnect();
+			const bottomInset = manageBottomPaneInsetPx();
+			observer = new IntersectionObserver(
+				([entry]) => {
+					setPagerInline(Boolean(entry?.isIntersecting));
+				},
+				{
+					root: null,
+					// Shrink the root from the bottom so “at list end” means
+					// above the fixed seller bar — not under it.
+					rootMargin: `0px 0px -${bottomInset}px 0px`,
+					threshold: 0,
+				},
+			);
+			observer.observe(listEndEl);
+		};
+
+		connect();
+		window.addEventListener('resize', connect);
+		return () => {
+			window.removeEventListener('resize', connect);
+			observer?.disconnect();
+		};
+	}, [
+		showPager,
+		listEndEl,
+		products.length,
+		page,
+		pageSize,
+	]);
+
 	return (
 		<div
 			className="
 				flex
 				flex-col
 				gap-6
+				pb-[max(4rem,var(--seller-bottom-pane-stack,0px))]
 			"
 		>
 			<SellerTopContextPortal>
@@ -573,7 +689,7 @@ function PlaceEtMarqueManageContent() {
 				}
 			</SellerTopContextPortal>
 
-			{showPager || newProductVendor
+			{(showPager && !pagerInline) || newProductVendor
 				? (
 					<PageBottomPanePortal>
 						<div
@@ -586,10 +702,9 @@ function PlaceEtMarqueManageContent() {
 								justify-end
 							"
 						>
-							{showPager
+							{showPager && !pagerInline
 								? (
-									<nav
-										aria-label="Pagination"
+									<ManagePagination
 										className="
 											absolute
 											left-1/2
@@ -601,47 +716,10 @@ function PlaceEtMarqueManageContent() {
 											justify-center
 											gap-1
 										"
-									>
-										<PagerButton
-											ariaLabel="Previous page"
-											disabled={page <= 1}
-											onClick={() => setPage((current) => Math.max(1, current - 1))}
-										>
-											<NavigatePersistentArrow
-												direction="left"
-												iconClassName="h-4 w-4"
-											/>
-										</PagerButton>
-										{pageItems(page, pageCount).map((item, index) =>
-											item === 'gap'
-												? (
-													<span
-														className="px-1 text-slate-400"
-														key={`gap-${index}`}
-													>
-														…
-													</span>
-												)
-												: (
-													<PagerButton
-														active={item === page}
-														ariaCurrent={item === page ? 'page' : undefined}
-														key={item}
-														onClick={() => setPage(item)}
-													>
-														{item}
-													</PagerButton>
-												))}
-										<PagerButton
-											ariaLabel="Next page"
-											disabled={page >= pageCount}
-											onClick={() => setPage((current) => Math.min(pageCount, current + 1))}
-										>
-											<NavigatePersistentArrow
-												iconClassName="h-4 w-4"
-											/>
-										</PagerButton>
-									</nav>
+										onPageChange={setPage}
+										page={page}
+										pageCount={pageCount}
+									/>
 								)
 								: null
 							}
@@ -851,6 +929,40 @@ function PlaceEtMarqueManageContent() {
 							/>
 						</div>
 					))
+					: null
+				}
+				{showPager
+					? (
+						<>
+							<div
+								aria-hidden
+								className="
+									h-px
+									w-full
+									shrink-0
+								"
+								ref={setListEndEl}
+							/>
+							{pagerInline
+								? (
+									<ManagePagination
+										className="
+											flex
+											flex-wrap
+											items-center
+											justify-center
+											gap-1
+											pt-1
+										"
+										onPageChange={setPage}
+										page={page}
+										pageCount={pageCount}
+									/>
+								)
+								: null
+							}
+						</>
+					)
 					: null
 				}
 			</section>
