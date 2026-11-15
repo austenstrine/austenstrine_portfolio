@@ -68,7 +68,7 @@ export const ROADMAP_PLANNED: RoadmapPlannedItem[] = [
 		id: 'planned-account-page',
 		title: 'Clearer account pages',
 		summary:
-			'The account hub and password page are live; buyer vs seller layout and navigation still need refine.',
+			'The account hub and password page are live; buyer vs seller layout and navigation still need polish.',
 		area: 'auth',
 		status: 'planned',
 		sourceHint: 'PEM-246 / PEM-240',
@@ -77,7 +77,7 @@ export const ROADMAP_PLANNED: RoadmapPlannedItem[] = [
 		id: 'planned-manage-pane',
 		title: 'Seller tools bar still settling',
 		summary:
-			'The bottom seller tools and pinned Filter–Show controls keep shifting; empty states and pin placement still need a settled pass.',
+			'The bottom seller tools and pinned Filter–Show controls keep shifting; empty states and pin placement still need a final polish.',
 		area: 'manage',
 		status: 'known-issue',
 		sourceHint: 'PEM-395 / PEM-427',
@@ -180,7 +180,7 @@ export const ROADMAP_COMPLETED: RoadmapItem[] = [
 	},
 	{
 		id: 'cat-pdp-cart',
-		title: 'Product page cart: quantity stepper with a steady height',
+		title: 'Quantity buttons keep a steady height',
 		area: 'catalog',
 		sourceHint: 'PEM-372',
 		highlight: true,
@@ -193,7 +193,7 @@ export const ROADMAP_COMPLETED: RoadmapItem[] = [
 	},
 	{
 		id: 'cat-vendor-storefront',
-		title: 'Buyer-facing shop pages by seller name',
+		title: 'Shop pages buyers see by seller name',
 		area: 'catalog',
 		highlight: true,
 	},
@@ -526,19 +526,19 @@ export const ROADMAP_COMPLETED: RoadmapItem[] = [
 	},
 	{
 		id: 'motion-persistent-arrow',
-		title: 'Go-forward arrow keeps a gentle nudge; Featured Join row tidied',
+		title: 'Forward arrow keeps a gentle nudge; Featured Join row tidied',
 		area: 'motion',
 		sourceHint: 'PEM-390',
 	},
 	{
 		id: 'motion-hover-nav',
-		title: 'Hover go-forward arrow on Shop by seller and related rows',
+		title: 'Hover forward arrow on Shop by seller and related rows',
 		area: 'motion',
 		sourceHint: 'PEM-376',
 	},
 	{
 		id: 'motion-footer-hover',
-		title: 'Go-forward hover arrow on marketplace footer links',
+		title: 'Forward hover arrow on marketplace footer links',
 		area: 'motion',
 		sourceHint: 'PEM-385',
 	},
