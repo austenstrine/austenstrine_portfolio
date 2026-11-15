@@ -500,7 +500,11 @@ type PageBottomPanePortalProps = SellerPaneSlots & {
 	reserveEmpty?: boolean;
 };
 
-/** Page actions for the full-width bottom pane: left / center / right groups. */
+/**
+ * Page actions for the full-width bottom pane: left / center / right groups.
+ * Host is viewport-wide; this shell uses max-w-7xl + px-gutter so controls
+ * match main / top-bar content (page gutter + centered content margin).
+ */
 export function PageBottomPanePortal({
 	left,
 	center,
@@ -527,23 +531,20 @@ export function PageBottomPanePortal({
 	return createPortal(
 		<div
 			aria-label="Page actions"
-			className={
-				`
-					grid
-					min-h-10
-					w-full
-					grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]
-					gap-x-2
-					gap-y-2
-					py-2
-					sm:gap-x-3
-					sm:py-2.5
-					${reserveEmpty
-						? 'px-2 sm:px-3'
-						: 'px-gutter'
-					}
-				`
-			}
+			className="
+				mx-auto
+				grid
+				min-h-10
+				w-full
+				max-w-7xl
+				grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]
+				gap-x-2
+				gap-y-2
+				px-gutter
+				py-2
+				sm:gap-x-3
+				sm:py-2.5
+			"
 			data-pane-filled={hasContent ? 'true' : 'false'}
 			role="region"
 		>

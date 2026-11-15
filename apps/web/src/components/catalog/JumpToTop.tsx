@@ -14,8 +14,8 @@ function prefersReducedMotion() {
 /**
  * Sitewide: bottom of the right gutter, centered in a rail at least as wide as
  * the control (so it never clips off-screen), lifting live above seller /
- * sticky-CTA stacks. Manage (guttered bottom pane): stationary bottom-right in
- * the right gutter, overlapping the pane whether scroll-hidden or not.
+ * sticky-CTA stacks. Manage: stationary bottom-right in the right gutter,
+ * overlapping the full-bleed bottom pane whether scroll-hidden or not.
  */
 export function JumpToTop() {
 	const pathname = usePathname();

@@ -61,8 +61,9 @@ const FILLED_PANE_CHROME_CLASSNAME = `
  * observers can clear the pane. While scroll-hidden, publishes 0px (not
  * removed) so IntersectionObserver rootMargins can treat the inset as gone.
  *
- * Manage keeps the bar mounted while empty (transparent clickthrough) with
- * gutter side insets so harvested controls pin into already-present chrome.
+ * Manage keeps the bar mounted while empty (transparent clickthrough) so
+ * harvested controls pin into already-present chrome. Host is always
+ * full viewport width; portal padding aligns controls with page content.
  * Other seller routes still use empty:hidden.
  *
  * Stack height uses layout metrics (offsetHeight + CSS bottom), not
@@ -178,10 +179,7 @@ export function SellerPageActionPane() {
 					duration-200
 					ease-out
 					motion-reduce:transition-none
-					${keepManagePane
-						? 'left-gutter right-gutter'
-						: 'inset-x-0'
-					}
+					inset-x-0
 					${reserveOrdersPane
 						? `
 							${FILLED_PANE_CHROME_CLASSNAME}
