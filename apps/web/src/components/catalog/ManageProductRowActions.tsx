@@ -9,14 +9,9 @@ import {
 	productEditHref,
 	productViewHref,
 } from '../../lib/vendor-ref';
-import { CaretDownIcon } from '../icons/CaretDownIcon';
 import { EyeIcon } from '../icons/EyeIcon';
+import { PencilIcon } from '../icons/PencilIcon';
 import { TrashIcon } from '../icons/TrashIcon';
-import {
-	CatalogMenuRow,
-	CatalogMenuSurface,
-	useCatalogFloatingMenu,
-} from './CatalogMenu';
 import { NavigatePersistentArrow } from './NavigatePersistentArrow';
 
 const desktopShellClassName = `
@@ -63,23 +58,10 @@ export function ManageProductRowActions({
 	onDeleted: (productId: string) => void;
 	product: CatalogProductSummary;
 }) {
-	const {
-		open,
-		panelBox,
-		panelRef,
-		setOpen,
-		triggerRef,
-	} = useCatalogFloatingMenu({
-		align: 'end',
-		closeKey: product.id,
-		minWidth: 160,
-		preferredWidth: 220,
-	});
 	const [deleteBusy, setDeleteBusy] = useState(false);
 	const [deleteError, setDeleteError] = useState<string | null>(null);
 
 	async function onDelete() {
-		setOpen(false);
 		const confirmed = window.confirm(
 			`Delete "${product.title}"? Live rows are removed, a CSV receipt is emailed to vendor owners, and an archive copy is kept for 6 months.`,
 		);
@@ -115,7 +97,7 @@ export function ManageProductRowActions({
 				gap-2
 			"
 		>
-			{/* Desktop: equal-width View / Edit stack; caret column reserved on View for icon alignment. */}
+			{/* Desktop: equal-width View / Edit / Delete stack; caret column reserved for icon alignment. */}
 			<div
 				className="
 					hidden
@@ -156,74 +138,82 @@ export function ManageProductRowActions({
 						/>
 					</span>
 				</a>
-				<div
+				<a
+					aria-disabled={deleteBusy || undefined}
+					aria-label={`Edit ${product.title}`}
 					className={`
 						${desktopShellClassName}
-						divide-slate-300
+						divide-transparent
+						hover:border-sky
+						hover:text-sky
+						aria-disabled:pointer-events-none
+						aria-disabled:opacity-60
 					`}
+					href={productEditHref({
+						vendorSlug: product.vendor.slug,
+						productSlug: product.slug,
+					})}
+					tabIndex={deleteBusy ? -1 : undefined}
 				>
-					<a
-						aria-disabled={deleteBusy || undefined}
-						className={`
-							${desktopPrimaryClassName}
-							aria-disabled:pointer-events-none
-							aria-disabled:opacity-60
-						`}
-						href={productEditHref({
-							vendorSlug: product.vendor.slug,
-							productSlug: product.slug,
-						})}
-						tabIndex={deleteBusy ? -1 : undefined}
+					<span
+						className={desktopPrimaryClassName}
 					>
+						<PencilIcon
+							className="h-3.5 w-3.5 shrink-0"
+						/>
 						<span>
 							Edit
 						</span>
-						<NavigatePersistentArrow
-							className="
-								ml-auto
-								text-slate-400
-							"
-						/>
-					</a>
-					<button
-						aria-expanded={open}
-						aria-haspopup="menu"
-						aria-label={`More actions for ${product.title}`}
-						className={`
-							${desktopCaretSlotClassName}
-							hover:bg-frost
-							hover:text-sky
-							disabled:opacity-60
-						`}
-						disabled={deleteBusy}
-						onClick={
-							() => setOpen((wasOpen) => !wasOpen)
-						}
-						ref={triggerRef}
-						type="button"
+					</span>
+					<span
+						aria-hidden
+						className={desktopCaretSlotClassName}
 					>
-						<CaretDownIcon
-							className={
-								open
-									? `
-										h-3
-										w-3
-										shrink-0
-										rotate-180
-										text-slate-500
-										transition
-									`
-									: `
-										h-3
-										w-3
-										shrink-0
-										text-slate-500
-										transition
-									`
-							}
+						<NavigatePersistentArrow
+							className="text-slate-400"
 						/>
-					</button>
-				</div>
+					</span>
+				</a>
+				<button
+					aria-label={`Delete ${product.title}`}
+					className={`
+						${desktopShellClassName}
+						divide-transparent
+						border-red-300
+						text-red-700
+						hover:border-red-500
+						disabled:opacity-60
+					`}
+					disabled={deleteBusy}
+					onClick={
+						() => {
+							void onDelete();
+						}
+					}
+					type="button"
+				>
+					<span
+						className={`
+							${desktopPrimaryClassName}
+							hover:bg-red-50
+							hover:text-red-800
+						`}
+					>
+						<TrashIcon
+							className="h-3.5 w-3.5 shrink-0"
+						/>
+						<span>
+							{deleteBusy
+								? 'Deleting…'
+								: 'Delete'
+							}
+						</span>
+					</span>
+					<span
+						aria-hidden
+						className={desktopCaretSlotClassName}
+					/>
+				</button>
 			</div>
 			{/* Mobile: circular View / Edit / Delete in one horizontal row. */}
 			<div
@@ -265,7 +255,6 @@ export function ManageProductRowActions({
 					aria-disabled={deleteBusy || undefined}
 					aria-label={`Edit ${product.title}`}
 					className="
-						group
 						inline-flex
 						h-9
 						w-9
@@ -287,7 +276,9 @@ export function ManageProductRowActions({
 					})}
 					tabIndex={deleteBusy ? -1 : undefined}
 				>
-					<NavigatePersistentArrow />
+					<PencilIcon
+						className="h-3.5 w-3.5 shrink-0"
+					/>
 				</a>
 				<button
 					aria-label={`Delete ${product.title}`}
@@ -318,40 +309,6 @@ export function ManageProductRowActions({
 					/>
 				</button>
 			</div>
-			{open && panelBox
-				? (
-					<CatalogMenuSurface
-						panelBox={panelBox}
-						panelRef={panelRef}
-					>
-						<CatalogMenuRow
-							onClick={
-								() => {
-									void onDelete();
-								}
-							}
-						>
-							<span
-								className="
-									inline-flex
-									items-center
-									gap-1.5
-									text-red-700
-								"
-							>
-								<TrashIcon
-									className="h-3.5 w-3.5 shrink-0"
-								/>
-								{deleteBusy
-									? 'Deleting…'
-									: 'Delete'
-								}
-							</span>
-						</CatalogMenuRow>
-					</CatalogMenuSurface>
-				)
-				: null
-			}
 			{deleteError
 				? (
 					<p
