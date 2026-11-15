@@ -71,12 +71,16 @@ export function CatalogCategoryMenu({
 						: 'Category'
 				}
 				className="
+					group
 					flex
 					h-full
 					items-center
 					border-r
 					border-slate-200
 					text-ink
+					transition
+					hover:bg-frost
+					hover:text-asgreen
 				"
 				onClick={() => setOpen((wasOpen) => !wasOpen)}
 				ref={triggerRef}
@@ -99,13 +103,28 @@ export function CatalogCategoryMenu({
 					{selectedLabel}
 				</span>
 				<CaretDownIcon
-					className="
-						mr-2
-						h-3
-						w-3
-						shrink-0
-						text-slate-500
-					"
+					className={
+						open
+							? `
+								mr-2
+								h-3
+								w-3
+								shrink-0
+								rotate-180
+								text-slate-500
+								transition
+								group-hover:text-asgreen
+							`
+							: `
+								mr-2
+								h-3
+								w-3
+								shrink-0
+								text-slate-500
+								transition
+								group-hover:text-asgreen
+							`
+					}
 				/>
 			</button>
 			{open && panelBox
