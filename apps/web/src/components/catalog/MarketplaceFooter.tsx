@@ -13,7 +13,7 @@ const footerLinkClassName = `
 	text-sm
 	font-semibold
 	text-ink
-	transition
+	transition-colors
 	hover:text-sky
 `;
 
