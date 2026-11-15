@@ -50,7 +50,7 @@ const LIST_CONTROLS_ROW_CLASS = `
 	grid
 	w-full
 	grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]
-	items-end
+	items-center
 	gap-x-3
 	gap-y-2
 `;
@@ -59,7 +59,7 @@ const LIST_CONTROLS_LEFT_CLASS = `
 	flex
 	min-w-0
 	flex-wrap
-	items-end
+	items-center
 	justify-start
 	gap-x-3
 	gap-y-2
@@ -69,7 +69,7 @@ const LIST_CONTROLS_CLUSTER_CLASS = `
 	flex
 	min-w-0
 	flex-wrap
-	items-end
+	items-center
 	justify-center
 	gap-x-3
 	gap-y-2
@@ -79,7 +79,7 @@ const LIST_CONTROLS_RIGHT_CLASS = `
 	flex
 	min-w-0
 	flex-wrap
-	items-end
+	items-center
 	justify-end
 	gap-x-3
 	gap-y-2

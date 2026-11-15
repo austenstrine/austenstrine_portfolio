@@ -475,6 +475,7 @@ export function SellerTopContextPortal({
 				w-full
 				max-w-7xl
 				grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]
+				items-center
 				gap-x-3
 				gap-y-2
 				px-gutter
@@ -483,6 +484,7 @@ export function SellerTopContextPortal({
 			role="region"
 		>
 			<SellerPaneGroups
+				align="center"
 				center={center}
 				left={leftNode}
 				right={right}
