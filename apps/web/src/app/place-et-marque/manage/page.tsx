@@ -922,6 +922,26 @@ function PlaceEtMarqueManageContent() {
 		)
 		: null;
 
+	/** Right-aligned shrink-wrap count; pins with Filter–Show (Your products stays on-page). */
+	const pageSummary = vendorsReady && !loadingProducts && total > 0
+		? (
+			<p
+				className="
+					w-fit
+					shrink-0
+					text-right
+					text-xs
+					text-slate-500
+				"
+			>
+				{selectedVendor
+					? `Showing ${((page - 1) * pageSize + 1).toLocaleString()}–${Math.min(page * pageSize, total).toLocaleString()} of ${total.toLocaleString()}`
+					: `Page ${page} of ${pageCount} · ${total.toLocaleString()} product${total === 1 ? '' : 's'} across your vendors`
+				}
+			</p>
+		)
+		: null;
+
 	return (
 		<div
 			className="
@@ -934,6 +954,7 @@ function PlaceEtMarqueManageContent() {
 			<SellerTopContextPortal
 				center={listControlsPinned ? listControls : null}
 				left={vendorTopLeft}
+				right={listControlsPinned ? pageSummary : null}
 			/>
 
 			<PageBottomPanePortal
@@ -1023,9 +1044,25 @@ function PlaceEtMarqueManageContent() {
 					gap-3
 				"
 			>
-				<h2 className="text-lg font-semibold">
-					Your products
-				</h2>
+				<div
+					className="
+						flex
+						min-w-0
+						flex-wrap
+						items-baseline
+						justify-between
+						gap-x-3
+						gap-y-1
+					"
+				>
+					<h2 className="text-lg font-semibold">
+						Your products
+					</h2>
+					{listControlsPinned
+						? null
+						: pageSummary
+					}
+				</div>
 				{!vendorsReady || loadingProducts
 					? (
 						<p className="text-sm text-slate-500">
@@ -1044,17 +1081,6 @@ function PlaceEtMarqueManageContent() {
 									: selectedVendor
 										? 'No products yet for this vendor.'
 										: 'No products yet for your vendors.'
-							}
-						</p>
-					)
-					: null
-				}
-				{vendorsReady && !loadingProducts && total > 0
-					? (
-						<p className="text-xs text-slate-500">
-							{selectedVendor
-								? `Showing ${((page - 1) * pageSize + 1).toLocaleString()}–${Math.min(page * pageSize, total).toLocaleString()} of ${total.toLocaleString()}`
-								: `Page ${page} of ${pageCount} · ${total.toLocaleString()} product${total === 1 ? '' : 's'} across your vendors`
 							}
 						</p>
 					)
