@@ -349,12 +349,6 @@ export function AccountMenu({
 			{open && panelBox
 				? (
 					<CatalogMenuSurface
-						bodyClassName="
-							max-h-[min(28rem,calc(100vh-2*var(--gutter)))]
-							space-y-0.5
-							overflow-y-auto
-							scrollbar-thin-quiet
-						"
 						panelBox={panelBox}
 						panelClassName="
 							fixed

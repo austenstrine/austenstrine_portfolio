@@ -4,6 +4,7 @@ import {
 	useEffect,
 	useRef,
 	useState,
+	useSyncExternalStore,
 	type ReactNode,
 	type RefObject,
 } from 'react';
@@ -15,6 +16,31 @@ export type CatalogMenuBox = {
 	top: number;
 	width: number;
 };
+
+/** Phones (viewport ≤639): account/sort/category menus open as a bottom drawer. */
+const CATALOG_MENU_DRAWER_MQ = '(max-width: 639px)';
+
+function subscribeCatalogMenuDrawer(onStoreChange: () => void) {
+	const media = window.matchMedia(CATALOG_MENU_DRAWER_MQ);
+	media.addEventListener('change', onStoreChange);
+	return () => media.removeEventListener('change', onStoreChange);
+}
+
+function getCatalogMenuDrawerSnapshot() {
+	return window.matchMedia(CATALOG_MENU_DRAWER_MQ).matches;
+}
+
+function getCatalogMenuDrawerServerSnapshot() {
+	return false;
+}
+
+export function useCatalogMenuDrawer() {
+	return useSyncExternalStore(
+		subscribeCatalogMenuDrawer,
+		getCatalogMenuDrawerSnapshot,
+		getCatalogMenuDrawerServerSnapshot,
+	);
+}
 
 const menuRowActiveClass = `
 	group
@@ -142,25 +168,46 @@ export function CatalogMenuLink({
 	);
 }
 
+const catalogMenuBodyClassName = `
+	max-h-[80vh]
+	space-y-0.5
+	overflow-y-auto
+	scrollbar-thin-quiet
+`;
+
+const catalogMenuFloatingPanelClassName = `
+	fixed
+	z-50
+	rounded-2xl
+	border
+	border-slate-200
+	bg-white
+	p-2
+	shadow-lg
+`;
+
+const catalogMenuDrawerPanelClassName = `
+	fixed
+	inset-x-0
+	bottom-0
+	z-50
+	max-h-[80vh]
+	overflow-y-auto
+	rounded-t-2xl
+	border
+	border-slate-200
+	bg-white
+	p-2
+	pb-[max(0.5rem,env(safe-area-inset-bottom))]
+	shadow-lg
+	scrollbar-thin-quiet
+`;
+
 export function CatalogMenuSurface({
-	bodyClassName = `
-		max-h-80
-		space-y-0.5
-		overflow-y-auto
-		scrollbar-thin-quiet
-	`,
+	bodyClassName = catalogMenuBodyClassName,
 	children,
 	panelBox,
-	panelClassName = `
-		fixed
-		z-50
-		rounded-2xl
-		border
-		border-slate-200
-		bg-white
-		p-2
-		shadow-lg
-	`,
+	panelClassName = catalogMenuFloatingPanelClassName,
 	panelRef,
 }: {
 	bodyClassName?: string;
@@ -169,8 +216,36 @@ export function CatalogMenuSurface({
 	panelClassName?: string;
 	panelRef: RefObject<HTMLDivElement | null>;
 }) {
+	const drawer = useCatalogMenuDrawer();
+
 	if(typeof document === 'undefined') {
 		return null;
+	}
+
+	if(drawer) {
+		return createPortal(
+			<>
+				<div
+					aria-hidden
+					className="
+						fixed
+						inset-0
+						z-50
+						bg-sky/40
+					"
+				/>
+				<div
+					className={catalogMenuDrawerPanelClassName}
+					ref={panelRef as RefObject<HTMLDivElement>}
+					role="menu"
+				>
+					<div className="space-y-0.5">
+						{children}
+					</div>
+				</div>
+			</>,
+			document.body,
+		);
 	}
 
 	return createPortal(
