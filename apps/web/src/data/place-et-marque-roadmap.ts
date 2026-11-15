@@ -50,7 +50,7 @@ export const ROADMAP_PLANNED: RoadmapPlannedItem[] = [
 		id: 'planned-notifications-inbox',
 		title: 'Clearer notifications inbox',
 		summary:
-			'Inbox is live; we are still tightening unread counts, expanding a message in place, and the menu badge.',
+			'The inbox works today; we are still polishing unread counts, opening a message in place, and the badge in the menu.',
 		area: 'notifications',
 		status: 'planned',
 		sourceHint: 'PEM-247 / prefs manage',
@@ -59,7 +59,7 @@ export const ROADMAP_PLANNED: RoadmapPlannedItem[] = [
 		id: 'planned-inplace-controls',
 		title: 'Smoother on-page editing',
 		summary:
-			'You can edit many fields without a separate dialog; the controls, save bar, and toggles still need polish.',
+			'You can change many fields without a separate dialog; the controls, save bar, and toggles still need polish.',
 		area: 'catalog',
 		status: 'planned',
 		sourceHint: 'PEM-245 / PEM-239',
@@ -68,7 +68,7 @@ export const ROADMAP_PLANNED: RoadmapPlannedItem[] = [
 		id: 'planned-account-page',
 		title: 'Clearer account pages',
 		summary:
-			'Account hub and password page landed; buyer vs seller density and navigation still need refine.',
+			'The account hub and password page are live; buyer vs seller layout and navigation still need refine.',
 		area: 'auth',
 		status: 'planned',
 		sourceHint: 'PEM-246 / PEM-240',
@@ -77,7 +77,7 @@ export const ROADMAP_PLANNED: RoadmapPlannedItem[] = [
 		id: 'planned-manage-pane',
 		title: 'Seller tools bar still settling',
 		summary:
-			'The bottom seller tools and Filter–Show pinning keep moving; empty states and pin placement need a settled pass.',
+			'The bottom seller tools and pinned Filter–Show controls keep shifting; empty states and pin placement still need a settled pass.',
 		area: 'manage',
 		status: 'known-issue',
 		sourceHint: 'PEM-395 / PEM-427',
@@ -100,29 +100,29 @@ export const ROADMAP_COMPLETED: RoadmapItem[] = [
 	// Catalog & search
 	{
 		id: 'cat-ssr-category-bar',
-		title: 'Faster category bar on first paint',
+		title: 'Category bar ready as soon as the page opens',
 		area: 'catalog',
 		sourceHint: 'PEM-370',
 		highlight: true,
 	},
 	{
 		id: 'cat-category-bar-typewriter',
-		title: 'Category bar second-line scroll and typewriter',
+		title: 'Category bar scrolls the second line of topics smoothly',
 		area: 'catalog',
 	},
 	{
 		id: 'cat-category-bar-fixed-row',
-		title: 'Category bar stays one row while chips swap',
+		title: 'Category bar stays one row while topics swap',
 		area: 'catalog',
 	},
 	{
 		id: 'cat-subcat-anim',
-		title: 'Animate subcategory reveal; drop Featured card arrows',
+		title: 'Subcategories ease in; Featured cards no longer show extra arrows',
 		area: 'catalog',
 	},
 	{
 		id: 'cat-category-hover',
-		title: 'Hover animation on catalog category trigger',
+		title: 'Gentle hover motion on the category button',
 		area: 'catalog',
 		sourceHint: 'PEM-409',
 	},
@@ -134,24 +134,24 @@ export const ROADMAP_COMPLETED: RoadmapItem[] = [
 	},
 	{
 		id: 'cat-navigate-chrome',
-		title: 'Clearer browse vs control vs back actions',
+		title: 'Clearer browse, control, and back actions',
 		area: 'catalog',
 		sourceHint: 'PEM-368 / PEM-366',
 	},
 	{
 		id: 'cat-drill-vs-navigate',
-		title: 'Clearer drill-in vs go-forward arrows sitewide',
+		title: 'Clearer “open folder” vs “go to page” arrows across the site',
 		area: 'catalog',
 		sourceHint: 'PEM-340',
 	},
 	{
 		id: 'cat-breadcrumb',
-		title: 'Shared marketplace breadcrumb',
+		title: 'Shared marketplace breadcrumb trail',
 		area: 'catalog',
 	},
 	{
 		id: 'cat-carousel-carets',
-		title: 'Product-card carousel arrows, dots, and hover fade',
+		title: 'Product-card image arrows, dots, and hover fade',
 		area: 'catalog',
 	},
 	{
@@ -162,32 +162,32 @@ export const ROADMAP_COMPLETED: RoadmapItem[] = [
 	},
 	{
 		id: 'cat-pdp-inplace',
-		title: 'On-page product edits with a Full edit link',
+		title: 'Edit product details on the page, with a Full edit link',
 		area: 'catalog',
 		sourceHint: 'PEM-228',
 	},
 	{
 		id: 'cat-inplace-toggle',
-		title: 'On-page edit optional and off by default',
+		title: 'On-page edit is optional and off by default',
 		area: 'catalog',
 		sourceHint: 'PEM-239',
 	},
 	{
 		id: 'cat-tiered-inplace',
-		title: 'Tiered on-page edit with deferred saves',
+		title: 'On-page edits can wait to save until you are ready',
 		area: 'catalog',
 		sourceHint: 'PEM-245',
 	},
 	{
 		id: 'cat-pdp-cart',
-		title: 'Product page cart: quantity stepper with stable height',
+		title: 'Product page cart: quantity stepper with a steady height',
 		area: 'catalog',
 		sourceHint: 'PEM-372',
 		highlight: true,
 	},
 	{
 		id: 'cat-slug-redirect',
-		title: 'Product links use readable names, not opaque ids',
+		title: 'Product links use readable names, not random codes',
 		area: 'catalog',
 		highlight: true,
 	},
@@ -204,12 +204,12 @@ export const ROADMAP_COMPLETED: RoadmapItem[] = [
 	},
 	{
 		id: 'cat-search-h1',
-		title: 'Truncate long search titles; skip straight to results',
+		title: 'Long search titles shorten; skip straight to results',
 		area: 'catalog',
 	},
 	{
 		id: 'cat-asgreen',
-		title: 'One selected-green language across search and drill-in',
+		title: 'Same green highlight across search and category browsing',
 		area: 'catalog',
 	},
 	{
@@ -219,7 +219,7 @@ export const ROADMAP_COMPLETED: RoadmapItem[] = [
 	},
 	{
 		id: 'cat-cls-first-pass',
-		title: 'Less layout jump on catalog chrome and images',
+		title: 'Less layout jump on category bars and product images',
 		area: 'catalog',
 	},
 
@@ -239,25 +239,25 @@ export const ROADMAP_COMPLETED: RoadmapItem[] = [
 	},
 	{
 		id: 'mng-title-align',
-		title: 'Middle-align manage title, Filter–Show, and summary',
+		title: 'Manage title, Filter–Show, and summary line up in the middle',
 		area: 'manage',
 		sourceHint: 'PEM-441',
 	},
 	{
 		id: 'mng-page-summary',
-		title: 'Pin manage page summary with Filter–Show in the top bar',
+		title: 'Manage page summary stays with Filter–Show in the top bar',
 		area: 'manage',
 		sourceHint: 'PEM-436',
 	},
 	{
 		id: 'mng-cls-reserve',
-		title: 'Reserve manage context bars before paint',
+		title: 'Manage top bars keep their space so the page does not jump',
 		area: 'manage',
 		sourceHint: 'PEM-440',
 	},
 	{
 		id: 'mng-frost-menus',
-		title: 'Custom Filter / Stock / Sort menus instead of native selects',
+		title: 'Custom Filter / Stock / Sort menus instead of plain dropdowns',
 		area: 'manage',
 		sourceHint: 'PEM-431',
 	},
@@ -281,12 +281,12 @@ export const ROADMAP_COMPLETED: RoadmapItem[] = [
 	},
 	{
 		id: 'mng-dock-pagination',
-		title: 'Pagination docks at the list end when you scroll',
+		title: 'Page numbers stick at the list end when you scroll',
 		area: 'manage',
 	},
 	{
 		id: 'mng-pin-groups',
-		title: 'Left / center / right pin groups for manage controls',
+		title: 'Seller tools pin to the left, center, or right of the bar',
 		area: 'manage',
 	},
 	{
@@ -296,7 +296,7 @@ export const ROADMAP_COMPLETED: RoadmapItem[] = [
 	},
 	{
 		id: 'mng-new-product-cta',
-		title: 'Stable New product button through hover arrow reveal',
+		title: 'New product button stays steady when its arrow appears',
 		area: 'manage',
 	},
 	{
@@ -317,7 +317,7 @@ export const ROADMAP_COMPLETED: RoadmapItem[] = [
 	},
 	{
 		id: 'mng-vendor-slugs',
-		title: 'Readable seller management URLs and link-name requests',
+		title: 'Readable seller management URLs and shop web-address requests',
 		area: 'manage',
 	},
 	{
@@ -328,7 +328,7 @@ export const ROADMAP_COMPLETED: RoadmapItem[] = [
 	},
 	{
 		id: 'mng-widget-prefs',
-		title: 'Collapsible section prefs menu on the right of headers',
+		title: 'Collapse-section menu sits on the right of headers',
 		area: 'manage',
 		sourceHint: 'PEM-446 / PEM-449',
 	},
@@ -342,7 +342,7 @@ export const ROADMAP_COMPLETED: RoadmapItem[] = [
 	},
 	{
 		id: 'sell-pane-full-width',
-		title: 'Seller bottom bar spans the full viewport',
+		title: 'Seller bottom bar spans the full window width',
 		area: 'seller-chrome',
 		sourceHint: 'PEM-427',
 	},
@@ -353,7 +353,7 @@ export const ROADMAP_COMPLETED: RoadmapItem[] = [
 	},
 	{
 		id: 'sell-mode-cues',
-		title: 'Clear Selling vs shopping cues in the chrome',
+		title: 'Clear Selling vs shopping cues in the header and menus',
 		area: 'seller-chrome',
 		sourceHint: 'PEM-339',
 		highlight: true,
@@ -371,13 +371,13 @@ export const ROADMAP_COMPLETED: RoadmapItem[] = [
 	},
 	{
 		id: 'sell-header-ssr',
-		title: 'Sign-in and role chrome ready on first paint',
+		title: 'Sign-in and role controls ready when the page opens',
 		area: 'seller-chrome',
 		sourceHint: 'PEM-373',
 	},
 	{
 		id: 'sell-header-spacer',
-		title: 'Header spacer matches the category bar height',
+		title: 'Header spacing matches the category bar height',
 		area: 'seller-chrome',
 		sourceHint: 'PEM-377',
 	},
@@ -408,25 +408,25 @@ export const ROADMAP_COMPLETED: RoadmapItem[] = [
 	},
 	{
 		id: 'auth-session-aware',
-		title: 'Sign-in language that knows if you are already signed in',
+		title: 'Sign-in wording that knows if you are already signed in',
 		area: 'auth',
 		sourceHint: 'PEM-237',
 	},
 	{
 		id: 'auth-join-demo',
-		title: 'Join-demo seller path through real invites',
+		title: 'Join the demo as a seller through real invites',
 		area: 'auth',
 	},
 	{
 		id: 'auth-demo-join-harden',
-		title: 'Hardened demo-join and link-name approve flow',
+		title: 'Safer joining the demo and approving a shop web address',
 		area: 'auth',
 	},
 
 	// Notifications
 	{
 		id: 'notif-inbox-first-pass',
-		title: 'Notifications inbox first quality bar',
+		title: 'Working notifications inbox (first usable version)',
 		area: 'notifications',
 	},
 	{
@@ -443,48 +443,48 @@ export const ROADMAP_COMPLETED: RoadmapItem[] = [
 	},
 	{
 		id: 'notif-seller-chrome',
-		title: 'In-app notifications with seller layout cues',
+		title: 'In-app notifications that match seller page layout',
 		area: 'notifications',
 	},
 
 	// Cart & checkout
 	{
 		id: 'cart-checkout-first-pass',
-		title: 'Cart and checkout first quality bar',
+		title: 'Working cart and checkout (first usable version)',
 		area: 'cart-checkout',
 	},
 	{
 		id: 'checkout-payment-step',
-		title: 'Checkout payment step (no longer skips pay)',
+		title: 'Checkout includes a real payment step',
 		area: 'cart-checkout',
 		sourceHint: 'PEM-338',
 		highlight: true,
 	},
 	{
 		id: 'checkout-payment-harden',
-		title: 'Hardened demo checkout payment after reject testing',
+		title: 'Safer demo checkout payment when a charge is declined',
 		area: 'cart-checkout',
 	},
 	{
 		id: 'checkout-money-guards',
-		title: 'Safer money-path re-entry and Cancelled filter fixes',
+		title: 'Safer return to pay, plus Cancelled filter fixes',
 		area: 'cart-checkout',
 	},
 	{
 		id: 'checkout-inventory-cas',
-		title: 'Inventory claim guards against overselling',
+		title: 'Stock claims that guard against overselling',
 		area: 'cart-checkout',
 	},
 	{
 		id: 'checkout-refund-order',
-		title: 'Refunds run in a safe order before reversing payouts',
+		title: 'Refunds finish in a safe order before reversing payouts',
 		area: 'cart-checkout',
 	},
 
 	// Orders
 	{
 		id: 'orders-first-pass',
-		title: 'Seller and buyer orders first quality bar',
+		title: 'Working seller and buyer orders (first usable version)',
 		area: 'orders',
 		sourceHint: 'PEM-87/88',
 	},
@@ -497,12 +497,12 @@ export const ROADMAP_COMPLETED: RoadmapItem[] = [
 	},
 	{
 		id: 'orders-buyer-chrome',
-		title: 'Buyer orders stay on shopping chrome',
+		title: 'Buyer orders keep the shopping header and menus',
 		area: 'orders',
 	},
 	{
 		id: 'orders-filters',
-		title: 'Vendor-order Filter and Status in the top context bar',
+		title: 'Seller-order Filter and Status in the top bar',
 		area: 'orders',
 		sourceHint: 'PEM-445',
 	},
@@ -513,38 +513,38 @@ export const ROADMAP_COMPLETED: RoadmapItem[] = [
 	},
 	{
 		id: 'orders-footer-cls',
-		title: 'Reserved orders list space so the footer does not jump',
+		title: 'Orders list keeps space so the footer does not jump',
 		area: 'orders',
 	},
 
 	// Motion & polish
 	{
 		id: 'motion-hero-cta',
-		title: 'Buttons match hero lift and featured-build arrow nudge',
+		title: 'Buttons lift like the hero; Featured build arrows ease forward',
 		area: 'motion',
 		sourceHint: 'PEM-389',
 	},
 	{
 		id: 'motion-persistent-arrow',
-		title: 'Persistent navigate arrow nudge; featured Join row cleanup',
+		title: 'Go-forward arrow keeps a gentle nudge; Featured Join row tidied',
 		area: 'motion',
 		sourceHint: 'PEM-390',
 	},
 	{
 		id: 'motion-hover-nav',
-		title: 'Hover-in navigate arrow on Shop by seller and related rows',
+		title: 'Hover go-forward arrow on Shop by seller and related rows',
 		area: 'motion',
 		sourceHint: 'PEM-376',
 	},
 	{
 		id: 'motion-footer-hover',
-		title: 'Navigate hover arrow on marketplace footer links',
+		title: 'Go-forward hover arrow on marketplace footer links',
 		area: 'motion',
 		sourceHint: 'PEM-385',
 	},
 	{
 		id: 'motion-hover-desktop-lg',
-		title: 'Hover-reveal chrome only on large screens',
+		title: 'Hover-only extra controls on large screens',
 		area: 'motion',
 	},
 	{
@@ -568,7 +568,7 @@ export const ROADMAP_COMPLETED: RoadmapItem[] = [
 	// Behind the scenes
 	{
 		id: 'plat-crm-first-pass',
-		title: 'Admin portal first quality bar (separate host)',
+		title: 'Working admin portal on its own host (first usable version)',
 		area: 'platform',
 	},
 	{
@@ -578,17 +578,17 @@ export const ROADMAP_COMPLETED: RoadmapItem[] = [
 	},
 	{
 		id: 'plat-agent-cli',
-		title: 'One-command orientation helper for agents',
+		title: 'One-command orientation helper for coding agents',
 		area: 'platform',
 	},
 	{
 		id: 'plat-prefs-lint',
-		title: 'Prefs lint that fails closed on style regressions',
+		title: 'Style checks that catch layout regressions early',
 		area: 'platform',
 	},
 	{
 		id: 'plat-graphify',
-		title: 'Local code knowledge graph for agents',
+		title: 'Local code map that helps coding agents find their way',
 		area: 'platform',
 	},
 	{
@@ -603,7 +603,7 @@ export const ROADMAP_COMPLETED: RoadmapItem[] = [
 	},
 	{
 		id: 'plat-backend-down',
-		title: 'API-down banner stacked with the dust banner',
+		title: 'Server-down banner stacked with the dust banner',
 		area: 'platform',
 	},
 ];
