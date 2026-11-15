@@ -981,6 +981,7 @@ function PlaceEtMarqueManageContent() {
 			<SellerTopContextPortal
 				center={listControlsPinned ? listControls : null}
 				left={vendorTopLeft}
+				reserveEmpty
 				right={listControlsPinned ? pageSummary : null}
 			/>
 

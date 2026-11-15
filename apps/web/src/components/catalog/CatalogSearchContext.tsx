@@ -446,13 +446,22 @@ function SellerPaneGroups({
 	);
 }
 
+type SellerTopContextPortalProps = SellerPaneSlots & {
+	/**
+	 * Manage: keep an empty L/C/R shell mounted so the reserved top host stays
+	 * present before vendor/list data arrives (PEM-440). Other routes omit this.
+	 */
+	reserveEmpty?: boolean;
+};
+
 /** Seller context for the top bar: explicit left / center / right groups. */
 export function SellerTopContextPortal({
 	left,
 	center,
 	right,
 	children,
-}: SellerPaneSlots) {
+	reserveEmpty = false,
+}: SellerTopContextPortalProps) {
 	const { sellerTopContextHostEl } = useCatalogSearch();
 	const leftNode = left !== undefined
 		? left
@@ -463,7 +472,10 @@ export function SellerTopContextPortal({
 		paneSlotPresent(leftNode)
 		|| paneSlotPresent(center)
 		|| paneSlotPresent(right);
-	if(!sellerTopContextHostEl || !hasContent) {
+	if(!sellerTopContextHostEl) {
+		return null;
+	}
+	if(!hasContent && !reserveEmpty) {
 		return null;
 	}
 	return createPortal(
@@ -472,6 +484,7 @@ export function SellerTopContextPortal({
 			className="
 				mx-auto
 				grid
+				min-h-[3.5rem]
 				w-full
 				max-w-7xl
 				grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]
@@ -481,6 +494,7 @@ export function SellerTopContextPortal({
 				px-gutter
 				py-2
 			"
+			data-pane-filled={hasContent ? 'true' : 'false'}
 			role="region"
 		>
 			<SellerPaneGroups

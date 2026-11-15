@@ -229,13 +229,20 @@ export function pathReservesOrdersListBottomPane(path: string): boolean {
 }
 
 /**
- * Manage keeps an empty bottom pane mounted (transparent clickthrough) so
- * harvested pagination / New product can pin into already-present chrome.
- * Other seller routes keep empty:hidden and must not show blank bar chrome.
+ * Manage reserves top + bottom context chrome before paint (PEM-440), like
+ * the landing department bar (PEM-370/377): presence is a path decision, not
+ * a post-load mount. Top host stays open (no empty:hidden pop); bottom harvest
+ * pane stays mounted transparent until controls pin in. Other seller routes
+ * keep empty:hidden.
  */
-export function pathKeepsManageBottomPane(path: string): boolean {
+export function pathReservesManageContextBars(path: string): boolean {
 	const pathname = path.split('?')[0] ?? path;
 	return pathname === '/place-et-marque/manage';
+}
+
+/** @see pathReservesManageContextBars */
+export function pathKeepsManageBottomPane(path: string): boolean {
+	return pathReservesManageContextBars(path);
 }
 
 export function buildLoginUrl(options: {

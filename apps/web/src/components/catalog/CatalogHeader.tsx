@@ -2,7 +2,10 @@
 
 import { useEffect, useLayoutEffect, useRef, useState, type RefObject } from 'react';
 import { usePathname } from 'next/navigation';
-import { pathUsesSellerChrome } from '../../lib/accessGate';
+import {
+	pathReservesManageContextBars,
+	pathUsesSellerChrome,
+} from '../../lib/accessGate';
 import { CART_CHANGED_EVENT, getCart } from '../../lib/checkout-api';
 import { useSession } from '../../lib/useSession';
 import { CaretDownIcon } from '../icons/CaretDownIcon';
@@ -91,6 +94,8 @@ export function CatalogHeader({
 	const [headerHidden, setHeaderHidden] = useState(false);
 	const lastScrollY = useRef(0);
 	const sellerChrome = pathUsesSellerChrome(pathname);
+	// Manage: reserve top + bottom context chrome before paint (PEM-440).
+	const reserveManageContext = pathReservesManageContextBars(pathname);
 	const showInPlaceEditToggle = !sellerChrome
 		&& editableVendorsReady
 		&& editableVendorIds.size > 0;
@@ -99,6 +104,7 @@ export function CatalogHeader({
 	// Categories are SSR-seeded (PEM-370): show/hide is decided before paint.
 	// Spacer / --catalog-header-h use the same decision (PEM-377) so first
 	// paint matches bar present vs absent — no post-paint spacer jump.
+	// Manage seller top-context uses with-seller-context the same way.
 	const showDepartmentBar =
 		!sellerChrome
 		&& pathname !== '/place-et-marque/search'
@@ -107,10 +113,14 @@ export function CatalogHeader({
 	const spacerRef = useRef<HTMLDivElement>(null);
 	const headerHeightVar = showDepartmentBar
 		? 'var(--catalog-header-h-with-bar)'
-		: 'var(--catalog-header-h-base)';
+		: reserveManageContext
+			? 'var(--catalog-header-h-with-seller-context)'
+			: 'var(--catalog-header-h-base)';
 	const spacerClassName = showDepartmentBar
 		? 'h-[var(--catalog-header-h-with-bar)]'
-		: 'h-[var(--catalog-header-h-base)]';
+		: reserveManageContext
+			? 'h-[var(--catalog-header-h-with-seller-context)]'
+			: 'h-[var(--catalog-header-h-base)]';
 
 	useLayoutEffect(() => {
 		const syncBanner = () => {
@@ -176,7 +186,7 @@ export function CatalogHeader({
 				spacer.style.height = '';
 			}
 		};
-	}, [bannerOffset, headerHidden, showDepartmentBar]);
+	}, [bannerOffset, headerHidden, showDepartmentBar, reserveManageContext]);
 
 	useEffect(() => {
 		lastScrollY.current = window.scrollY;
@@ -223,12 +233,16 @@ export function CatalogHeader({
 	return (
 		<>
 			{/*
-				SSR with the category bar: pin --catalog-header-h to the matching
-				token before paint. Soft-nav updates this with showDepartmentBar.
+				SSR with the category / manage context bar: pin --catalog-header-h
+				to the matching token before paint. Soft-nav updates with the
+				same presence decision (PEM-377 / PEM-440). Manage also pins the
+				bottom-pane stack floor so pad does not wait on layout sync.
 			*/}
 			<style
 				dangerouslySetInnerHTML={{
-					__html: `:root{--catalog-header-h:${headerHeightVar};}`,
+					__html: reserveManageContext
+						? `:root{--catalog-header-h:${headerHeightVar};--seller-bottom-pane-stack:var(--seller-bottom-pane-stack-manage);}`
+						: `:root{--catalog-header-h:${headerHeightVar};}`,
 				}}
 			/>
 			<div
@@ -237,7 +251,9 @@ export function CatalogHeader({
 				data-catalog-header-spacer={
 					showDepartmentBar
 						? 'with-bar'
-						: 'base'
+						: reserveManageContext
+							? 'with-seller-context'
+							: 'base'
 				}
 				ref={spacerRef}
 			/>
@@ -454,12 +470,26 @@ export function CatalogHeader({
 				{sellerChrome
 					? (
 						<div
-							className="
-								border-t
-								border-slate-100
-								bg-white
-								empty:hidden
-							"
+							className={
+								reserveManageContext
+									? `
+										min-h-[4rem]
+										border-t
+										border-slate-100
+										bg-white
+									`
+									: `
+										border-t
+										border-slate-100
+										bg-white
+										empty:hidden
+									`
+							}
+							data-manage-top-context={
+								reserveManageContext
+									? 'reserve'
+									: undefined
+							}
 							ref={setSellerTopContextHost}
 						/>
 					)

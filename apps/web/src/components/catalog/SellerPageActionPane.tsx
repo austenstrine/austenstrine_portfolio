@@ -3,7 +3,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import {
-	pathKeepsManageBottomPane,
+	pathReservesManageContextBars,
 	pathReservesOrdersListBottomPane,
 	pathUsesSellerChrome,
 } from '../../lib/accessGate';
@@ -62,10 +62,10 @@ const FILLED_PANE_CHROME_CLASSNAME = `
  * dock observers can clear the pane. While scroll-hidden, publishes 0px
  * (not removed) so IntersectionObserver rootMargins treat inset as gone.
  *
- * Manage keeps the bar mounted while empty (transparent clickthrough) so
- * harvested controls pin into already-present chrome. Host is always
- * full viewport width; portal padding aligns controls with page content.
- * Other seller routes still use empty:hidden.
+ * Manage reserves the bar before paint (PEM-440; pathReservesManageContextBars)
+ * so harvested controls pin into already-present chrome — no post-load pop.
+ * Host is always full viewport width; portal padding aligns controls with
+ * page content. Other seller routes still use empty:hidden.
  *
  * Stack height uses layout metrics (offsetHeight + CSS bottom), not
  * getBoundingClientRect, so CSS hide/show transforms do not collapse the
@@ -79,7 +79,7 @@ export function SellerPageActionPane() {
 	const [paneHidden, setPaneHidden] = useState(false);
 	const sellerChrome = pathUsesSellerChrome(pathname);
 	const reserveOrdersPane = pathReservesOrdersListBottomPane(pathname);
-	const keepManagePane = pathKeepsManageBottomPane(pathname);
+	const keepManagePane = pathReservesManageContextBars(pathname);
 
 	useEffect(() => {
 		if(!sellerChrome) {

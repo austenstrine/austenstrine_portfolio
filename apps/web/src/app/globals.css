@@ -11,21 +11,26 @@
   /* Vertical rhythm between homepage section cards (Tailwind gap-6). */
   --section-gap: 1.5rem;
   /*
-   * PeM fixed-header spacer tokens (PEM-377). Measured chrome:
+   * PeM fixed-header spacer tokens (PEM-377 / PEM-440). Measured chrome:
    * mobile two-row (bar is md:block only) ≈ 119px; desktop search row ≈ 67px;
-   * desktop + department bar (border-t + h-12) ≈ 116px.
-   * CatalogHeader SSR picks base vs with-bar with the category bar; JS may
+   * desktop + department bar (border-t + h-12) ≈ 116px;
+   * manage seller top-context reserve (border-t + min-h 4rem) ≈ base + 4rem.
+   * CatalogHeader SSR picks base / with-bar / with-seller-context; JS may
    * refine --catalog-header-h to px (banner / sticky) after paint.
    */
   --catalog-header-h-base: 7.4375rem;
   --catalog-header-h-with-bar: 7.4375rem;
+  --catalog-header-h-with-seller-context: 11.4375rem;
   --catalog-header-h: var(--catalog-header-h-base);
+  /* Manage bottom pane floor before layout sync (min-h 3.5rem + 8px gap). */
+  --seller-bottom-pane-stack-manage: 4rem;
 }
 
 @media (min-width: 768px) {
   :root {
     --catalog-header-h-base: 4.1875rem;
     --catalog-header-h-with-bar: 7.25rem;
+    --catalog-header-h-with-seller-context: 8.1875rem;
   }
 }
 
