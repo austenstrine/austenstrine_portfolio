@@ -1164,6 +1164,21 @@ function PlaceEtMarqueManageContent() {
 										setTotal((current) => Math.max(0, current - 1));
 									}
 								}
+								onRestored={
+									(restored) => {
+										setProducts((current) =>
+											current.map((row) =>
+												row.id === product.id
+													? {
+														...row,
+														...restored,
+														id: restored.id,
+													}
+													: row
+											),
+										);
+									}
+								}
 								product={product}
 							/>
 						</div>

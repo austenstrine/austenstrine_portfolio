@@ -259,8 +259,11 @@ export class CatalogArchiveService implements OnModuleInit, OnModuleDestroy {
 		}
 
 		const product = await this.prisma.$transaction(async (tx) => {
+			// Reuse archived originalIds so manage-list undo keeps the same product id
+			// (a reminted UUID would leave the row pointing at a deleted id).
 			const created = await tx.catalogProduct.create({
 				data: {
+					id: archived.originalId,
 					vendorId: archived.vendorId,
 					categoryId,
 					slug: archived.slug,
@@ -278,6 +281,7 @@ export class CatalogArchiveService implements OnModuleInit, OnModuleDestroy {
 					},
 					offerings: {
 						create: offerings.map((offering) => ({
+							id: offering.originalId,
 							vendorId: offering.vendorId,
 							sku: offering.sku,
 							offeringKey: offering.offeringKey,
@@ -299,17 +303,9 @@ export class CatalogArchiveService implements OnModuleInit, OnModuleDestroy {
 				},
 			});
 
-			const offeringIdByOriginal = new Map<string, string>();
-			for(const offering of offerings) {
-				const match = created.offerings.find(
-					(row) =>
-						row.sku === offering.sku
-						&& row.offeringKey === offering.offeringKey,
-				);
-				if(match) {
-					offeringIdByOriginal.set(offering.originalId, match.id);
-				}
-			}
+			const offeringIdByOriginal = new Map(
+				offerings.map((offering) => [offering.originalId, offering.originalId]),
+			);
 
 			for(const link of relevantContainments) {
 				const parentOfferingId = offeringIdByOriginal.get(
@@ -323,6 +319,7 @@ export class CatalogArchiveService implements OnModuleInit, OnModuleDestroy {
 				}
 				await tx.offeringContainment.create({
 					data: {
+						id: link.originalId,
 						parentOfferingId,
 						childOfferingId,
 						childQtyPerParent: link.childQtyPerParent,
@@ -340,6 +337,7 @@ export class CatalogArchiveService implements OnModuleInit, OnModuleDestroy {
 				}
 				await tx.brokenPack.create({
 					data: {
+						id: pack.originalId,
 						packOfferingId,
 						label: pack.label,
 						remainingQty: pack.remainingQty,

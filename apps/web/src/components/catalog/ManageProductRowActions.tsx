@@ -61,7 +61,10 @@ export function ManageProductRowActions({
 	product,
 }: {
 	onDeleted: (productId: string) => void;
-	/** Called after a successful undo-archive so the list can re-insert. */
+	/**
+	 * Called after a successful undo-archive with the live product id
+	 * (same as `product.id` when restore reuses `originalId`).
+	 */
 	onRestored?: (product: CatalogProductSummary) => void;
 	product: CatalogProductSummary;
 }) {
@@ -173,12 +176,17 @@ export function ManageProductRowActions({
 		setBusyMode('undo');
 		setError(null);
 		try {
-			await restoreArchivedCatalogProduct(archivedProductId);
+			const restored = await restoreArchivedCatalogProduct(archivedProductId);
 			clearUndoTimers();
 			pendingRemoveRef.current = false;
 			setArchivedProductId(null);
 			setUndoSecondsLeft(0);
-			onRestored?.(product);
+			onRestored?.({
+				...product,
+				id: restored.productId,
+				slug: restored.slug,
+				title: restored.title,
+			});
 		}
 		catch(err) {
 			setError(
