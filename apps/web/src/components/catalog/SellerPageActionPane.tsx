@@ -4,7 +4,6 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import {
 	pathReservesManageContextBars,
-	pathReservesOrdersListBottomPane,
 	pathUsesSellerChrome,
 } from '../../lib/accessGate';
 import { useCatalogSearch } from './CatalogSearchContext';
@@ -13,14 +12,6 @@ const STACK_VAR = '--seller-bottom-pane-stack';
 const STACK_GAP_PX = 8;
 const PANE_SCROLL_DELTA = 8;
 const PANE_SHOW_TOP = 16;
-/** Matches orders filter labels + controls (+ pane pad) before portal fill. */
-const ORDERS_PANE_RESERVE_CLASSNAME = `
-	min-h-[4.75rem]
-	empty:pointer-events-none
-	empty:border-transparent
-	empty:bg-transparent
-	empty:shadow-none
-`;
 
 /**
  * Manage-only: keep geometry mounted while empty (transparent clickthrough).
@@ -53,10 +44,10 @@ const FILLED_PANE_CHROME_CLASSNAME = `
 
 /**
  * Full-width bottom pane for page-specific seller actions (pagination,
- * New product, order filters, save). Solid white with a tiny alpha — no
- * frosted blur, no corner radius. Site-wide context and page-level list
- * controls (vendor picker, Filter/Stock/Sort/Show) live in the top bar.
- * Hides on scroll-down / shows on scroll-up like the top bar.
+ * New product, save). Solid white with a tiny alpha — no frosted blur, no
+ * corner radius. Site-wide context and page-level list controls (vendor
+ * picker, Filter/Stock/Sort/Show, vendor-order Filter/Status) live in the
+ * top bar. Hides on scroll-down / shows on scroll-up like the top bar.
  * Publishes --seller-bottom-pane-stack so JumpToTop can mid-align over
  * the bar (New product stays clear via the side margin+gutter rail) and
  * dock observers can clear the pane. While scroll-hidden, publishes 0px
@@ -78,7 +69,6 @@ export function SellerPageActionPane() {
 	const lastScrollY = useRef(0);
 	const [paneHidden, setPaneHidden] = useState(false);
 	const sellerChrome = pathUsesSellerChrome(pathname);
-	const reserveOrdersPane = pathReservesOrdersListBottomPane(pathname);
 	const keepManagePane = pathReservesManageContextBars(pathname);
 
 	useEffect(() => {
@@ -156,7 +146,7 @@ export function SellerPageActionPane() {
 			host.removeEventListener('transitionend', sync);
 			document.documentElement.style.removeProperty(STACK_VAR);
 		};
-	}, [paneHidden, reserveOrdersPane, keepManagePane, sellerChrome]);
+	}, [paneHidden, keepManagePane, sellerChrome]);
 
 	useEffect(() => {
 		return () => {
@@ -181,19 +171,13 @@ export function SellerPageActionPane() {
 					ease-out
 					motion-reduce:transition-none
 					inset-x-0
-					${reserveOrdersPane
-						? `
+					${keepManagePane
+						? MANAGE_HARVEST_PANE_CLASSNAME
+						: `
 							${FILLED_PANE_CHROME_CLASSNAME}
 							pointer-events-auto
-							${ORDERS_PANE_RESERVE_CLASSNAME}
+							empty:hidden
 						`
-						: keepManagePane
-							? MANAGE_HARVEST_PANE_CLASSNAME
-							: `
-								${FILLED_PANE_CHROME_CLASSNAME}
-								pointer-events-auto
-								empty:hidden
-							`
 					}
 				`
 			}

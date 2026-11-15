@@ -19,7 +19,7 @@ import {
 import { getMyVendor, type VendorDetail } from '../../../../../lib/catalog-api';
 import { RequireAccess } from '../../../../../components/auth/RequireAccess';
 import { BackLink } from '../../../../../components/BackLink';
-import { PageBottomPanePortal } from '../../../../../components/catalog/CatalogSearchContext';
+import { SellerTopContextPortal } from '../../../../../components/catalog/CatalogSearchContext';
 import { OrderConfirmActions } from '../../../../../components/orders/OrderConfirmActions';
 import { OrderMoneySummary } from '../../../../../components/orders/OrderMoneySummary';
 import { OrdersListFilters } from '../../../../../components/orders/OrdersListFilters';
@@ -37,6 +37,49 @@ import { RefundIcon } from '../../../../../components/icons/RefundIcon';
 import { TruckIcon } from '../../../../../components/icons/TruckIcon';
 import { useSession } from '../../../../../lib/useSession';
 
+/** Match SellerTopContextPortal L/C/R so on-page ↔ pinned stays put. */
+const LIST_CONTROLS_ROW_CLASS = `
+	grid
+	w-full
+	grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]
+	items-center
+	gap-x-3
+	gap-y-2
+`;
+
+const LIST_CONTROLS_CLUSTER_CLASS = `
+	flex
+	min-w-0
+	flex-wrap
+	items-center
+	justify-center
+	gap-x-3
+	gap-y-2
+`;
+
+/** Read a CSS length var as px; missing/cleared/0 → 0 (never invent a stale inset). */
+function cssVarPx(name: string): number {
+	if(typeof document === 'undefined') {
+		return 0;
+	}
+	const raw = getComputedStyle(document.documentElement)
+		.getPropertyValue(name)
+		.trim();
+	const parsed = Number.parseFloat(raw);
+	if(Number.isFinite(parsed) && parsed > 0) {
+		return Math.ceil(parsed);
+	}
+	return 0;
+}
+
+function ordersTopChromeInsetPx(): number {
+	const measured = cssVarPx('--catalog-header-h');
+	if(measured > 0) {
+		return measured;
+	}
+	return cssVarPx('--catalog-header-h-base');
+}
+
 function VendorOrdersPageContent() {
 	const params = useParams<{ vendorId: string }>();
 	const vendorRef = params.vendorId;
@@ -50,6 +93,9 @@ function VendorOrdersPageContent() {
 	const [filterText, setFilterText] = useState('');
 	const [statusFilter, setStatusFilter] = useState<OrderStatusFilter>('all');
 	const deferredFilterText = useDeferredValue(filterText);
+	const [listControlsEl, setListControlsEl] = useState<HTMLDivElement | null>(null);
+	/** Filter + Status pin into top bar center once their on-page row scrolls away. */
+	const [listControlsPinned, setListControlsPinned] = useState(false);
 	const vendorId = vendor?.id;
 	const vendorSlug = vendor?.slug || vendorRef;
 
@@ -88,6 +134,52 @@ function VendorOrdersPageContent() {
 				);
 			});
 	}, [user, vendorRef]);
+
+	useEffect(() => {
+		if(!listControlsEl) {
+			setListControlsPinned(false);
+			return;
+		}
+
+		let observer: IntersectionObserver | null = null;
+		let raf = 0;
+		const connect = () => {
+			observer?.disconnect();
+			const topInset = ordersTopChromeInsetPx();
+			observer = new IntersectionObserver(
+				([entry]) => {
+					setListControlsPinned(!entry?.isIntersecting);
+				},
+				{
+					root: null,
+					rootMargin: `-${topInset}px 0px 0px 0px`,
+					threshold: 0,
+				},
+			);
+			observer.observe(listControlsEl);
+		};
+		const scheduleConnect = () => {
+			cancelAnimationFrame(raf);
+			raf = requestAnimationFrame(connect);
+		};
+
+		scheduleConnect();
+		window.addEventListener('resize', scheduleConnect);
+		const styleWatcher = new MutationObserver(scheduleConnect);
+		styleWatcher.observe(document.documentElement, {
+			attributes: true,
+			attributeFilter: ['style'],
+		});
+		return () => {
+			cancelAnimationFrame(raf);
+			window.removeEventListener('resize', scheduleConnect);
+			styleWatcher.disconnect();
+			observer?.disconnect();
+		};
+	}, [
+		listControlsEl,
+		orders.length,
+	]);
 
 	async function onShip(orderId: string) {
 		if(!vendorId || busyRef.current) {
@@ -147,6 +239,16 @@ function VendorOrdersPageContent() {
 			: 'Cancel & refund';
 	}
 
+	const listControls = (
+		<OrdersListFilters
+			filterPlaceholder="Buyer, product, place"
+			filterText={filterText}
+			onFilterTextChange={setFilterText}
+			onStatusFilterChange={setStatusFilter}
+			statusFilter={statusFilter}
+		/>
+	);
+
 	return (
 		<div
 			className="
@@ -155,15 +257,10 @@ function VendorOrdersPageContent() {
 				gap-6
 			"
 		>
-			<PageBottomPanePortal>
-				<OrdersListFilters
-					filterPlaceholder="Buyer, product, place"
-					filterText={filterText}
-					onFilterTextChange={setFilterText}
-					onStatusFilterChange={setStatusFilter}
-					statusFilter={statusFilter}
-				/>
-			</PageBottomPanePortal>
+			<SellerTopContextPortal
+				center={listControlsPinned ? listControls : null}
+				reserveEmpty
+			/>
 
 			<BackLink href={`/place-et-marque/vendors/${vendorSlug}`}>
 				Back to vendor
@@ -193,6 +290,29 @@ function VendorOrdersPageContent() {
 						: ''
 					}
 				</p>
+			</div>
+
+			<div
+				className={
+					listControlsPinned
+						? `
+							${LIST_CONTROLS_ROW_CLASS}
+							min-h-[4.5rem]
+						`
+						: LIST_CONTROLS_ROW_CLASS
+				}
+				ref={setListControlsEl}
+			>
+				<div />
+				{listControlsPinned
+					? <div />
+					: (
+						<div className={LIST_CONTROLS_CLUSTER_CLASS}>
+							{listControls}
+						</div>
+					)
+				}
+				<div />
 			</div>
 
 			{sessionLoading

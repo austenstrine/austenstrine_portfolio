@@ -218,14 +218,19 @@ export function pathUsesSellerChrome(path: string): boolean {
 	return PRODUCT_SLUG_EDITOR_PATH.test(pathname);
 }
 
-/**
- * Seller order *lists* mount frost filter controls into the bottom pane.
- * Reserve pane geometry so empty:hidden cannot late-show the FOOTER-attributed
- * chrome (buyer orders filter inline; order detail has no pane portal).
- */
-export function pathReservesOrdersListBottomPane(path: string): boolean {
+/** Vendor seller order list (`…/vendors/:id/orders`). */
+export function pathIsVendorOrdersList(path: string): boolean {
 	const pathname = path.split('?')[0] ?? path;
 	return /^\/place-et-marque\/vendors\/[^/]+\/orders\/?$/.test(pathname);
+}
+
+/**
+ * Vendor order lists pin Filter/Status into the top context bar on scroll
+ * (PEM-445). Reserve top host geometry before paint so empty:hidden cannot
+ * late-show chrome when controls harvest up (buyer orders stay inline).
+ */
+export function pathReservesOrdersListTopContext(path: string): boolean {
+	return pathIsVendorOrdersList(path);
 }
 
 /**
@@ -238,6 +243,15 @@ export function pathReservesOrdersListBottomPane(path: string): boolean {
 export function pathReservesManageContextBars(path: string): boolean {
 	const pathname = path.split('?')[0] ?? path;
 	return pathname === '/place-et-marque/manage';
+}
+
+/**
+ * Top seller context host stays reserved before paint (manage + vendor orders).
+ * Bottom pane harvest remains manage-only.
+ */
+export function pathReservesSellerTopContext(path: string): boolean {
+	return pathReservesManageContextBars(path)
+		|| pathReservesOrdersListTopContext(path);
 }
 
 /** @see pathReservesManageContextBars */

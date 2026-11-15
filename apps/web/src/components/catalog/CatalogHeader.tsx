@@ -4,6 +4,7 @@ import { useEffect, useLayoutEffect, useRef, useState, type RefObject } from 're
 import { usePathname } from 'next/navigation';
 import {
 	pathReservesManageContextBars,
+	pathReservesSellerTopContext,
 	pathUsesSellerChrome,
 } from '../../lib/accessGate';
 import { CART_CHANGED_EVENT, getCart } from '../../lib/checkout-api';
@@ -94,8 +95,10 @@ export function CatalogHeader({
 	const [headerHidden, setHeaderHidden] = useState(false);
 	const lastScrollY = useRef(0);
 	const sellerChrome = pathUsesSellerChrome(pathname);
-	// Manage: reserve top + bottom context chrome before paint (PEM-440).
+	// Manage: reserve top + bottom before paint (PEM-440). Vendor orders:
+	// reserve top only for Filter/Status harvest (PEM-445).
 	const reserveManageContext = pathReservesManageContextBars(pathname);
+	const reserveTopContext = pathReservesSellerTopContext(pathname);
 	const showInPlaceEditToggle = !sellerChrome
 		&& editableVendorsReady
 		&& editableVendorIds.size > 0;
@@ -104,7 +107,7 @@ export function CatalogHeader({
 	// Categories are SSR-seeded (PEM-370): show/hide is decided before paint.
 	// Spacer / --catalog-header-h use the same decision (PEM-377) so first
 	// paint matches bar present vs absent — no post-paint spacer jump.
-	// Manage seller top-context uses with-seller-context the same way.
+	// Seller top-context (manage + vendor orders) uses with-seller-context.
 	const showDepartmentBar =
 		!sellerChrome
 		&& pathname !== '/place-et-marque/search'
@@ -113,12 +116,12 @@ export function CatalogHeader({
 	const spacerRef = useRef<HTMLDivElement>(null);
 	const headerHeightVar = showDepartmentBar
 		? 'var(--catalog-header-h-with-bar)'
-		: reserveManageContext
+		: reserveTopContext
 			? 'var(--catalog-header-h-with-seller-context)'
 			: 'var(--catalog-header-h-base)';
 	const spacerClassName = showDepartmentBar
 		? 'h-[var(--catalog-header-h-with-bar)]'
-		: reserveManageContext
+		: reserveTopContext
 			? 'h-[var(--catalog-header-h-with-seller-context)]'
 			: 'h-[var(--catalog-header-h-base)]';
 
@@ -186,7 +189,7 @@ export function CatalogHeader({
 				spacer.style.height = '';
 			}
 		};
-	}, [bannerOffset, headerHidden, showDepartmentBar, reserveManageContext]);
+	}, [bannerOffset, headerHidden, showDepartmentBar, reserveTopContext]);
 
 	useEffect(() => {
 		lastScrollY.current = window.scrollY;
@@ -251,7 +254,7 @@ export function CatalogHeader({
 				data-catalog-header-spacer={
 					showDepartmentBar
 						? 'with-bar'
-						: reserveManageContext
+						: reserveTopContext
 							? 'with-seller-context'
 							: 'base'
 				}
@@ -471,7 +474,7 @@ export function CatalogHeader({
 					? (
 						<div
 							className={
-								reserveManageContext
+								reserveTopContext
 									? `
 										min-h-[4rem]
 										border-t
@@ -487,6 +490,11 @@ export function CatalogHeader({
 							}
 							data-manage-top-context={
 								reserveManageContext
+									? 'reserve'
+									: undefined
+							}
+							data-seller-top-context={
+								reserveTopContext
 									? 'reserve'
 									: undefined
 							}
