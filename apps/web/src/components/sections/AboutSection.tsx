@@ -1,6 +1,8 @@
 import { recommendations } from '../../data/recommendations';
 import type { Recommendation } from '../../data/recommendations';
 import { CdnImg } from '../CdnImg';
+import { ExternalHoverIcon } from '../ExternalHoverIcon';
+import { ExternalLinkIcon } from '../icons/ExternalLinkIcon';
 
 function RecommendationAttribution({
 	recommendation,
@@ -19,16 +21,23 @@ function RecommendationAttribution({
 		>
 			<a
 				className="
+					group
+					inline-flex
+					items-center
+					justify-center
 					text-lg
 					font-semibold
 					text-ink
+					transition
 					hover:text-sky
+					md:justify-start
 				"
 				href={recommendation.profileUrl}
 				rel="noreferrer"
 				target="_blank"
 			>
 				{recommendation.name}
+				<ExternalHoverIcon className="text-slate-400" />
 			</a>
 			<p
 				className="
@@ -86,6 +95,91 @@ function RecommendationQuote({
 	);
 }
 
+function RecommendationPhotoLink({
+	recommendation,
+	size,
+}: {
+	recommendation: Recommendation;
+	size: 'featured' | 'supporting';}) {
+	const pixels = size === 'featured'
+		? 112
+		: 80;
+	const cdnEdge = pixels * 2;
+
+	return (
+		<a
+			aria-label={`${recommendation.name} on LinkedIn (opens in a new tab)`}
+			className="
+				group
+				relative
+				mx-auto
+				block
+				shrink-0
+				md:mx-0
+			"
+			href={recommendation.profileUrl}
+			rel="noreferrer"
+			target="_blank"
+		>
+			<CdnImg
+				className={
+					`
+						rounded-full
+						border-4
+						border-white
+						object-cover
+						shadow-md
+						${size === 'featured'
+							? 'h-28 w-28'
+							: 'h-20 w-20'
+						}
+					`.trim()
+				}
+				alt={recommendation.name}
+				src={recommendation.image}
+				cdn={{ w: cdnEdge, h: cdnEdge, fit: 'cover', fm: 'webp' }}
+				width={pixels}
+				height={pixels}
+			/>
+			<span
+				aria-hidden
+				className="
+					pointer-events-none
+					absolute
+					bottom-0.5
+					right-0.5
+					inline-flex
+					items-center
+					justify-center
+					rounded-full
+					border
+					border-slate-200
+					bg-white
+					p-1
+					text-sky
+					shadow-sm
+					opacity-100
+					transition-opacity
+					duration-200
+					ease-out
+					motion-reduce:transition-none
+					lg:opacity-0
+					group-focus-visible:opacity-100
+					[@media(hover:hover)]:lg:group-hover:opacity-100
+				"
+			>
+				<ExternalLinkIcon
+					className="
+						h-3
+						w-3
+						shrink-0
+					"
+				/>
+			</span>
+		</a>
+	);
+}
+
 function FeaturedRecommendation({
 	recommendation,
 }: {
@@ -114,33 +208,10 @@ function FeaturedRecommendation({
 					md:gap-8
 				"
 			>
-				<a
-					className="
-						mx-auto
-						shrink-0
-						md:mx-0
-					"
-					href={recommendation.profileUrl}
-					rel="noreferrer"
-					target="_blank"
-				>
-					<CdnImg
-						className="
-							h-28
-							w-28
-							rounded-full
-							border-4
-							border-white
-							object-cover
-							shadow-md
-						"
-						alt={recommendation.name}
-						src={recommendation.image}
-						cdn={{ w: 224, h: 224, fit: 'cover', fm: 'webp' }}
-						width={112}
-						height={112}
-					/>
-				</a>
+				<RecommendationPhotoLink
+					recommendation={recommendation}
+					size="featured"
+				/>
 
 				<div>
 					<RecommendationAttribution
@@ -178,33 +249,10 @@ function SupportingRecommendation({
 					gap-4
 				"
 			>
-				<a
-					className="
-						mx-auto
-						shrink-0
-						md:mx-0
-					"
-					href={recommendation.profileUrl}
-					rel="noreferrer"
-					target="_blank"
-				>
-					<CdnImg
-						className="
-							h-20
-							w-20
-							rounded-full
-							border-4
-							border-white
-							object-cover
-							shadow-md
-						"
-						alt={recommendation.name}
-						src={recommendation.image}
-						cdn={{ w: 160, h: 160, fit: 'cover', fm: 'webp' }}
-						width={80}
-						height={80}
-					/>
-				</a>
+				<RecommendationPhotoLink
+					recommendation={recommendation}
+					size="supporting"
+				/>
 
 				<div>
 					<RecommendationAttribution
