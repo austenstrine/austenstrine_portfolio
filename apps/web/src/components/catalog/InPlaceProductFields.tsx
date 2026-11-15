@@ -27,7 +27,7 @@ import {
 	uomIdForCode,
 } from '../../lib/inplace-product-edit';
 import { productEditHref } from '../../lib/vendor-ref';
-import { ArrowRightIcon } from '../icons/ArrowRightIcon';
+import { NavigatePersistentArrow } from './NavigatePersistentArrow';
 import { CaretDownIcon } from '../icons/CaretDownIcon';
 import { PencilIcon } from '../icons/PencilIcon';
 import { PlusIcon } from '../icons/PlusIcon';
@@ -972,6 +972,7 @@ export function InPlaceFullEditLink({
 	return (
 		<a
 			className={`
+				group
 				inline-flex
 				items-center
 				gap-1.5
@@ -986,13 +987,7 @@ export function InPlaceFullEditLink({
 			})}
 		>
 			Full edit
-			<ArrowRightIcon
-				className="
-					h-3.5
-					w-3.5
-					shrink-0
-				"
-			/>
+			<NavigatePersistentArrow />
 		</a>
 	);
 }

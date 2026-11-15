@@ -1,7 +1,7 @@
 'use client';
 
 import type { ReactNode } from 'react';
-import { ArrowRightIcon } from '../icons/ArrowRightIcon';
+import { NavigatePersistentArrow } from '../catalog/NavigatePersistentArrow';
 import { CopyIcon } from '../icons/CopyIcon';
 
 type ContactMethodRowProps = {
@@ -288,19 +288,10 @@ export function ContactMethodRow({
 						</p>
 					</div>
 				</div>
-				<span
-					className="
-						ml-2
-						shrink-0
-						transition
-						group-hover:translate-x-0.5
-					"
-					aria-hidden="true"
-				>
-					<ArrowRightIcon
-						className="h-5 w-5"
-					/>
-				</span>
+				<NavigatePersistentArrow
+					className="ml-2"
+					iconClassName="h-5 w-5"
+				/>
 			</a>
 		</div>
 	);

@@ -1,5 +1,6 @@
 import { GUIDED_DEMO_PRODUCT } from '../../lib/site';
-import { ArrowRightIcon } from '../icons/ArrowRightIcon';
+import { NavigatePersistentArrow } from './NavigatePersistentArrow';
+import { PILL_CTA_BASE_CLASS } from './pillCta';
 
 export function DemoIntro() {
 	return (
@@ -49,55 +50,34 @@ export function DemoIntro() {
 				"
 			>
 				<a
-					className="
-						inline-flex
-						items-center
-						gap-1.5
-						rounded-full
+					className={`
+						${PILL_CTA_BASE_CLASS}
 						bg-white
 						px-5
 						py-2.5
-						text-sm
-						font-semibold
 						text-ink
 						hover:bg-frost
-					"
+					`}
 					href="/place-et-marque/search"
 				>
 					Shop all products
-					<ArrowRightIcon
-						className="
-							h-3.5
-							w-3.5
-							shrink-0
-						"
-					/>
+					<NavigatePersistentArrow />
 				</a>
 				<a
-					className="
-						inline-flex
-						items-center
-						gap-1.5
-						rounded-full
+					className={`
+						${PILL_CTA_BASE_CLASS}
 						border
 						border-white/30
 						px-5
 						py-2.5
-						text-sm
-						font-semibold
 						text-white
+						hover:bg-white/10
 						hover:border-white
-					"
+					`}
 					href={GUIDED_DEMO_PRODUCT.href}
 				>
 					{GUIDED_DEMO_PRODUCT.title}
-					<ArrowRightIcon
-						className="
-							h-3.5
-							w-3.5
-							shrink-0
-						"
-					/>
+					<NavigatePersistentArrow />
 				</a>
 			</div>
 		</section>

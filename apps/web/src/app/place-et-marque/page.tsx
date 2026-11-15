@@ -15,7 +15,7 @@ import {
 	type CatalogTermFacet,
 } from '../../lib/catalog-api';
 import { nestCategoryTree, type NestedCategory } from '../../lib/category-tree';
-import { ArrowRightIcon } from '../../components/icons/ArrowRightIcon';
+import { NavigatePersistentArrow } from '../../components/catalog/NavigatePersistentArrow';
 
 function titleCaseSlug(slug: string) {
 	return slug
@@ -102,6 +102,7 @@ export default async function PlaceEtMarqueHomePage() {
 							</div>
 							<a
 								className="
+									group
 									inline-flex
 									items-center
 									gap-1.5
@@ -112,13 +113,7 @@ export default async function PlaceEtMarqueHomePage() {
 								href="/place-et-marque/search"
 							>
 								All categories
-								<ArrowRightIcon
-									className="
-										h-3.5
-										w-3.5
-										shrink-0
-									"
-								/>
+								<NavigatePersistentArrow />
 							</a>
 						</div>
 						<div
@@ -257,6 +252,7 @@ export default async function PlaceEtMarqueHomePage() {
 						? (
 							<a
 								className="
+									group
 									inline-flex
 									items-center
 									gap-1.5
@@ -267,13 +263,7 @@ export default async function PlaceEtMarqueHomePage() {
 								href="/place-et-marque/search"
 							>
 								View all
-								<ArrowRightIcon
-									className="
-										h-3.5
-										w-3.5
-										shrink-0
-									"
-								/>
+								<NavigatePersistentArrow />
 							</a>
 						)
 						: null

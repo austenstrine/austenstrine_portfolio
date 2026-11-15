@@ -30,7 +30,8 @@ import { CollapsibleWidget } from '../../../../components/catalog/CollapsibleWid
 import { MarketplaceBreadcrumb } from '../../../../components/catalog/MarketplaceBreadcrumb';
 import { UrlSlugField } from '../../../../components/catalog/UrlSlugField';
 import { VendorMembersPanel } from '../../../../components/catalog/VendorMembersPanel';
-import { ArrowRightIcon } from '../../../../components/icons/ArrowRightIcon';
+import { NavigatePersistentArrow } from '../../../../components/catalog/NavigatePersistentArrow';
+import { PILL_CTA_MOTION_CLASS } from '../../../../components/catalog/pillCta';
 import { CaretDownIcon } from '../../../../components/icons/CaretDownIcon';
 import { CloseIcon } from '../../../../components/icons/CloseIcon';
 import { DocumentIcon } from '../../../../components/icons/DocumentIcon';
@@ -1486,7 +1487,8 @@ function VendorDetailContent() {
 								{(vendor.myRole === 'OWNER' || vendor.myRole === 'EDITOR')
 									? (
 										<a
-											className="
+											className={`
+												group
 												inline-flex
 												items-center
 												gap-2
@@ -1496,9 +1498,9 @@ function VendorDetailContent() {
 												text-sm
 												font-semibold
 												text-sky
-												transition
+												${PILL_CTA_MOTION_CLASS}
 												hover:bg-sky/5
-											"
+											`}
 											href={productCreateHref({ vendor })}
 										>
 											<PlusIcon
@@ -1511,19 +1513,14 @@ function VendorDetailContent() {
 											<span className="min-w-0 flex-1 text-left">
 												New product
 											</span>
-											<ArrowRightIcon
-												className="
-													h-3.5
-													w-3.5
-													shrink-0
-												"
-											/>
+											<NavigatePersistentArrow />
 										</a>
 									)
 									: null
 								}
 								<a
-									className="
+									className={`
+										group
 										inline-flex
 										items-center
 										gap-2
@@ -1533,9 +1530,9 @@ function VendorDetailContent() {
 										text-sm
 										font-semibold
 										text-sky
-										transition
+										${PILL_CTA_MOTION_CLASS}
 										hover:bg-sky/5
-									"
+									`}
 									href={`/place-et-marque/${encodeURIComponent(vendor.slug)}`}
 								>
 									<EyeIcon
@@ -1548,16 +1545,11 @@ function VendorDetailContent() {
 									<span className="min-w-0 flex-1 text-left">
 										View storefront
 									</span>
-									<ArrowRightIcon
-										className="
-											h-3.5
-											w-3.5
-											shrink-0
-										"
-									/>
+									<NavigatePersistentArrow />
 								</a>
 								<a
-									className="
+									className={`
+										group
 										inline-flex
 										items-center
 										gap-2
@@ -1567,9 +1559,9 @@ function VendorDetailContent() {
 										text-sm
 										font-semibold
 										text-sky
-										transition
+										${PILL_CTA_MOTION_CLASS}
 										hover:bg-sky/5
-									"
+									`}
 									href={`/place-et-marque/vendors/${vendor.slug}/import`}
 								>
 									<DocumentIcon
@@ -1582,16 +1574,11 @@ function VendorDetailContent() {
 									<span className="min-w-0 flex-1 text-left">
 										Bulk CSV import
 									</span>
-									<ArrowRightIcon
-										className="
-											h-3.5
-											w-3.5
-											shrink-0
-										"
-									/>
+									<NavigatePersistentArrow />
 								</a>
 								<a
-									className="
+									className={`
+										group
 										inline-flex
 										items-center
 										gap-2
@@ -1601,9 +1588,9 @@ function VendorDetailContent() {
 										text-sm
 										font-semibold
 										text-sky
-										transition
+										${PILL_CTA_MOTION_CLASS}
 										hover:bg-sky/5
-									"
+									`}
 									href={`/place-et-marque/vendors/${vendor.slug}/orders`}
 								>
 									<TruckIcon
@@ -1616,13 +1603,7 @@ function VendorDetailContent() {
 									<span className="min-w-0 flex-1 text-left">
 										Orders to fulfill
 									</span>
-									<ArrowRightIcon
-										className="
-											h-3.5
-											w-3.5
-											shrink-0
-										"
-									/>
+									<NavigatePersistentArrow />
 								</a>
 							</nav>
 						</section>

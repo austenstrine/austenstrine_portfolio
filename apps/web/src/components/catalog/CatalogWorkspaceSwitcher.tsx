@@ -8,7 +8,8 @@ import {
 	productCreateHref,
 	productEditHref,
 } from '../../lib/vendor-ref';
-import { ArrowRightIcon } from '../icons/ArrowRightIcon';
+import { NavigatePersistentArrow } from './NavigatePersistentArrow';
+import { PILL_CTA_MOTION_CLASS } from './pillCta';
 
 type CatalogWorkspaceSwitcherProps = {
 	active: ProductEditorSurface;
@@ -75,7 +76,8 @@ export function CatalogWorkspaceSwitcher({
 		return (
 			<a
 				aria-label={switchLabel}
-				className="
+				className={`
+					group
 					inline-flex
 					h-9
 					w-9
@@ -89,13 +91,14 @@ export function CatalogWorkspaceSwitcher({
 					text-sm
 					font-semibold
 					text-ink
+					${PILL_CTA_MOTION_CLASS}
 					hover:border-sky
 					hover:text-sky
 					sm:h-auto
 					sm:w-auto
 					sm:px-3
 					sm:py-1.5
-				"
+				`}
 				href={href}
 				onClick={onNavigate}
 				title={switchLabel}
@@ -108,13 +111,7 @@ export function CatalogWorkspaceSwitcher({
 				>
 					{switchLabel}
 				</span>
-				<ArrowRightIcon
-					className="
-						h-3.5
-						w-3.5
-						shrink-0
-					"
-				/>
+				<NavigatePersistentArrow />
 			</a>
 		);
 	}
@@ -160,7 +157,8 @@ export function CatalogWorkspaceSwitcher({
 			</div>
 			<a
 				aria-label={switchLabel}
-				className="
+				className={`
+					group
 					inline-flex
 					h-9
 					w-9
@@ -175,13 +173,14 @@ export function CatalogWorkspaceSwitcher({
 					text-xs
 					font-semibold
 					text-slate-700
+					${PILL_CTA_MOTION_CLASS}
 					hover:border-sky
 					hover:text-sky
 					sm:h-auto
 					sm:w-auto
 					sm:px-3
 					sm:py-1.5
-				"
+				`}
 				href={href}
 				onClick={onNavigate}
 				title={switchLabel}
@@ -194,13 +193,7 @@ export function CatalogWorkspaceSwitcher({
 				>
 					{switchLabel}
 				</span>
-				<ArrowRightIcon
-					className="
-						h-3.5
-						w-3.5
-						shrink-0
-					"
-				/>
+				<NavigatePersistentArrow />
 			</a>
 		</div>
 	);

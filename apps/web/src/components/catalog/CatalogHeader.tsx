@@ -5,7 +5,6 @@ import { usePathname } from 'next/navigation';
 import { pathUsesSellerChrome } from '../../lib/accessGate';
 import { CART_CHANGED_EVENT, getCart } from '../../lib/checkout-api';
 import { useSession } from '../../lib/useSession';
-import { ArrowRightIcon } from '../icons/ArrowRightIcon';
 import { CaretDownIcon } from '../icons/CaretDownIcon';
 import { CartIcon } from '../icons/CartIcon';
 import { AccountMenu } from './AccountMenu';
@@ -14,6 +13,8 @@ import { useEditableVendors } from './EditableVendorsProvider';
 import { HeaderPortraitLink } from './HeaderPortraitLink';
 import { InPlaceEditToggle } from './InPlaceProductFields';
 import { MarketplaceBrandLink } from './MarketplaceBrandLink';
+import { NavigatePersistentArrow } from './NavigatePersistentArrow';
+import { PILL_CTA_MOTION_CLASS } from './pillCta';
 import { SellerModeChip } from './SellerModeChip';
 import { syncSiteTopBanners } from '../../lib/site-top-banners';
 import { useCatalogSearch } from './CatalogSearchContext';
@@ -388,7 +389,8 @@ export function CatalogHeader({
 									)
 									: (
 										<a
-											className="
+											className={`
+												group
 												inline-flex
 												items-center
 												gap-1.5
@@ -397,18 +399,13 @@ export function CatalogHeader({
 												px-3.5
 												py-2
 												text-white
+												${PILL_CTA_MOTION_CLASS}
 												hover:bg-asgreen/90
-											"
+											`}
 											href="/auth/login"
 										>
 											Sign in
-											<ArrowRightIcon
-												className="
-													h-3.5
-													w-3.5
-													shrink-0
-												"
-											/>
+											<NavigatePersistentArrow />
 										</a>
 									)
 							}

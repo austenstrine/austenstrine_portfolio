@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect, useRef, useState } from 'react';
 import { RequireAccess } from '../../../components/auth/RequireAccess';
-import { ArrowRightIcon } from '../../../components/icons/ArrowRightIcon';
+import { NavigatePersistentArrow } from '../../../components/catalog/NavigatePersistentArrow';
 import { ChevronRightIcon } from '../../../components/icons/ChevronRightIcon';
 import {
 	listNotifications,
@@ -410,6 +410,7 @@ function NotificationsInboxInner() {
 															? (
 																<a
 																	className="
+																		group
 																		inline-flex
 																		items-center
 																		gap-1.5
@@ -420,13 +421,7 @@ function NotificationsInboxInner() {
 																	href={item.href}
 																>
 																	Open related
-																	<ArrowRightIcon
-																		className="
-																			h-3.5
-																			w-3.5
-																			shrink-0
-																		"
-																	/>
+																	<NavigatePersistentArrow />
 																</a>
 															)
 															: null

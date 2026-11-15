@@ -9,7 +9,6 @@ import {
 	productEditHref,
 	productViewHref,
 } from '../../lib/vendor-ref';
-import { ArrowRightIcon } from '../icons/ArrowRightIcon';
 import { CaretDownIcon } from '../icons/CaretDownIcon';
 import { EyeIcon } from '../icons/EyeIcon';
 import { TrashIcon } from '../icons/TrashIcon';
@@ -18,8 +17,10 @@ import {
 	CatalogMenuSurface,
 	useCatalogFloatingMenu,
 } from './CatalogMenu';
+import { NavigatePersistentArrow } from './NavigatePersistentArrow';
 
 const desktopShellClassName = `
+	group
 	inline-flex
 	h-9
 	w-full
@@ -35,6 +36,7 @@ const desktopShellClassName = `
 `;
 
 const desktopPrimaryClassName = `
+	group
 	inline-flex
 	min-w-0
 	flex-1
@@ -149,13 +151,8 @@ export function ManageProductRowActions({
 						aria-hidden
 						className={desktopCaretSlotClassName}
 					>
-						<ArrowRightIcon
-							className="
-								h-3.5
-								w-3.5
-								shrink-0
-								text-slate-400
-							"
+						<NavigatePersistentArrow
+							className="text-slate-400"
 						/>
 					</span>
 				</a>
@@ -181,12 +178,9 @@ export function ManageProductRowActions({
 						<span>
 							Edit
 						</span>
-						<ArrowRightIcon
+						<NavigatePersistentArrow
 							className="
 								ml-auto
-								h-3.5
-								w-3.5
-								shrink-0
 								text-slate-400
 							"
 						/>
@@ -271,6 +265,7 @@ export function ManageProductRowActions({
 					aria-disabled={deleteBusy || undefined}
 					aria-label={`Edit ${product.title}`}
 					className="
+						group
 						inline-flex
 						h-9
 						w-9
@@ -292,9 +287,7 @@ export function ManageProductRowActions({
 					})}
 					tabIndex={deleteBusy ? -1 : undefined}
 				>
-					<ArrowRightIcon
-						className="h-3.5 w-3.5 shrink-0"
-					/>
+					<NavigatePersistentArrow />
 				</a>
 				<button
 					aria-label={`Delete ${product.title}`}

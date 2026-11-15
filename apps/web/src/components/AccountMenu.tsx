@@ -1,7 +1,8 @@
 'use client';
 
 import { useSession } from '../lib/useSession';
-import { ArrowRightIcon } from './icons/ArrowRightIcon';
+import { NavigatePersistentArrow } from './catalog/NavigatePersistentArrow';
+import { PILL_CTA_MOTION_CLASS } from './catalog/pillCta';
 
 export function AccountMenu() {
 	const { user, loading, signOut } = useSession();
@@ -13,7 +14,8 @@ export function AccountMenu() {
 	if(!user) {
 		return (
 			<a
-				className="
+				className={`
+					group
 					absolute
 					right-4
 					top-4
@@ -29,19 +31,13 @@ export function AccountMenu() {
 					text-xs
 					font-semibold
 					text-white
-					transition
+					${PILL_CTA_MOTION_CLASS}
 					hover:bg-white/20
-				"
+				`}
 				href="/auth/login"
 			>
 				Sign in
-				<ArrowRightIcon
-					className="
-						h-3.5
-						w-3.5
-						shrink-0
-					"
-				/>
+				<NavigatePersistentArrow />
 			</a>
 		);
 	}

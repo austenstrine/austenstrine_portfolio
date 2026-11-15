@@ -21,6 +21,8 @@ import {
 	SellerTopContextPortal,
 } from '../../../components/catalog/CatalogSearchContext';
 import { ManageProductRowActions } from '../../../components/catalog/ManageProductRowActions';
+import { NavigatePersistentArrow } from '../../../components/catalog/NavigatePersistentArrow';
+import { PILL_CTA_MOTION_CLASS } from '../../../components/catalog/pillCta';
 import { ArrowLeftIcon } from '../../../components/icons/ArrowLeftIcon';
 import { ArrowRightIcon } from '../../../components/icons/ArrowRightIcon';
 import { PlusIcon } from '../../../components/icons/PlusIcon';
@@ -629,7 +631,8 @@ function PlaceEtMarqueManageContent() {
 					? (
 						<a
 							aria-label="New product"
-							className="
+							className={`
+								group
 								inline-flex
 								h-10
 								w-10
@@ -642,12 +645,13 @@ function PlaceEtMarqueManageContent() {
 								text-sm
 								font-semibold
 								text-white
+								${PILL_CTA_MOTION_CLASS}
 								hover:bg-asgreen/90
 								sm:h-auto
 								sm:w-auto
 								sm:px-3.5
 								sm:py-1.5
-							"
+							`}
 							href={productCreateHref({ vendor: newProductVendor })}
 							title={
 								selectedVendor
@@ -671,13 +675,10 @@ function PlaceEtMarqueManageContent() {
 							>
 								New product
 							</span>
-							<ArrowRightIcon
+							<NavigatePersistentArrow
 								className="
 									hidden
-									h-3.5
-									w-3.5
-									shrink-0
-									sm:inline
+									sm:inline-flex
 								"
 							/>
 						</a>

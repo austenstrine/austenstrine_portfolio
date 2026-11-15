@@ -10,7 +10,8 @@ import {
 	accessReason,
 	buildLoginUrl,
 } from '../../../lib/accessGate';
-import { ArrowRightIcon } from '../../../components/icons/ArrowRightIcon';
+import { NavigatePersistentArrow } from '../../../components/catalog/NavigatePersistentArrow';
+import { PILL_CTA_MOTION_CLASS } from '../../../components/catalog/pillCta';
 import { useSession } from '../../../lib/useSession';
 
 export default function JoinDemoPage() {
@@ -268,7 +269,8 @@ export default function JoinDemoPage() {
 						{user
 							? (
 									<a
-										className="
+										className={`
+											group
 											inline-flex
 											items-center
 											gap-1.5
@@ -280,24 +282,20 @@ export default function JoinDemoPage() {
 											text-sm
 											font-semibold
 											text-ink
+											${PILL_CTA_MOTION_CLASS}
 											hover:border-sky
 											hover:text-sky
-										"
+										`}
 										href={sellerWorkspaceHref}
 									>
 										Open seller workspace
-										<ArrowRightIcon
-											className="
-												h-3.5
-												w-3.5
-												shrink-0
-											"
-										/>
+										<NavigatePersistentArrow />
 									</a>
 								)
 							: (
 									<a
-										className="
+										className={`
+											group
 											inline-flex
 											items-center
 											gap-1.5
@@ -309,19 +307,14 @@ export default function JoinDemoPage() {
 											text-sm
 											font-semibold
 											text-ink
+											${PILL_CTA_MOTION_CLASS}
 											hover:border-sky
 											hover:text-sky
-										"
+										`}
 										href={signInHref}
 									>
 										Sign in
-										<ArrowRightIcon
-											className="
-												h-3.5
-												w-3.5
-												shrink-0
-											"
-										/>
+										<NavigatePersistentArrow />
 									</a>
 								)
 						}

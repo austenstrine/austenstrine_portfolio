@@ -12,7 +12,8 @@ import {
 import { useSession } from '../../../lib/useSession';
 import { RequireAccess } from '../../../components/auth/RequireAccess';
 import { CompoundQtyField } from '../../../components/catalog/CompoundQtyField';
-import { ArrowRightIcon } from '../../../components/icons/ArrowRightIcon';
+import { NavigatePersistentArrow } from '../../../components/catalog/NavigatePersistentArrow';
+import { PILL_CTA_MOTION_CLASS } from '../../../components/catalog/pillCta';
 import { formatAvailableQty } from '../../../lib/uom-qty';
 
 function CartContent() {
@@ -152,7 +153,8 @@ function CartContent() {
 							Your cart is empty
 						</p>
 						<Link
-							className="
+							className={`
+								group
 								mt-6
 								inline-flex
 								items-center
@@ -164,18 +166,13 @@ function CartContent() {
 								text-sm
 								font-semibold
 								text-white
+								${PILL_CTA_MOTION_CLASS}
 								hover:bg-sky/90
-							"
+							`}
 							href="/place-et-marque/search"
 						>
 							Shop products
-							<ArrowRightIcon
-								className="
-									h-3.5
-									w-3.5
-									shrink-0
-								"
-							/>
+							<NavigatePersistentArrow />
 						</Link>
 					</div>
 				)
@@ -391,7 +388,8 @@ function CartContent() {
 								</span>
 							</div>
 							<Link
-								className="
+								className={`
+									group
 									mt-5
 									flex
 									w-full
@@ -405,21 +403,17 @@ function CartContent() {
 									text-sm
 									font-semibold
 									text-white
+									${PILL_CTA_MOTION_CLASS}
 									hover:bg-sky/90
-								"
+								`}
 								href="/place-et-marque/checkout"
 							>
 								Checkout
-								<ArrowRightIcon
-									className="
-										h-3.5
-										w-3.5
-										shrink-0
-									"
-								/>
+								<NavigatePersistentArrow />
 							</Link>
 							<Link
 								className="
+									group
 									mt-3
 									inline-flex
 									w-full
@@ -433,13 +427,7 @@ function CartContent() {
 								href="/place-et-marque/search"
 							>
 								Continue shopping
-								<ArrowRightIcon
-									className="
-										h-3.5
-										w-3.5
-										shrink-0
-									"
-								/>
+								<NavigatePersistentArrow />
 							</Link>
 						</aside>
 					</div>

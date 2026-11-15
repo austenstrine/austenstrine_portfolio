@@ -45,7 +45,7 @@ import {
 	useInPlaceProductEdit,
 } from './InPlaceProductFields';
 import { BackLink } from '../BackLink';
-import { ArrowRightIcon } from '../icons/ArrowRightIcon';
+import { NavigatePersistentArrow } from './NavigatePersistentArrow';
 import { MarketplaceBreadcrumb } from './MarketplaceBreadcrumb';
 import { ProductCard } from './ProductCard';
 import { ProductMobileStickyCta } from './ProductMobileStickyCta';
@@ -1427,6 +1427,7 @@ export function ProductDetailClient({
 							? (
 								<Link
 									className="
+										group
 										inline-flex
 										items-center
 										gap-1.5
@@ -1436,13 +1437,7 @@ export function ProductDetailClient({
 									href={searchHref}
 								>
 									More in {product.category.name}
-									<ArrowRightIcon
-										className="
-											h-3.5
-											w-3.5
-											shrink-0
-										"
-									/>
+									<NavigatePersistentArrow />
 								</Link>
 							)
 							: (
@@ -1470,6 +1465,7 @@ export function ProductDetailClient({
 							</h2>
 							<Link
 								className="
+									group
 									inline-flex
 									items-center
 									gap-1.5
@@ -1480,13 +1476,7 @@ export function ProductDetailClient({
 								href={searchHref}
 							>
 								View all
-								<ArrowRightIcon
-									className="
-										h-3.5
-										w-3.5
-										shrink-0
-									"
-								/>
+								<NavigatePersistentArrow />
 							</Link>
 						</div>
 						<div className="mt-5 grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-3">
