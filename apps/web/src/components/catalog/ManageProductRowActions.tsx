@@ -208,7 +208,20 @@ function ArchiveSplitControl({
 						type="button"
 					>
 						<CaretDownIcon
-							className="h-3.5 w-3.5"
+							className={
+								menuOpen
+									? `
+										h-3.5
+										w-3.5
+										rotate-180
+										transition
+									`
+									: `
+										h-3.5
+										w-3.5
+										transition
+									`
+							}
 						/>
 					</button>
 				</div>
@@ -286,7 +299,20 @@ function ArchiveSplitControl({
 					type="button"
 				>
 					<CaretDownIcon
-						className="h-3.5 w-3.5"
+						className={
+							menuOpen
+								? `
+									h-3.5
+									w-3.5
+									rotate-180
+									transition
+								`
+								: `
+									h-3.5
+									w-3.5
+									transition
+								`
+						}
 					/>
 				</button>
 			</div>
