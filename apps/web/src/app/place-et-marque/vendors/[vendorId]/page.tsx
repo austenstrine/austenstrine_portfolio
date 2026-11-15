@@ -32,6 +32,7 @@ import { UrlSlugField } from '../../../../components/catalog/UrlSlugField';
 import { VendorMembersPanel } from '../../../../components/catalog/VendorMembersPanel';
 import { NavigatePersistentArrow } from '../../../../components/catalog/NavigatePersistentArrow';
 import { PILL_CTA_MOTION_CLASS } from '../../../../components/catalog/pillCta';
+import { DestructiveConfirmActions } from '../../../../components/ui/DestructiveConfirmActions';
 import { CaretDownIcon } from '../../../../components/icons/CaretDownIcon';
 import { CloseIcon } from '../../../../components/icons/CloseIcon';
 import { DocumentIcon } from '../../../../components/icons/DocumentIcon';
@@ -117,6 +118,7 @@ function VendorDetailContent() {
 	const [createdToken, setCreatedToken] = useState<CreatedVendorAppPassword | null>(null);
 	const [passwordBusy, setPasswordBusy] = useState(false);
 	const [passwordError, setPasswordError] = useState<string | null>(null);
+	const [confirmRevokePasswordId, setConfirmRevokePasswordId] = useState<string | null>(null);
 	const [appPasswordsOpen, setAppPasswordsOpen] = useWidgetOpenState('vendor.app-passwords', false);
 	const [invites, setInvites] = useState<VendorInviteSummary[]>([]);
 	const [membersOpen, setMembersOpen] = useWidgetOpenState('vendor.members', false);
@@ -409,6 +411,7 @@ function VendorDetailContent() {
 		try {
 			await revokeVendorAppPassword(vendorId, passwordId);
 			setPasswords(await listVendorAppPasswords(vendorId));
+			setConfirmRevokePasswordId(null);
 		}
 		catch(revokeError) {
 			setPasswordError(
@@ -1936,24 +1939,52 @@ function VendorDetailContent() {
 															</p>
 														</div>
 														{row.active
-															? (
-																<button
-																	className="
-																		text-sm
-																		font-semibold
-																		text-red-700
-																		hover:underline
-																		disabled:opacity-60
-																	"
-																	type="button"
-																	disabled={passwordBusy}
-																	onClick={() =>
-																		void onRevokePassword(row.id)
+															? confirmRevokePasswordId === row.id
+																? (
+																	<div className="w-full sm:w-auto">
+																		<DestructiveConfirmActions
+																			prompt={`Revoke app password "${row.name}"?`}
+																			detail="Integrations using this password stop working."
+																			irreversible
+																			confirmLabel="Revoke password"
+																			busy={passwordBusy}
+																			busyLabel="Revoking…"
+																			onConfirm={
+																				() => {
+																					void onRevokePassword(row.id);
+																				}
+																			}
+																			onDismiss={
+																				() => {
+																					if(!passwordBusy) {
+																						setConfirmRevokePasswordId(null);
+																					}
+																				}
+																			}
+																		/>
+																	</div>
+																)
+																: (
+																	<button
+																		className="
+																			text-sm
+																			font-semibold
+																			text-red-700
+																			hover:underline
+																			disabled:opacity-60
+																		"
+																		type="button"
+																		disabled={passwordBusy}
+																		onClick={
+																			() => {
+																				setConfirmRevokePasswordId(row.id);
+																				setPasswordError(null);
+																			}
 																		}
-																>
-																	Revoke
-																</button>
-															)
+																	>
+																		Revoke
+																	</button>
+																)
 															: null
 														}
 													</li>

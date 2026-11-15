@@ -1,4 +1,4 @@
-import { IsArray, IsOptional, IsString, IsUUID } from 'class-validator';
+import { IsArray, IsBoolean, IsOptional, IsString, IsUUID } from 'class-validator';
 
 export class DeleteCatalogProductsDto {
 	@IsOptional()
@@ -10,4 +10,9 @@ export class DeleteCatalogProductsDto {
 	@IsArray()
 	@IsString({ each: true })
 	productSlugs?: string[];
+
+	/** When true, skip the 6-month archive. Irreversible. */
+	@IsOptional()
+	@IsBoolean()
+	permanent?: boolean;
 }

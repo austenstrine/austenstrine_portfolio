@@ -6,10 +6,13 @@ import { useEffect, useMemo, useState } from 'react';
 import {
 	deleteCatalogProduct,
 	getCatalogProduct,
+	getCatalogProductById,
+	restoreArchivedCatalogProduct,
 	type CatalogOfferingDetail,
 	type CatalogProductDetail,
 	type CatalogProductSummary,
 } from '../../lib/catalog-api';
+import { DestructiveConfirmActions } from '../ui/DestructiveConfirmActions';
 import {
 	getCart,
 	removeCartLine,
@@ -208,9 +211,11 @@ export function ProductDetailClient({
 	const router = useRouter();
 	const { user, loading: sessionLoading } = useSession();
 	const [product, setProduct] = useState(initialProduct);
-	const [deleteBusy, setDeleteBusy] = useState(false);
+	const [deleteBusyMode, setDeleteBusyMode] = useState<'archive' | 'permanent' | 'undo' | null>(null);
+	const [deleteConfirmMode, setDeleteConfirmMode] = useState<'archive' | 'permanent' | null>(null);
 	const [deleteError, setDeleteError] = useState<string | null>(null);
 	const [deletedNotice, setDeletedNotice] = useState<string | null>(null);
+	const [archivedProductId, setArchivedProductId] = useState<string | null>(null);
 	const [activeImage, setActiveImage] = useState(0);
 	const [selectedOfferingId, setSelectedOfferingId] = useState(() => (
 		initialCartLine?.offeringId
@@ -487,31 +492,91 @@ export function ProductDetailClient({
 		void setCartLineQty(String(base - 1));
 	}
 
-	async function onDelete() {
-		const confirmed = window.confirm(
-			`Delete "${product.title}"? Live rows are removed, a CSV receipt is emailed to vendor owners, and an archive copy is kept for 6 months.`,
-		);
-		if(!confirmed) {
-			return;
-		}
-
-		setDeleteBusy(true);
+	async function onArchiveProduct() {
+		setDeleteBusyMode('archive');
 		setDeleteError(null);
 		try {
 			const result = await deleteCatalogProduct(product.id);
 			const emailed = result.emailedTo.length > 0
 				? ` Receipt emailed to ${result.emailedTo.join(', ')}.`
 				: ' No owner email was available for the CSV receipt.';
-			setDeletedNotice(`Deleted. Archive batch ${result.archiveBatchId.slice(0, 8)}.${emailed}`);
+			const archiveId = result.archivedProductIds[0] ?? null;
+			setArchivedProductId(archiveId);
+			setDeleteConfirmMode(null);
+			setDeletedNotice(
+				`Archived.${result.archiveBatchId
+					? ` Batch ${result.archiveBatchId.slice(0, 8)}.`
+					: ''
+				}${emailed}`,
+			);
+			if(!archiveId) {
+				window.setTimeout(() => {
+					router.push('/place-et-marque/manage');
+				}, 1800);
+			}
+		}
+		catch(error) {
+			setDeleteError(
+				error instanceof Error
+					? error.message
+					: 'Could not archive product.',
+			);
+		}
+		finally {
+			setDeleteBusyMode(null);
+		}
+	}
+
+	async function onPermanentDeleteProduct() {
+		setDeleteBusyMode('permanent');
+		setDeleteError(null);
+		try {
+			const result = await deleteCatalogProduct(product.id, { permanent: true });
+			const emailed = result.emailedTo.length > 0
+				? ` Receipt emailed to ${result.emailedTo.join(', ')}.`
+				: ' No owner email was available for the CSV receipt.';
+			setArchivedProductId(null);
+			setDeleteConfirmMode(null);
+			setDeletedNotice(`Permanently deleted.${emailed}`);
 			window.setTimeout(() => {
 				router.push('/place-et-marque/manage');
 			}, 1800);
 		}
 		catch(error) {
-			setDeleteError(error instanceof Error ? error.message : 'Could not delete product.');
+			setDeleteError(
+				error instanceof Error
+					? error.message
+					: 'Could not delete product.',
+			);
 		}
 		finally {
-			setDeleteBusy(false);
+			setDeleteBusyMode(null);
+		}
+	}
+
+	async function onUndoArchive() {
+		if(!archivedProductId) {
+			return;
+		}
+		setDeleteBusyMode('undo');
+		setDeleteError(null);
+		try {
+			const restored = await restoreArchivedCatalogProduct(archivedProductId);
+			const refreshed = await getCatalogProductById(restored.productId);
+			setProduct(refreshed);
+			setArchivedProductId(null);
+			setDeletedNotice(null);
+			setDeleteConfirmMode(null);
+		}
+		catch(error) {
+			setDeleteError(
+				error instanceof Error
+					? error.message
+					: 'Could not undo archive.',
+			);
+		}
+		finally {
+			setDeleteBusyMode(null);
 		}
 	}
 
@@ -1488,7 +1553,7 @@ export function ProductDetailClient({
 				)
 				: null}
 
-			{bulkEditing
+			{bulkEditing && !deletedNotice
 				? (
 					<details
 						className="
@@ -1498,6 +1563,7 @@ export function ProductDetailClient({
 							bg-white
 							p-5
 						"
+						open={deleteConfirmMode !== null || undefined}
 					>
 						<summary
 							className="
@@ -1507,12 +1573,106 @@ export function ProductDetailClient({
 								text-red-700
 							"
 						>
-							Delete
+							Archive or delete
 						</summary>
 						<div className="mt-4">
-							<p className="text-sm text-slate-600">
-								Archives the listing, emails owners a CSV, and prunes the archive after 6 months.
-							</p>
+							{deleteConfirmMode === 'permanent'
+								? (
+									<DestructiveConfirmActions
+										prompt={`Permanently delete "${product.title}"?`}
+										detail="No archive copy will be kept."
+										irreversible
+										confirmLabel="Delete permanently"
+										busy={deleteBusyMode === 'permanent'}
+										busyLabel="Deleting…"
+										onConfirm={
+											() => {
+												void onPermanentDeleteProduct();
+											}
+										}
+										onDismiss={
+											() => {
+												if(!deleteBusyMode) {
+													setDeleteConfirmMode('archive');
+													setDeleteError(null);
+												}
+											}
+										}
+									/>
+								)
+								: deleteConfirmMode === 'archive'
+									? (
+										<DestructiveConfirmActions
+											prompt={`Archive "${product.title}"?`}
+											detail="Live listing is removed. An archive copy is kept for 6 months and can be restored. Owners get a CSV receipt."
+											confirmLabel="Archive"
+											busy={deleteBusyMode === 'archive'}
+											busyLabel="Archiving…"
+											onConfirm={
+												() => {
+													void onArchiveProduct();
+												}
+											}
+											onDismiss={
+												() => {
+													if(!deleteBusyMode) {
+														setDeleteConfirmMode(null);
+														setDeleteError(null);
+													}
+												}
+											}
+											secondaryConfirmLabel="Delete permanently…"
+											onSecondaryConfirm={
+												() => {
+													if(!deleteBusyMode) {
+														setDeleteConfirmMode('permanent');
+														setDeleteError(null);
+													}
+												}
+											}
+										/>
+									)
+									: (
+										<>
+											<p className="text-sm text-slate-600">
+												Archive keeps a copy for 6 months (undoable). Permanent delete is irreversible.
+											</p>
+											<div
+												className="
+													mt-3
+													flex
+													justify-end
+												"
+											>
+												<button
+													type="button"
+													disabled={deleteBusyMode !== null}
+													onClick={
+														() => {
+															setDeleteConfirmMode('archive');
+															setDeleteError(null);
+														}
+													}
+													className="
+														rounded-full
+														border
+														border-red-300
+														bg-white
+														px-4
+														py-2
+														text-sm
+														font-semibold
+														text-red-700
+														hover:border-red-500
+														disabled:opacity-60
+													"
+												>
+													Archive or delete…
+												</button>
+											</div>
+										</>
+									)
+							}
 							{deleteError
 								? (
 									<p className="mt-2 text-sm text-red-700">
@@ -1521,46 +1681,20 @@ export function ProductDetailClient({
 								)
 								: null
 							}
-							<div
-								className="
-									mt-3
-									flex
-									justify-end
-								"
-							>
-								<button
-									type="button"
-									disabled={deleteBusy}
-									onClick={() => void onDelete()}
-									className="
-										rounded-full
-										border
-										border-red-300
-										bg-white
-										px-4
-										py-2
-										text-sm
-										font-semibold
-										text-red-700
-										hover:border-red-500
-										disabled:opacity-60
-									"
-								>
-									{deleteBusy
-										? 'Deleting…'
-										: 'Delete product'
-									}
-								</button>
-							</div>
 						</div>
 					</details>
 				)
-				: null}
+				: null
+			}
 
 			{deletedNotice
 				? (
-					<p
+					<div
 						className="
+							flex
+							flex-col
+							items-end
+							gap-3
 							rounded-2xl
 							border
 							border-asgreen/30
@@ -1570,11 +1704,53 @@ export function ProductDetailClient({
 							text-asgreen
 						"
 					>
-						{deletedNotice}
-					</p>
+						<p className="w-full">
+							{deletedNotice}
+						</p>
+						{archivedProductId
+							? (
+								<button
+									type="button"
+									disabled={deleteBusyMode === 'undo'}
+									onClick={
+										() => {
+											void onUndoArchive();
+										}
+									}
+									className="
+										rounded-full
+										border
+										border-asgreen
+										bg-white
+										px-4
+										py-2
+										text-sm
+										font-semibold
+										text-asgreen
+										hover:bg-asgreen/10
+										disabled:opacity-60
+									"
+								>
+									{deleteBusyMode === 'undo'
+										? 'Restoring…'
+										: 'Undo archive'
+									}
+								</button>
+							)
+							: null
+						}
+						{deleteError
+							? (
+								<p className="w-full text-red-700">
+									{deleteError}
+								</p>
+							)
+							: null
+						}
+					</div>
 				)
-				: null}
-
+				: null
+			}
 			{selectedOffering && !deletedNotice
 				? (
 					<ProductMobileStickyCta

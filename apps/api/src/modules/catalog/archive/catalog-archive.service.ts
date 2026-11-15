@@ -1,5 +1,6 @@
 import {
 	BadRequestException,
+	ConflictException,
 	Injectable,
 	Logger,
 	NotFoundException,
@@ -12,6 +13,8 @@ import { MailService } from '../../../infra/mail/mail.service';
 import { PrismaService } from '../../../infra/prisma/prisma.service';
 import type { CatalogActor } from '../catalog-actor';
 import { VendorAccessService } from '../vendor-access.service';
+
+type RemovalMode = 'archive' | 'permanent';
 
 const productDeleteInclude = {
 	vendor: true,
@@ -82,24 +85,32 @@ export class CatalogArchiveService implements OnModuleInit, OnModuleDestroy {
 		}
 	}
 
-	async deleteProductById(actor: CatalogActor, productId: string) {
-		const product = await this.prisma.catalogProduct.findUnique({
-			where: { id: productId },
-			include: productDeleteInclude,
-		});
-
-		if(!product) {
-			throw new NotFoundException('Product not found.');
-		}
-
+	/** Soft-remove: live rows gone, archive kept ~6 months (undoable). */
+	async deleteProductById(
+		actor: CatalogActor,
+		productId: string,
+		options?: { permanent?: boolean },
+	) {
+		const product = await this.loadProductForRemoval(productId);
 		await this.vendorAccess.assertActorCanEditVendor(actor, product.vendorId);
-		return this.deleteProducts(actor, product.vendorId, [product]);
+		return this.removeProducts(
+			actor,
+			product.vendorId,
+			[product],
+			options?.permanent
+				? 'permanent'
+				: 'archive',
+		);
 	}
 
 	async deleteProductsForVendor(
 		actor: CatalogActor,
 		vendorId: string,
-		input: { productIds?: string[]; productSlugs?: string[] },
+		input: {
+			productIds?: string[];
+			productSlugs?: string[];
+			permanent?: boolean;
+		},
 	) {
 		await this.vendorAccess.assertActorCanEditVendor(actor, vendorId);
 
@@ -127,7 +138,257 @@ export class CatalogArchiveService implements OnModuleInit, OnModuleDestroy {
 			throw new NotFoundException('No matching products found for this vendor.');
 		}
 
-		return this.deleteProducts(actor, vendorId, products);
+		return this.removeProducts(
+			actor,
+			vendorId,
+			products,
+			input.permanent
+				? 'permanent'
+				: 'archive',
+		);
+	}
+
+	async listArchivedProductsForVendor(actor: CatalogActor, vendorId: string) {
+		await this.vendorAccess.assertActorCanEditVendor(actor, vendorId);
+		const rows = await this.prisma.archivedCatalogProduct.findMany({
+			where: { vendorId },
+			orderBy: { archivedAt: 'desc' },
+			take: 100,
+		});
+		return rows.map((row) => ({
+			id: row.id,
+			archiveBatchId: row.archiveBatchId,
+			archivedAt: row.archivedAt,
+			originalId: row.originalId,
+			slug: row.slug,
+			title: row.title,
+			vendorId: row.vendorId,
+			vendorSlug: row.vendorSlug,
+		}));
+	}
+
+	async restoreArchivedProduct(actor: CatalogActor, archivedProductId: string) {
+		const archived = await this.prisma.archivedCatalogProduct.findUnique({
+			where: { id: archivedProductId },
+		});
+		if(!archived) {
+			throw new NotFoundException('Archived product not found.');
+		}
+
+		await this.vendorAccess.assertActorCanEditVendor(actor, archived.vendorId);
+
+		const slugTaken = await this.prisma.catalogProduct.findUnique({
+			where: {
+				vendorId_slug: {
+					vendorId: archived.vendorId,
+					slug: archived.slug,
+				},
+			},
+			select: { id: true },
+		});
+		if(slugTaken) {
+			throw new ConflictException(
+				`Cannot restore "${archived.title}": live product slug "${archived.slug}" is already in use.`,
+			);
+		}
+
+		const [attrs, offerings, containments, broken] = await Promise.all([
+			this.prisma.archivedProductAttribute.findMany({
+				where: {
+					archiveBatchId: archived.archiveBatchId,
+					originalProductId: archived.originalId,
+				},
+			}),
+			this.prisma.archivedProductOffering.findMany({
+				where: {
+					archiveBatchId: archived.archiveBatchId,
+					originalProductId: archived.originalId,
+				},
+			}),
+			this.prisma.archivedOfferingContainment.findMany({
+				where: { archiveBatchId: archived.archiveBatchId },
+			}),
+			this.prisma.archivedBrokenPack.findMany({
+				where: { archiveBatchId: archived.archiveBatchId },
+			}),
+		]);
+
+		for(const offering of offerings) {
+			const skuTaken = await this.prisma.productOffering.findUnique({
+				where: {
+					vendorId_sku_offeringKey: {
+						vendorId: offering.vendorId,
+						sku: offering.sku,
+						offeringKey: offering.offeringKey,
+					},
+				},
+				select: { id: true },
+			});
+			if(skuTaken) {
+				throw new ConflictException(
+					`Cannot restore "${archived.title}": SKU ${offering.sku} / ${offering.offeringKey} is already in use.`,
+				);
+			}
+		}
+
+		const offeringOriginalIds = new Set(offerings.map((row) => row.originalId));
+		const relevantContainments = containments.filter(
+			(row) =>
+				offeringOriginalIds.has(row.originalParentOfferingId)
+				&& offeringOriginalIds.has(row.originalChildOfferingId),
+		);
+		const relevantBroken = broken.filter((row) =>
+			offeringOriginalIds.has(row.originalPackOfferingId),
+		);
+
+		const uomIds = await this.resolveUomIds(offerings);
+		const attributeLinks = await this.resolveAttributeLinks(
+			archived.vendorId,
+			attrs,
+		);
+
+		let categoryId: string | null = archived.categoryId;
+		if(categoryId) {
+			const category = await this.prisma.catalogCategory.findUnique({
+				where: { id: categoryId },
+				select: { id: true },
+			});
+			if(!category) {
+				categoryId = null;
+			}
+		}
+
+		const product = await this.prisma.$transaction(async (tx) => {
+			const created = await tx.catalogProduct.create({
+				data: {
+					vendorId: archived.vendorId,
+					categoryId,
+					slug: archived.slug,
+					title: archived.title,
+					description: archived.description,
+					active: archived.active,
+					inventoryFromAllocations: archived.inventoryFromAllocations,
+					breakFeeMode: archived.breakFeeMode,
+					breakFeeCents: archived.breakFeeCents,
+					attributeValues: {
+						create: attributeLinks.map((link) => ({
+							attributeValueId: link.attributeValueId,
+							sortOrder: link.sortOrder,
+						})),
+					},
+					offerings: {
+						create: offerings.map((offering) => ({
+							vendorId: offering.vendorId,
+							sku: offering.sku,
+							offeringKey: offering.offeringKey,
+							uomId: uomIds.get(offering.originalId)!,
+							role: offering.role,
+							priceCents: offering.priceCents,
+							currency: offering.currency,
+							qtyOnHand: offering.qtyOnHand,
+							availableQty: offering.availableQty,
+							tracksOwnQty: offering.tracksOwnQty,
+							minUnbrokenQty: offering.minUnbrokenQty,
+							breakPoolAboveQty: offering.breakPoolAboveQty,
+							inheritQtyToChildren: offering.inheritQtyToChildren,
+						})),
+					},
+				},
+				include: {
+					offerings: true,
+				},
+			});
+
+			const offeringIdByOriginal = new Map<string, string>();
+			for(const offering of offerings) {
+				const match = created.offerings.find(
+					(row) =>
+						row.sku === offering.sku
+						&& row.offeringKey === offering.offeringKey,
+				);
+				if(match) {
+					offeringIdByOriginal.set(offering.originalId, match.id);
+				}
+			}
+
+			for(const link of relevantContainments) {
+				const parentOfferingId = offeringIdByOriginal.get(
+					link.originalParentOfferingId,
+				);
+				const childOfferingId = offeringIdByOriginal.get(
+					link.originalChildOfferingId,
+				);
+				if(!parentOfferingId || !childOfferingId) {
+					continue;
+				}
+				await tx.offeringContainment.create({
+					data: {
+						parentOfferingId,
+						childOfferingId,
+						childQtyPerParent: link.childQtyPerParent,
+						breakFeeCents: link.breakFeeCents,
+					},
+				});
+			}
+
+			for(const pack of relevantBroken) {
+				const packOfferingId = offeringIdByOriginal.get(
+					pack.originalPackOfferingId,
+				);
+				if(!packOfferingId) {
+					continue;
+				}
+				await tx.brokenPack.create({
+					data: {
+						packOfferingId,
+						label: pack.label,
+						remainingQty: pack.remainingQty,
+						status: pack.status,
+					},
+				});
+			}
+
+			await tx.archivedProductAttribute.deleteMany({
+				where: {
+					archiveBatchId: archived.archiveBatchId,
+					originalProductId: archived.originalId,
+				},
+			});
+			await tx.archivedProductOffering.deleteMany({
+				where: {
+					archiveBatchId: archived.archiveBatchId,
+					originalProductId: archived.originalId,
+				},
+			});
+			await tx.archivedOfferingContainment.deleteMany({
+				where: {
+					archiveBatchId: archived.archiveBatchId,
+					OR: [
+						{ originalParentOfferingId: { in: [...offeringOriginalIds] } },
+						{ originalChildOfferingId: { in: [...offeringOriginalIds] } },
+					],
+				},
+			});
+			await tx.archivedBrokenPack.deleteMany({
+				where: {
+					archiveBatchId: archived.archiveBatchId,
+					originalPackOfferingId: { in: [...offeringOriginalIds] },
+				},
+			});
+			await tx.archivedCatalogProduct.delete({
+				where: { id: archived.id },
+			});
+
+			return created;
+		});
+
+		return {
+			productId: product.id,
+			slug: product.slug,
+			title: archived.title,
+			restoredFromArchiveId: archivedProductId,
+			archiveBatchId: archived.archiveBatchId,
+		};
 	}
 
 	async pruneExpiredArchives() {
@@ -176,10 +437,97 @@ export class CatalogArchiveService implements OnModuleInit, OnModuleDestroy {
 		};
 	}
 
-	private async deleteProducts(
-		actor: CatalogActor,
+	private async loadProductForRemoval(productId: string): Promise<ProductForDelete> {
+		const product = await this.prisma.catalogProduct.findUnique({
+			where: { id: productId },
+			include: productDeleteInclude,
+		});
+		if(!product) {
+			throw new NotFoundException('Product not found.');
+		}
+		return product;
+	}
+
+	private async resolveUomIds(
+		offerings: Array<{ originalId: string; uomId: string; uomCode: string }>,
+	): Promise<Map<string, string>> {
+		const byOriginal = new Map<string, string>();
+		for(const offering of offerings) {
+			const byId = await this.prisma.unitOfMeasure.findUnique({
+				where: { id: offering.uomId },
+				select: { id: true },
+			});
+			if(byId) {
+				byOriginal.set(offering.originalId, byId.id);
+				continue;
+			}
+			const byCode = await this.prisma.unitOfMeasure.findFirst({
+				where: { code: offering.uomCode },
+				select: { id: true },
+			});
+			if(!byCode) {
+				throw new BadRequestException(
+					`Cannot restore: unknown UOM ${offering.uomCode}.`,
+				);
+			}
+			byOriginal.set(offering.originalId, byCode.id);
+		}
+		return byOriginal;
+	}
+
+	private async resolveAttributeLinks(
+		vendorId: string,
+		attrs: Array<{
+			originalId: string;
+			key: string;
+			value: string;
+			sortOrder: number;
+		}>,
+	): Promise<Array<{ attributeValueId: string; sortOrder: number }>> {
+		const resolved: Array<{ attributeValueId: string; sortOrder: number }> = [];
+		for(const attr of attrs) {
+			const byId = await this.prisma.attributeValue.findUnique({
+				where: { id: attr.originalId },
+				select: { id: true },
+			});
+			if(byId) {
+				resolved.push({
+					attributeValueId: byId.id,
+					sortOrder: attr.sortOrder,
+				});
+				continue;
+			}
+			const byName = await this.prisma.attributeValue.findFirst({
+				where: {
+					value: attr.value,
+					attribute: { name: attr.key },
+					OR: [
+						{ vendorId },
+						{ vendorId: null },
+					],
+				},
+				select: { id: true },
+				orderBy: { vendorId: 'desc' },
+			});
+			if(byName) {
+				resolved.push({
+					attributeValueId: byName.id,
+					sortOrder: attr.sortOrder,
+				});
+				continue;
+			}
+			this.logger.warn(
+				`Skipping archived attribute ${attr.key}=${attr.value}; value no longer exists.`,
+			);
+		}
+		return resolved;
+	}
+
+	private async removeProducts(
+		_actor: CatalogActor,
 		vendorId: string,
 		products: ProductForDelete[],
+		mode: RemovalMode,
 	) {
 		for(const product of products) {
 			const pending = product.offerings.reduce(
@@ -188,136 +536,141 @@ export class CatalogArchiveService implements OnModuleInit, OnModuleDestroy {
 			);
 			if(pending > 0) {
 				throw new BadRequestException(
-					`Cannot delete "${product.title}" while pending inventory claims exist.`,
+					`Cannot ${mode === 'archive' ? 'archive' : 'delete'} "${product.title}" while pending inventory claims exist.`,
 				);
 			}
 		}
 
-		const archiveBatchId = randomUUID();
+		const archiveBatchId = mode === 'archive'
+			? randomUUID()
+			: null;
 		const csv = this.buildDeletionCsv(products);
 		const ownerEmails = await this.ownerEmails(vendorId);
+		const archivedProductIds: string[] = [];
 
 		await this.prisma.$transaction(async (tx) => {
 			for(const product of products) {
-				await tx.archivedCatalogProduct.create({
-					data: {
-						archiveBatchId,
-						originalId: product.id,
-						vendorId: product.vendorId,
-						vendorSlug: product.vendor.slug,
-						categoryId: product.categoryId,
-						categorySlug: product.category?.slug ?? null,
-						slug: product.slug,
-						title: product.title,
-						description: product.description,
-						active: product.active,
-						inventoryFromAllocations: product.inventoryFromAllocations,
-						breakFeeMode: product.breakFeeMode,
-						breakFeeCents: product.breakFeeCents,
-						originalCreatedAt: product.createdAt,
-						originalUpdatedAt: product.updatedAt,
-					},
-				});
-
-				if(product.attributeValues.length > 0) {
-					await tx.archivedProductAttribute.createMany({
-						data: product.attributeValues.map((row) => ({
-							archiveBatchId,
-							originalId: row.attributeValue.id,
-							originalProductId: product.id,
-							key: row.attributeValue.attribute.name,
-							value: row.attributeValue.value,
-							sortOrder: row.sortOrder,
-						})),
-					});
-				}
-
-				for(const offering of product.offerings) {
-					await tx.archivedProductOffering.create({
+				if(mode === 'archive' && archiveBatchId) {
+					const archived = await tx.archivedCatalogProduct.create({
 						data: {
 							archiveBatchId,
-							originalId: offering.id,
-							originalProductId: product.id,
-							vendorId: offering.vendorId,
-							sku: offering.sku,
-							offeringKey: offering.offeringKey,
-							uomId: offering.uomId,
-							uomCode: offering.uom.code,
-							role: offering.role,
-							priceCents: offering.priceCents,
-							currency: offering.currency,
-							qtyOnHand: offering.qtyOnHand,
-							availableQty: offering.availableQty,
-							tracksOwnQty: offering.tracksOwnQty,
-							minUnbrokenQty: offering.minUnbrokenQty,
-							breakPoolAboveQty: offering.breakPoolAboveQty,
-							inheritQtyToChildren: offering.inheritQtyToChildren,
-							originalCreatedAt: offering.createdAt,
-							originalUpdatedAt: offering.updatedAt,
+							originalId: product.id,
+							vendorId: product.vendorId,
+							vendorSlug: product.vendor.slug,
+							categoryId: product.categoryId,
+							categorySlug: product.category?.slug ?? null,
+							slug: product.slug,
+							title: product.title,
+							description: product.description,
+							active: product.active,
+							inventoryFromAllocations: product.inventoryFromAllocations,
+							breakFeeMode: product.breakFeeMode,
+							breakFeeCents: product.breakFeeCents,
+							originalCreatedAt: product.createdAt,
+							originalUpdatedAt: product.updatedAt,
 						},
 					});
+					archivedProductIds.push(archived.id);
 
-					const containmentRows = [
-						...offering.containmentsAsParent.map((link) => ({
-							archiveBatchId,
-							originalId: link.id,
-							originalParentOfferingId: link.parentOfferingId,
-							originalChildOfferingId: link.childOfferingId,
-							parentSku: offering.sku,
-							parentOfferingKey: offering.offeringKey,
-							childSku: link.childOffering.sku,
-							childOfferingKey: link.childOffering.offeringKey,
-							childQtyPerParent: link.childQtyPerParent,
-							breakFeeCents: link.breakFeeCents,
-							originalCreatedAt: link.createdAt,
-						})),
-						...offering.containmentsAsChild.map((link) => ({
-							archiveBatchId,
-							originalId: link.id,
-							originalParentOfferingId: link.parentOfferingId,
-							originalChildOfferingId: link.childOfferingId,
-							parentSku: link.parentOffering.sku,
-							parentOfferingKey: link.parentOffering.offeringKey,
-							childSku: offering.sku,
-							childOfferingKey: offering.offeringKey,
-							childQtyPerParent: link.childQtyPerParent,
-							breakFeeCents: link.breakFeeCents,
-							originalCreatedAt: link.createdAt,
-						})),
-					];
-					const seenContainment = new Set<string>();
-					const uniqueContainments = containmentRows.filter((row) => {
-						if(seenContainment.has(row.originalId)) {
-							return false;
-						}
-						seenContainment.add(row.originalId);
-						return true;
-					});
-					if(uniqueContainments.length > 0) {
-						await tx.archivedOfferingContainment.createMany({
-							data: uniqueContainments,
-						});
-					}
-
-					if(offering.brokenPacks.length > 0) {
-						await tx.archivedBrokenPack.createMany({
-							data: offering.brokenPacks.map((broken) => ({
+					if(product.attributeValues.length > 0) {
+						await tx.archivedProductAttribute.createMany({
+							data: product.attributeValues.map((row) => ({
 								archiveBatchId,
-								originalId: broken.id,
-								originalPackOfferingId: broken.packOfferingId,
-								packSku: offering.sku,
-								packOfferingKey: offering.offeringKey,
-								label: broken.label,
-								remainingQty: broken.remainingQty,
-								status: broken.status,
-								originalCreatedAt: broken.createdAt,
-								originalUpdatedAt: broken.updatedAt,
+								originalId: row.attributeValue.id,
+								originalProductId: product.id,
+								key: row.attributeValue.attribute.name,
+								value: row.attributeValue.value,
+								sortOrder: row.sortOrder,
 							})),
 						});
 					}
+
+					for(const offering of product.offerings) {
+						await tx.archivedProductOffering.create({
+							data: {
+								archiveBatchId,
+								originalId: offering.id,
+								originalProductId: product.id,
+								vendorId: offering.vendorId,
+								sku: offering.sku,
+								offeringKey: offering.offeringKey,
+								uomId: offering.uomId,
+								uomCode: offering.uom.code,
+								role: offering.role,
+								priceCents: offering.priceCents,
+								currency: offering.currency,
+								qtyOnHand: offering.qtyOnHand,
+								availableQty: offering.availableQty,
+								tracksOwnQty: offering.tracksOwnQty,
+								minUnbrokenQty: offering.minUnbrokenQty,
+								breakPoolAboveQty: offering.breakPoolAboveQty,
+								inheritQtyToChildren: offering.inheritQtyToChildren,
+								originalCreatedAt: offering.createdAt,
+								originalUpdatedAt: offering.updatedAt,
+							},
+						});
+
+						const containmentRows = [
+							...offering.containmentsAsParent.map((link) => ({
+								archiveBatchId,
+								originalId: link.id,
+								originalParentOfferingId: link.parentOfferingId,
+								originalChildOfferingId: link.childOfferingId,
+								parentSku: offering.sku,
+								parentOfferingKey: offering.offeringKey,
+								childSku: link.childOffering.sku,
+								childOfferingKey: link.childOffering.offeringKey,
+								childQtyPerParent: link.childQtyPerParent,
+								breakFeeCents: link.breakFeeCents,
+								originalCreatedAt: link.createdAt,
+							})),
+							...offering.containmentsAsChild.map((link) => ({
+								archiveBatchId,
+								originalId: link.id,
+								originalParentOfferingId: link.parentOfferingId,
+								originalChildOfferingId: link.childOfferingId,
+								parentSku: link.parentOffering.sku,
+								parentOfferingKey: link.parentOffering.offeringKey,
+								childSku: offering.sku,
+								childOfferingKey: offering.offeringKey,
+								childQtyPerParent: link.childQtyPerParent,
+								breakFeeCents: link.breakFeeCents,
+								originalCreatedAt: link.createdAt,
+							})),
+						];
+						const seenContainment = new Set<string>();
+						const uniqueContainments = containmentRows.filter((row) => {
+							if(seenContainment.has(row.originalId)) {
+								return false;
+							}
+							seenContainment.add(row.originalId);
+							return true;
+						});
+						if(uniqueContainments.length > 0) {
+							await tx.archivedOfferingContainment.createMany({
+								data: uniqueContainments,
+							});
+						}
+
+						if(offering.brokenPacks.length > 0) {
+							await tx.archivedBrokenPack.createMany({
+								data: offering.brokenPacks.map((brokenRow) => ({
+									archiveBatchId,
+									originalId: brokenRow.id,
+									originalPackOfferingId: brokenRow.packOfferingId,
+									packSku: offering.sku,
+									packOfferingKey: offering.offeringKey,
+									label: brokenRow.label,
+									remainingQty: brokenRow.remainingQty,
+									status: brokenRow.status,
+									originalCreatedAt: brokenRow.createdAt,
+									originalUpdatedAt: brokenRow.updatedAt,
+								})),
+							});
+						}
+					}
 				}
 
-				// Drop non-pending claims + broken packs via cascade with product
 				await tx.inventoryClaim.deleteMany({
 					where: {
 						offeringId: { in: product.offerings.map((row) => row.id) },
@@ -332,26 +685,39 @@ export class CatalogArchiveService implements OnModuleInit, OnModuleDestroy {
 			}
 		});
 
+		const actionLabel = mode === 'archive'
+			? 'archived'
+			: 'permanently deleted';
+		const batchNote = archiveBatchId
+			? `Batch: ${archiveBatchId}\n`
+			: '';
+		const retentionNote = mode === 'archive'
+			? 'Archived copies are kept for 6 months and can be restored.'
+			: 'This action was irreversible — no archive copy was kept.';
+
 		if(ownerEmails.length > 0) {
 			const slugList = products.map((row) => row.slug).join(', ');
+			const receiptId = archiveBatchId ?? randomUUID();
 			try {
 				await this.mail.sendMailWithAttachment({
 					to: ownerEmails,
-					subject: `Catalog deletion receipt · ${products[0].vendor.name}`,
+					subject: `Catalog ${mode === 'archive' ? 'archive' : 'deletion'} receipt · ${products[0].vendor.name}`,
 					text:
-						`${products.length} product(s) were deleted from ${products[0].vendor.name}.\n` +
-						`Batch: ${archiveBatchId}\n` +
+						`${products.length} product(s) were ${actionLabel} from ${products[0].vendor.name}.\n` +
+						batchNote +
 						`Slugs: ${slugList}\n\n` +
-						`A CSV of the deleted offerings is attached. Archived copies are kept for 6 months.`,
+						`A CSV of the offerings is attached. ${retentionNote}`,
 					html:
-						`<p><strong>${products.length}</strong> product(s) were deleted from ` +
+						`<p><strong>${products.length}</strong> product(s) were ${actionLabel} from ` +
 						`<strong>${products[0].vendor.name}</strong>.</p>` +
-						`<p>Batch: <code>${archiveBatchId}</code></p>` +
+						(archiveBatchId
+							? `<p>Batch: <code>${archiveBatchId}</code></p>`
+							: '') +
 						`<p>Slugs: ${slugList}</p>` +
-						`<p>A CSV of the deleted offerings is attached. Archived copies are kept for 6 months.</p>`,
+						`<p>A CSV of the offerings is attached. ${retentionNote}</p>`,
 					attachments: [
 						{
-							filename: `catalog-deleted-${archiveBatchId.slice(0, 8)}.csv`,
+							filename: `catalog-${mode === 'archive' ? 'archived' : 'deleted'}-${receiptId.slice(0, 8)}.csv`,
 							content: csv,
 							contentType: 'text/csv; charset=utf-8',
 						},
@@ -360,23 +726,31 @@ export class CatalogArchiveService implements OnModuleInit, OnModuleDestroy {
 			}
 			catch(error) {
 				this.logger.error(
-					`Deleted products but failed to email owners for batch ${archiveBatchId}`,
+					`${actionLabel} products but failed to email owners` +
+						(archiveBatchId ? ` for batch ${archiveBatchId}` : ''),
 					error as Error,
 				);
 			}
 		}
 		else {
 			this.logger.warn(
-				`No OWNER emails for vendor ${vendorId}; deletion CSV was not emailed (batch ${archiveBatchId}).`,
+				`No OWNER emails for vendor ${vendorId}; ${mode} CSV was not emailed` +
+					(archiveBatchId ? ` (batch ${archiveBatchId})` : '') +
+					'.',
 			);
 		}
 
 		return {
+			mode,
 			archiveBatchId,
+			archivedProductIds: mode === 'archive'
+				? archivedProductIds
+				: [],
 			deletedCount: products.length,
 			productSlugs: products.map((row) => row.slug),
 			emailedTo: ownerEmails,
 			csvAttached: ownerEmails.length > 0,
+			reversible: mode === 'archive',
 		};
 	}
 
