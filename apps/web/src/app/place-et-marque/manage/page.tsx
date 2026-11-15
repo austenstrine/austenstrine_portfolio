@@ -21,6 +21,7 @@ import {
 	SellerTopContextPortal,
 	useCatalogSearch,
 } from '../../../components/catalog/CatalogSearchContext';
+import { FrostSelectMenu } from '../../../components/catalog/FrostSelectMenu';
 import { ManageProductRowActions } from '../../../components/catalog/ManageProductRowActions';
 import { NavigateHoverArrow } from '../../../components/catalog/NavigateHoverArrow';
 import { NavigatePersistentArrow } from '../../../components/catalog/NavigatePersistentArrow';
@@ -394,7 +395,7 @@ function ManageListControls({
 					value={filterText}
 				/>
 			</label>
-			<label
+			<div
 				className="
 					inline-flex
 					flex-col
@@ -407,30 +408,14 @@ function ManageListControls({
 				<span>
 					Stock
 				</span>
-				<select
-					aria-label="Stock filter"
-					className={frostControlClassName}
-					onChange={
-						(event) => {
-							const next = event.target.value as StockFilter;
-							if(STOCK_FILTERS.some((row) => row.id === next)) {
-								onStockFilterChange(next);
-							}
-						}
-					}
+				<FrostSelectMenu
+					ariaLabel="Stock filter"
+					onChange={onStockFilterChange}
+					options={STOCK_FILTERS}
 					value={stockFilter}
-				>
-					{STOCK_FILTERS.map((row) => (
-						<option
-							key={row.id}
-							value={row.id}
-						>
-							{row.label}
-						</option>
-					))}
-				</select>
-			</label>
-			<label
+				/>
+			</div>
+			<div
 				className="
 					inline-flex
 					flex-col
@@ -443,30 +428,14 @@ function ManageListControls({
 				<span>
 					Sort
 				</span>
-				<select
-					aria-label="Sort products"
-					className={frostControlClassName}
-					onChange={
-						(event) => {
-							const next = event.target.value as ManageSort;
-							if(MANAGE_SORTS.some((row) => row.id === next)) {
-								onSortChange(next);
-							}
-						}
-					}
+				<FrostSelectMenu
+					ariaLabel="Sort products"
+					onChange={onSortChange}
+					options={MANAGE_SORTS}
 					value={sort}
-				>
-					{MANAGE_SORTS.map((row) => (
-						<option
-							key={row.id}
-							value={row.id}
-						>
-							{row.label}
-						</option>
-					))}
-				</select>
-			</label>
-			<label
+				/>
+			</div>
+			<div
 				className="
 					inline-flex
 					flex-col
@@ -479,29 +448,20 @@ function ManageListControls({
 				<span>
 					Show
 				</span>
-				<select
-					aria-label="Products per page"
-					className={frostControlClassName}
+				<FrostSelectMenu
+					ariaLabel="Products per page"
 					onChange={
-						(event) => {
-							const next = Number(event.target.value) as PageSize;
-							if((PAGE_SIZE_OPTIONS as readonly number[]).includes(next)) {
-								onPageSizeChange(next);
-							}
+						(next) => {
+							onPageSizeChange(Number(next) as PageSize);
 						}
 					}
-					value={pageSize}
-				>
-					{PAGE_SIZE_OPTIONS.map((size) => (
-						<option
-							key={size}
-							value={size}
-						>
-							{size} per page
-						</option>
-					))}
-				</select>
-			</label>
+					options={PAGE_SIZE_OPTIONS.map((size) => ({
+						id: String(size),
+						label: `${size} per page`,
+					}))}
+					value={String(pageSize)}
+				/>
+			</div>
 		</>
 	);
 }
@@ -871,7 +831,7 @@ function PlaceEtMarqueManageContent() {
 	let vendorTopLeft: ReactNode = null;
 	if(vendorsReady && vendors.length > 0) {
 		vendorTopLeft = (
-			<label
+			<div
 				className="
 					flex
 					min-w-[12rem]
@@ -879,47 +839,35 @@ function PlaceEtMarqueManageContent() {
 					flex-1
 					flex-col
 					gap-0.5
+					text-[11px]
+					font-medium
+					text-slate-500
 					sm:max-w-sm
 					sm:flex-none
 				"
 			>
-				<span
-					className="
-						text-[11px]
-						font-medium
-						leading-tight
-						text-slate-500
-					"
-				>
+				<span className="leading-tight">
 					Show products for vendor:
 				</span>
-				<select
-					className="
-						w-full
-						rounded-full
-						border
-						border-slate-300
-						bg-white
-						px-3
-						py-1.5
-						text-sm
-					"
+				<FrostSelectMenu
+					ariaLabel="Show products for vendor"
+					fullWidth
+					minWidth={192}
+					onChange={setSelectedVendorId}
+					options={[
+						{
+							id: '',
+							label: 'All vendors',
+						},
+						...vendors.map((vendor) => ({
+							id: vendor.id,
+							label: vendor.name,
+						})),
+					]}
+					preferredWidth={288}
 					value={selectedVendorId}
-					onChange={(event) => setSelectedVendorId(event.target.value)}
-				>
-					<option value="">
-						All vendors
-					</option>
-					{vendors.map((vendor) => (
-						<option
-							key={vendor.id}
-							value={vendor.id}
-						>
-							{vendor.name}
-						</option>
-					))}
-				</select>
-			</label>
+				/>
+			</div>
 		);
 	}
 	else if(vendorsReady && vendors.length === 0) {
