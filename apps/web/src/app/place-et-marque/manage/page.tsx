@@ -498,9 +498,9 @@ function ManageNewProductLink({
 			aria-label="New product"
 			className={`
 				group
+				relative
 				inline-flex
 				h-10
-				min-h-10
 				w-10
 				shrink-0
 				items-center
@@ -512,11 +512,10 @@ function ManageNewProductLink({
 				text-white
 				${PILL_CTA_MOTION_CLASS}
 				hover:bg-asgreen/90
-				sm:h-auto
-				sm:min-h-10
 				sm:w-auto
-				sm:px-3.5
-				sm:py-1.5
+				sm:justify-center
+				sm:pl-3.5
+				sm:pr-8
 			`}
 			href={href}
 			title={title}
@@ -545,7 +544,24 @@ function ManageNewProductLink({
 					New product
 				</span>
 			</span>
-			<NavigateHoverArrow />
+			{/*
+				Arrow is out of flow + right pad reserves its slot so hover
+				max-width/margin reveal cannot grow the CTA box (PEM-395).
+			*/}
+			<span
+				aria-hidden
+				className="
+					pointer-events-none
+					absolute
+					right-2.5
+					top-1/2
+					hidden
+					-translate-y-1/2
+					sm:inline-flex
+				"
+			>
+				<NavigateHoverArrow />
+			</span>
 		</a>
 	);
 }
