@@ -27,7 +27,9 @@ const ORDERS_PANE_RESERVE_CLASSNAME = `
  * frosted blur, no corner radius. Site-wide context and page-level list
  * controls (vendor picker, Filter/Stock/Sort/Show) live in the top bar.
  * Hides on scroll-down / shows on scroll-up like the top bar.
- * Publishes --seller-bottom-pane-stack so JumpToTop can sit above this pane.
+ * Publishes --seller-bottom-pane-stack so JumpToTop / dock observers can
+ * clear the pane. While scroll-hidden, publishes 0px (not removed) so
+ * IntersectionObserver rootMargins can treat the inset as gone.
  *
  * Stack height uses layout metrics (offsetHeight + CSS bottom), not
  * getBoundingClientRect, so CSS hide/show transforms do not collapse the
@@ -84,13 +86,15 @@ export function SellerPageActionPane() {
 		const sync = () => {
 			const style = getComputedStyle(host);
 			if(paneHidden || style.display === 'none') {
-				document.documentElement.style.removeProperty(STACK_VAR);
+				// Keep the var published at 0 so dock observers reconnect to
+				// inset 0 instead of a stale positive rootMargin (PEM-404).
+				document.documentElement.style.setProperty(STACK_VAR, '0px');
 				return;
 			}
 			// Transform-safe: offsetHeight ignores translateY used for hide/show.
 			const height = host.offsetHeight;
 			if(height < 1) {
-				document.documentElement.style.removeProperty(STACK_VAR);
+				document.documentElement.style.setProperty(STACK_VAR, '0px');
 				return;
 			}
 			const bottomInset = Number.parseFloat(style.bottom) || 0;

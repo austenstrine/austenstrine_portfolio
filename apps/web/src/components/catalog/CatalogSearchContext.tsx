@@ -375,10 +375,95 @@ export function SearchExtrasPortal({ children }: { children: ReactNode }) {
 	return createPortal(content, target);
 }
 
-/** Seller context + page-level list controls for the top bar (vendor picker, Filter/Stock/Sort/Show). */
-export function SellerTopContextPortal({ children }: { children: ReactNode }) {
+type SellerPaneSlots = {
+	left?: ReactNode;
+	center?: ReactNode;
+	right?: ReactNode;
+	/** Legacy fill: top → left, bottom → right when no slots are set. */
+	children?: ReactNode;
+};
+
+function paneSlotPresent(node: ReactNode): boolean {
+	return node != null && node !== false;
+}
+
+function SellerPaneGroups({
+	left,
+	center,
+	right,
+	align = 'end',
+}: {
+	left?: ReactNode;
+	center?: ReactNode;
+	right?: ReactNode;
+	align?: 'end' | 'center';
+}) {
+	const itemsClass = align === 'center'
+		? 'items-center'
+		: 'items-end';
+	return (
+		<>
+			<div
+				className={`
+					flex
+					min-w-0
+					flex-wrap
+					${itemsClass}
+					justify-start
+					gap-x-3
+					gap-y-2
+				`}
+			>
+				{left}
+			</div>
+			<div
+				className={`
+					flex
+					min-w-0
+					flex-wrap
+					${itemsClass}
+					justify-center
+					gap-x-3
+					gap-y-2
+				`}
+			>
+				{center}
+			</div>
+			<div
+				className={`
+					flex
+					min-w-0
+					flex-wrap
+					${itemsClass}
+					justify-end
+					gap-x-3
+					gap-y-2
+				`}
+			>
+				{right}
+			</div>
+		</>
+	);
+}
+
+/** Seller context for the top bar: explicit left / center / right groups. */
+export function SellerTopContextPortal({
+	left,
+	center,
+	right,
+	children,
+}: SellerPaneSlots) {
 	const { sellerTopContextHostEl } = useCatalogSearch();
-	if(!sellerTopContextHostEl) {
+	const leftNode = left !== undefined
+		? left
+		: (center === undefined && right === undefined
+			? children
+			: undefined);
+	const hasContent =
+		paneSlotPresent(leftNode)
+		|| paneSlotPresent(center)
+		|| paneSlotPresent(right);
+	if(!sellerTopContextHostEl || !hasContent) {
 		return null;
 	}
 	return createPortal(
@@ -386,10 +471,10 @@ export function SellerTopContextPortal({ children }: { children: ReactNode }) {
 			aria-label="Seller context"
 			className="
 				mx-auto
-				flex
+				grid
+				w-full
 				max-w-7xl
-				flex-wrap
-				items-end
+				grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]
 				gap-x-3
 				gap-y-2
 				px-gutter
@@ -397,27 +482,43 @@ export function SellerTopContextPortal({ children }: { children: ReactNode }) {
 			"
 			role="region"
 		>
-			{children}
+			<SellerPaneGroups
+				center={center}
+				left={leftNode}
+				right={right}
+			/>
 		</div>,
 		sellerTopContextHostEl,
 	);
 }
 
-/** Page-specific actions for the full-width bottom pane (e.g. pagination + New product on manage). */
-export function PageBottomPanePortal({ children }: { children: ReactNode }) {
+/** Page actions for the full-width bottom pane: left / center / right groups. */
+export function PageBottomPanePortal({
+	left,
+	center,
+	right,
+	children,
+}: SellerPaneSlots) {
 	const { pageBottomPaneHostEl } = useCatalogSearch();
-	if(!pageBottomPaneHostEl || children == null || children === false) {
+	const rightNode = right !== undefined
+		? right
+		: (left === undefined && center === undefined
+			? children
+			: undefined);
+	const hasContent =
+		paneSlotPresent(left)
+		|| paneSlotPresent(center)
+		|| paneSlotPresent(rightNode);
+	if(!pageBottomPaneHostEl || !hasContent) {
 		return null;
 	}
 	return createPortal(
 		<div
 			aria-label="Page actions"
 			className="
-				flex
+				grid
 				w-full
-				flex-wrap
-				items-center
-				justify-end
+				grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]
 				gap-x-2
 				gap-y-2
 				px-gutter
@@ -427,7 +528,12 @@ export function PageBottomPanePortal({ children }: { children: ReactNode }) {
 			"
 			role="region"
 		>
-			{children}
+			<SellerPaneGroups
+				align="center"
+				center={center}
+				left={left}
+				right={rightNode}
+			/>
 		</div>,
 		pageBottomPaneHostEl,
 	);
