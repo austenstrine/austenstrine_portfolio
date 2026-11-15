@@ -30,6 +30,8 @@ const ORDERS_PANE_RESERVE_CLASSNAME = `
  * Publishes --seller-bottom-pane-stack so JumpToTop / dock observers can
  * clear the pane. While scroll-hidden, publishes 0px (not removed) so
  * IntersectionObserver rootMargins can treat the inset as gone.
+ * Stays visible when empty (no empty:hidden) so harvested controls can
+ * pin into an already-present bar.
  *
  * Stack height uses layout metrics (offsetHeight + CSS bottom), not
  * getBoundingClientRect, so CSS hide/show transforms do not collapse the
@@ -150,7 +152,7 @@ export function SellerPageActionPane() {
 					motion-reduce:transition-none
 					${reserveOrdersPane
 						? ORDERS_PANE_RESERVE_CLASSNAME
-						: 'empty:hidden'
+						: 'min-h-[3.5rem]'
 					}
 				`
 			}

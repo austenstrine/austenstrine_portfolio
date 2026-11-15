@@ -988,15 +988,18 @@ function PlaceEtMarqueManageContent() {
 				left={vendorTopLeft}
 			/>
 
-			{showBottomActions && !bottomActionsInline
-				? (
-					<PageBottomPanePortal
-						center={pagerNav}
-						right={newProductLink}
-					/>
-				)
-				: null
-			}
+			<PageBottomPanePortal
+				center={
+					!bottomActionsInline
+						? pagerNav
+						: null
+				}
+				right={
+					!bottomActionsInline
+						? newProductLink
+						: null
+				}
+			/>
 
 			<div>
 				<h1
