@@ -375,7 +375,7 @@ export function SearchExtrasPortal({ children }: { children: ReactNode }) {
 	return createPortal(content, target);
 }
 
-/** Seller context for the top bar (e.g. vendor picker). Not page actions. */
+/** Seller context + page-level list controls for the top bar (vendor picker, Filter/Stock/Sort/Show). */
 export function SellerTopContextPortal({ children }: { children: ReactNode }) {
 	const { sellerTopContextHostEl } = useCatalogSearch();
 	if(!sellerTopContextHostEl) {
@@ -403,7 +403,7 @@ export function SellerTopContextPortal({ children }: { children: ReactNode }) {
 	);
 }
 
-/** Page-specific actions for the frosted bottom-right pane (e.g. New product on manage). */
+/** Page-specific actions for the full-width bottom pane (e.g. pagination + New product on manage). */
 export function PageBottomPanePortal({ children }: { children: ReactNode }) {
 	const { pageBottomPaneHostEl } = useCatalogSearch();
 	if(!pageBottomPaneHostEl || children == null || children === false) {
@@ -414,14 +414,15 @@ export function PageBottomPanePortal({ children }: { children: ReactNode }) {
 			aria-label="Page actions"
 			className="
 				flex
+				w-full
 				flex-wrap
 				items-center
 				justify-end
 				gap-x-2
 				gap-y-2
-				p-2
+				px-gutter
+				py-2
 				sm:gap-x-3
-				sm:px-3
 				sm:py-2.5
 			"
 			role="region"

@@ -104,6 +104,7 @@ export function CatalogHeader({
 		&& pathname !== '/place-et-marque/search'
 		&& categories.length > 0;
 	const headerRef = useRef<HTMLElement>(null);
+	const spacerRef = useRef<HTMLDivElement>(null);
 	const headerHeightVar = showDepartmentBar
 		? 'var(--catalog-header-h-with-bar)'
 		: 'var(--catalog-header-h-base)';
@@ -151,12 +152,18 @@ export function CatalogHeader({
 		const sync = () => {
 			const height = header.offsetHeight;
 			// Sticky filters use viewport top — include banner band. Body
-			// padding-top already clears banners for in-flow content; the
-			// in-flow spacer stays on SSR tokens (base vs with-bar).
+			// padding-top already clears banners for in-flow content.
 			document.documentElement.style.setProperty(
 				'--catalog-header-h',
 				`${headerHidden ? 0 : height + bannerOffset}px`,
 			);
+			// Spacer is header-only (no banner). Track measured height so
+			// seller top-context rows (Filter/Stock/Sort/Show) clear the
+			// title — SSR tokens stay as the first-paint floor (PEM-377).
+			const spacer = spacerRef.current;
+			if(spacer) {
+				spacer.style.height = `${height}px`;
+			}
 		};
 		sync();
 		const observer = new ResizeObserver(sync);
@@ -164,6 +171,10 @@ export function CatalogHeader({
 		return () => {
 			observer.disconnect();
 			document.documentElement.style.removeProperty('--catalog-header-h');
+			const spacer = spacerRef.current;
+			if(spacer) {
+				spacer.style.height = '';
+			}
 		};
 	}, [bannerOffset, headerHidden, showDepartmentBar]);
 
@@ -228,6 +239,7 @@ export function CatalogHeader({
 						? 'with-bar'
 						: 'base'
 				}
+				ref={spacerRef}
 			/>
 			<header
 				className="

@@ -21,6 +21,7 @@ import {
 	SellerTopContextPortal,
 } from '../../../components/catalog/CatalogSearchContext';
 import { ManageProductRowActions } from '../../../components/catalog/ManageProductRowActions';
+import { NavigateHoverArrow } from '../../../components/catalog/NavigateHoverArrow';
 import { NavigatePersistentArrow } from '../../../components/catalog/NavigatePersistentArrow';
 import { PILL_CTA_MOTION_CLASS } from '../../../components/catalog/pillCta';
 import { PlusIcon } from '../../../components/icons/PlusIcon';
@@ -415,22 +416,6 @@ function PlaceEtMarqueManageContent() {
 					)
 					: null
 				}
-				{vendorsReady && vendors.length === 0
-					? (
-						<p
-							className="
-								text-xs
-								text-slate-500
-							"
-						>
-							No vendor memberships yet.
-						</p>
-					)
-					: null
-				}
-			</SellerTopContextPortal>
-
-			<PageBottomPanePortal>
 				{showListControls
 					? (
 						<>
@@ -573,120 +558,160 @@ function PlaceEtMarqueManageContent() {
 					)
 					: null
 				}
-				{showPager
+				{vendorsReady && vendors.length === 0
 					? (
-						<nav
-							aria-label="Pagination"
+						<p
 							className="
-								flex
-								flex-wrap
-								items-center
-								justify-end
-								gap-1
+								text-xs
+								text-slate-500
 							"
 						>
-							<PagerButton
-								ariaLabel="Previous page"
-								disabled={page <= 1}
-								onClick={() => setPage((current) => Math.max(1, current - 1))}
-							>
-								<NavigatePersistentArrow
-									direction="left"
-									iconClassName="h-4 w-4"
-								/>
-							</PagerButton>
-							{pageItems(page, pageCount).map((item, index) =>
-								item === 'gap'
-									? (
-										<span
-											className="px-1 text-slate-400"
-											key={`gap-${index}`}
-										>
-											…
-										</span>
-									)
-									: (
-										<PagerButton
-											active={item === page}
-											ariaCurrent={item === page ? 'page' : undefined}
-											key={item}
-											onClick={() => setPage(item)}
-										>
-											{item}
-										</PagerButton>
-									))}
-							<PagerButton
-								ariaLabel="Next page"
-								disabled={page >= pageCount}
-								onClick={() => setPage((current) => Math.min(pageCount, current + 1))}
-							>
-								<NavigatePersistentArrow
-									iconClassName="h-4 w-4"
-								/>
-							</PagerButton>
-						</nav>
+							No vendor memberships yet.
+						</p>
 					)
 					: null
 				}
-				{newProductVendor
-					? (
-						<a
-							aria-label="New product"
-							className={`
-								group
-								inline-flex
-								h-10
-								w-10
-								shrink-0
+			</SellerTopContextPortal>
+
+			{showPager || newProductVendor
+				? (
+					<PageBottomPanePortal>
+						<div
+							className="
+								relative
+								flex
+								w-full
+								min-w-0
 								items-center
-								justify-center
-								gap-1.5
-								rounded-full
-								bg-asgreen
-								text-sm
-								font-semibold
-								text-white
-								${PILL_CTA_MOTION_CLASS}
-								hover:bg-asgreen/90
-								sm:h-auto
-								sm:w-auto
-								sm:px-3.5
-								sm:py-1.5
-							`}
-							href={productCreateHref({ vendor: newProductVendor })}
-							title={
-								selectedVendor
-									? 'New product'
-									: `Creates under ${newProductVendorName}`
-							}
+								justify-end
+							"
 						>
-							<PlusIcon
-								className="
-									h-4
-									w-4
-									shrink-0
-								"
-							/>
-							<span
-								className="
-									hidden
-									whitespace-nowrap
-									sm:inline
-								"
-							>
-								New product
-							</span>
-							<NavigatePersistentArrow
-								className="
-									hidden
-									sm:inline-flex
-								"
-							/>
-						</a>
-					)
-					: null
-				}
-			</PageBottomPanePortal>
+							{showPager
+								? (
+									<nav
+										aria-label="Pagination"
+										className="
+											absolute
+											left-1/2
+											flex
+											max-w-[calc(100%-5.5rem)]
+											-translate-x-1/2
+											flex-wrap
+											items-center
+											justify-center
+											gap-1
+										"
+									>
+										<PagerButton
+											ariaLabel="Previous page"
+											disabled={page <= 1}
+											onClick={() => setPage((current) => Math.max(1, current - 1))}
+										>
+											<NavigatePersistentArrow
+												direction="left"
+												iconClassName="h-4 w-4"
+											/>
+										</PagerButton>
+										{pageItems(page, pageCount).map((item, index) =>
+											item === 'gap'
+												? (
+													<span
+														className="px-1 text-slate-400"
+														key={`gap-${index}`}
+													>
+														…
+													</span>
+												)
+												: (
+													<PagerButton
+														active={item === page}
+														ariaCurrent={item === page ? 'page' : undefined}
+														key={item}
+														onClick={() => setPage(item)}
+													>
+														{item}
+													</PagerButton>
+												))}
+										<PagerButton
+											ariaLabel="Next page"
+											disabled={page >= pageCount}
+											onClick={() => setPage((current) => Math.min(pageCount, current + 1))}
+										>
+											<NavigatePersistentArrow
+												iconClassName="h-4 w-4"
+											/>
+										</PagerButton>
+									</nav>
+								)
+								: null
+							}
+							{newProductVendor
+								? (
+									<a
+										aria-label="New product"
+										className={`
+											group
+											relative
+											z-10
+											inline-flex
+											h-10
+											w-10
+											shrink-0
+											items-center
+											justify-center
+											rounded-full
+											bg-asgreen
+											text-sm
+											font-semibold
+											text-white
+											${PILL_CTA_MOTION_CLASS}
+											hover:bg-asgreen/90
+											sm:h-auto
+											sm:w-auto
+											sm:px-3.5
+											sm:py-1.5
+										`}
+										href={productCreateHref({ vendor: newProductVendor })}
+										title={
+											selectedVendor
+												? 'New product'
+												: `Creates under ${newProductVendorName}`
+										}
+									>
+										<span
+											className="
+												inline-flex
+												items-center
+												gap-1.5
+											"
+										>
+											<PlusIcon
+												className="
+													h-4
+													w-4
+													shrink-0
+												"
+											/>
+											<span
+												className="
+													hidden
+													whitespace-nowrap
+													sm:inline
+												"
+											>
+												New product
+											</span>
+										</span>
+										<NavigateHoverArrow />
+									</a>
+								)
+								: null
+							}
+						</div>
+					</PageBottomPanePortal>
+				)
+				: null
+			}
 
 			<div>
 				<h1

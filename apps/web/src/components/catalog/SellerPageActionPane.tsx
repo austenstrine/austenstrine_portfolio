@@ -19,14 +19,13 @@ const ORDERS_PANE_RESERVE_CLASSNAME = `
 	empty:border-transparent
 	empty:bg-transparent
 	empty:shadow-none
-	empty:backdrop-blur-none
 `;
 
 /**
- * Compact right-aligned lightly frosted bottom pane for page-specific seller
- * actions. Docked bottom-right (bottom:0, right:0); only the top-left corner
- * is rounded. Not full-width. Site-wide context such as the vendor picker
- * stays in the top bar. Blocks click-through; frost stays faint.
+ * Full-width bottom pane for page-specific seller actions (pagination,
+ * New product, order filters, save). Solid white with a tiny alpha — no
+ * frosted blur, no corner radius. Site-wide context and page-level list
+ * controls (vendor picker, Filter/Stock/Sort/Show) live in the top bar.
  * Hides on scroll-down / shows on scroll-up like the top bar.
  * Publishes --seller-bottom-pane-stack so JumpToTop can sit above this pane.
  *
@@ -134,18 +133,13 @@ export function SellerPageActionPane() {
 				`
 					pointer-events-auto
 					fixed
+					inset-x-0
 					bottom-0
-					right-0
 					z-30
-					max-w-[min(100%,52rem)]
-					rounded-tl-2xl
-					border
-					border-b-0
-					border-r-0
-					border-slate-200/40
-					bg-white/25
-					shadow-[0_4px_24px_rgba(13,27,42,0.06)]
-					backdrop-blur-[2px]
+					border-t
+					border-slate-200
+					bg-white/95
+					shadow-[0_-2px_12px_rgba(13,27,42,0.04)]
 					transition-transform
 					duration-200
 					ease-out
