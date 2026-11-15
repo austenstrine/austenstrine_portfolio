@@ -24,8 +24,9 @@ type ProductMobileStickyCtaProps = {
 
 /**
  * Buyer PDP mobile sticky Add to cart / in-cart qty spinner. Publishes
- * --product-sticky-cta-stack so JumpToTop sits above this bar (same pattern
- * as SellerPageActionPane). CTA stacks Add+spinner for stable height (PEM-372).
+ * --product-sticky-cta-stack so sitewide JumpToTop lifts above this bar
+ * (same pattern as SellerPageActionPane). CTA stacks Add+spinner for stable
+ * height (PEM-372).
  */
 export function ProductMobileStickyCta({
 	priceLabel,
