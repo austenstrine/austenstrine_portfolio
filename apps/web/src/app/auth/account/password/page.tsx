@@ -1,16 +1,14 @@
 'use client';
 
-import { Suspense, useState, type FormEvent } from 'react';
-import { AuthCard } from '../../../../components/auth/AuthCard';
+import { useState, type FormEvent } from 'react';
 import { ErrorText } from '../../../../components/auth/ErrorText';
 import { FormField } from '../../../../components/auth/FormField';
-import { RequireAccess } from '../../../../components/auth/RequireAccess';
 import { BackLink } from '../../../../components/BackLink';
 import { AuthApiError, setPassword } from '../../../../lib/auth-api';
 import { useSession } from '../../../../lib/useSession';
 
-function PasswordForm() {
-	const { user, loading, refresh } = useSession();
+export default function AccountPasswordPage() {
+	const { user, refresh } = useSession();
 	const [currentPassword, setCurrentPassword] = useState('');
 	const [password, setNewPassword] = useState('');
 	const [confirmPassword, setConfirmPassword] = useState('');
@@ -65,27 +63,37 @@ function PasswordForm() {
 		}
 	};
 
-	if(loading || !user) {
-		return (
-			<p className="text-sm text-slate-500">
-				Loading account…
-			</p>
-		);
+	if(!user) {
+		return null;
 	}
 
 	return (
-		<AuthCard
-			title="Password"
+		<div
+			className="
+				mx-auto
+				w-full
+				max-w-xl
+			"
 		>
 			<div className="mb-6">
-				<BackLink
-					href="/auth/account"
-				>
+				<BackLink href="/auth/account">
 					Account
 				</BackLink>
 			</div>
+
+			<h1
+				className="
+					text-2xl
+					font-semibold
+					text-ink
+				"
+			>
+				Password
+			</h1>
+
 			<form
 				className="
+					mt-8
 					flex
 					flex-col
 					gap-4
@@ -127,9 +135,7 @@ function PasswordForm() {
 					autoComplete="new-password"
 				/>
 
-				<ErrorText
-					message={error}
-				/>
+				<ErrorText message={error} />
 				{success
 					? (
 						<p
@@ -144,8 +150,8 @@ function PasswordForm() {
 
 				<button
 					className="
-						self-end
 						mt-2
+						self-end
 						rounded-full
 						bg-sky
 						px-4
@@ -164,30 +170,6 @@ function PasswordForm() {
 					{submitLabel}
 				</button>
 			</form>
-		</AuthCard>
-	);
-}
-
-export default function AccountPasswordPage() {
-	return (
-		<main
-			className="
-				flex
-				min-h-screen
-				items-center
-				justify-center
-				bg-frost
-				px-6
-				py-16
-			"
-		>
-			<Suspense fallback={null}>
-				<RequireAccess
-					reasonKey="account"
-				>
-					<PasswordForm />
-				</RequireAccess>
-			</Suspense>
-		</main>
+		</div>
 	);
 }
