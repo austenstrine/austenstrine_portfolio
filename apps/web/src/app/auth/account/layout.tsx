@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import type { ReactNode } from 'react';
 import { CatalogHeader } from '../../../components/catalog/CatalogHeader';
@@ -49,28 +50,40 @@ export default async function AccountLayout({ children }: { children: ReactNode 
 	initialUser = userResult.user;
 
 	if(!initialUser) {
-		redirect(
-			buildLoginUrl({
-				next: '/auth/account',
-				reason: accessReason('account', false),
-			}),
+		const jar = cookies();
+		const hasAuthCookie = Boolean(
+			jar.get('access_token')?.value
+			|| jar.get('refresh_token')?.value,
 		);
+		// True guest (no cookies): one-shot SSR login. Cookie present but SSR
+		// could not establish a user (stale access / legacy refresh path): let
+		// the client probe recover — do not bounce account↔login.
+		if(!hasAuthCookie) {
+			redirect(
+				buildLoginUrl({
+					next: '/auth/account',
+					reason: accessReason('account', false),
+				}),
+			);
+		}
 	}
 
-	const [vendorsResult, cartResult] = await Promise.all([
-		listMyVendors()
-			.then((vendors) => ({ ok: true as const, vendors }))
-			.catch(() => ({
-				ok: false as const,
-				vendors: [] as Awaited<ReturnType<typeof listMyVendors>>,
-			})),
-		getCartCached()
-			.then((cart) => ({ ok: true as const, cart }))
-			.catch(() => ({ ok: false as const, cart: null })),
-	]);
-	initialEditableVendorIds = editableVendorIdsFromMine(vendorsResult.vendors);
-	if(cartResult.cart) {
-		initialCartCount = cartResult.cart.lineCount ?? cartResult.cart.lines.length;
+	if(initialUser) {
+		const [vendorsResult, cartResult] = await Promise.all([
+			listMyVendors()
+				.then((vendors) => ({ ok: true as const, vendors }))
+				.catch(() => ({
+					ok: false as const,
+					vendors: [] as Awaited<ReturnType<typeof listMyVendors>>,
+				})),
+			getCartCached()
+				.then((cart) => ({ ok: true as const, cart }))
+				.catch(() => ({ ok: false as const, cart: null })),
+		]);
+		initialEditableVendorIds = editableVendorIdsFromMine(vendorsResult.vendors);
+		if(cartResult.cart) {
+			initialCartCount = cartResult.cart.lineCount ?? cartResult.cart.lines.length;
+		}
 	}
 
 	return (

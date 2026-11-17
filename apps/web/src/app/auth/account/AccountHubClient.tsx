@@ -1,6 +1,8 @@
 'use client';
 
 import Link from 'next/link';
+import { Suspense } from 'react';
+import { RequireAccess } from '../../../components/auth/RequireAccess';
 import {
 	resolveOrdersToFulfillHref,
 } from '../../../components/catalog/AccountMenu';
@@ -90,15 +92,19 @@ function HubSection({
 	);
 }
 
-export function AccountHubClient({
+function AccountHubBody({
 	vendors,
 }: {
 	vendors: VendorSummary[];
 }) {
-	const { user, signOut } = useSession();
+	const { user, loading, signOut } = useSession();
 
-	if(!user) {
-		return null;
+	if(loading || !user) {
+		return (
+			<p className="text-sm text-slate-500">
+				Checking access…
+			</p>
+		);
 	}
 
 	const accountLinks: HubLink[] = [
@@ -220,5 +226,25 @@ export function AccountHubClient({
 				</button>
 			</div>
 		</div>
+	);
+}
+
+export function AccountHubClient({
+	vendors,
+}: {
+	vendors: VendorSummary[];
+}) {
+	return (
+		<Suspense
+			fallback={
+				<p className="text-sm text-slate-500">
+					Loading…
+				</p>
+			}
+		>
+			<RequireAccess reasonKey="account">
+				<AccountHubBody vendors={vendors} />
+			</RequireAccess>
+		</Suspense>
 	);
 }
