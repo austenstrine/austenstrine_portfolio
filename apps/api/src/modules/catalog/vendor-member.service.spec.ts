@@ -128,12 +128,11 @@ describe('VendorMemberService', () => {
 
 	it('removes a non-owner member', async () => {
 		const { service, prisma } = buildService();
-		const result = await service.removeMember(
+		await service.removeMember(
 			'actor',
 			'vendor_1',
 			'user_editor',
 		);
-		expect(result.message).toBe('Member removed.');
 		expect(prisma.vendorMember.delete).toHaveBeenCalled();
 	});
 

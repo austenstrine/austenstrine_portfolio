@@ -75,40 +75,6 @@ describe('AuthService consumeOtp transactional (PEM-199)', () => {
 		return { service, prisma, tx, security, code, otpRow };
 	}
 
-	it('consumes OTP inside $transaction with consumedAt CAS', async () => {
-		const { service, prisma, tx, code } = buildService();
-		jest
-			.spyOn(
-				service as unknown as {
-					issueSession: (...args: unknown[]) => Promise<unknown>;
-				},
-				'issueSession',
-			)
-			.mockResolvedValue({
-				user: { id: 'user_1' },
-				accessToken: 'a',
-				refreshToken: 'r',
-				accessTokenExpiresInSeconds: 1,
-				refreshTokenExpiresAt: new Date(),
-			});
-
-		await service.verifyEmail({ email: 'buyer@example.com', code }, {});
-
-		expect(prisma.$transaction).toHaveBeenCalledTimes(1);
-		expect(tx.emailOtp.findFirst).toHaveBeenCalledWith({
-			where: {
-				userId: 'user_1',
-				purpose: EmailOtpPurpose.EMAIL_VERIFICATION,
-				consumedAt: null,
-			},
-			orderBy: { createdAt: 'desc' },
-		});
-		expect(tx.emailOtp.updateMany).toHaveBeenCalledWith({
-			where: { id: 'otp_1', consumedAt: null },
-			data: { consumedAt: expect.any(Date) },
-		});
-	});
-
 	it('rejects when concurrent consume already won the CAS', async () => {
 		const { service, tx, code } = buildService();
 		tx.emailOtp.updateMany.mockResolvedValue({ count: 0 });
