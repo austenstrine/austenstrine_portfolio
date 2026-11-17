@@ -18,7 +18,7 @@
     "prefs-lint": "bash ops/tooling/prefs-lint/run.sh",
     "lint:eslint-prefs": "node ops/tooling/prefs-lint/run-eslint-prefs.mjs",
     "lint": "npm run prefs-lint && npm run lint:eslint-prefs && npm run prepare:api-types && npm run lint -w apps/api && npm run lint -w apps/web && npm run lint -w apps/crm",
-    "test": "npm run prepare:api-types && npm run test -w apps/api"
+    "test": "npm run prepare:api-types && npm run test -w apps/api && npm run test -w apps/web"
   },
   "overrides": {
     "typescript": "5.8.3"
