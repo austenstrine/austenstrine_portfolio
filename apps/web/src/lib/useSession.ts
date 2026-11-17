@@ -35,7 +35,13 @@ function useSessionController(options: {
 	const [user, setUser] = useState<AuthUser | null>(() => (seeded
 		? initialUser
 		: null));
-	const [loading, setLoading] = useState(() => enabled && !seeded);
+	// Null seed: SSR often cannot refresh (refresh cookie used to be path-scoped
+	// to /api/auth, so HTML navigations omitted it). Stay loading until the
+	// first client probe so RequireAccess does not bounce to login before
+	// refresh can recover — adversary bar for notifications/account family.
+	const [loading, setLoading] = useState(
+		() => enabled && (!seeded || initialUser == null),
+	);
 	const [sessionUnavailable, setSessionUnavailable] = useState<string | null>(null);
 
 	const refresh = useCallback(async (quiet = false) => {
@@ -53,21 +59,27 @@ function useSessionController(options: {
 		else if(probe.status === 'unauthenticated') {
 			setUser(null);
 			setSessionUnavailable(null);
+			// Seeded as signed-in then rejected: clear leftover cookies so the
+			// next HTML navigation does not SSR-seed a zombie session.
+			if(initialUser != null) {
+				void logoutUser().catch(() => undefined);
+			}
 		}
 		else {
 			// Keep the last known user on a blip so seller pages do not bounce to Sign in.
 			setSessionUnavailable(probe.message);
 		}
 		setLoading(false);
-	}, [enabled]);
+	}, [enabled, initialUser]);
 
 	useEffect(() => {
 		if(!enabled) {
 			return;
 		}
-		// Seeded: confirm in the background without the invisible Account placeholder.
-		void refresh(seeded);
-	}, [enabled, refresh, seeded]);
+		// Seeded non-null: confirm quietly (PEM-373). Null seed: still probing
+		// with loading=true until this settles.
+		void refresh(seeded && initialUser != null);
+	}, [enabled, refresh, seeded, initialUser]);
 
 	const signOut = useCallback(async () => {
 		if(!enabled) {
@@ -94,6 +106,7 @@ function useSessionController(options: {
 /**
  * SSR-seeded session for PeM (and anywhere else that can decide before paint).
  * Pass `initialUser` from a server layout after `getCurrentUser()`.
+ * Null seed stays `loading` until the first client probe (stale-session recovery).
  */
 export function SessionProvider({
 	children,

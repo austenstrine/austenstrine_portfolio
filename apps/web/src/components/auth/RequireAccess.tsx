@@ -66,6 +66,9 @@ function RequireAccessInner({
 		?? accessReason(reasonKeyOrDefault, true);
 
 	useEffect(() => {
+		// Null-seed SessionProvider keeps loading=true until the first client
+		// probe settles — do not bounce to login before that (stale access +
+		// recoverable refresh must not account↔login↔notifications loop).
 		if(sessionLoading) {
 			return;
 		}

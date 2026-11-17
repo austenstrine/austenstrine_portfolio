@@ -46,9 +46,16 @@ export class AuthController {
 			maxAge: session.accessTokenExpiresInSeconds * 1000,
 		});
 
-		res.cookie(REFRESH_COOKIE, session.refreshToken, {
+		// path=/ so HTML navigations carry refresh to Next SSR. Legacy installs
+		// used path=/api/auth which made expired-access SSR redirect to login
+		// while the browser client could still refresh → account↔login loop.
+		res.clearCookie(REFRESH_COOKIE, {
 			...this.baseCookieOptions(),
 			path: '/api/auth',
+		});
+		res.cookie(REFRESH_COOKIE, session.refreshToken, {
+			...this.baseCookieOptions(),
+			path: '/',
 			maxAge: this.authService.refreshTokenTtlMs,
 			expires: session.refreshTokenExpiresAt,
 		});
@@ -56,7 +63,12 @@ export class AuthController {
 
 	private clearSessionCookies(res: Response): void {
 		res.clearCookie(ACCESS_COOKIE, { ...this.baseCookieOptions(), path: '/' });
-		res.clearCookie(REFRESH_COOKIE, { ...this.baseCookieOptions(), path: '/api/auth' });
+		res.clearCookie(REFRESH_COOKIE, { ...this.baseCookieOptions(), path: '/' });
+		// Drop legacy path-scoped refresh cookies from older sessions.
+		res.clearCookie(REFRESH_COOKIE, {
+			...this.baseCookieOptions(),
+			path: '/api/auth',
+		});
 	}
 
 	private sessionMeta(req: Request): SessionMeta {

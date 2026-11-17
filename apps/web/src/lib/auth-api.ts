@@ -81,7 +81,8 @@ async function serverSessionCookieHeader(): Promise<string | undefined> {
 		if(access) {
 			parts.push(`${ACCESS_COOKIE}=${access}`);
 		}
-		// Usually absent on page navigations (cookie path /api/auth).
+		// Refresh is path=/ (PEM-452) so HTML navigations can SSR-refresh.
+		// Legacy path=/api/auth cookies may still appear until the next login.
 		const refresh = jar.get(REFRESH_COOKIE)?.value;
 		if(refresh) {
 			parts.push(`${REFRESH_COOKIE}=${refresh}`);

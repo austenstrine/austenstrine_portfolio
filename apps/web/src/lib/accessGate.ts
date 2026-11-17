@@ -116,8 +116,26 @@ const VENDOR_REQUIRED_PREFIXES = [
 	'/place-et-marque/categories',
 ] as const;
 
+/** Guest auth surfaces — never use these as post-login `next` (bounce fuel). */
+const AUTH_GUEST_NEXT_BLOCKLIST = [
+	'/auth/login',
+	'/auth/register',
+	'/auth/forgot-password',
+	'/auth/reset-password',
+	'/auth/verify',
+	'/auth/verify-email',
+] as const;
+
 export function safeNextPath(raw: string | null | undefined, fallback = '/'): string {
 	if(!raw || !raw.startsWith('/') || raw.startsWith('//')) {
+		return fallback;
+	}
+	const pathname = raw.split('?')[0] ?? raw;
+	if(
+		AUTH_GUEST_NEXT_BLOCKLIST.some(
+			(blocked) => pathname === blocked || pathname.startsWith(`${blocked}/`),
+		)
+	) {
 		return fallback;
 	}
 	return raw;
