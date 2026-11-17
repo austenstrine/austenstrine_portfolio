@@ -1,14 +1,15 @@
 'use client';
 
 import { useState, type FormEvent } from 'react';
+import { RequireAccess } from '../../../../components/auth/RequireAccess';
 import { ErrorText } from '../../../../components/auth/ErrorText';
 import { FormField } from '../../../../components/auth/FormField';
 import { BackLink } from '../../../../components/BackLink';
 import { AuthApiError, setPassword } from '../../../../lib/auth-api';
 import { useSession } from '../../../../lib/useSession';
 
-export default function AccountPasswordPage() {
-	const { user, refresh } = useSession();
+function PasswordForm() {
+	const { user, loading, refresh } = useSession();
 	const [currentPassword, setCurrentPassword] = useState('');
 	const [password, setNewPassword] = useState('');
 	const [confirmPassword, setConfirmPassword] = useState('');
@@ -63,8 +64,12 @@ export default function AccountPasswordPage() {
 		}
 	};
 
-	if(!user) {
-		return null;
+	if(loading || !user) {
+		return (
+			<p className="text-sm text-slate-500">
+				Checking access…
+			</p>
+		);
 	}
 
 	return (
@@ -171,5 +176,15 @@ export default function AccountPasswordPage() {
 				</button>
 			</form>
 		</div>
+	);
+}
+
+export default function AccountPasswordPage() {
+	// RequireAccess waits for null-seed probe, then one-shots true guests to login
+	// (same gate as the hub — soft SSR when cookies exist must not hang blank).
+	return (
+		<RequireAccess reasonKey="account">
+			<PasswordForm />
+		</RequireAccess>
 	);
 }
