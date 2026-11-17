@@ -33,12 +33,15 @@ export async function seedDemoNotifications(prisma: PrismaClient): Promise<void>
 		select: { id: true },
 	});
 
+	const welcomeBody =
+		'Your seller workspace is ready. Open Vendors when you want to manage organizations.';
+
 	if(existingWelcome) {
 		await prisma.notification.update({
 			where: { id: existingWelcome.id },
 			data: {
 				title: 'Welcome to Place et Marque',
-				body: null,
+				body: welcomeBody,
 				href: '/place-et-marque/vendors',
 				payload: { source: 'seed' },
 			},
@@ -51,7 +54,7 @@ export async function seedDemoNotifications(prisma: PrismaClient): Promise<void>
 			userId: admin.id,
 			kind: DEMO_WELCOME_KIND,
 			title: 'Welcome to Place et Marque',
-			body: null,
+			body: welcomeBody,
 			href: '/place-et-marque/vendors',
 			payload: { source: 'seed' },
 		},

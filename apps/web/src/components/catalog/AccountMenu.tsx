@@ -503,7 +503,18 @@ export function AccountMenu({
 													"
 													href={notificationInboxHref(item.id)}
 													key={item.id}
-													onClick={closeMenu}
+													onClick={(event) => {
+														closeMenu();
+														// Already on inbox: hash-only so the row expands in place
+														// (no soft-nav remount of the gated page).
+														if(pathname === NOTIFICATIONS_INBOX_PATH) {
+															event.preventDefault();
+															const nextHash = `#${encodeURIComponent(item.id)}`;
+															if(window.location.hash !== nextHash) {
+																window.location.hash = encodeURIComponent(item.id);
+															}
+														}
+													}}
 													role="menuitem"
 												>
 													<span className="block min-w-0 flex-1 truncate">

@@ -1,7 +1,7 @@
 'use client';
 
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { useEffect, useState, type ReactNode } from 'react';
+import { Suspense, useEffect, useState, type ReactNode } from 'react';
 import { listMyVendors } from '../../lib/catalog-api';
 import {
 	accessReason,
@@ -20,7 +20,28 @@ type RequireAccessProps = {
 	reason?: string;
 };
 
-export function RequireAccess({
+function AccessFallback() {
+	return (
+		<p className="text-sm text-slate-500">
+			Checking access…
+		</p>
+	);
+}
+
+/**
+ * Gate that may call `useSearchParams` + `router.replace`. Always wrap the
+ * searchParams consumer in Suspense (Next 14 CSR bailout) — callers that put
+ * Suspense *inside* this tree still remount-loop (notifications inbox).
+ */
+export function RequireAccess(props: RequireAccessProps) {
+	return (
+		<Suspense fallback={<AccessFallback />}>
+			<RequireAccessInner {...props} />
+		</Suspense>
+	);
+}
+
+function RequireAccessInner({
 	children,
 	vendorRequired = false,
 	reasonKey,
@@ -29,6 +50,7 @@ export function RequireAccess({
 	const router = useRouter();
 	const pathname = usePathname();
 	const searchParams = useSearchParams();
+	const search = searchParams.toString();
 	const { user, loading: sessionLoading, sessionUnavailable, refresh } = useSession();
 	const [vendorLoading, setVendorLoading] = useState(vendorRequired);
 	const [allowed, setAllowed] = useState(false);
@@ -48,7 +70,6 @@ export function RequireAccess({
 			return;
 		}
 
-		const search = searchParams.toString();
 		const next = search ? `${pathname}?${search}` : pathname;
 
 		if(sessionUnavailable && !user) {
@@ -58,12 +79,15 @@ export function RequireAccess({
 		}
 
 		if(!user) {
-			router.replace(
-				buildLoginUrl({
-					next,
-					reason: guestMessage,
-				}),
-			);
+			const loginUrl = buildLoginUrl({
+				next,
+				reason: guestMessage,
+			});
+			// Avoid replace storms when searchParams CSR bailout remounts the gate.
+			if(pathname.startsWith('/auth/login')) {
+				return;
+			}
+			router.replace(loginUrl);
 			return;
 		}
 
@@ -116,7 +140,7 @@ export function RequireAccess({
 		sessionUnavailable,
 		vendorRequired,
 		pathname,
-		searchParams,
+		search,
 		router,
 		guestMessage,
 		signedInMessage,
@@ -184,11 +208,7 @@ export function RequireAccess({
 	}
 
 	if(sessionLoading || vendorLoading || !allowed) {
-		return (
-			<p className="text-sm text-slate-500">
-				Checking access…
-			</p>
-		);
+		return <AccessFallback />;
 	}
 
 	return (

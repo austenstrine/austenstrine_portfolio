@@ -77,7 +77,13 @@ function NotificationsInboxInner() {
 			behavior: 'smooth',
 			block: 'center',
 		});
+		// Depend on length, not `items`, so mark-read rewrites do not re-scroll.
+	}, [activeId, items.length]);
 
+	useEffect(() => {
+		if(!activeId || items.length === 0) {
+			return;
+		}
 		const row = items.find((item) => item.id === activeId);
 		if(!row || row.readAt || markedRef.current.has(activeId)) {
 			return;
@@ -441,19 +447,21 @@ function NotificationsInboxInner() {
 }
 
 export default function NotificationsInboxClient() {
+	// Suspense must wrap RequireAccess (useSearchParams). Inverted nesting
+	// CSR-bailout remounted the gate → Checking access… / login replace loop.
 	return (
-		<RequireAccess
-			reasonKey="notifications"
+		<Suspense
+			fallback={
+				<p className="text-sm text-slate-500">
+					Loading…
+				</p>
+			}
 		>
-			<Suspense
-				fallback={
-					<p className="text-sm text-slate-500">
-						Loading…
-					</p>
-				}
+			<RequireAccess
+				reasonKey="notifications"
 			>
 				<NotificationsInboxInner />
-			</Suspense>
-		</RequireAccess>
+			</RequireAccess>
+		</Suspense>
 	);
 }

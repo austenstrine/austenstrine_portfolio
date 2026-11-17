@@ -20,9 +20,14 @@ export function useRedirectIfAuthenticated(nextRaw: string | null | undefined) {
 		}
 		let cancelled = false;
 		void resolvePostAuthDestination(nextPath).then((destination) => {
-			if(!cancelled) {
-				router.replace(destination);
+			if(cancelled) {
+				return;
 			}
+			const here = `${window.location.pathname}${window.location.search}`;
+			if(here === destination) {
+				return;
+			}
+			router.replace(destination);
 		});
 		return () => {
 			cancelled = true;
