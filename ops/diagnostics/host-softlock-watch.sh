@@ -251,6 +251,14 @@ elevated=0
 metrics_init
 log "started poll=${POLL_SEC}s preflight_max_age=${PREFLIGHT_MAX_AGE_SEC}s d_min=${D_STATE_MIN} stuck_polls=${D_STATE_STUCK_POLLS} pileon=${DOCKER_PILEON} state=$STATE_DIR"
 metrics_event started "poll=${POLL_SEC}s d_min=${D_STATE_MIN} pileon=${DOCKER_PILEON}"
+# Reboot / service restart leaves docker-pileon-pause while in-memory elevated=0,
+# so the elevate→clear transition never runs and dssh launch false-refuses.
+if [[ -f "$PILEON_PAUSE_FLAG" ]]; then
+  log "clearing orphan docker-pileon-pause on start (elevated memory=0; will re-touch if still elevated)"
+  metrics_event orphan_pause_cleared "on_start=1"
+  rm -f "$PILEON_PAUSE_FLAG"
+fi
+rm -f "$STALL_FLAG"
 write_status 0 0 0 0 "" 
 
 while true; do
@@ -338,10 +346,17 @@ while true; do
     fi
   else
     clean_polls=$((clean_polls + 1))
-    if (( elevated == 1 && clean_polls >= CLEAR_POLLS )); then
-      log "stall cleared after ${clean_polls} clean polls"
-      metrics_event stall_cleared "clean_polls=$clean_polls"
-      elevated=0
+    # Clear pause after CLEAR_POLLS even if this process never saw elevated=1
+    # (orphan flag after crash/reboot, or status.json elevated=false mismatch).
+    if (( clean_polls >= CLEAR_POLLS )); then
+      if (( elevated == 1 )); then
+        log "stall cleared after ${clean_polls} clean polls"
+        metrics_event stall_cleared "clean_polls=$clean_polls"
+        elevated=0
+      elif [[ -f "$PILEON_PAUSE_FLAG" ]]; then
+        log "clearing orphan docker-pileon-pause after ${clean_polls} clean polls"
+        metrics_event orphan_pause_cleared "clean_polls=$clean_polls"
+      fi
       rm -f "$PILEON_PAUSE_FLAG"
     fi
   fi
