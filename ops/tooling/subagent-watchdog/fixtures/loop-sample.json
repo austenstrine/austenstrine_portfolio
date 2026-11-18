@@ -1,0 +1,17 @@
+{
+	"polled_at": "2026-11-17T20:10:00-07:00",
+	"workers": [
+		{
+			"id": "bc-loop-demo",
+			"status": "RUNNING",
+			"task_size": "tiny",
+			"started_at": "2026-11-17T20:00:00-07:00",
+			"turns": [
+				{ "at": "2026-11-17T20:02:00-07:00", "summary": "retry eslint with fix", "tools": ["Shell"], "strategy": "lint-fix-a" },
+				{ "at": "2026-11-17T20:04:00-07:00", "summary": "retry eslint with fix again", "tools": ["Shell"], "strategy": "lint-fix-b" },
+				{ "at": "2026-11-17T20:06:00-07:00", "summary": "retry eslint tweak flag", "tools": ["Shell"], "strategy": "lint-fix-c" },
+				{ "at": "2026-11-17T20:08:00-07:00", "summary": "retry eslint one more tweak", "tools": ["Shell"], "strategy": "lint-fix-d" }
+			]
+		}
+	]
+}

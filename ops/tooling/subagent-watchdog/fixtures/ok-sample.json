@@ -1,0 +1,14 @@
+{
+	"polled_at": "2026-11-17T19:58:00-07:00",
+	"workers": [
+		{
+			"id": "bc-ok-demo",
+			"status": "RUNNING",
+			"task_size": "medium",
+			"started_at": "2026-11-17T19:55:00-07:00",
+			"turns": [
+				{ "at": "2026-11-17T19:56:00-07:00", "summary": "orient and read target file", "tools": ["Shell", "Read"], "strategy": "orient-read" }
+			]
+		}
+	]
+}

@@ -1,0 +1,17 @@
+{
+	"polled_at": "2026-11-17T20:20:00-07:00",
+	"workers": [
+		{
+			"id": "bc-pause-demo",
+			"status": "RUNNING",
+			"task_size": "big",
+			"started_at": "2026-11-17T20:00:00-07:00",
+			"different_fail_count": 3,
+			"turns": [
+				{ "summary": "approach A failed", "tools": ["Shell"], "strategy": "rebuild-docker" },
+				{ "summary": "approach B failed", "tools": ["Grep"], "strategy": "search-symbols" },
+				{ "summary": "approach C failed", "tools": ["Write"], "strategy": "rewrite-module" }
+			]
+		}
+	]
+}

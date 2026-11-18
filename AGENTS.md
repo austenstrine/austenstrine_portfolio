@@ -44,4 +44,5 @@ Opt out only: “stop caveman” / “normal mode” / “stop ultracave”.
 | agent-coord | `docs/agent/agent-coord.md` |
 | Context compress (RTK / prune / caveman-compress) | `docs/agent/context-compress.md` · `./bin/context-compress` · report `docs/context-compress-tooling.md` |
 | Voice / kickoff | **Ultracave mandatory** — `voice-modes.mdc` + kickoff paste `docs/agent/ultracave-kickoff.md`. Opt out: “stop caveman” / “normal mode” / “stop ultracave”. |
+| Subagent stuck-loop watchdog | Coordinator: `docs/agent/subagent-watchdog.md` · `./bin/subagent-watchdog` · Project `workflows/subagent-watchdog.md` |
 | Sibling tools (dssh install, etc.) | README “Third-party tools”; tool remotes usually land on `master` |

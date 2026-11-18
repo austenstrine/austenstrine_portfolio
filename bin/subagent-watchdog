@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# Thin wrapper → ops/tooling/subagent-watchdog/watchdog.sh
+set -euo pipefail
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+exec bash "$ROOT/ops/tooling/subagent-watchdog/watchdog.sh" "$@"
