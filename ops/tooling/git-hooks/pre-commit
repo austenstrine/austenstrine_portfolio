@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# Fail-closed: refuse ordinary commits on master/main/development.
+# Merge commits allowed (MERGE_HEAD). See prefs-lint/branch-guard.check.sh.
+set -euo pipefail
+ROOT="$(git rev-parse --show-toplevel 2>/dev/null)" || exit 0
+export PREFS_LINT_HOOK=1
+exec "$ROOT/ops/tooling/prefs-lint/branch-guard.check.sh"
