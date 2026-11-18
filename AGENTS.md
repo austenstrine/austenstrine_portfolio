@@ -3,21 +3,34 @@
 Start here for this repo.
 
 1. Run `./bin/agent-cli` (or `./bin/agent-cli orient`) once before exploring.
-2. Prefer `./bin/agent-cli <subcommand> [--json]` over re-reading `package.json`, `.dsshrc`, compose files, seed paths, or guessing npm/dssh commands.
+2. Prefer `./bin/agent-cli <subcommand> [--json]` over re-reading `package.json`, `.dsshrc`, compose, seed paths, or guessing npm/dssh.
 3. Subcommands: `orient` `layout` `scripts` `env` `docker` `seed` `helpers` — see `./bin/agent-cli --help`.
-4. **Graphify (structural map):** after orient, prefer `graphify query|path|explain` (or local MCP `graphify-mcp`) before wide Grep for architecture / call-graph questions. Host: `graphify-out/` is gitignored — rebuild with `graphify extract . --code-only` if missing. Cloud VMs: rebuild if `graphify` is available, else skip. See `.cursor/rules/graphify.mdc` and Place et Marque `workflows/graphify.md`.
-5. Git (this portfolio): integrate on **`development`** (based on `master` — `master` is stable/deploy, not the agent default). Feature branches: `feature/<user>/development/<name>` (user usually `als`); always create a **local** branch (GitKraken). Merge features into `development` with no PR; leave `master` alone unless asked. After peers land on `development`, rebase/pull the feature onto it. After pushing `development`, sync Austen’s local checked-out `development`. On a shared VM, edit via `git worktree add`, not the shared checkout in place. Full prefs: `docs/git-commit-preferences.md` (mirrored in `.cursor/rules/git-commit-preferences.mdc`).
-6. Sibling tool remotes are usually **`master`** (commit/merge without review there is OK) — confirm with `git ls-remote --symref origin HEAD` rather than a local branch name. That is **not** this portfolio’s landing rule.
-7. `./dssh` needs [developers-sugary-shell-helper](https://github.com/austenstrine/developers-sugary-shell-helper): run that repo’s `./install.sh` and keep `~/.local/bin` on `PATH`, or clone as a sibling / set `DSSH_BIN`. See README “Third-party tools”.
-8. Same-checkout multi-agent file claims (optional, judgment over ritual): when another agent may edit the same paths on this host, use `./bin/agent-coord` claim / negotiate / release (sibling `~/Development/agent-coord`, or `~/.local/bin/agent-coord` via that repo’s `./install.sh`, or `AGENT_COORD_BIN`). Skip when you are alone on those paths. HELLO discourse flag `0x01`. See `.cursor/rules/agent-coord-async.mdc`, Place et Marque store `workflows/agent-coordination.md` and `principles/agent-coordination-discourse.md`.
-9. **Local backend / CRM restarts:** agents may restart `./dssh backend` / `portfolio-api` and `./dssh crm` / `portfolio-crm` when needed, but must run `dssh backend restart; dssh logs backend` or `dssh crm restart; dssh logs crm` in the **user's Cursor terminal** in this window (prefer the active backend/CRM/dssh terminal). Prefer `dssh logs <target>` (not `dssh <target> logs` as the documented form). If the agent cannot drive that terminal, prompt the user to run it and wait until they indicate done before continuing work that depends on the new process. Do not silently `docker stop|rm|restart portfolio-api` or `portfolio-crm` in the background — that confuses the user's log stream with SIGTERM. SIGTERM during a proper user-terminal restart is expected (old container replace), not a Nest/Next bug. See `.cursor/rules/dssh-backend-ownership.mdc`.
-10. **Local-first:** prefer Austen’s host checkout; after pushing/merging `development`, sync his local checked-out `development`. See `.cursor/rules/local-first.mdc`.
-11. **Day-to-day stack:** `dssh launch` (6 tabs via consumer `.dsshrc`); detach start then `dssh logs <target>`. See `.cursor/rules/dssh-launch.mdc` and Place et Marque `workflows/dssh-launch-stack.md`.
-12. **Tiny-copy / doer+adversary:** exact ≤~2-sentence drop-ins → same_vm-local patch+verify (no CreateAgent); paste-only; fail-closed EOL+lint. See `.cursor/rules/tiny-copy-doer-adversary.mdc`.
-13. **Out-of-scope handoff:** new/out-of-project repos need env + `repo_url` worker; hand off blockers instead of faking access. See `.cursor/rules/out-of-scope-handoff.mdc`.
-14. **Shell-timing hooks:** on Austen’s host, heed Shell `additional_context` SLOW/LOOP/tiny-diff warnings. See `.cursor/rules/shell-timing-hooks.mdc`.
-15. **Show, don’t tell:** no GUI coaching copy in UI; fix the interaction; field-meaning helpers OK. See `.cursor/rules/show-dont-tell.mdc`.
-16. **Viewport testing:** don’t steal the user’s browser width; use band devices / gutters in `.cursor/rules/viewport-testing.mdc`.
-17. **New chat on drift:** if the thread clearly switched subjects, ask once whether to start a new chat — see `.cursor/rules/new-chat-on-drift.mdc`.
-18. **Code style:** tabs, JSX layout, Tailwind static tokens, catalog chrome — see `docs/code-style-preferences.md` (mirrored in `.cursor/rules/code-style-preferences.mdc`).
-19. **Fail-closed lint:** `./bin/agent-cli lint` (root `npm run lint`) runs prefs + ESLint prefs + workspace typecheck. Workspace `npm run lint -w apps/*` is typecheck only and **skips** prefs.
+4. **Git (this portfolio):** integrate on **`development`**; features `feature/<user>/development/<name>` (user usually `als`); local branch required; merge features → `development` **no PR**; leave `master` alone unless asked; same-VM → `git worktree add`. Full: `docs/git-commit-preferences.md`.
+5. **Fail-closed lint:** `./bin/agent-cli lint` (prefs + ESLint prefs + typecheck). Workspace `npm run lint -w apps/*` skips prefs.
+6. **Rules map / progressive disclosure:** `docs/cursor-rules-progressive-disclosure.md`. Most `.cursor/rules/*.mdc` are intelligent, globs, or manual — not always-on. Read the named doc when the task matches.
+
+## Hard never
+
+- Do not develop or land on `master` unless the user asks.
+- Do not edit a shared checkout in place — use a worktree.
+- Do not silently `docker stop|rm|kill|restart portfolio-api` / `portfolio-crm` (use user-terminal `dssh backend|crm restart; dssh logs …`).
+- Do not fake out-of-scope forge/repo/env access — hand off instead.
+
+## Read when needed
+
+| Topic | Doc / rule |
+|-------|------------|
+| Orient / layout / docker | `./bin/agent-cli` |
+| Code style (TS/TSX) | `docs/code-style-preferences.md` |
+| Graphify | `docs/agent/graphify.md` |
+| Local-first / sync `development` | `docs/agent/local-first.md` |
+| `dssh launch` | `docs/agent/dssh-launch.md` |
+| Backend / CRM restart | `docs/agent/dssh-backend-ownership.md` |
+| Tiny-copy doer+adversary | `docs/agent/tiny-copy-doer-adversary.md` |
+| Show-don’t-tell | `docs/agent/show-dont-tell.md` |
+| Viewport bands | `docs/agent/viewport-testing.md` |
+| Shell-timing hooks | `docs/agent/shell-timing-hooks.md` |
+| Out-of-scope handoff | `docs/agent/out-of-scope-handoff.md` |
+| agent-coord | `docs/agent/agent-coord.md` |
+| Voice: caveman / ultracave | `/caveman`, `/ultracave`, `/caveman ultra` — see rule `voice-modes` |
+| Sibling tools (dssh install, etc.) | README “Third-party tools”; tool remotes usually land on `master` |

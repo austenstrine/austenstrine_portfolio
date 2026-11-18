@@ -1,8 +1,8 @@
 ---
-description: Optional same-checkout file claims via agent-coord
-alwaysApply: true
+description: Same-checkout multi-agent file claims via agent-coord (claim/negotiate/release)
+alwaysApply: false
 ---
 
 # Agent coordination
 
-When another agent may edit the same checkout paths on this host, use `./bin/agent-coord` (or `agent-coord` on PATH) claim / negotiate / release. Skip when you are alone on those paths — judgment over ritual. See `AGENTS.md` §7 and `~/Development/agent-coord`.
+When another agent may edit the same paths on this host, use `./bin/agent-coord` (or `agent-coord` on PATH). Skip when alone. Full: `docs/agent/agent-coord.md`.

@@ -1,0 +1,15 @@
+---
+description: How to invoke caveman / ultracave voice skills (not always-on terse)
+alwaysApply: true
+---
+
+# Voice modes (caveman / ultracave)
+
+Do **not** enable caveman/ultracave on every turn.
+
+Activate only when the user says `/caveman`, `/ultracave`, `/caveman ultra`, “caveman mode”, “talk like caveman”, “be brief”, “less tokens”, or attaches the skill. Then read and follow the skill:
+
+- caveman: `~/.agents/skills/caveman/SKILL.md` (also `~/.cursor/caveman/skills/caveman`)
+- ultracave: `~/.agents/skills/ultracave/SKILL.md` (also `~/.cursor/caveman/skills/ultracave`); `/caveman ultra` → ultracave
+
+Stay on until “stop caveman” or “normal mode”. `/caveman status` reports mode only (no activation).

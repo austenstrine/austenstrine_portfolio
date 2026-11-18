@@ -1,87 +1,11 @@
 ---
-description: TSX layout, tabs, quotes, icon widgets
-alwaysApply: true
+description: TSX/TS layout, tabs, quotes, icons, navigate chrome — read full docs when editing UI
+globs: apps/web/**/*.{ts,tsx},apps/crm/**/*.{ts,tsx},packages/**/*.{ts,tsx}
+alwaysApply: false
 ---
 
 # Code style
 
-Keep in sync with `docs/code-style-preferences.md`.
+Full prefs: `docs/code-style-preferences.md` (read before finishing UI/TS edits). Preferences, not build errors; prefer format-on-save.
 
-Preferences, not build errors. Prefer format-on-save over a failing build.
-
-## JSX / TSX
-
-- Opening tag, content, and closing tag on separate lines. Self-closing (`<br />`) may stay one line.
-- One simple attribute: keep the opening tag on one line.
-- Two or more attributes, a dense tag, or a multiline value: stack attributes.
-- Self-closing with attributes: one attribute per line, one indent.
-- Stay in the editor viewport. Wrap long values (especially `className`).
-- Wrapped attributes: closing quote and `>` on separate visual boundaries — not `...">`.
-- `className`: 1–2 tokens on one line; 3+ tokens split across lines.
-- Multiline `className`: attributes on separate lines, `className` first.
-
-### Tailwind
-
-- Class tokens are static string literals only (no runtime-built names). Multiline static strings are fine.
-
-### Catalog chrome
-
-- One radius for search controls: `rounded-full` (search field, Sort, chips, facet rows). Do not mix `rounded-md` selected rows with `rounded-full` fields.
-- Selected/highlight uses primary `asgreen` `#257257` (text and/or soft fill). Site navy `sky` `#1b263b` is the dark UI chrome color (panels, dark CTAs, footers, scrims) — do not use near-black or a darker-than-navy stop and treat navy as the light end. `ink` `#0d1b2a` is body text only; never a selected fill or dark surface.
-
-## Indentation
-
-- Tabs, not spaces, except where the format requires spaces (YAML, etc.).
-- Stay consistent inside a file.
-
-## TS
-
-- `if` / `else if` / `else` and `try` / `catch` / `finally`: each block on its own line (not `} else {`).
-- No space before `(`: `if(...)`, `else if(...)`, `switch(...)`, `catch(...)`.
-- Single quotes in TS. Escape apostrophes; do not switch the string to double quotes.
-- JSX/HTML attributes keep double quotes.
-
-## Delimiters
-
-- Do not stack `{}` `()` `[]` on one line when it gets dense; newline + one indent.
-- One indent per newline, not a jump of two.
-- Fat-arrow: stacked `()` on the same arrow is OK.
-- Fat-arrow in JSX `{ }`: put the whole arrow expression on a new indented line so `{` and `(` do not stack.
-
-## TSX ternaries
-
-- `?` and `:` each on their own line, one indent deeper than the wrapper.
-- Condition stays on the wrapper's opening line: `{cond` then `?` / `:`.
-- JSX attribute braces: start on a new line; wrap the ternary in `()`.
-- No clean wrapper: wrap the whole ternary in `()`.
-- Multiline: closing `}` or `)` on its own line, aligned with the opener. Do not glue `}` to the last operand.
-
-```tsx
-{submitting
-	? 'Sending code…'
-	: 'Send reset code'
-}
-```
-
-- Extra `()` is optional when the ternary is already in clean JSX `{ }`.
-- Find with search/regex. Never fix with a regex replace. Edit each hit so the closer matches its opener.
-
-## Reuse / icons
-
-- Extract repeated UI. Import an existing widget instead of copying markup.
-- No raw `<svg>` in pages or HTML. Put SVG in `apps/web/src/components/icons/` with a `className` prop.
-- Directional / action cues (follow common menu & link conventions):
-	- `ArrowLeftIcon` / `ArrowRightIcon` (shafted) — route navigation (and result-list pager that changes page/query).
-	- `ChevronLeftIcon` / `ChevronRightIcon` (shaftless) — in-place only: hierarchy de-drill/drill, and image-carousel slide. Never reuse for page navigation. Breadcrumbs: always use shared `MarketplaceBreadcrumb` (PDP, vendor, search, etc.) — separators are `/` (not chevrons/carets); do not hand-roll breadcrumb markup.
-	- `CaretDownIcon` — open a dropdown / expand-collapse toggle (not left/right direction).
-	- `PencilIcon` — in-place edit affordance (tier toggle / field edit). Also allowed as the leading semantic icon on manage-list Edit (`ManageProductRowActions`), paired with `NavigatePersistentArrow` for navigate chrome (desktop labeled control and icon-only mobile). Other full-editor navigate controls (e.g. PDP “Full edit”) still use the navigate arrow only, not Pencil.
-	- Navigate chrome — pick **one** style per control by context (do not mix for the same job):
-		- **Inline / in-text navigators** (a link inside a sentence, glossary jump, “Sold by …”, cart-message “View cart”): traditional link — `text-sky underline underline-offset-2`. Underlines are fine here; no navigate arrow required.
-		- **Separate controls** (standalone section-header action, buy-box secondary, filled/outline CTA — not inline prose): permanent shafted navigate cue via shared `NavigatePersistentArrow` (`direction="right"` default / `direction="left"` for back), on a parent with `group`. Nudges `translate-x-0.5` / `-translate-x-0.5` on `group-hover` and `group-focus-visible` (same motion as featured-build “Join the seller demo →”). Do **not** use bare underlined text that only pretends to be a button. Examples: section “View all” / “All categories”, Checkout / Shop products CTAs, hero/featured-build CTAs. (PDP buy box uses header cart + in-cart qty spinner — no secondary “View cart” under Add.)
-		- **Whole-card / contextual menu rows** (full-row hit target with **no** leading/trailing action icon yet: Account menu Account / Your orders, category choose pills/rows, home “Shop by seller” pills, `CatalogMenuLink`, order/vendor list cards, account hub rows, `MarketplaceFooter` Shop/Cart/Guide/Sell/Portfolio): shared `NavigateHoverArrow` — always visible below `lg` (tablet and smaller; touch has no hover); at `lg+` (desktop) animate in on `(hover: hover)` + `group-hover`, plus `group-focus-visible` for keyboard. Visible end state nudges to `translate-x-0.5` (same motion as `NavigatePersistentArrow`). Touch must not leave a stuck arrow on desktop. Drill chevrons stay always-on drill cues — do not replace them with hover arrows. Prefer CSS hover over JS hover state.
-		- **Large-image backdrop cards/tiles** (image fills the card: `CategoryCard`, `ProductCard`, similar): **no** hover arrow; underline the main title/text on group-hover instead (link-style cue on the label).
-		- **“Back” navigation** must roll back history (`router.back` / `history.back`) when same-origin history exists; use a safe fallback `href` only when there is no history to roll back. Prefer shared `BackLink` (leading `ArrowLeftIcon` + fallback `href`). Do not label a guessed parent URL as “Back …” without history rollback. Examples: “Back to account”, “Back to orders”, “Back to vendor”.
-		- In-place actions that are not route navigation (Clear all, Mark all read, Show more, expand toggles, sort picks) are not under this rule; keep their existing action chrome.
-	- Product/image carousels: one job per control — image plane may be a navigate backdrop to the PDP; slide carets/dots only change the slide (stopPropagation). Use chevrons for slide, not shafted arrows. Shared `ProductCardImageCarousel`: carets always visible below `lg` (tablet and smaller; touch has no hover); at `lg+` (desktop) fade in on `(hover: hover)` + group-hover. End-of-range carets stay faded/disabled. Dot pills: solid white = current image; transparent/outline = siblings. Sitewide hover-reveal chrome (carets + `NavigateHoverArrow`): desktop = `lg+`; always-on below `lg`.
-	- No raw `←` `→` `›` glyphs or unnamed caret/chevron components; use the icons.
-- Find inline `<svg>` with search. Move each hit into an icon widget by hand — no regex rewrite.
+Quick musts: tabs; JSX open/content/close on separate lines when multi-attr; static Tailwind tokens only; no raw `<svg>` in pages (icons under `apps/web/src/components/icons/`); catalog selected = `asgreen`, dark chrome = `sky` (not near-black); navigate chrome per docs (shafted arrows vs chevrons vs hover arrows).

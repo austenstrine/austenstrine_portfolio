@@ -1,0 +1,16 @@
+---
+alwaysApply: false
+---
+
+# Expected SIGTERM on backend/CRM restart (manual)
+
+`dssh backend restart` / `dssh crm restart` (and `backend_start_local`’s `docker rm -f`) sends **SIGTERM** to the old Nest/`nest start --watch` or Next process. Following `dssh logs …` across a restart almost always shows:
+
+```text
+[NestApplication] Nest application successfully started
+npm error signal SIGTERM
+```
+
+(or the Next equivalent). That is the old container dying during replace — not Nest/Next watch flaking, not OOM, unless `OOMKilled=true` or there is no matching `container kill`/`stop`/`destroy` in `docker events`. Background docker kill/rm outside the user-terminal pattern is what made those SIGTERMs confusing.
+
+See also: `docs/agent/dssh-backend-ownership.md`.

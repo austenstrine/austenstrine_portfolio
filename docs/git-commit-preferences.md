@@ -1,6 +1,6 @@
 # Git and commit preferences
 
-Cursor loads `.cursor/rules/git-commit-preferences.mdc` (`alwaysApply: true`). Keep that file and this one in sync.
+Canonical source for git prefs. Hard constraints also live in always-on `.cursor/rules/portfolio-essentials.mdc`; the intelligent rule `.cursor/rules/git-commit-preferences.mdc` points here. Keep them aligned.
 
 These rules apply to **this portfolio repo** (`austenstrine_portfolio`). Sibling tool repos (dssh, agent-coord, image CDN, etc.) have different landing prefs — see “Sibling tool repos” below.
 

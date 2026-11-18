@@ -1,29 +1,8 @@
 ---
-description: Exact tiny-copy drop-ins use same_vm-local doer+adversary; no CreateAgent
-alwaysApply: true
+description: Exact tiny-copy drop-ins — same_vm-local patch+verify; no CreateAgent
+alwaysApply: false
 ---
 
 # Tiny copy / doer + adversary
 
-Keep in sync with Place et Marque `workflows/tiny-copy-edit.md` and Project `scripts/cv-summary-patch.sh` / `tiny-copy-verify.sh`.
-
-## When this path applies
-
-All of: ≤ ~2 sentences; known file (`--file`); exact unique old string; no layout/CSS/design judgment.
-
-Otherwise use a normal doer agent.
-
-## Protocol (exact drop-ins)
-
-- **same_vm-local** default: warm coordinator/peer runs patch + verify on this host.
-- **Do not** `CreateAgent` a new doer/adversary for unambiguous drop-ins — boot/hops dominate the budget.
-- Paste-only: `--new` is user text verbatim (JSX-escape if the file uses `&apos;`). Doer and adversary must not rewrite.
-- Fail-closed verify required (lint evidence + exact diff + EOL). Re-read/`rg`-only is not verify.
-- Preserve EOL (CRLF stays CRLF). LF rewrite of a CRLF file → adversary REJECT.
-- Portfolio git: commit only on `feature/<user>/development/<slug>`; ff-merge to `development`; never commit on `development`/`master`.
-- Budget: ≤ **30s** wall user message → pushed SHA + adversary ACCEPT.
-
-## Do not
-
-- `./bin/agent-cli orient`, repo tour, or worktree theater for this class of edit.
-- Spawn more agents to “finish” after the wall is blown — record why instead.
+≤~2 sentences, known file, exact old string, no layout judgment → same_vm-local paste-only + fail-closed verify. Full: `docs/agent/tiny-copy-doer-adversary.md`.

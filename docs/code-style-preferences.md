@@ -1,6 +1,6 @@
 # Code style
 
-Cursor loads `.cursor/rules/code-style-preferences.mdc` (`alwaysApply: true`). Keep that file and this one in sync.
+Canonical source for code style. Cursor attaches a short pointer via `.cursor/rules/code-style-preferences.mdc` (globs on `apps/web|crm` / `packages` TS/TSX, not always-on). Keep the rule pointer and this file aligned.
 
 Preferences, not build errors. Prefer format-on-save over a failing build.
 
