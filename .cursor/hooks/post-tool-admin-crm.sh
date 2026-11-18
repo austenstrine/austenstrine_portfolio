@@ -1,7 +1,13 @@
 #!/usr/bin/env bash
-# postToolUse (Write|StrReplace|Edit): remind admin-crm skill on CRM-boundary paths only.
-# Fail-open. No injection on PeM vendor UI (apps/web PeM) or shared ambiguous files.
+# postToolUse (Write|StrReplace|Edit): LOG-ONLY admin-crm remind on CRM-boundary paths.
+# Fail-open. No additional_context (avoids clobbering host prefs-skills).
+# No injection on PeM vendor UI (apps/web PeM) or shared ambiguous files.
 set -u
+HOOK_DIR="$(cd "$(dirname "$0")" && pwd)"
+STATE_DIR="${HOOK_DIR}/state"
+mkdir -p "${STATE_DIR}" 2>/dev/null || true
+LOG="${STATE_DIR}/admin-crm.log"
+
 node -e '
 let raw = "";
 process.stdin.setEncoding("utf8");
@@ -40,10 +46,11 @@ process.stdin.on("end", () => {
       "separate apps/crm (not PeM vendor UI); admin routes CRM-origin only",
       "(crm.austenstrine.dev / crm.local.austenstrine.dev)."
     ].join(" ");
-    process.stdout.write(JSON.stringify({ additional_context: msg }));
+    process.stderr.write(msg + "\n");
+    empty();
   } catch {
     empty();
   }
 });
-' 2>/dev/null || printf '%s\n' '{}'
+' 2>>"${LOG}" || printf '%s\n' '{}'
 exit 0
