@@ -1,52 +1,44 @@
-# Cursor rules progressive disclosure (PEM-488)
+# Cursor rules progressive disclosure (PEM-488 → PEM-490)
 
-Audit and restructure of always-on Cursor context for `austenstrine_portfolio`. Goal: load only what is needed; pointers over inlines.
+Audit and restructure of always-on Cursor context for `austenstrine_portfolio`. Goal: load only what is needed; pointers over inlines — **except** voice: ultracave is forced always-on (token savings on reply volume).
 
 **Token method:** `chars / 4` (UTF-8 file bytes as chars). Project always-on = `AGENTS.md` + every `.cursor/rules/*.mdc` with `alwaysApply: true`. Does **not** include user-global rules, system prompts, or Skills bodies (Skills load on invoke/attach).
 
-## Before (always-on)
+## Before PEM-488 (always-on)
 
 | Path | Chars | ~Tokens |
 |------|------:|--------:|
 | `AGENTS.md` | 4981 | 1245 |
-| `.cursor/rules/agent-coord-async.mdc` | 374 | 94 |
-| `.cursor/rules/code-style-preferences.mdc` | 7383 | 1846 |
-| `.cursor/rules/dssh-backend-ownership.mdc` | 2513 | 628 |
-| `.cursor/rules/dssh-launch.mdc` | 1257 | 314 |
-| `.cursor/rules/git-commit-preferences.mdc` | 2706 | 676 |
-| `.cursor/rules/graphify.mdc` | 1357 | 339 |
-| `.cursor/rules/local-first.mdc` | 1236 | 309 |
-| `.cursor/rules/new-chat-on-drift.mdc` | 471 | 118 |
-| `.cursor/rules/out-of-scope-handoff.mdc` | 1046 | 262 |
-| `.cursor/rules/shell-timing-hooks.mdc` | 1079 | 270 |
-| `.cursor/rules/show-dont-tell.mdc` | 999 | 250 |
-| `.cursor/rules/tiny-copy-doer-adversary.mdc` | 1346 | 336 |
-| `.cursor/rules/viewport-testing.mdc` | 1404 | 351 |
+| 13 topic `.mdc` always-on bodies | ~23171 | ~5793 |
 | **Total** | **28152** | **~7038** |
 
-Notes:
-
-- No repo `.cursorrules`. No project `CLAUDE.md` (only unrelated `node_modules` hit).
-- User-global (document only, not deleted): `~/.cursor/rules/agent-coord-async.mdc` (~140 tok). Project still has its own intelligent `agent-coord-async` pointer.
-- Skills (host): `~/.agents/skills/caveman`, `~/.agents/skills/ultracave` (+ mirrors under `~/.cursor/caveman/skills/`). Ultracave has `disable-model-invocation: true` — must be invoked explicitly.
-
-## After (always-on)
+## After PEM-488 (discoverability voice)
 
 | Path | Mode | Chars | ~Tokens | Why always-on |
 |------|------|------:|--------:|---------------|
-| `AGENTS.md` | hub | 2298 | 574 | Entry + hard never + read-when-needed table |
-| `.cursor/rules/portfolio-essentials.mdc` | Always | 994 | 248 | Stack, git land, lint, hard never |
-| `.cursor/rules/voice-modes.mdc` | Always | 710 | 178 | Discoverability for `/caveman` `/ultracave` without forcing terse every turn |
-| **Total** | | **4002** | **~1000** | Under 1–2k target |
+| `AGENTS.md` | hub | 2298 | 574 | Entry + hard never |
+| `portfolio-essentials.mdc` | Always | 994 | 248 | Stack, git land, lint, hard never |
+| `voice-modes.mdc` | Always | 710 | 178 | Discover how to invoke caveman/ultracave |
+| **Total** | | **4002** | **~1000** | |
 
-**Estimated reduction:** ~7038 → ~1000 always-on tokens (**~86%** / ~6038 tokens off the always-on prefix).
+## After PEM-490 (forced ultracave)
 
-## Mode map (after)
+| Path | Mode | Why always-on |
+|------|------|---------------|
+| `AGENTS.md` | hub | Entry + hard never + voice opt-out pointer |
+| `portfolio-essentials.mdc` | Always | Stack, git land, lint, hard never |
+| `voice-modes.mdc` | Always | **Mandatory ultracave** inline (skill does not attach to subagents) |
+
+Re-measure after landing (see Verify). Target: always-on prefix still near **≤2k** tokens while ultracave body (~400–600) lives in `voice-modes.mdc`.
+
+**Why inline:** host skill `~/.agents/skills/ultracave` has `disable-model-invocation: true` and does **not** attach to child agents. Coordinator kickoffs must work with mdc alone.
+
+## Mode map
 
 | File | Mode | Points to |
 |------|------|-----------|
 | `portfolio-essentials.mdc` | Always | `docs/git-commit-preferences.md`, `docs/agent/*` |
-| `voice-modes.mdc` | Always | host caveman/ultracave skills |
+| `voice-modes.mdc` | Always | **inline ultracave** (opt-out phrases; optional host skills for `/caveman`) |
 | `agent-coord-async.mdc` | Intelligent | `docs/agent/agent-coord.md` |
 | `dssh-backend-ownership.mdc` | Intelligent | `docs/agent/dssh-backend-ownership.md` |
 | `dssh-launch.mdc` | Intelligent | `docs/agent/dssh-launch.md` |
@@ -62,31 +54,38 @@ Notes:
 | `viewport-testing.mdc` | Globs (web/crm TS/CSS) | `docs/agent/viewport-testing.md` |
 | `dssh-backend-sigterm.mdc` | Manual (`@` only) | deep SIGTERM notes |
 
-Long bodies live under `docs/agent/` (index: `docs/agent/index.md`). Guidance was relocated, not deleted.
+Long bodies live under `docs/agent/` (index: `docs/agent/index.md`).
 
-## Caveman / ultracave
+## Caveman / ultracave (PEM-490)
 
-- **Problem:** ultracave skill sets `disable-model-invocation: true` — silent skill never auto-attaches; agents may not know how to invoke.
-- **Fix:** thin always-on `voice-modes.mdc` documents `/caveman`, `/ultracave`, `/caveman ultra`, attach paths, persistence until “stop caveman” / “normal mode”.
-- **Explicitly not done:** forcing caveman/ultracave on every turn.
+- **Default:** ultracave **on** every turn for all agents/subagents via always-on `voice-modes.mdc`.
+- **Opt out:** “stop caveman”, “normal mode”, “stop ultracave”.
+- **Skill attach not required** for kickoffs or children.
+- `/caveman` → host caveman skill; `/ultracave` / `/caveman ultra` keep ultracave; `/caveman status` reports only.
 
 ## Skills recommendation
 
-Reusable multi-step workflows (tiny-copy doer+adversary, dssh launch) stay as Intelligent rules + `docs/agent/*` for now. Optional follow-up: project Skills under `.agents/skills/` so full bodies load only on attach — not required for this token win.
+Reusable multi-step workflows stay Intelligent rules + `docs/agent/*`. Optional project Skills under `.agents/skills/` — not required for this win.
 
 ## User-global offset
 
-Do not delete user rules. If global `agent-coord-async` duplicates project guidance, prefer keeping the project intelligent rule as the portfolio-specific pointer; global remains host-wide for other repos.
+Do not delete user rules. Project intelligent `agent-coord-async` is the portfolio pointer; global remains host-wide.
 
 ## Verify
-
-Re-measure anytime:
 
 ```bash
 python3 - <<'PY'
 from pathlib import Path
 root = Path('.')
-files = [root/'AGENTS.md'] + [p for p in (root/'.cursor/rules').glob('*.mdc') if 'alwaysApply: true' in p.read_text()]
-print(sum(len(p.read_text()) for p in files)/4)
+files = [root/'AGENTS.md'] + sorted(
+	p for p in (root/'.cursor/rules').glob('*.mdc')
+	if 'alwaysApply: true' in p.read_text()
+)
+total = 0
+for p in files:
+	n = len(p.read_text())
+	total += n
+	print(f'{n:5d} chars  ~{n/4:6.0f} tok  {p}')
+print(f'TOTAL {total} chars ~{total/4:.0f} tok')
 PY
 ```

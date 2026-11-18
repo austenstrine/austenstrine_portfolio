@@ -32,5 +32,5 @@ Start here for this repo.
 | Shell-timing hooks | `docs/agent/shell-timing-hooks.md` |
 | Out-of-scope handoff | `docs/agent/out-of-scope-handoff.md` |
 | agent-coord | `docs/agent/agent-coord.md` |
-| Voice: caveman / ultracave | `/caveman`, `/ultracave`, `/caveman ultra` — see rule `voice-modes` |
+| Voice | **Ultracave always-on** (rule `voice-modes`, inline — skill attach not required). Opt out: “stop caveman” / “normal mode” / “stop ultracave”. `/caveman` → caveman skill. |
 | Sibling tools (dssh install, etc.) | README “Third-party tools”; tool remotes usually land on `master` |

@@ -17,3 +17,5 @@ Canonical long-form guidance relocated from always-on Cursor rules. Thin `.curso
 | [new-chat-on-drift.md](./new-chat-on-drift.md) | Subject drift → new chat ask |
 
 Also: `docs/code-style-preferences.md`, `docs/git-commit-preferences.md`, `docs/cursor-rules-progressive-disclosure.md`.
+
+**Voice:** always-on ultracave via `.cursor/rules/voice-modes.mdc` (forced default for agents + subagents; mdc enough, skill attach not required). Opt out: “stop caveman” / “normal mode” / “stop ultracave”.
