@@ -1,0 +1,110 @@
+#!/usr/bin/env bash
+# Thin wrappers for host context-compress tooling (RTK, ContextPrune, caveman-compress).
+# Prefer this over pasting huge raw dumps into the model. Full: docs/context-compress-tooling.md
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+# Prefer git URL: package name is not always on the npm registry.
+CONTEXTPRUNE_SPEC="${CONTEXTPRUNE_SPEC:-github:maniraja5599/contextprune}"
+CAVEMAN_COMPRESS_DIR="${CAVEMAN_COMPRESS_DIR:-$HOME/.agents/skills/caveman-compress}"
+
+usage() {
+	cat <<'EOF'
+Usage: ./bin/context-compress <command> [args]
+
+Commands:
+  status              Which tools are on PATH / installable
+  rtk [--] <args…>    Pass-through to host `rtk` (install first)
+  prune [args…]       ContextPrune AST prune (npx git package)
+  skeleton [args…]    ContextPrune --skeleton-all (+ extra args)
+  caveman <file>      Run host caveman-compress on absolute/relative file
+
+Env:
+  CONTEXTPRUNE_SPEC   default github:maniraja5599/contextprune
+  CAVEMAN_COMPRESS_DIR  default ~/.agents/skills/caveman-compress
+
+Docs: docs/context-compress-tooling.md  docs/agent/context-compress.md
+EOF
+}
+
+have() { command -v "$1" >/dev/null 2>&1; }
+
+die() { echo "context-compress: $*" >&2; exit 1; }
+
+cmd_status() {
+	echo "context-compress status (host)"
+	if have rtk; then
+		echo "  rtk: $(command -v rtk)  ($({ rtk --version 2>/dev/null || true; } | head -1))"
+	else
+		echo "  rtk: missing — curl -fsSL https://raw.githubusercontent.com/rtk-ai/rtk/refs/heads/master/install.sh | sh"
+		echo "         optional Cursor hook: rtk init -g --agent cursor   (dry-run first)"
+	fi
+	if have npx; then
+		echo "  contextprune: via npx $CONTEXTPRUNE_SPEC  (npm registry name may 404; use git)"
+	else
+		echo "  contextprune: need node/npx"
+	fi
+	if [[ -d "$CAVEMAN_COMPRESS_DIR/scripts" ]]; then
+		echo "  caveman-compress: $CAVEMAN_COMPRESS_DIR"
+	else
+		echo "  caveman-compress: missing — npx skills add JuliusBrussee/caveman --skill caveman-compress -a cursor -g"
+	fi
+	if have supercompress || npm ls -g --depth=0 supercompress-proxy >/dev/null 2>&1; then
+		echo "  supercompress-proxy: present (MCP/setup is account-gated — see docs)"
+	else
+		echo "  supercompress: optional — npm i -g supercompress-proxy && npx supercompress setup  (needs login)"
+	fi
+	echo "  report: $ROOT/docs/context-compress-tooling.md"
+}
+
+cmd_rtk() {
+	have rtk || die "rtk not on PATH — install: curl -fsSL https://raw.githubusercontent.com/rtk-ai/rtk/refs/heads/master/install.sh | sh"
+	if [[ "${1:-}" == "--" ]]; then
+		shift
+	fi
+	exec rtk "$@"
+}
+
+cmd_prune() {
+	have npx || die "npx required for ContextPrune"
+	exec npx --yes "$CONTEXTPRUNE_SPEC" "$@"
+}
+
+cmd_skeleton() {
+	have npx || die "npx required for ContextPrune"
+	exec npx --yes "$CONTEXTPRUNE_SPEC" --skeleton-all --no-copy "$@"
+}
+
+cmd_caveman() {
+	[[ $# -ge 1 ]] || die "caveman needs a filepath (absolute preferred)"
+	local target="$1"
+	if [[ "$target" != /* ]]; then
+		target="$(cd "$(dirname "$target")" && pwd)/$(basename "$target")"
+	fi
+	[[ -f "$target" ]] || die "not a file: $target"
+	[[ -d "$CAVEMAN_COMPRESS_DIR/scripts" ]] || die "skill missing at $CAVEMAN_COMPRESS_DIR — install: npx skills add JuliusBrussee/caveman --skill caveman-compress -a cursor -g"
+	# Data leaves the machine (model provider). Refuse obvious secret filenames here too.
+	case "$(basename "$target")" in
+		.env|.env.*|*credentials*|*secrets*|.netrc|*.pem|*.key)
+			die "refusing likely-secret filename: $target"
+			;;
+	esac
+	(cd "$CAVEMAN_COMPRESS_DIR" && exec python3 -m scripts "$target")
+}
+
+main() {
+	local cmd="${1:-}"
+	[[ -n "$cmd" ]] || { usage; exit 1; }
+	shift || true
+	case "$cmd" in
+		-h|--help|help) usage ;;
+		status) cmd_status "$@" ;;
+		rtk) cmd_rtk "$@" ;;
+		prune) cmd_prune "$@" ;;
+		skeleton) cmd_skeleton "$@" ;;
+		caveman) cmd_caveman "$@" ;;
+		*) die "unknown command: $cmd (try --help)" ;;
+	esac
+}
+
+main "$@"

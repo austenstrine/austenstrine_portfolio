@@ -15,7 +15,8 @@ Canonical long-form guidance relocated from always-on Cursor rules. Thin `.curso
 | [out-of-scope-handoff.md](./out-of-scope-handoff.md) | Missing repo/env/forge access |
 | [agent-coord.md](./agent-coord.md) | Same-checkout multi-agent file claims |
 | [new-chat-on-drift.md](./new-chat-on-drift.md) | Subject drift → new chat ask |
+| [context-compress.md](./context-compress.md) | Large context → RTK / ContextPrune / caveman-compress (`./bin/context-compress`) |
 
-Also: `docs/code-style-preferences.md`, `docs/git-commit-preferences.md`, `docs/cursor-rules-progressive-disclosure.md`.
+Also: `docs/code-style-preferences.md`, `docs/git-commit-preferences.md`, `docs/cursor-rules-progressive-disclosure.md`, `docs/context-compress-tooling.md`.
 
 **Voice:** always-on ultracave via `.cursor/rules/voice-modes.mdc` (forced default for agents + subagents; mdc enough, skill attach not required). Opt out: “stop caveman” / “normal mode” / “stop ultracave”.

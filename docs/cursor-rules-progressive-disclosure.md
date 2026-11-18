@@ -50,6 +50,7 @@ Re-measure after landing (see Verify). Target: always-on prefix still near **≤
 | `shell-timing-hooks.mdc` | Intelligent | `docs/agent/shell-timing-hooks.md` |
 | `show-dont-tell.mdc` | Intelligent | `docs/agent/show-dont-tell.md` |
 | `tiny-copy-doer-adversary.mdc` | Intelligent | `docs/agent/tiny-copy-doer-adversary.md` |
+| `context-compress.mdc` | Intelligent | `docs/agent/context-compress.md` · `docs/context-compress-tooling.md` |
 | `code-style-preferences.mdc` | Globs (`apps/web|crm`, `packages` `*.{ts,tsx}`) | `docs/code-style-preferences.md` |
 | `viewport-testing.mdc` | Globs (web/crm TS/CSS) | `docs/agent/viewport-testing.md` |
 | `dssh-backend-sigterm.mdc` | Manual (`@` only) | deep SIGTERM notes |

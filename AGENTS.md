@@ -32,5 +32,6 @@ Start here for this repo.
 | Shell-timing hooks | `docs/agent/shell-timing-hooks.md` |
 | Out-of-scope handoff | `docs/agent/out-of-scope-handoff.md` |
 | agent-coord | `docs/agent/agent-coord.md` |
+| Context compress (RTK / prune / caveman-compress) | `docs/agent/context-compress.md` · `./bin/context-compress` · report `docs/context-compress-tooling.md` |
 | Voice | **Ultracave always-on** (rule `voice-modes`, inline — skill attach not required). Opt out: “stop caveman” / “normal mode” / “stop ultracave”. `/caveman` → caveman skill. |
 | Sibling tools (dssh install, etc.) | README “Third-party tools”; tool remotes usually land on `master` |

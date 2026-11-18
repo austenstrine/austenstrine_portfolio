@@ -1,0 +1,8 @@
+---
+description: Compress large context outside the model (RTK, ContextPrune, caveman-compress) via ./bin/context-compress
+alwaysApply: false
+---
+
+# Context compress
+
+Gathering large dumps? Compress/skeletonize **outside** the model first (`./bin/context-compress status|prune|skeleton|rtk|caveman`). Skip tiny known-file edits and secrets. Full: `docs/agent/context-compress.md` · inventory: `docs/context-compress-tooling.md`.
