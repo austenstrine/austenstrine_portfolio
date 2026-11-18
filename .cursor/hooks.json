@@ -18,6 +18,11 @@
         "command": ".cursor/hooks/post-tool-watchdog.sh",
         "matcher": "Task",
         "timeout": 5
+      },
+      {
+        "command": ".cursor/hooks/post-tool-admin-crm.sh",
+        "matcher": "Write|StrReplace|Edit",
+        "timeout": 5
       }
     ]
   }
