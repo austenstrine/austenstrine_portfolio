@@ -73,6 +73,10 @@ Reusable multi-step workflows stay Intelligent rules + `docs/agent/*`. Optional 
 
 Do not delete user rules. Project intelligent `agent-coord-async` is the portfolio pointer; global remains host-wide.
 
+## Lint contract
+
+`ops/tooling/prefs-lint/agent-behavior-mdc-present.check.sh` and `cursor-rules-sync.check.sh` enforce this map: always-on = `portfolio-essentials.mdc` + `voice-modes.mdc`; topic `.mdc` stay `alwaysApply: false` pointer stubs; preference docs ↔ rules cross-link without requiring identical bodies.
+
 ## Verify
 
 ```bash

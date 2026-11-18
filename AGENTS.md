@@ -7,7 +7,7 @@ Start here for this repo.
 3. Subcommands: `orient` `layout` `scripts` `env` `docker` `seed` `helpers` — see `./bin/agent-cli --help`.
 4. **Git (this portfolio):** integrate on **`development`**; features `feature/<user>/development/<name>` (user usually `als`); local branch required; merge features → `development` **no PR**; leave `master` alone unless asked; same-VM → `git worktree add`. Full: `docs/git-commit-preferences.md`.
 5. **Fail-closed lint:** `./bin/agent-cli lint` (prefs + ESLint prefs + typecheck). Workspace `npm run lint -w apps/*` skips prefs.
-6. **Rules map / progressive disclosure:** `docs/cursor-rules-progressive-disclosure.md`. Most `.cursor/rules/*.mdc` are intelligent, globs, or manual — not always-on. Read the named doc when the task matches.
+6. **Rules map / progressive disclosure:** `docs/cursor-rules-progressive-disclosure.md`. Always-on: `portfolio-essentials.mdc` + `voice-modes.mdc`. Most other `.cursor/rules/*.mdc` are intelligent, globs, or manual — not always-on. Read the named doc when the task matches.
 7. **Ultracave forever:** every agent/worker/subagent uses ultracave (repo `.cursor/rules/voice-modes.mdc`, alwaysApply). Skill attach not required / not reliable. **Coordinators MUST prepend** this paste (verbatim; also in `docs/agent/ultracave-kickoff.md`) to every `CreateAgent` / `SendToAgent` / `Task` kickoff (cloud + local):
 
 ```text
@@ -40,6 +40,7 @@ Opt out only: “stop caveman” / “normal mode” / “stop ultracave”.
 | Viewport bands | `docs/agent/viewport-testing.md` |
 | Shell-timing hooks | `docs/agent/shell-timing-hooks.md` |
 | Out-of-scope handoff | `docs/agent/out-of-scope-handoff.md` |
+| New chat on subject drift | `docs/agent/new-chat-on-drift.md` |
 | agent-coord | `docs/agent/agent-coord.md` |
 | Context compress (RTK / prune / caveman-compress) | `docs/agent/context-compress.md` · `./bin/context-compress` · report `docs/context-compress-tooling.md` |
 | Voice / kickoff | **Ultracave mandatory** — `voice-modes.mdc` + kickoff paste `docs/agent/ultracave-kickoff.md`. Opt out: “stop caveman” / “normal mode” / “stop ultracave”. |

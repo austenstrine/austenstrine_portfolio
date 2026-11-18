@@ -1,17 +1,19 @@
 #!/usr/bin/env bash
-# Angle D: docs ↔ .cursor/rules mirrors for preference docs agents load.
-# Fail-closed on missing files, missing cross-links, and preference-body drift
-# after stripping YAML frontmatter + reciprocal Keep-in-sync / Cursor-loads banner lines.
+# Angle D: docs ↔ .cursor/rules preference mirrors under progressive disclosure.
+# Fail-closed on missing files and missing cross-links.
+# Bodies intentionally differ: docs hold full prefs; .mdc files are short pointers
+# (see docs/cursor-rules-progressive-disclosure.md). Do not require body identity.
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 cd "$ROOT"
 
 fail=0
 
-# Normalize preference prose for comparison (stdout).
-# Drop whole lines that carry the reciprocal sync banners (avoid matching
-# periods inside backtick paths like `.cursor` / `.md`).
-preference_body() {
+# Pointer stubs must stay short so always-on / glob attach stays cheap.
+# Soft cap in UTF-8 bytes (body after optional YAML frontmatter).
+MAX_POINTER_BYTES=1200
+
+rule_body_bytes() {
 	local path="$1"
 	python3 - "$path" <<'PY'
 import sys
@@ -22,14 +24,7 @@ if text.startswith('---'):
 	end = text.find('\n---', 3)
 	if end != -1:
 		text = text[end + 4:].lstrip('\n')
-
-out = []
-for line in text.splitlines():
-	low = line.lower()
-	if 'keep in sync with' in low or 'cursor loads' in low:
-		continue
-	out.append(line)
-sys.stdout.write('\n'.join(out).strip() + '\n')
+sys.stdout.write(str(len(text.encode('utf-8'))))
 PY
 }
 
@@ -54,18 +49,10 @@ pair() {
 		fail=1
 	fi
 
-	local doc_body rule_body
-	doc_body="$(preference_body "$doc")"
-	rule_body="$(preference_body "$rule")"
-	if [[ "$doc_body" != "$rule_body" ]]; then
-		echo "cursor-rules-sync: preference body drift between $doc and $rule (after banner/frontmatter strip)" >&2
-		if command -v diff >/dev/null 2>&1; then
-			diff -u \
-				<(printf '%s' "$doc_body") \
-				<(printf '%s' "$rule_body") \
-				|& sed -e "1s|.*|--- $doc|" -e "2s|.*|+++ $rule|" \
-				>&2 || true
-		fi
+	local nbytes
+	nbytes="$(rule_body_bytes "$rule")"
+	if [[ "$nbytes" -gt "$MAX_POINTER_BYTES" ]]; then
+		echo "cursor-rules-sync: $rule body is ${nbytes}B (max ${MAX_POINTER_BYTES}B) — keep progressive-disclosure pointer short; full prefs live in $doc" >&2
 		fail=1
 	fi
 }
