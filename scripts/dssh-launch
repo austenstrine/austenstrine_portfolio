@@ -26,14 +26,20 @@ declare -a TAB_CMDS=()
 DRY_RUN=0
 MAP_ONLY=0
 IGNORE_STALL=0
+SKIP_PREBUILD=0
 EXTRA=()
 SOFTLOCK_STATE="${HOST_SOFTLOCK_STATE_DIR:-${XDG_STATE_HOME:-$HOME/.local/state}/host-softlock-watch}"
-# Serialize compose create/build inside tab commands / child dssh (avoid build storms).
+# Serialize compose create/build + BuildKit caps (avoid post-cache-clear softlock).
 export COMPOSE_PARALLEL_LIMIT="${COMPOSE_PARALLEL_LIMIT:-1}"
+export BUILDKIT_MAX_PARALLELISM="${BUILDKIT_MAX_PARALLELISM:-1}"
+export DOCKER_BUILDKIT="${DOCKER_BUILDKIT:-1}"
+# Heavy app images — built in order before tabs (tabs use -nobuild for these).
+PREBUILD_TARGETS=(backend frontend crm)
+DSSH_BIN="${DSSH_LAUNCH_DSSH:-$ROOT/dssh}"
 
 usage() {
 	cat <<'EOF'
-Usage: dssh launch [--dry-run] [--map-only] [--ignore-stall] [--confirm|-y] […]
+Usage: dssh launch [--dry-run] [--map-only] [--ignore-stall] [--skip-prebuild] [--confirm|-y] […]
 
   Bring up the Place et Marque local stack the same way as
   scripts/port-broadcast-launcher + scripts/port-broadcast-stack.conf:
@@ -48,14 +54,20 @@ Usage: dssh launch [--dry-run] [--map-only] [--ignore-stall] [--confirm|-y] […
   D-state / RCU / softlock (see ~/.local/state/host-softlock-watch/status.json).
   Override: --ignore-stall or DSSH_LAUNCH_IGNORE_STALL=1.
 
-  Compose: COMPOSE_PARALLEL_LIMIT defaults to 1 (serialize create/build).
+  Build throttle:
+    COMPOSE_PARALLEL_LIMIT=1
+    BUILDKIT_MAX_PARALLELISM=1
+    DOCKER_BUILDKIT=1
+    Prebuild serialize: backend → frontend → crm (then tabs -nobuild).
+    Softlock caution: never SIGKILL D-state; wait for stall clear.
 
 Options:
-  --dry-run       Write map; pass --dry-run to the launcher (no GUI)
-  --map-only      Write map only; do not invoke the launcher
-  --ignore-stall  Bypass D-state/RCU stall gate (dangerous)
-  --confirm|-y    Accepted (launch already confirms); forwarded if present
-  -h, --help      Show this help
+  --dry-run        Write map; pass --dry-run to the launcher (no GUI)
+  --map-only       Write map only; do not invoke the launcher
+  --ignore-stall   Bypass D-state/RCU stall gate (dangerous)
+  --skip-prebuild  Skip ordered backend/frontend/crm image builds
+  --confirm|-y     Accepted (launch already confirms); forwarded if present
+  -h, --help       Show this help
 EOF
 }
 
@@ -89,6 +101,28 @@ try {
 		echo "dssh-launch: wait for clear (./bin/agent-cli watchdog) or override with --ignore-stall" >&2
 		exit 2
 	fi
+}
+
+# One image at a time: backend → frontend → crm (tabs restart -nobuild).
+prebuild_app_images() {
+	if [[ "${DSSH_LAUNCH_SKIP_PREBUILD:-0}" == "1" || "$SKIP_PREBUILD" == "1" ]]; then
+		echo "dssh-launch: skip prebuild (--skip-prebuild / DSSH_LAUNCH_SKIP_PREBUILD=1)" >&2
+		return 0
+	fi
+	if [[ ! -x "$DSSH_BIN" ]]; then
+		die "missing dssh wrapper for prebuild: $DSSH_BIN"
+	fi
+	local t
+	echo "dssh-launch: prebuild serialize → ${PREBUILD_TARGETS[*]} (COMPOSE_PARALLEL_LIMIT=${COMPOSE_PARALLEL_LIMIT} BUILDKIT_MAX_PARALLELISM=${BUILDKIT_MAX_PARALLELISM})" >&2
+	for t in "${PREBUILD_TARGETS[@]}"; do
+		stall_gate
+		echo "dssh-launch: building $t..." >&2
+		if [[ "$DRY_RUN" == "1" ]]; then
+			echo "dssh-launch: dry-run would run: $DSSH_BIN $t build" >&2
+			continue
+		fi
+		"$DSSH_BIN" "$t" build
+	done
 }
 
 port_listening() {
@@ -232,6 +266,10 @@ while [[ $# -gt 0 ]]; do
 			IGNORE_STALL=1
 			shift
 			;;
+		--skip-prebuild)
+			SKIP_PREBUILD=1
+			shift
+			;;
 		--confirm|-y)
 			# Launch already confirms; accept so `dssh launch --confirm` is harmless.
 			EXTRA+=(--confirm)
@@ -267,6 +305,9 @@ if [[ "$DRY_RUN" != "1" ]] && hops_already_up; then
 	echo "dssh-launch: attach with: nc ${BIND} ${BASE_PORT}  # … through $((BASE_PORT + TABS - 1))" >&2
 	exit 0
 fi
+
+# Ordered image builds before tabs open (backend→frontend→crm). Softlock caution.
+prebuild_app_images
 
 # Real GUI launch always needs --confirm (port-broadcast safety). Add if missing.
 has_confirm=0
