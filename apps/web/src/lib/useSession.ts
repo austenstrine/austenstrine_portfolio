@@ -19,6 +19,13 @@ export type SessionValue = {
 	user: AuthUser | null;
 	loading: boolean;
 	refresh: () => Promise<void>;
+	/**
+	 * After login / 2FA / email-verify, cookies are set but the PeM layout
+	 * SessionProvider stays mounted with a guest seed. Soft `router.push`
+	 * does not re-run the mount probe — adopt the issued user before navigate
+	 * so RequireAccess / header see signed-in (PEM-505).
+	 */
+	adoptSignedIn: (user: AuthUser) => void;
 	signOut: () => Promise<void>;
 	sessionUnavailable: string | null;
 };
@@ -90,6 +97,15 @@ function useSessionController(options: {
 		setSessionUnavailable(null);
 	}, [enabled]);
 
+	const adoptSignedIn = useCallback((next: AuthUser) => {
+		if(!enabled) {
+			return;
+		}
+		setUser(next);
+		setSessionUnavailable(null);
+		setLoading(false);
+	}, [enabled]);
+
 	const publicRefresh = useCallback(async () => {
 		await refresh(false);
 	}, [refresh]);
@@ -98,6 +114,7 @@ function useSessionController(options: {
 		user,
 		loading,
 		refresh: publicRefresh,
+		adoptSignedIn,
 		signOut,
 		sessionUnavailable,
 	};

@@ -10,10 +10,12 @@ import {
 	resolvePostAuthDestination,
 	safeNextPath,
 } from '../../../../lib/accessGate';
+import { useSession } from '../../../../lib/useSession';
 
 function VerifyEmailForm() {
 	const router = useRouter();
 	const searchParams = useSearchParams();
+	const { adoptSignedIn } = useSession();
 	const nextPath = safeNextPath(searchParams.get('next'));
 	const [email, setEmail] = useState(searchParams.get('email') ?? '');
 	const [code, setCode] = useState('');
@@ -26,7 +28,8 @@ function VerifyEmailForm() {
 		setSubmitting(true);
 
 		try {
-			await verifyEmail(email, code);
+			const session = await verifyEmail(email, code);
+			adoptSignedIn(session.user);
 			const destination = await resolvePostAuthDestination(nextPath);
 			router.push(destination);
 		}

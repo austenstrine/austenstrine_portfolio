@@ -13,10 +13,12 @@ import {
 	resolvePostAuthDestination,
 	safeNextPath,
 } from '../../../../lib/accessGate';
+import { useSession } from '../../../../lib/useSession';
 
 function VerifyLoginForm() {
 	const router = useRouter();
 	const searchParams = useSearchParams();
+	const { adoptSignedIn } = useSession();
 	const pendingToken = searchParams.get('pendingToken');
 	const nextFromQuery = searchParams.get('next');
 	const nextPath = safeNextPath(
@@ -40,7 +42,8 @@ function VerifyLoginForm() {
 		setSubmitting(true);
 
 		try {
-			await verifyLoginOtp(pendingToken, code);
+			const session = await verifyLoginOtp(pendingToken, code);
+			adoptSignedIn(session.user);
 			const destination = await resolvePostAuthDestination(
 				nextFromQuery ? nextPath : consumeStashedNext(nextPath),
 			);

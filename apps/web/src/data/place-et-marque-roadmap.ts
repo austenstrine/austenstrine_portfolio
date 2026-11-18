@@ -74,15 +74,6 @@ export const ROADMAP_PLANNED: RoadmapPlannedItem[] = [
 		sourceHint: 'PEM-246 / PEM-240',
 	},
 	{
-		id: 'planned-auth-2fa-session',
-		title: 'Sign-in and 2FA leave you signed out',
-		summary:
-			'After password + email code, cookies land but the page still acts signed out until a hard refresh.',
-		area: 'auth',
-		status: 'known-issue',
-		sourceHint: 'PEM-505',
-	},
-	{
 		id: 'planned-persona-pass',
 		title: 'Visitor walkthrough on new pages',
 		summary:
@@ -401,6 +392,13 @@ export const ROADMAP_COMPLETED: RoadmapItem[] = [
 	},
 
 	// Auth
+	{
+		id: 'auth-2fa-session-adopt',
+		title: 'Stay signed in after the email sign-in code',
+		area: 'auth',
+		sourceHint: 'PEM-505',
+		highlight: true,
+	},
 	{
 		id: 'auth-account-hub',
 		title: 'Account hub with a password subpage',
