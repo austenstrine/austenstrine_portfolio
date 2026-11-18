@@ -25,6 +25,8 @@ Opt out only: “stop caveman” / “normal mode” / “stop ultracave”.
 - Do not silently `docker stop|rm|kill|restart portfolio-api` / `portfolio-crm` (use user-terminal `dssh backend|crm restart; dssh logs …`).
 - Do not fake out-of-scope forge/repo/env access — hand off instead.
 
+When Austen input needed: run `/home/austen-loren-strine/Development/hey-alarm/hey` (shell only; no CreateAgent just to play the mp3).
+
 If working on session/cookie, read this: docs/agent/cookie-epoch.md
 
 ## Read when needed
