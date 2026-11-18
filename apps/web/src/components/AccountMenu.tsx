@@ -34,7 +34,7 @@ export function AccountMenu() {
 					${PILL_CTA_MOTION_CLASS}
 					hover:bg-white/20
 				`}
-				href="/auth/login"
+				href="/place-et-marque/auth/login"
 			>
 				Sign in
 				<NavigatePersistentArrow />
@@ -69,7 +69,7 @@ export function AccountMenu() {
 					underline
 					underline-offset-2
 				"
-				href="/auth/account"
+				href="/place-et-marque/auth/account"
 			>
 				{user.email}
 			</a>

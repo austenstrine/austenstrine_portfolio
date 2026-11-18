@@ -2,11 +2,11 @@
 
 import { useRouter } from 'next/navigation';
 import { useState, type FormEvent } from 'react';
-import { AuthCard } from '../../../components/auth/AuthCard';
-import { ErrorText } from '../../../components/auth/ErrorText';
-import { FormField } from '../../../components/auth/FormField';
-import { AuthApiError, requestPasswordReset } from '../../../lib/auth-api';
-import { useSession } from '../../../lib/useSession';
+import { AuthCard } from '../../../../components/auth/AuthCard';
+import { ErrorText } from '../../../../components/auth/ErrorText';
+import { FormField } from '../../../../components/auth/FormField';
+import { AuthApiError, requestPasswordReset } from '../../../../lib/auth-api';
+import { useSession } from '../../../../lib/useSession';
 
 export default function ForgotPasswordPage() {
 	const router = useRouter();
@@ -22,7 +22,7 @@ export default function ForgotPasswordPage() {
 
 		try {
 			await requestPasswordReset(email);
-			router.push(`/auth/reset-password?email=${encodeURIComponent(email)}`);
+			router.push(`/place-et-marque/auth/reset-password?email=${encodeURIComponent(email)}`);
 		}
 		catch(submitError) {
 			setError(
@@ -37,15 +37,14 @@ export default function ForgotPasswordPage() {
 	};
 
 	return (
-		<main
+		<div
 			className="
 				flex
-				min-h-screen
+				min-h-[min(70vh,40rem)]
 				items-center
 				justify-center
-				bg-frost
-				px-6
-				py-16
+				py-8
+				md:py-12
 			"
 		>
 			<AuthCard
@@ -64,7 +63,7 @@ export default function ForgotPasswordPage() {
 												text-sky
 												hover:underline
 											"
-											href="/auth/account"
+											href="/place-et-marque/auth/account"
 										>
 											Account
 										</a>
@@ -79,7 +78,7 @@ export default function ForgotPasswordPage() {
 												text-sky
 												hover:underline
 											"
-											href="/auth/login"
+											href="/place-et-marque/auth/login"
 										>
 											Sign in
 										</a>
@@ -134,6 +133,6 @@ export default function ForgotPasswordPage() {
 					</button>
 				</form>
 			</AuthCard>
-		</main>
+		</div>
 	);
 }

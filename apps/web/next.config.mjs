@@ -16,19 +16,29 @@ const nextConfig = {
 		];
 	},
 	async redirects() {
-    return [
-      {
-        source: '/shop',
-        destination: '/place-et-marque',
-        permanent: true,
-      },
-      {
-        source: '/shop/:path*',
-        destination: '/place-et-marque/:path*',
-        permanent: true,
-      },
-    ];
-  },
+		return [
+			{
+				source: '/shop',
+				destination: '/place-et-marque',
+				permanent: true,
+			},
+			{
+				source: '/shop/:path*',
+				destination: '/place-et-marque/:path*',
+				permanent: true,
+			},
+			{
+				source: '/auth',
+				destination: '/place-et-marque/auth/login',
+				permanent: true,
+			},
+			{
+				source: '/auth/:path*',
+				destination: '/place-et-marque/auth/:path*',
+				permanent: true,
+			},
+		];
+	},
 };
 
 export default nextConfig;

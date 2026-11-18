@@ -13,7 +13,7 @@ export function SessionNav() {
 		return (
 			<a
 				className="text-sky hover:underline"
-				href="/auth/login"
+				href="/place-et-marque/auth/login"
 			>
 				Sign in
 			</a>
@@ -31,7 +31,7 @@ export function SessionNav() {
 		>
 			<a
 				className="text-sky hover:underline"
-				href="/auth/account"
+				href="/place-et-marque/auth/account"
 			>
 				Account
 			</a>

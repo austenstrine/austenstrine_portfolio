@@ -116,8 +116,25 @@ const VENDOR_REQUIRED_PREFIXES = [
 	'/place-et-marque/categories',
 ] as const;
 
+/** Place et Marque web auth (App Router). API routes stay at `/auth/*`. */
+export const PEM_AUTH_BASE = '/place-et-marque/auth';
+
+export function pemAuthPath(suffix: string): string {
+	const normalized = suffix.startsWith('/')
+		? suffix
+		: `/${suffix}`;
+	return `${PEM_AUTH_BASE}${normalized}`;
+}
+
 /** Guest auth surfaces — never use these as post-login `next` (bounce fuel). */
 const AUTH_GUEST_NEXT_BLOCKLIST = [
+	pemAuthPath('/login'),
+	pemAuthPath('/register'),
+	pemAuthPath('/forgot-password'),
+	pemAuthPath('/reset-password'),
+	pemAuthPath('/verify'),
+	pemAuthPath('/verify-email'),
+	// Legacy portfolio-root auth URLs (redirect targets may still appear in next=).
 	'/auth/login',
 	'/auth/register',
 	'/auth/forgot-password',
@@ -125,6 +142,24 @@ const AUTH_GUEST_NEXT_BLOCKLIST = [
 	'/auth/verify',
 	'/auth/verify-email',
 ] as const;
+
+/** Any PeM auth URL (guest + account). */
+export function pathIsPemAuth(path: string): boolean {
+	const pathname = path.split('?')[0] ?? path;
+	return pathname === PEM_AUTH_BASE || pathname.startsWith(`${PEM_AUTH_BASE}/`);
+}
+
+/**
+ * Guest-only auth surfaces (login / register / OTP / password reset).
+ * Account hub stays on shopping chrome; these lean the header to brand + escape.
+ */
+export function pathIsPemAuthGuest(path: string): boolean {
+	const pathname = path.split('?')[0] ?? path;
+	if(!pathIsPemAuth(pathname)) {
+		return false;
+	}
+	return !pathname.startsWith(pemAuthPath('/account'));
+}
 
 export function safeNextPath(raw: string | null | undefined, fallback = '/'): string {
 	if(!raw || !raw.startsWith('/') || raw.startsWith('//')) {
@@ -148,6 +183,7 @@ const PRODUCT_SLUG_EDITOR_PATH =
 /** First path segment after /place-et-marque/ that is an app route, not a vendor slug. */
 const PLACE_ET_MARQUE_RESERVED_SEGMENTS = new Set([
 	'attributes',
+	'auth',
 	'cart',
 	'categories',
 	'checkout',
@@ -159,6 +195,7 @@ const PLACE_ET_MARQUE_RESERVED_SEGMENTS = new Set([
 	'orders',
 	'preferences',
 	'products',
+	'roadmap',
 	'search',
 	'uom-merges',
 	'uoms',
@@ -290,7 +327,8 @@ export function buildLoginUrl(options: {
 		params.set('reason', options.reason);
 	}
 	const query = params.toString();
-	return query ? `/auth/login?${query}` : '/auth/login';
+	const base = pemAuthPath('/login');
+	return query ? `${base}?${query}` : base;
 }
 
 export function buildRegisterUrl(options: {
@@ -306,7 +344,8 @@ export function buildRegisterUrl(options: {
 		params.set('reason', options.reason);
 	}
 	const query = params.toString();
-	return query ? `/auth/register?${query}` : '/auth/register';
+	const base = pemAuthPath('/register');
+	return query ? `${base}?${query}` : base;
 }
 
 export function buildVendorGateUrl(next?: string, reason?: string): string {

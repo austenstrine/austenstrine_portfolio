@@ -176,19 +176,21 @@ export class AuthController {
 		const webUrl = process.env.WEB_URL ?? 'http://localhost:3000';
 
 		if(!user) {
-			res.redirect(`${webUrl}/auth/login?error=google`);
+			res.redirect(`${webUrl}/place-et-marque/auth/login?error=google`);
 			return;
 		}
 
 		const fullUser = await this.authService.getUserById(user.id);
 
 		if(!fullUser) {
-			res.redirect(`${webUrl}/auth/login?error=google`);
+			res.redirect(`${webUrl}/place-et-marque/auth/login?error=google`);
 			return;
 		}
 
 		const { pendingToken } = await this.authService.beginTwoFactorForGoogleUser(fullUser);
-		res.redirect(`${webUrl}/auth/verify?pendingToken=${encodeURIComponent(pendingToken)}`);
+		res.redirect(
+			`${webUrl}/place-et-marque/auth/verify?pendingToken=${encodeURIComponent(pendingToken)}`,
+		);
 	}
 
 	@Throttle({ default: { limit: 5, ttl: 60_000 } })

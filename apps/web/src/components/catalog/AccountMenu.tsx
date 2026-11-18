@@ -28,7 +28,7 @@ import { NavigateHoverArrow } from './NavigateHoverArrow';
 
 /** Shopping-side account links (purchases keep buyer chrome). */
 const buyerLinks = [
-	{ href: '/auth/account', label: 'Account' },
+	{ href: '/place-et-marque/auth/account', label: 'Account' },
 	{ href: '/place-et-marque/orders', label: 'Your orders' },
 ];
 
@@ -269,7 +269,7 @@ export function AccountMenu({
 
 	const primaryLinks = sellerChrome
 		? [
-			{ href: '/auth/account', label: 'Account' },
+			{ href: '/place-et-marque/auth/account', label: 'Account' },
 			...sellerToolLinks,
 			{ href: BUYER_ORDERS_HREF, label: 'Your orders' },
 		]

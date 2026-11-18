@@ -2,35 +2,37 @@
 
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useState, type FormEvent } from 'react';
-import { AuthCard } from '../../../components/auth/AuthCard';
-import { AuthReasonBanner } from '../../../components/auth/AuthReasonBanner';
-import { ErrorText } from '../../../components/auth/ErrorText';
-import { FormField } from '../../../components/auth/FormField';
-import { GoogleButton } from '../../../components/auth/GoogleButton';
-import { AuthApiError, loginUser } from '../../../lib/auth-api';
+import { AuthCard } from '../../../../components/auth/AuthCard';
+import { AuthReasonBanner } from '../../../../components/auth/AuthReasonBanner';
+import { ErrorText } from '../../../../components/auth/ErrorText';
+import { FormField } from '../../../../components/auth/FormField';
+import { GoogleButton } from '../../../../components/auth/GoogleButton';
+import { AuthApiError, registerUser } from '../../../../lib/auth-api';
 import {
-	buildRegisterUrl,
+	buildLoginUrl,
 	safeNextPath,
 	stashAuthRedirect,
-} from '../../../lib/accessGate';
-import { useRedirectIfAuthenticated } from '../../../lib/useRedirectIfAuthenticated';
+} from '../../../../lib/accessGate';
+import { useRedirectIfAuthenticated } from '../../../../lib/useRedirectIfAuthenticated';
 
 
-function LoginForm() {
+function RegisterForm() {
 	const router = useRouter();
 	const searchParams = useSearchParams();
-	const googleError = searchParams.get('error') === 'google';
 	const nextPath = safeNextPath(searchParams.get('next'));
 	const reason = searchParams.get('reason');
 	const { loading: sessionLoading, redirecting } = useRedirectIfAuthenticated(
 		nextPath,
 	);
-
-	const [email, setEmail] = useState('');
+	const [email, setEmail] = useState(() => {
+		const raw = searchParams.get('email')?.trim() ?? '';
+		return raw.includes('@')
+			? raw
+			: '';
+	});
 	const [password, setPassword] = useState('');
-	const [error, setError] = useState<string | null>(
-		googleError ? 'Google sign-in failed. Please try again.' : null,
-	);
+	const [confirmPassword, setConfirmPassword] = useState('');
+	const [error, setError] = useState<string | null>(null);
 	const [submitting, setSubmitting] = useState(false);
 
 	if(sessionLoading || redirecting) {
@@ -44,18 +46,24 @@ function LoginForm() {
 	const onSubmit = async (event: FormEvent) => {
 		event.preventDefault();
 		setError(null);
+
+		if(password !== confirmPassword) {
+			setError('Passwords do not match.');
+			return;
+		}
+
 		setSubmitting(true);
 
 		try {
-			const { pendingToken } = await loginUser(email, password);
+			await registerUser(email, password);
 			const verifyQuery = new URLSearchParams({
-				pendingToken,
+				email,
 				next: nextPath,
 			});
 			if(reason) {
 				verifyQuery.set('reason', reason);
 			}
-			router.push(`/auth/verify?${verifyQuery.toString()}`);
+			router.push(`/place-et-marque/auth/verify-email?${verifyQuery.toString()}`);
 		}
 		catch(submitError) {
 			setError(
@@ -71,23 +79,23 @@ function LoginForm() {
 
 	return (
 		<AuthCard
-			title="Sign in"
-			subtitle="Every sign-in is confirmed with a one-time code sent to your email."
+			title="Create your account"
+			subtitle="Your email doubles as your username, and every sign-in is confirmed with a one-time code."
 			footer={
 				<p>
-					Need an account?{' '}
+					Already have an account?{' '}
 					<a
 						className="
 							font-semibold
 							text-sky
 							hover:underline
 						"
-						href={buildRegisterUrl({
+						href={buildLoginUrl({
 							next: nextPath,
 							reason: reason ?? undefined,
 						})}
 					>
-						Create one
+						Sign in
 					</a>
 				</p>
 			}
@@ -116,42 +124,16 @@ function LoginForm() {
 					type="password"
 					value={password}
 					onChange={setPassword}
-					autoComplete="current-password"
+					autoComplete="new-password"
+					placeholder="At least 10 characters"
 				/>
-
-				<div className="-mt-2 text-right">
-					<a
-						className="
-							text-sm
-							font-semibold
-							text-sky
-							hover:underline
-						"
-						href="/auth/forgot-password"
-					>
-						Forgot password?
-					</a>
-				</div>
-				<p
-					className="
-						-mt-1
-						text-xs
-						text-slate-500
-					"
-				>
-					Used Google and never set a password? You can add one after signing in, or
-					{' '}
-					<a
-						className="
-							font-semibold
-							text-sky
-							hover:underline
-						"
-						href="/auth/forgot-password"
-					>
-						create one here.
-					</a>
-				</p>
+				<FormField
+					label="Confirm password"
+					type="password"
+					value={confirmPassword}
+					onChange={setConfirmPassword}
+					autoComplete="new-password"
+				/>
 
 				<ErrorText
 					message={error}
@@ -177,8 +159,8 @@ function LoginForm() {
 					disabled={submitting}
 				>
 					{submitting
-						? 'Signing in…'
-						: 'Sign in'
+						? 'Creating account…'
+						: 'Create account'
 					}
 				</button>
 
@@ -220,22 +202,21 @@ function LoginForm() {
 	);
 }
 
-export default function LoginPage() {
+export default function RegisterPage() {
 	return (
-		<main
+		<div
 			className="
 				flex
-				min-h-screen
+				min-h-[min(70vh,40rem)]
 				items-center
 				justify-center
-				bg-frost
-				px-6
-				py-16
+				py-8
+				md:py-12
 			"
 		>
 			<Suspense fallback={null}>
-				<LoginForm />
+				<RegisterForm />
 			</Suspense>
-		</main>
+		</div>
 	);
 }

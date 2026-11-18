@@ -1,15 +1,13 @@
 'use client';
 
 import Link from 'next/link';
-import { Suspense } from 'react';
-import { RequireAccess } from '../../../components/auth/RequireAccess';
 import {
 	resolveOrdersToFulfillHref,
-} from '../../../components/catalog/AccountMenu';
-import { NavigateHoverArrow } from '../../../components/catalog/NavigateHoverArrow';
-import type { VendorSummary } from '../../../lib/catalog-api';
-import { NOTIFICATIONS_INBOX_PATH } from '../../../lib/notifications-api';
-import { useSession } from '../../../lib/useSession';
+} from '../../../../components/catalog/AccountMenu';
+import { NavigateHoverArrow } from '../../../../components/catalog/NavigateHoverArrow';
+import type { VendorSummary } from '../../../../lib/catalog-api';
+import { NOTIFICATIONS_INBOX_PATH } from '../../../../lib/notifications-api';
+import { useSession } from '../../../../lib/useSession';
 
 type HubLink = {
 	href: string;
@@ -109,7 +107,7 @@ function AccountHubBody({
 
 	const accountLinks: HubLink[] = [
 		{
-			href: '/auth/account/password',
+			href: '/place-et-marque/auth/account/password',
 			label: user.hasPassword
 				? 'Password'
 				: 'Add password',
@@ -143,7 +141,7 @@ function AccountHubBody({
 			label: 'Manage listings',
 		});
 		const fulfillHref = resolveOrdersToFulfillHref(
-			'/auth/account',
+			'/place-et-marque/auth/account',
 			vendors,
 		);
 		if(fulfillHref) {
@@ -218,7 +216,7 @@ function AccountHubBody({
 					type="button"
 					onClick={() => {
 						void signOut().then(() => {
-							window.location.href = '/auth/login';
+							window.location.href = '/place-et-marque/auth/login';
 						});
 					}}
 				>
@@ -235,16 +233,6 @@ export function AccountHubClient({
 	vendors: VendorSummary[];
 }) {
 	return (
-		<Suspense
-			fallback={
-				<p className="text-sm text-slate-500">
-					Loading…
-				</p>
-			}
-		>
-			<RequireAccess reasonKey="account">
-				<AccountHubBody vendors={vendors} />
-			</RequireAccess>
-		</Suspense>
+		<AccountHubBody vendors={vendors} />
 	);
 }

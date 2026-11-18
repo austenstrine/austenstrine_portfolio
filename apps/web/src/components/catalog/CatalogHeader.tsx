@@ -3,6 +3,8 @@
 import { useEffect, useLayoutEffect, useRef, useState, type RefObject } from 'react';
 import { usePathname } from 'next/navigation';
 import {
+	buildLoginUrl,
+	pathIsPemAuthGuest,
 	pathReservesManageContextBars,
 	pathReservesSellerTopContext,
 	pathUsesSellerChrome,
@@ -95,21 +97,25 @@ export function CatalogHeader({
 	const [headerHidden, setHeaderHidden] = useState(false);
 	const lastScrollY = useRef(0);
 	const sellerChrome = pathUsesSellerChrome(pathname);
+	const authGuest = pathIsPemAuthGuest(pathname);
 	// Manage: reserve top + bottom before paint (PEM-440). Vendor orders:
 	// reserve top only for Filter/Status harvest (PEM-445).
 	const reserveManageContext = pathReservesManageContextBars(pathname);
 	const reserveTopContext = pathReservesSellerTopContext(pathname);
 	const showInPlaceEditToggle = !sellerChrome
+		&& !authGuest
 		&& editableVendorsReady
 		&& editableVendorIds.size > 0;
 	// Buyer chrome (incl. /place-et-marque/<vendor>) keeps the department bar.
 	// Search hides it — filters live on the page instead.
+	// Guest auth lean: brand mark is the leave-auth escape (no dept bar / cart).
 	// Categories are SSR-seeded (PEM-370): show/hide is decided before paint.
 	// Spacer / --catalog-header-h use the same decision (PEM-377) so first
 	// paint matches bar present vs absent — no post-paint spacer jump.
 	// Seller top-context (manage + vendor orders) uses with-seller-context.
 	const showDepartmentBar =
 		!sellerChrome
+		&& !authGuest
 		&& pathname !== '/place-et-marque/search'
 		&& categories.length > 0;
 	const headerRef = useRef<HTMLElement>(null);
@@ -309,13 +315,18 @@ export function CatalogHeader({
 							? <SellerModeChip />
 							: null
 						}
-						<div className="hidden min-w-0 flex-1 md:flex">
-							<HeaderSearch
-								inputId="store-search-desktop"
-								inputRef={headerDesktopRef}
-								setExtras={setHeaderDesktopExtras}
-							/>
-						</div>
+						{authGuest
+							? <div className="hidden min-w-0 flex-1 md:block" />
+							: (
+								<div className="hidden min-w-0 flex-1 md:flex">
+									<HeaderSearch
+										inputId="store-search-desktop"
+										inputRef={headerDesktopRef}
+										setExtras={setHeaderDesktopExtras}
+									/>
+								</div>
+							)
+						}
 						{showInPlaceEditToggle
 							? (
 								<InPlaceEditToggle
@@ -338,9 +349,9 @@ export function CatalogHeader({
 								sm:gap-3
 							"
 						>
-							{sellerChrome
-								? null
-								: (
+						{sellerChrome || authGuest
+							? null
+							: (
 									<a
 										className="
 											relative
@@ -383,93 +394,104 @@ export function CatalogHeader({
 									</a>
 								)
 							}
-							{loading
-								? (
-									<span
-										aria-hidden
-										className="
-											invisible
-											inline-flex
-											min-h-9
-											items-center
-											gap-1
-											text-sm
-											font-semibold
-										"
-									>
-										<span>Account</span>
-										<CaretDownIcon
-											className="
-												h-3
-												w-3
-												shrink-0
-												text-slate-400
-											"
-										/>
-									</span>
-								)
-								: user
+							{authGuest
+								? null
+								: loading
 									? (
-										<AccountMenu
-											email={user.email}
-											onSignOut={() => {
-												void signOut().then(() => {
-													window.location.reload();
-												});
-											}}
-										/>
-									)
-									: (
-										<a
-											className={`
-												group
+										<span
+											aria-hidden
+											className="
+												invisible
 												inline-flex
+												min-h-9
 												items-center
-												gap-1.5
-												rounded-full
-												bg-asgreen
-												px-3.5
-												py-2
-												text-white
-												${PILL_CTA_MOTION_CLASS}
-												hover:bg-asgreen/90
-											`}
-											href="/auth/login"
+												gap-1
+												text-sm
+												font-semibold
+											"
 										>
-											Sign in
-											<NavigatePersistentArrow />
-										</a>
+											<span>Account</span>
+											<CaretDownIcon
+												className="
+													h-3
+													w-3
+													shrink-0
+													text-slate-400
+												"
+											/>
+										</span>
 									)
+									: user
+										? (
+											<AccountMenu
+												email={user.email}
+												onSignOut={() => {
+													void signOut().then(() => {
+														window.location.reload();
+													});
+												}}
+											/>
+										)
+										: (
+											<a
+												className={`
+													group
+													inline-flex
+													items-center
+													gap-1.5
+													rounded-full
+													bg-asgreen
+													px-3.5
+													py-2
+													text-white
+													${PILL_CTA_MOTION_CLASS}
+													hover:bg-asgreen/90
+												`}
+												href={buildLoginUrl({
+													next: pathname.startsWith('/place-et-marque')
+														? pathname
+														: '/place-et-marque',
+												})}
+											>
+												Sign in
+												<NavigatePersistentArrow />
+											</a>
+										)
 							}
 						</nav>
 					</div>
-					<div className="md:hidden">
-						<div
-							className="
-								flex
-								min-w-0
-								flex-wrap
-								items-center
-								gap-2
-							"
-						>
-							<HeaderSearch
-								inputId="store-search-mobile"
-								inputRef={headerMobileRef}
-								setExtras={setHeaderMobileExtras}
-							/>
-							{showInPlaceEditToggle
-								? (
-									<InPlaceEditToggle
-										className="shrink-0"
-										onChange={setEditTier}
-										tier={editTier}
+					{authGuest
+						? null
+						: (
+							<div className="md:hidden">
+								<div
+									className="
+										flex
+										min-w-0
+										flex-wrap
+										items-center
+										gap-2
+									"
+								>
+									<HeaderSearch
+										inputId="store-search-mobile"
+										inputRef={headerMobileRef}
+										setExtras={setHeaderMobileExtras}
 									/>
-								)
-								: null
-							}
-						</div>
-					</div>
+									{showInPlaceEditToggle
+										? (
+											<InPlaceEditToggle
+												className="shrink-0"
+												onChange={setEditTier}
+												tier={editTier}
+											/>
+										)
+										: null
+									}
+								</div>
+							</div>
+						)
+					}
 				</div>
 				{sellerChrome
 					? (

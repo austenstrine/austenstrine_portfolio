@@ -2,48 +2,32 @@
 
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useState, type FormEvent } from 'react';
-import { AuthCard } from '../../../components/auth/AuthCard';
-import { ErrorText } from '../../../components/auth/ErrorText';
-import { FormField } from '../../../components/auth/FormField';
-import { AuthApiError, verifyLoginOtp } from '../../../lib/auth-api';
+import { AuthCard } from '../../../../components/auth/AuthCard';
+import { ErrorText } from '../../../../components/auth/ErrorText';
+import { FormField } from '../../../../components/auth/FormField';
+import { AuthApiError, verifyEmail } from '../../../../lib/auth-api';
 import {
-	AUTH_NEXT_COOKIE,
-	consumeStashedNext,
-	readCookie,
 	resolvePostAuthDestination,
 	safeNextPath,
-} from '../../../lib/accessGate';
+} from '../../../../lib/accessGate';
 
-function VerifyLoginForm() {
+function VerifyEmailForm() {
 	const router = useRouter();
 	const searchParams = useSearchParams();
-	const pendingToken = searchParams.get('pendingToken');
-	const nextFromQuery = searchParams.get('next');
-	const nextPath = safeNextPath(
-		nextFromQuery ?? readCookie(AUTH_NEXT_COOKIE),
-	);
-
+	const nextPath = safeNextPath(searchParams.get('next'));
+	const [email, setEmail] = useState(searchParams.get('email') ?? '');
 	const [code, setCode] = useState('');
-	const [error, setError] = useState<string | null>(
-		pendingToken ? null : 'This sign-in link is invalid or has expired. Please log in again.',
-	);
+	const [error, setError] = useState<string | null>(null);
 	const [submitting, setSubmitting] = useState(false);
 
 	const onSubmit = async (event: FormEvent) => {
 		event.preventDefault();
-
-		if(!pendingToken) {
-			return;
-		}
-
 		setError(null);
 		setSubmitting(true);
 
 		try {
-			await verifyLoginOtp(pendingToken, code);
-			const destination = await resolvePostAuthDestination(
-				nextFromQuery ? nextPath : consumeStashedNext(nextPath),
-			);
+			await verifyEmail(email, code);
+			const destination = await resolvePostAuthDestination(nextPath);
 			router.push(destination);
 		}
 		catch(submitError) {
@@ -60,8 +44,8 @@ function VerifyLoginForm() {
 
 	return (
 		<AuthCard
-			title="Enter your code"
-			subtitle="We sent a 6-digit code to your email to confirm this sign-in."
+			title="Confirm your email"
+			subtitle="We sent a 6-digit code to your email address. Enter it below to finish creating your account."
 		>
 			<form
 				className="
@@ -71,6 +55,13 @@ function VerifyLoginForm() {
 				"
 				onSubmit={onSubmit}
 			>
+				<FormField
+					label="Email address"
+					type="email"
+					value={email}
+					onChange={setEmail}
+					autoComplete="email"
+				/>
 				<FormField
 					label="Verification code"
 					value={code}
@@ -102,11 +93,11 @@ function VerifyLoginForm() {
 						disabled:opacity-60
 					"
 					type="submit"
-					disabled={submitting || !pendingToken}
+					disabled={submitting}
 				>
 					{submitting
 						? 'Verifying…'
-						: 'Verify and sign in'
+						: 'Verify email'
 					}
 				</button>
 			</form>
@@ -114,22 +105,21 @@ function VerifyLoginForm() {
 	);
 }
 
-export default function VerifyLoginPage() {
+export default function VerifyEmailPage() {
 	return (
-		<main
+		<div
 			className="
 				flex
-				min-h-screen
+				min-h-[min(70vh,40rem)]
 				items-center
 				justify-center
-				bg-frost
-				px-6
-				py-16
+				py-8
+				md:py-12
 			"
 		>
 			<Suspense fallback={null}>
-				<VerifyLoginForm />
+				<VerifyEmailForm />
 			</Suspense>
-		</main>
+		</div>
 	);
 }

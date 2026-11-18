@@ -97,13 +97,13 @@ tester.run('session-aware-sign-in', plugin.rules['session-aware-sign-in'], {
 	valid: [
 		{
 			code: 'import { RequireAccess } from \'x\';\nexport default function Page(){ return <RequireAccess><div /></RequireAccess>; }\n',
-			filename: path.join(process.cwd(), 'apps/web/src/app/auth/account/page.tsx'),
+			filename: path.join(process.cwd(), 'apps/web/src/app/place-et-marque/auth/account/page.tsx'),
 		},
 	],
 	invalid: [
 		{
 			code: 'export default function Page(){ return <div>Sign in</div>; }\n',
-			filename: path.join(process.cwd(), 'apps/web/src/app/auth/account/page.tsx'),
+			filename: path.join(process.cwd(), 'apps/web/src/app/place-et-marque/auth/account/page.tsx'),
 			errors: [
 				{
 					messageId: 'needRequireAccess',

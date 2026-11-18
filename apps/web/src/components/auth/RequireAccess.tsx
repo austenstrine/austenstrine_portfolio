@@ -87,7 +87,7 @@ function RequireAccessInner({
 				reason: guestMessage,
 			});
 			// Avoid replace storms when searchParams CSR bailout remounts the gate.
-			if(pathname.startsWith('/auth/login')) {
+			if(pathname.startsWith('/place-et-marque/auth/login')) {
 				return;
 			}
 			router.replace(loginUrl);

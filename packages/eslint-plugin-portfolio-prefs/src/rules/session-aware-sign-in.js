@@ -2,12 +2,12 @@
 
 /**
  * Account hub surfaces must use RequireAccess (session-aware; guests never see
- * bare Sign in on /auth/account*).
+ * bare Sign in on /place-et-marque/auth/account*).
  */
 function isAccountHubPage(filename) {
 	const normalized = filename.replace(/\\/g, '/');
 	// Layouts/metadata files are not the hub surface — only page.tsx.
-	return /\/app\/auth\/account\/(?:.*\/)?page\.(tsx|jsx|ts|js)$/i.test(normalized);
+	return /\/app\/place-et-marque\/auth\/account\/(?:.*\/)?page\.(tsx|jsx|ts|js)$/i.test(normalized);
 }
 
 module.exports = {

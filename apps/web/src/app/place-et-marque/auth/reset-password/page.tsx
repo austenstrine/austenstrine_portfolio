@@ -2,10 +2,10 @@
 
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useState, type FormEvent } from 'react';
-import { AuthCard } from '../../../components/auth/AuthCard';
-import { ErrorText } from '../../../components/auth/ErrorText';
-import { FormField } from '../../../components/auth/FormField';
-import { AuthApiError, resetPassword } from '../../../lib/auth-api';
+import { AuthCard } from '../../../../components/auth/AuthCard';
+import { ErrorText } from '../../../../components/auth/ErrorText';
+import { FormField } from '../../../../components/auth/FormField';
+import { AuthApiError, resetPassword } from '../../../../lib/auth-api';
 
 function ResetPasswordForm() {
 	const router = useRouter();
@@ -30,7 +30,7 @@ function ResetPasswordForm() {
 
 		try {
 			await resetPassword(email, code, password);
-			router.push('/auth/login');
+			router.push('/place-et-marque/auth/login');
 		}
 		catch(submitError) {
 			setError(
@@ -57,7 +57,7 @@ function ResetPasswordForm() {
 							text-sky
 							hover:underline
 						"
-						href="/auth/forgot-password"
+						href="/place-et-marque/auth/forgot-password"
 					>
 						Request another
 					</a>
@@ -139,20 +139,19 @@ function ResetPasswordForm() {
 
 export default function ResetPasswordPage() {
 	return (
-		<main
+		<div
 			className="
 				flex
-				min-h-screen
+				min-h-[min(70vh,40rem)]
 				items-center
 				justify-center
-				bg-frost
-				px-6
-				py-16
+				py-8
+				md:py-12
 			"
 		>
 			<Suspense fallback={null}>
 				<ResetPasswordForm />
 			</Suspense>
-		</main>
+		</div>
 	);
 }

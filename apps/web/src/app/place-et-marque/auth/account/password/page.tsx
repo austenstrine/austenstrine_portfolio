@@ -1,12 +1,12 @@
 'use client';
 
 import { useState, type FormEvent } from 'react';
-import { RequireAccess } from '../../../../components/auth/RequireAccess';
-import { ErrorText } from '../../../../components/auth/ErrorText';
-import { FormField } from '../../../../components/auth/FormField';
-import { BackLink } from '../../../../components/BackLink';
-import { AuthApiError, setPassword } from '../../../../lib/auth-api';
-import { useSession } from '../../../../lib/useSession';
+import { RequireAccess } from '../../../../../components/auth/RequireAccess';
+import { ErrorText } from '../../../../../components/auth/ErrorText';
+import { FormField } from '../../../../../components/auth/FormField';
+import { BackLink } from '../../../../../components/BackLink';
+import { AuthApiError, setPassword } from '../../../../../lib/auth-api';
+import { useSession } from '../../../../../lib/useSession';
 
 function PasswordForm() {
 	const { user, loading, refresh } = useSession();
@@ -81,7 +81,7 @@ function PasswordForm() {
 			"
 		>
 			<div className="mb-6">
-				<BackLink href="/auth/account">
+				<BackLink href="/place-et-marque/auth/account">
 					Account
 				</BackLink>
 			</div>

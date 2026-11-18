@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
-import { PLACE_ET_MARQUE_NAME } from '../../lib/place-et-marque-meta';
+import { PLACE_ET_MARQUE_NAME } from '../../../lib/place-et-marque-meta';
 
 export const metadata: Metadata = {
 	title: {

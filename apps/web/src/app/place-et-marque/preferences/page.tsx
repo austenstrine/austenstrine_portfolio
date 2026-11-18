@@ -166,7 +166,7 @@ function WidgetPreferencesPanel() {
 					gap-3
 				"
 			>
-				<BackLink href="/auth/account">
+				<BackLink href="/place-et-marque/auth/account">
 					Back to account
 				</BackLink>
 				{rows.length > 0

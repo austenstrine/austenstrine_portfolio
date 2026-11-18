@@ -2,8 +2,10 @@ import {
 	accessReason,
 	buildLoginUrl,
 	pathIsBuyerVendorStorefront,
+	pathIsPemAuthGuest,
 	pathRequiresVendor,
 	pathUsesSellerChrome,
+	pemAuthPath,
 	safeNextPath,
 } from './accessGate';
 
@@ -37,11 +39,15 @@ describe('accessGate path and session contracts', () => {
 		expect(safeNextPath('//evil.example')).toBe('/');
 		expect(safeNextPath('/place-et-marque/cart')).toBe('/place-et-marque/cart');
 		// Guest auth surfaces must not be post-login next (bounce fuel).
+		expect(safeNextPath(pemAuthPath('/login'))).toBe('/');
+		expect(safeNextPath(`${pemAuthPath('/login')}?next=%2Fplace-et-marque%2Fauth%2Faccount`)).toBe('/');
+		expect(safeNextPath(pemAuthPath('/register'))).toBe('/');
 		expect(safeNextPath('/auth/login')).toBe('/');
-		expect(safeNextPath('/auth/login?next=%2Fauth%2Faccount')).toBe('/');
 		expect(safeNextPath('/auth/register')).toBe('/');
 		expect(buildLoginUrl({ next: '/place-et-marque/cart', reason: 'cart' })).toBe(
-			'/auth/login?next=%2Fplace-et-marque%2Fcart&reason=cart',
+			`${pemAuthPath('/login')}?next=%2Fplace-et-marque%2Fcart&reason=cart`,
 		);
+		expect(pathIsPemAuthGuest(pemAuthPath('/login'))).toBe(true);
+		expect(pathIsPemAuthGuest(pemAuthPath('/account'))).toBe(false);
 	});
 });
