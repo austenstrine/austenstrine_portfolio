@@ -72,6 +72,7 @@ Softlock **stays on** across agent sessions. Do not leave it uninstalled after a
 | `…/status.json` | Agent-facing: `ok`, `elevated`, `reasons`, `d_state_*`, `rcu_recent`, `docker_pileon_paused`, `agent_hint` |
 | `…/stall-elevated` | Presence = elevated (shell-friendly) |
 | `…/docker-pileon-pause` | Presence = pause new docker create/build |
+| orphan pause | Cleared on watch start + after CLEAR_POLLS clean polls even if process never elevated (reboot residue) |
 | `…/metrics.json` | `ticks`, `soft_lockup_hits`, `d_state_hits`, `rcu_stall_hits`, `docker_pileon_stops`, `preflight_kills`, `notifies`, `notify_suppressed` |
 | `…/metrics.jsonl` | Structured events |
 | `…/events.log` | Human log |
