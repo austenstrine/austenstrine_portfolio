@@ -7,4 +7,4 @@ alwaysApply: false
 
 **Hard:** `graphify query|path|explain` (or MCP) **before** wide Grep. Grep only if graph insufficient.
 
-Keep fresh: `./bin/agent-cli graphify` (or `orient` — runs ensure). Full: `docs/agent/graphify.md`.
+Keep fresh: `./bin/agent-cli graphify` / `orient` (auto-installs hooks + ensure). Full: `docs/agent/graphify.md`.

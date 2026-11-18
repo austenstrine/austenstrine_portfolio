@@ -6,4 +6,7 @@ prev="${1:-}"; new="${2:-}"; flag="${3:-}"
 # File checkout (flag=0): skip. Same HEAD: skip.
 [[ "$flag" == "0" ]] && exit 0
 [[ -n "$prev" && -n "$new" && "$prev" == "$new" ]] && exit 0
+mkdir -p "$ROOT/graphify-out" 2>/dev/null || true
+printf 'post-checkout %s %s\n' "$(date -Iseconds 2>/dev/null || date)" "$(git -C "$ROOT" rev-parse --short HEAD 2>/dev/null || echo '?')" \
+	>"$ROOT/graphify-out/.agent_graphify_last_hook" 2>/dev/null || true
 exec "$ROOT/ops/tooling/graphify-ensure.sh"

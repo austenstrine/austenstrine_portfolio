@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
 # After merge/ff: refresh graphify-out when HEAD moved.
 ROOT="$(git rev-parse --show-toplevel 2>/dev/null)" || exit 0
+mkdir -p "$ROOT/graphify-out" 2>/dev/null || true
+printf 'post-merge %s %s\n' "$(date -Iseconds 2>/dev/null || date)" "$(git -C "$ROOT" rev-parse --short HEAD 2>/dev/null || echo '?')" \
+	>"$ROOT/graphify-out/.agent_graphify_last_hook" 2>/dev/null || true
 exec "$ROOT/ops/tooling/graphify-ensure.sh"

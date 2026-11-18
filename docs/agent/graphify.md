@@ -6,7 +6,7 @@ Local graph: `graphify-out/` (OSS CLI `graphify` / package `graphifyy`; optional
 
 **Hard rule:** `graphify query|path|explain` (or MCP) **before** wide Grep/Glob. Grep only after graph insufficient.
 
-**Orientation:** `./bin/agent-cli orient` first (also refreshes graph when stale), then Graphify for structure.
+**Orientation:** `./bin/agent-cli orient` first (installs hooks + refreshes graph when stale), then Graphify for structure.
 
 ## Commands
 
@@ -21,10 +21,13 @@ Prefer incremental ensure — **not** a full rebuild every time:
 | Path | What |
 |------|------|
 | `./bin/agent-cli graphify` | `ops/tooling/graphify-ensure.sh` — skip when `graphify-out/.agent_graphify_head` == `git HEAD`; else `graphify update .` (or `extract . --code-only` if missing) |
-| `./bin/agent-cli orient` | Agent-start: runs ensure (fail-open if CLI missing) |
-| `ops/tooling/git-hooks/post-merge` + `post-checkout` | After merge/checkout; install: `ops/tooling/install-graphify-hooks.sh` (symlinks into `.git/hooks`; Cursor overlay still chains them) |
+| `./bin/agent-cli orient` | Agent-start: auto-runs `install-graphify-hooks.sh --quiet` then ensure (fail-open if CLI missing) |
+| `npm prepare` | Same install on `npm install` / land |
+| `ops/tooling/git-hooks/post-merge` + `post-checkout` | After merge/checkout. Install links `.git/hooks` **and**, when Cursor `core.hooksPath` → agent-hooks, adds `post-*` → `.dispatcher` (stock overlay only has commit-msg/prepare-commit-msg; without those entries post-* never runs). Proof marker: `graphify-out/.agent_graphify_last_hook` |
 
 Stamp is vs **git HEAD** (SHA), not file mtime — `graphify update` does not always bump `graph.json` mtime. AST-only; no API key. `graphify-out/` stays gitignored.
+
+Manual: `ops/tooling/install-graphify-hooks.sh`.
 
 ## Skip Graphify when
 

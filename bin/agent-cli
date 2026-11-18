@@ -483,8 +483,9 @@ process.stdout.write(JSON.stringify({ok:status===0,fresh,status,output:text.trim
 }
 
 cmd_orient() {
-  # Agent-start: cheap graph refresh (skip when stamp matches HEAD; fail-open if no CLI).
+  # Agent-start: wire hooks (Cursor overlay needs post-* → .dispatcher) + cheap graph refresh.
   if [[ "$JSON" -eq 0 ]]; then
+    "$ROOT/ops/tooling/install-graphify-hooks.sh" --quiet || true
     "$ROOT/ops/tooling/graphify-ensure.sh" || true
     echo
   fi
@@ -495,6 +496,7 @@ const {execFileSync}=require("child_process");
 const root=process.argv[1];
 const bin=root+"/bin/agent-cli";
 const run=(cmd)=>JSON.parse(execFileSync(bin,[cmd,"--json"],{encoding:"utf8"}));
+try { execFileSync(root+"/ops/tooling/install-graphify-hooks.sh",["--quiet"],{encoding:"utf8"}); } catch (_) {}
 let graphify={ok:false,fresh:false,status:1,output:"skipped"};
 try {
   graphify=JSON.parse(execFileSync(bin,["graphify","--json"],{encoding:"utf8"}));
