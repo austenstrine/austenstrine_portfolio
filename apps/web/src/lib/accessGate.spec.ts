@@ -48,6 +48,15 @@ describe('accessGate path and session contracts', () => {
 			`${pemAuthPath('/login')}?next=%2Fplace-et-marque%2Fcart&reason=cart`,
 		);
 		expect(pathIsPemAuthGuest(pemAuthPath('/login'))).toBe(true);
+		expect(pathIsPemAuthGuest(pemAuthPath('/register'))).toBe(true);
+		expect(pathIsPemAuthGuest(pemAuthPath('/verify'))).toBe(true);
+		expect(pathIsPemAuthGuest(pemAuthPath('/verify-email'))).toBe(true);
+		expect(pathIsPemAuthGuest(pemAuthPath('/forgot-password'))).toBe(true);
+		expect(pathIsPemAuthGuest(pemAuthPath('/reset-password'))).toBe(true);
+		// Account hub keeps shop SessionProvider (PEM-516 layout branch).
 		expect(pathIsPemAuthGuest(pemAuthPath('/account'))).toBe(false);
+		expect(pathIsPemAuthGuest(pemAuthPath('/account/password'))).toBe(false);
+		expect(pathIsPemAuthGuest('/place-et-marque/cart')).toBe(false);
 	});
 });
+

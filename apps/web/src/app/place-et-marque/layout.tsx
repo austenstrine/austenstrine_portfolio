@@ -1,5 +1,7 @@
 import type { Metadata } from 'next';
+import { headers } from 'next/headers';
 import type { ReactNode } from 'react';
+import { AuthGuestChrome } from '../../components/auth/AuthGuestChrome';
 import { CatalogHeader } from '../../components/catalog/CatalogHeader';
 import { CatalogSearchProvider } from '../../components/catalog/CatalogSearchContext';
 import { EditableVendorsProvider } from '../../components/catalog/EditableVendorsProvider';
@@ -9,6 +11,7 @@ import { MarketplaceFooter } from '../../components/catalog/MarketplaceFooter';
 import { PardonOurDustBanner } from '../../components/catalog/PardonOurDustBanner';
 import { SellerPageActionPane } from '../../components/catalog/SellerPageActionPane';
 import { WidgetPrefsProvider } from '../../components/catalog/WidgetPrefsProvider';
+import { pathIsPemAuthGuest } from '../../lib/accessGate';
 import { getCurrentUser, type AuthUser } from '../../lib/auth-api';
 import {
 	listCatalogCategories,
@@ -39,6 +42,39 @@ export const metadata: Metadata = {
 };
 
 export default async function PlaceEtMarqueLayout({ children }: { children: ReactNode }) {
+	const pathname = headers().get('x-pathname') ?? '';
+	// Guest auth under /place-et-marque/auth/* must NOT mount the shop
+	// SessionProvider with a guest SSR seed — that is what killed post-login
+	// soft nav (PEM-505/514). Cookies + hard remount into shop are authoritative.
+	if(pathIsPemAuthGuest(pathname)) {
+		return (
+			<div
+				className="
+					flex
+					min-h-screen
+					flex-col
+					bg-frost
+					text-ink
+				"
+			>
+				<AuthGuestChrome />
+				<main
+					className="
+						mx-auto
+						w-full
+						max-w-7xl
+						flex-1
+						px-gutter
+						py-6
+						md:py-8
+					"
+				>
+					{children}
+				</main>
+			</div>
+		);
+	}
+
 	// Decide category bar + auth/role header chrome before first paint (PEM-370/373).
 	// Slower HTML is OK; never reserve-then-reveal Sign in / Account / Edit / cart.
 	let initialCategories: CatalogCategoryRow[] = [];
@@ -72,6 +108,8 @@ export default async function PlaceEtMarqueLayout({ children }: { children: Reac
 		}
 	}
 
+	const sessionKey = initialUser?.id ?? 'guest';
+
 	return (
 		<div
 			className="
@@ -82,7 +120,10 @@ export default async function PlaceEtMarqueLayout({ children }: { children: Reac
 				text-ink
 			"
 		>
-			<SessionProvider initialUser={initialUser}>
+			<SessionProvider
+				key={sessionKey}
+				initialUser={initialUser}
+			>
 				<CatalogSearchProvider initialCategories={initialCategories}>
 					<EditableVendorsProvider initialEditableVendorIds={initialEditableVendorIds}>
 						<WidgetPrefsProvider>

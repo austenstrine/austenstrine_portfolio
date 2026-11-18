@@ -48,7 +48,7 @@ function VerifyLoginForm() {
 			const destination = await resolvePostAuthDestination(
 				nextFromQuery ? nextPath : consumeStashedNext(nextPath),
 			);
-			// Hard remount: soft push left guest SSR seed on SessionProvider (PEM-514).
+			// Cookies from verify are authoritative; hard-assign into shop layout (PEM-516).
 			finishSignedInNavigation(adoptSignedIn, session.user, destination);
 		}
 		catch(submitError) {

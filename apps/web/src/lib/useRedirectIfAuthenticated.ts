@@ -7,7 +7,7 @@ import { useSession } from './useSession';
 /**
  * When a session already exists, leave guest auth pages (login/register)
  * for `next` — same idea as Linear/Notes not showing Sign in while signed in.
- * Full document load so PeM layout SSR re-reads cookies (PEM-514).
+ * Full document load so shop layout SSR re-reads cookies (PEM-516).
  */
 export function useRedirectIfAuthenticated(nextRaw: string | null | undefined) {
 	const { user, loading } = useSession();

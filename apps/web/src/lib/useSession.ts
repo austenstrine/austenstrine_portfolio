@@ -21,12 +21,8 @@ export type SessionValue = {
 	loading: boolean;
 	refresh: () => Promise<void>;
 	/**
-	 * After login / 2FA / email-verify, cookies are set but the PeM layout
-	 * SessionProvider stays mounted with a guest seed. Soft `router.push`
-	 * does not re-run the mount probe — adopt the issued user before navigate
-	 * so RequireAccess / header see signed-in (PEM-505). Prefer
-	 * `finishSignedInNavigation` so the next document load SSR-reseeds
-	 * (PEM-514).
+	 * Best-effort client adopt. Prefer `finishSignedInNavigation` after OTP /
+	 * email-verify so the next document load SSR-reseeds shop chrome (PEM-516).
 	 */
 	adoptSignedIn: (user: AuthUser) => void;
 	signOut: () => Promise<void>;
@@ -34,17 +30,18 @@ export type SessionValue = {
 };
 
 /**
- * Cookies just landed; soft `router.push` keeps the guest SSR seed on the
- * still-mounted SessionProvider. Adopt for the current tree, then full
- * document load so layout `getCurrentUser()` / header re-read cookies
- * (PEM-514).
+ * Cookies from the verify response are authoritative. Soft `router.push` kept
+ * a guest shop SessionProvider mounted (PEM-505/514). Always hard-assign into
+ * the shop tree so layout `getCurrentUser()` re-reads cookies (PEM-516).
  */
 export function finishSignedInNavigation(
-	adoptSignedIn: (user: AuthUser) => void,
-	user: AuthUser,
+	_adoptSignedIn: ((user: AuthUser) => void) | null | undefined,
+	_user: AuthUser,
 	destination: string,
 ): void {
-	adoptSignedIn(user);
+	if(typeof window === 'undefined') {
+		return;
+	}
 	window.location.assign(destination);
 }
 
@@ -160,9 +157,9 @@ function useSessionController(options: {
 }
 
 /**
- * SSR-seeded session for PeM (and anywhere else that can decide before paint).
- * Pass `initialUser` from a server layout after `getCurrentUser()`.
- * Null seed stays `loading` until the first client probe (stale-session recovery).
+ * SSR-seeded session for PeM shop chrome. Pass `initialUser` from a server
+ * layout after `getCurrentUser()`. Guest auth routes skip this provider
+ * (PEM-516). Null seed stays `loading` until the first client probe.
  */
 export function SessionProvider({
 	children,
@@ -181,7 +178,7 @@ export function SessionProvider({
 
 export function useSession(): SessionValue {
 	const ctx = useContext(SessionContext);
-	// Auth pages outside PeM still work without a provider.
+	// Guest auth pages (no shop SessionProvider) use a standalone probe.
 	const standalone = useSessionController({
 		enabled: ctx == null,
 		seeded: false,
