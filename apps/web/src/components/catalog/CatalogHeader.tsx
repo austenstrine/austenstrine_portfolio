@@ -15,9 +15,7 @@ import { CaretDownIcon } from '../icons/CaretDownIcon';
 import { CartIcon } from '../icons/CartIcon';
 import { AccountMenu } from './AccountMenu';
 import { CatalogCategoryBar } from './CatalogCategoryBar';
-import { useEditableVendors } from './EditableVendorsProvider';
 import { HeaderPortraitLink } from './HeaderPortraitLink';
-import { InPlaceEditToggle } from './InPlaceProductFields';
 import { MarketplaceBrandLink } from './MarketplaceBrandLink';
 import { NavigatePersistentArrow } from './NavigatePersistentArrow';
 import { PILL_CTA_MOTION_CLASS } from './pillCta';
@@ -86,12 +84,6 @@ export function CatalogHeader({
 		setSellerTopContextHost,
 	} = useCatalogSearch();
 	const { user, loading, signOut } = useSession();
-	const {
-		editableVendorIds,
-		editTier,
-		ready: editableVendorsReady,
-		setEditTier,
-	} = useEditableVendors();
 	const [cartCount, setCartCount] = useState(initialCartCount);
 	const [bannerOffset, setBannerOffset] = useState(0);
 	const [headerHidden, setHeaderHidden] = useState(false);
@@ -102,10 +94,6 @@ export function CatalogHeader({
 	// orders: reserve top only for Filter/Status harvest (PEM-445).
 	const reserveManageContext = pathReservesManageContextBars(pathname);
 	const reserveTopContext = pathReservesSellerTopContext(pathname);
-	const showInPlaceEditToggle = !sellerChrome
-		&& !authGuest
-		&& editableVendorsReady
-		&& editableVendorIds.size > 0;
 	// Buyer chrome (incl. /place-et-marque/<vendor>) keeps the department bar.
 	// Search hides it — filters live on the page instead.
 	// Guest auth lean: brand mark is the leave-auth escape (no dept bar / cart).
@@ -327,16 +315,6 @@ export function CatalogHeader({
 								</div>
 							)
 						}
-						{showInPlaceEditToggle
-							? (
-								<InPlaceEditToggle
-									className="hidden shrink-0 md:inline-flex"
-									onChange={setEditTier}
-									tier={editTier}
-								/>
-							)
-							: null
-						}
 						<nav
 							className="
 								ml-auto
@@ -478,16 +456,6 @@ export function CatalogHeader({
 										inputRef={headerMobileRef}
 										setExtras={setHeaderMobileExtras}
 									/>
-									{showInPlaceEditToggle
-										? (
-											<InPlaceEditToggle
-												className="shrink-0"
-												onChange={setEditTier}
-												tier={editTier}
-											/>
-										)
-										: null
-									}
 								</div>
 							</div>
 						)

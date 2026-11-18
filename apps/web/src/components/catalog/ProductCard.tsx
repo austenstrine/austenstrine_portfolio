@@ -17,6 +17,7 @@ import {
 	type InPlaceFieldName,
 } from './EditableVendorsProvider';
 import {
+	InPlaceCardEditToggle,
 	InPlaceCategorySelect,
 	InPlaceError,
 	InPlaceFieldSurface,
@@ -490,15 +491,14 @@ function SellerProductCard({
 }: {
 	product: CatalogProductSummary;
 	onUpdated: (next: CatalogProductSummary) => void;
-	/** When set, only these fields render as inputs (element tier). */
+	/** When set, only these fields render as inputs (field mode). */
 	editableFields?: ReadonlySet<InPlaceFieldName> | 'all';
-	/** Element tier: hover-pencil activate for fields that are not open. */
+	/** Field mode: hover-pencil activate for fields that are not open. */
 	onActivateField?: (field: InPlaceFieldName) => void;
 }) {
 	const titleId = useId();
 	const {
 		editTier,
-		setActiveCardId,
 		setActiveFieldKey,
 	} = useEditableVendors();
 	const edit = useInPlaceProductEdit({
@@ -528,6 +528,8 @@ function SellerProductCard({
 	const allOpen = editableFields === 'all' || editableFields == null;
 	const fieldOpen = (field: InPlaceFieldName) =>
 		allOpen || (editableFields?.has(field) ?? false);
+	/** Per-field pencils (not bulk page/card open). */
+	const fieldMode = !allOpen;
 	const showCardSave = editTier === 'card';
 	const exitField = () => {
 		setActiveFieldKey(null);
@@ -689,7 +691,7 @@ function SellerProductCard({
 							? () => onActivateField('category')
 							: undefined
 					}
-					onExit={editTier === 'element' ? exitField : undefined}
+					onExit={fieldMode ? exitField : undefined}
 				/>
 				<InPlaceFieldSurface
 					display={
@@ -729,7 +731,7 @@ function SellerProductCard({
 							? () => onActivateField('title')
 							: undefined
 					}
-					onExit={editTier === 'element' ? exitField : undefined}
+					onExit={fieldMode ? exitField : undefined}
 				/>
 				<p
 					className="
@@ -783,7 +785,7 @@ function SellerProductCard({
 									? () => onActivateField('price')
 									: undefined
 							}
-							onExit={editTier === 'element' ? exitField : undefined}
+							onExit={fieldMode ? exitField : undefined}
 						/>
 						<InPlaceFieldSurface
 							className="min-w-0"
@@ -823,7 +825,7 @@ function SellerProductCard({
 									? () => onActivateField('uom')
 									: undefined
 							}
-							onExit={editTier === 'element' ? exitField : undefined}
+							onExit={fieldMode ? exitField : undefined}
 						/>
 					</div>
 					<InPlaceFieldSurface
@@ -868,7 +870,7 @@ function SellerProductCard({
 								? () => onActivateField('qty')
 								: undefined
 						}
-						onExit={editTier === 'element' ? exitField : undefined}
+						onExit={fieldMode ? exitField : undefined}
 					/>
 				</div>
 				<InPlaceError
@@ -914,20 +916,12 @@ function SellerProductCard({
 						Open
 					</a>
 					<InPlaceFullEditLink product={display} />
-					{editTier === 'card'
+					{editTier !== 'page'
 						? (
-							<button
-								className="
-									text-[12px]
-									font-semibold
-									text-slate-500
-									hover:text-sky
-								"
-								onClick={() => setActiveCardId(null)}
-								type="button"
-							>
-								Done
-							</button>
+							<InPlaceCardEditToggle
+								className="text-[12px]"
+								productId={display.id}
+							/>
 						)
 						: null
 					}
@@ -943,8 +937,8 @@ export function ProductCard({ product }: { product: CatalogProductSummary }) {
 		editTier,
 		activeCardId,
 		activeFieldKey,
-		setActiveCardId,
 		setActiveFieldKey,
+		setEditTier,
 	} = useEditableVendors();
 	const [display, setDisplay] = useState(product);
 
@@ -953,66 +947,60 @@ export function ProductCard({ product }: { product: CatalogProductSummary }) {
 	}, [product]);
 
 	const canEdit = canEditVendor(display.vendor.id);
-	if(!canEdit || editTier === 'off') {
+	if(!canEdit) {
 		return <BuyerProductCard product={display} />;
 	}
 
-	const open = productEditOpen(
+	const bulkOpen = productEditOpen(
 		editTier,
 		display.id,
 		activeCardId,
 		activeFieldKey,
 	);
 
-	if(editTier === 'card' && !open) {
-		return (
-			<BuyerProductCard
-				onActivateCard={() => setActiveCardId(display.id)}
-				product={display}
-			/>
-		);
-	}
-
-	if(editTier === 'element') {
-		const fields = new Set<InPlaceFieldName>();
-		for(const field of [
-			'title',
-			'description',
-			'category',
-			'price',
-			'uom',
-			'qty',
-			'images',
-		] as InPlaceFieldName[]) {
-			if(fieldEditOpen(
-				editTier,
-				display.id,
-				field,
-				activeCardId,
-				activeFieldKey,
-			)) {
-				fields.add(field);
-				// Price chip also exposes uom when activating price.
-				if(field === 'price') {
-					fields.add('uom');
-				}
-			}
-		}
+	if(bulkOpen) {
 		return (
 			<SellerProductCard
-				editableFields={fields}
-				onActivateField={(field) => {
-					setActiveFieldKey(inPlaceFieldKey(display.id, field));
-				}}
+				editableFields="all"
 				onUpdated={setDisplay}
 				product={display}
 			/>
 		);
 	}
 
+	const fields = new Set<InPlaceFieldName>();
+	for(const field of [
+		'title',
+		'description',
+		'category',
+		'price',
+		'uom',
+		'qty',
+		'images',
+	] as InPlaceFieldName[]) {
+		if(fieldEditOpen(
+			editTier,
+			display.id,
+			field,
+			activeCardId,
+			activeFieldKey,
+		)) {
+			fields.add(field);
+			// Price chip also exposes uom when activating price.
+			if(field === 'price') {
+				fields.add('uom');
+			}
+		}
+	}
 	return (
 		<SellerProductCard
-			editableFields="all"
+			editableFields={fields}
+			onActivateField={(field) => {
+				if(editTier === 'card') {
+					setEditTier('field');
+				}
+				setActiveFieldKey(inPlaceFieldKey(display.id, field));
+			}}
 			onUpdated={setDisplay}
 			product={display}
 		/>

@@ -32,9 +32,9 @@ import {
 	type InPlaceFieldName,
 } from './EditableVendorsProvider';
 import {
+	InPlaceCardEditToggle,
 	InPlaceCategorySelect,
 	InPlaceDescriptionInput,
-	InPlaceEditToggle,
 	InPlaceError,
 	InPlaceFieldSurface,
 	InPlaceFullEditLink,
@@ -304,15 +304,14 @@ export function ProductDetailClient({
 
 	const {
 		editTier,
-		setEditTier,
 		activeCardId,
 		activeFieldKey,
 		setActiveCardId,
 		setActiveFieldKey,
+		setEditTier,
 	} = useEditableVendors();
 	const canEdit = product.permissions.canEdit && !deletedNotice;
-	const tierActive = canEdit && editTier !== 'off';
-	const bulkEditing = tierActive
+	const bulkEditing = canEdit
 		&& (
 			editTier === 'page'
 			|| (
@@ -320,7 +319,7 @@ export function ProductDetailClient({
 				&& productEditOpen(editTier, product.id, activeCardId, activeFieldKey)
 			)
 		);
-	const elementMode = tierActive && editTier === 'element';
+	const fieldMode = canEdit && !bulkEditing;
 	const fieldIsOpen = (field: InPlaceFieldName) =>
 		canEdit && fieldEditOpen(
 			editTier,
@@ -330,6 +329,9 @@ export function ProductDetailClient({
 			activeFieldKey,
 		);
 	const activateField = (field: InPlaceFieldName) => {
+		if(editTier === 'card') {
+			setEditTier('field');
+		}
 		setActiveFieldKey(inPlaceFieldKey(product.id, field));
 	};
 	const exitField = () => {
@@ -337,13 +339,13 @@ export function ProductDetailClient({
 	};
 
 	useEffect(() => {
-		if(canEdit && editTier === 'card') {
+		if(canEdit && editTier === 'card' && activeCardId == null) {
 			setActiveCardId(product.id);
 		}
-	}, [canEdit, editTier, product.id, setActiveCardId]);
+	}, [activeCardId, canEdit, editTier, product.id, setActiveCardId]);
 
 	const edit = useInPlaceProductEdit({
-		enabled: tierActive,
+		enabled: canEdit,
 		offeringId: selectedOfferingId,
 		onUpdated: (next) => {
 			setProduct(next);
@@ -627,11 +629,11 @@ export function ProductDetailClient({
 						field="qty"
 						label="Edit quantity"
 						onActivate={
-							elementMode && !qtyEditing
+							fieldMode && !qtyEditing
 								? () => activateField('qty')
 								: undefined
 						}
-						onExit={elementMode ? exitField : undefined}
+						onExit={fieldMode ? exitField : undefined}
 					/>
 					<div
 						className="
@@ -667,11 +669,11 @@ export function ProductDetailClient({
 							field="price"
 							label="Edit price"
 							onActivate={
-								elementMode && !fieldIsOpen('price') && !bulkEditing
+								fieldMode && !fieldIsOpen('price') && !bulkEditing
 									? () => activateField('price')
 									: undefined
 							}
-							onExit={elementMode ? exitField : undefined}
+							onExit={fieldMode ? exitField : undefined}
 						/>
 						<InPlaceFieldSurface
 							className="min-w-0"
@@ -697,11 +699,11 @@ export function ProductDetailClient({
 							field="uom"
 							label="Edit unit"
 							onActivate={
-								elementMode && !fieldIsOpen('uom') && !bulkEditing
+								fieldMode && !fieldIsOpen('uom') && !bulkEditing
 									? () => activateField('uom')
 									: undefined
 							}
-							onExit={elementMode ? exitField : undefined}
+							onExit={fieldMode ? exitField : undefined}
 						/>
 					</div>
 					{!qtyEditing && stock.detail
@@ -914,7 +916,7 @@ export function ProductDetailClient({
 					{selectedOffering?.sku || product.sku ? ` · ${selectedOffering?.sku || product.sku}` : ''}
 				</p>
 				<div className="mt-2 max-w-3xl">
-					{(bulkEditing || fieldIsOpen('category') || elementMode)
+					{(bulkEditing || fieldIsOpen('category') || fieldMode)
 						? (
 							<InPlaceFieldSurface
 								className="max-w-md"
@@ -949,11 +951,11 @@ export function ProductDetailClient({
 								field="category"
 								label="Edit category"
 								onActivate={
-									elementMode && !fieldIsOpen('category') && !bulkEditing
+									fieldMode && !fieldIsOpen('category') && !bulkEditing
 										? () => activateField('category')
 										: undefined
 								}
-								onExit={elementMode ? exitField : undefined}
+								onExit={fieldMode ? exitField : undefined}
 							/>
 						)
 						: null
@@ -1001,11 +1003,11 @@ export function ProductDetailClient({
 							field="title"
 							label="Edit title"
 							onActivate={
-								elementMode && !fieldIsOpen('title') && !bulkEditing
+								fieldMode && !fieldIsOpen('title') && !bulkEditing
 									? () => activateField('title')
 									: undefined
 							}
-							onExit={elementMode ? exitField : undefined}
+							onExit={fieldMode ? exitField : undefined}
 						/>
 						{canEdit
 							? (
@@ -1019,24 +1021,21 @@ export function ProductDetailClient({
 										gap-3
 									"
 								>
-									<InPlaceEditToggle
-										onChange={setEditTier}
-										tier={editTier}
-									/>
+									<InPlaceCardEditToggle productId={product.id} />
 									<InPlaceFullEditLink product={product} />
 								</div>
 							)
 							: null
 						}
 					</div>
-					{(bulkEditing || fieldIsOpen('description') || elementMode || product.description)
+					{(bulkEditing || fieldIsOpen('description') || fieldMode || product.description)
 						? (
 							<InPlaceFieldSurface
 								className="mt-3 max-w-2xl"
 								display={
 									<p
 										className={
-											elementMode || bulkEditing || fieldIsOpen('description')
+											fieldMode || bulkEditing || fieldIsOpen('description')
 												? `
 													min-h-[6rem]
 													text-sm
@@ -1050,7 +1049,7 @@ export function ProductDetailClient({
 												`
 										}
 									>
-										{product.description || (elementMode ? 'Add a description' : '')}
+										{product.description || (fieldMode ? 'Add a description' : '')}
 									</p>
 								}
 								edit={edit}
@@ -1070,11 +1069,11 @@ export function ProductDetailClient({
 								field="description"
 								label="Edit description"
 								onActivate={
-									elementMode && !fieldIsOpen('description') && !bulkEditing
+									fieldMode && !fieldIsOpen('description') && !bulkEditing
 										? () => activateField('description')
 										: undefined
 								}
-								onExit={elementMode ? exitField : undefined}
+								onExit={fieldMode ? exitField : undefined}
 							/>
 						)
 						: null
@@ -1200,7 +1199,7 @@ export function ProductDetailClient({
 										edit={edit}
 									/>
 								)
-								: elementMode
+								: fieldMode
 									? (
 										<button
 											aria-label="Edit images"
@@ -1245,7 +1244,7 @@ export function ProductDetailClient({
 								? (
 									<span
 										className={
-											elementMode
+											fieldMode
 												? 'absolute left-4 top-4 rounded-full bg-white/90 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-ink'
 												: 'absolute right-4 top-4 rounded-full bg-white/90 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-ink'
 										}
