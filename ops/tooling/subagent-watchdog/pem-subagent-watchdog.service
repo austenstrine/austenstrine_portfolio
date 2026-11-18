@@ -1,0 +1,15 @@
+[Unit]
+Description=PEM subagent stuck-loop watchdog (host keep-alive loop)
+Documentation=file:%h/.agents/skills/watchdog/SKILL.md
+After=default.target
+
+[Service]
+Type=simple
+Environment=SUBAGENT_WATCHDOG_INTERVAL_SEC=60
+ExecStart=%h/.local/bin/pem-subagent-watchdog-loop
+Restart=always
+RestartSec=5
+Nice=10
+
+[Install]
+WantedBy=default.target

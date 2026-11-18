@@ -33,6 +33,12 @@ function die(msg) {
 	process.exit(2);
 }
 
+function defaultStateDir() {
+	if (process.env.SUBAGENT_WATCHDOG_DIR) return process.env.SUBAGENT_WATCHDOG_DIR;
+	const xdgState = process.env.XDG_STATE_HOME || path.join(process.env.HOME || '.', '.local/state');
+	return path.join(xdgState, 'subagent-watchdog');
+}
+
 function parseArgs(argv) {
 	const out = { cmd: 'tick', sample: null, stateDir: process.env.SUBAGENT_WATCHDOG_DIR || null };
 	const args = [];
@@ -51,11 +57,79 @@ function parseArgs(argv) {
 		}
 	}
 	if (args[0]) out.cmd = args[0];
-	if (!out.stateDir) {
-		const xdg = process.env.XDG_DATA_HOME || path.join(process.env.HOME || '.', '.local/share');
-		out.stateDir = path.join(xdg, 'subagent-watchdog');
-	}
+	if (!out.stateDir) out.stateDir = defaultStateDir();
 	return out;
+}
+
+function emptyMetrics() {
+	return {
+		schema: 'subagent-watchdog-metrics.v1',
+		ticks: 0,
+		strategy_flips: 0,
+		budget_breaches: 0,
+		intervenes: 0,
+		nudges: 0,
+		pause_escalates: 0,
+		ok: 0,
+		updated_at: null,
+	};
+}
+
+function loadMetrics(stateDir) {
+	const p = path.join(stateDir, 'metrics.json');
+	if (!fs.existsSync(p)) return emptyMetrics();
+	try {
+		return { ...emptyMetrics(), ...JSON.parse(fs.readFileSync(p, 'utf8')) };
+	} catch {
+		return emptyMetrics();
+	}
+}
+
+function recordTickMetrics(stateDir, out) {
+	const metrics = loadMetrics(stateDir);
+	metrics.ticks = (metrics.ticks || 0) + 1;
+	const at = out.polled_at || new Date().toISOString();
+	metrics.updated_at = at;
+	const events = [];
+	for (const row of out.actions || []) {
+		const action = row.action || 'ok';
+		if (action === 'ok') {
+			metrics.ok = (metrics.ok || 0) + 1;
+		} else {
+			metrics.intervenes = (metrics.intervenes || 0) + 1;
+			if (action === 'force_rotate') metrics.strategy_flips = (metrics.strategy_flips || 0) + 1;
+			if (action === 'budget_intervene' || String(row.reason || '').includes('over_budget')) {
+				metrics.budget_breaches = (metrics.budget_breaches || 0) + 1;
+			}
+			if (action === 'nudge') metrics.nudges = (metrics.nudges || 0) + 1;
+			if (action === 'pause_escalate') metrics.pause_escalates = (metrics.pause_escalates || 0) + 1;
+		}
+		events.push({
+			at,
+			worker_id: row.worker_id,
+			action,
+			reason: row.reason || null,
+			pause: Boolean(row.pause),
+		});
+	}
+	fs.writeFileSync(path.join(stateDir, 'metrics.json'), JSON.stringify(metrics, null, 2) + '\n');
+	const line = JSON.stringify({
+		at,
+		kind: 'tick',
+		active_workers: out.active_workers,
+		should_poll: out.should_poll,
+		actions: events,
+		counters: {
+			ticks: metrics.ticks,
+			strategy_flips: metrics.strategy_flips,
+			budget_breaches: metrics.budget_breaches,
+			intervenes: metrics.intervenes,
+		},
+	});
+	fs.appendFileSync(path.join(stateDir, 'metrics.jsonl'), line + '\n');
+	out.metrics = metrics;
+	out.metrics_log = path.join(stateDir, 'metrics.jsonl');
+	return metrics;
 }
 
 function nowMs(iso) {
@@ -316,28 +390,46 @@ function classify(sample, stateDir) {
 
 const opts = parseArgs(process.argv.slice(2));
 if (opts.help) {
-	console.log(`Usage: classify.mjs [tick|active] --sample PATH|--sample - [--state DIR]`);
+	console.log(
+		`Usage: classify.mjs [tick|active|metrics] --sample PATH|--sample - [--state DIR]`,
+	);
 	process.exit(0);
 }
 
 fs.mkdirSync(opts.stateDir, { recursive: true });
-const sample = readSample(opts.sample);
 
-if (opts.cmd === 'active') {
-	const workers = Array.isArray(sample.workers) ? sample.workers : [];
-	const active = workers.filter(isActive);
+if (opts.cmd === 'metrics') {
+	const metrics = loadMetrics(opts.stateDir);
 	const out = {
-		schema: SCHEMA,
-		active_workers: active.length,
-		should_poll: active.length >= 1,
-		ids: active.map((w) => w.id),
+		schema: 'subagent-watchdog-metrics.v1',
+		state_dir: opts.stateDir,
+		metrics_json: path.join(opts.stateDir, 'metrics.json'),
+		metrics_log: path.join(opts.stateDir, 'metrics.jsonl'),
+		...metrics,
 	};
-	process.stdout.write(JSON.stringify(out) + '\n');
-	process.exit(active.length >= 1 ? 0 : 1);
+	process.stdout.write(JSON.stringify(out, null, 2) + '\n');
+	process.exit(0);
 }
 
-if (opts.cmd !== 'tick') die(`unknown command: ${opts.cmd}`);
+if (opts.cmd === 'active' || opts.cmd === 'tick') {
+	const sample = readSample(opts.sample);
+	if (opts.cmd === 'active') {
+		const workers = Array.isArray(sample.workers) ? sample.workers : [];
+		const active = workers.filter(isActive);
+		const out = {
+			schema: SCHEMA,
+			active_workers: active.length,
+			should_poll: active.length >= 1,
+			ids: active.map((w) => w.id),
+		};
+		process.stdout.write(JSON.stringify(out) + '\n');
+		process.exit(active.length >= 1 ? 0 : 1);
+	}
+	const out = classify(sample, opts.stateDir);
+	recordTickMetrics(opts.stateDir, out);
+	fs.writeFileSync(path.join(opts.stateDir, 'last-tick.json'), JSON.stringify(out, null, 2) + '\n');
+	process.stdout.write(JSON.stringify(out, null, 2) + '\n');
+	process.exit(0);
+}
 
-const out = classify(sample, opts.stateDir);
-fs.writeFileSync(path.join(opts.stateDir, 'last-tick.json'), JSON.stringify(out, null, 2) + '\n');
-process.stdout.write(JSON.stringify(out, null, 2) + '\n');
+die(`unknown command: ${opts.cmd}`);

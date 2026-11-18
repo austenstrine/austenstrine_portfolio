@@ -29,6 +29,7 @@ ops/diagnostics/*
 !ops/diagnostics/rlog.sh
 !ops/diagnostics/host-softlock-watch.sh
 !ops/diagnostics/host-softlock-watch.service
+!ops/diagnostics/install-host-softlock-watch.sh
 
 # Serializes dssh docker build/stop/run across terminals
 .dssh-docker.lock

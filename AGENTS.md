@@ -51,4 +51,6 @@ If working on session/cookie, read this: docs/agent/cookie-epoch.md
 | Context compress (RTK / prune / caveman-compress) | `docs/agent/context-compress.md` · `./bin/context-compress` · report `docs/context-compress-tooling.md` |
 | Voice / kickoff | **Ultracave mandatory** — `voice-modes.mdc` + kickoff paste `docs/agent/ultracave-kickoff.md`. Opt out: “stop caveman” / “normal mode” / “stop ultracave”. |
 | Subagent stuck-loop watchdog | Coordinator: `docs/agent/subagent-watchdog.md` · `./bin/subagent-watchdog` · Project `workflows/subagent-watchdog.md` |
+| Host softlock watchdog | Always-on systemd: `docs/agent/host-softlock-watch.md` · `./ops/diagnostics/install-host-softlock-watch.sh` |
+| Watchdog skill (both) | **Read** `~/.agents/skills/watchdog/SKILL.md` (repo mirror `.cursor/skills/watchdog/`) · `./bin/agent-cli watchdog` |
 | Sibling tools (dssh install, etc.) | README “Third-party tools”; tool remotes usually land on `master` |

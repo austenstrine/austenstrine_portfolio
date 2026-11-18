@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 # Subagent stuck-loop watchdog — one-shot classify tick (coordinator runtime).
-# No idle daemon. JSON on stdout.
+# No idle daemon. JSON on stdout. Durable metrics under state dir.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-STATE_DIR="${SUBAGENT_WATCHDOG_DIR:-${XDG_DATA_HOME:-$HOME/.local/share}/subagent-watchdog}"
+STATE_DIR="${SUBAGENT_WATCHDOG_DIR:-${XDG_STATE_HOME:-$HOME/.local/state}/subagent-watchdog}"
 CLASSIFY="$ROOT/classify.mjs"
 
 usage() {
@@ -12,17 +12,19 @@ usage() {
 Usage: watchdog.sh <command> [options]
 
 Commands:
-  tick     One poll: classify sample → nudge JSON (default).
-  active   Exit 0 if sample has ≥1 active worker; else 1.
-  reset    Clear state dir (optional --worker ID).
+  tick      One poll: classify sample → nudge JSON (default).
+  active    Exit 0 if sample has ≥1 active worker; else 1.
+  metrics   Print durable counters (ticks / flips / breaches / intervenes).
+  reset     Clear worker state (optional --worker ID). Does not wipe metrics.
 
 Options:
   --sample PATH   Worker sample JSON (or "-" stdin). Required for tick/active.
-  --state DIR     Override state dir (default: ~/.local/share/subagent-watchdog).
+  --state DIR     Override state dir (default: ~/.local/state/subagent-watchdog).
   -h, --help
 
 Coordinator: start subscribe_timer (60s) when first worker spawns; each fire run
 `tick`; if should_poll=false, unsubscribe. See docs/agent/subagent-watchdog.md
+Skill: ~/.agents/skills/watchdog/SKILL.md
 EOF
 }
 
@@ -73,12 +75,15 @@ case "$CMD" in
 	reset)
 		if [[ -n "$RESET_WORKER" ]]; then
 			rm -f "$STATE_DIR/worker-${RESET_WORKER}.json"
-			echo "{\"ok\":true,\"reset\":\"$RESET_WORKER\"}"
+			echo "{\"ok\":true,\"reset\":\"$RESET_WORKER\",\"state_dir\":\"$STATE_DIR\"}"
 		else
 			rm -f "$STATE_DIR"/worker-*.json "$STATE_DIR"/last-tick.json
-			echo '{"ok":true,"reset":"all"}'
+			echo "{\"ok\":true,\"reset\":\"all\",\"state_dir\":\"$STATE_DIR\",\"metrics_kept\":true}"
 		fi
 		exit 0
+		;;
+	metrics)
+		exec node "$CLASSIFY" metrics --state "$STATE_DIR"
 		;;
 	active|tick)
 		[[ -n "$SAMPLE" ]] || die "need --sample PATH (or - for stdin)"

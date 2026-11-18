@@ -6,7 +6,7 @@ Local graph: `graphify-out/` (OSS CLI `graphify` / package `graphifyy`; optional
 
 **Hard rule:** `graphify query|path|explain` (or MCP) **before** wide Grep/Glob. Grep only after graph insufficient.
 
-**Orientation:** `./bin/agent-cli orient` first (installs hooks + refreshes graph when stale), then Graphify for structure.
+**Orientation:** project `sessionStart` hook runs `install-graphify-hooks` + `graphify-ensure` (also `./bin/agent-cli orient`). Prefer Graphify query|path|explain before wide Grep.
 
 ## Commands
 

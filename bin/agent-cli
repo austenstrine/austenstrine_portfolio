@@ -22,6 +22,7 @@ Commands (default: orient):
   docker    Compose services + dssh/.dsshrc pointers (alias: dssh).
   seed      Prisma schema/seed/seed-sync paths + commands.
   helpers   Sibling tool-repo consumption status (detected from this tree).
+  watchdog  Softlock + subagent watchdog binaries, metrics paths, start hints.
   graphify  Ensure graphify-out matches git HEAD (ops/tooling/graphify-ensure.sh).
   lint      Fail-closed prefs + ESLint prefs + workspace typecheck (same as npm run lint).
 
@@ -58,7 +59,7 @@ else
 fi
 case "$CMD" in
   orient|default|"") CMD=orient ;;
-  layout|scripts|env|seed|helpers|lint|graphify) ;;
+  layout|scripts|env|seed|helpers|watchdog|lint|graphify) ;;
   docker|dssh) CMD=docker ;;
   *) die "unknown command: $CMD (try --help)" ;;
 esac
@@ -467,6 +468,90 @@ process.stdout.write(JSON.stringify(out,null,2)+"\n");
   helper_status_text
 }
 
+cmd_watchdog() {
+  local soft_state="${XDG_STATE_HOME:-$HOME/.local/state}/host-softlock-watch"
+  local sub_state="${SUBAGENT_WATCHDOG_DIR:-${XDG_STATE_HOME:-$HOME/.local/state}/subagent-watchdog}"
+  local soft_bin="${HOME}/.local/bin/host-softlock-watch"
+  local skill="${HOME}/.agents/skills/watchdog/SKILL.md"
+  local soft_active=0 soft_enabled=0 sub_active=0 sub_enabled=0
+  if systemctl --user is-active host-softlock-watch.service >/dev/null 2>&1; then soft_active=1; fi
+  if systemctl --user is-enabled host-softlock-watch.service >/dev/null 2>&1; then soft_enabled=1; fi
+  if systemctl --user is-active pem-subagent-watchdog.service >/dev/null 2>&1; then sub_active=1; fi
+  if systemctl --user is-enabled pem-subagent-watchdog.service >/dev/null 2>&1; then sub_enabled=1; fi
+  if [[ "$JSON" -eq 1 ]]; then
+    node -e '
+const fs=require("fs"); const path=require("path");
+const root=process.argv[1];
+const softState=process.argv[2];
+const subState=process.argv[3];
+const softBin=process.argv[4];
+const skill=process.argv[5];
+const softActive=process.argv[6]==="1";
+const softEnabled=process.argv[7]==="1";
+const subActive=process.argv[8]==="1";
+const subEnabled=process.argv[9]==="1";
+const readJson=(p)=>{ try { return JSON.parse(fs.readFileSync(p,"utf8")); } catch { return null; } };
+const out={
+  skill,
+  skillRepo: path.join(root,".cursor/skills/watchdog/SKILL.md"),
+  softlock:{
+    binaryRepo: path.join(root,"ops/diagnostics/host-softlock-watch.sh"),
+    binaryInstalled: softBin,
+    install: path.join(root,"ops/diagnostics/install-host-softlock-watch.sh"),
+    stateDir: softState,
+    metricsJson: path.join(softState,"metrics.json"),
+    metricsLog: path.join(softState,"metrics.jsonl"),
+    eventsLog: path.join(softState,"events.log"),
+    systemdActive: softActive,
+    systemdEnabled: softEnabled,
+    metrics: readJson(path.join(softState,"metrics.json")),
+    start: "stay on via systemd --user; ./ops/diagnostics/install-host-softlock-watch.sh"
+  },
+  subagent:{
+    binary: path.join(root,"bin/subagent-watchdog"),
+    stateDir: subState,
+    metricsJson: path.join(subState,"metrics.json"),
+    metricsLog: path.join(subState,"metrics.jsonl"),
+    metrics: readJson(path.join(subState,"metrics.json")),
+    start: "systemd pem-subagent-watchdog.service (install-loop.sh) + optional subscribe_timer",
+    systemdActive: subActive,
+    systemdEnabled: subEnabled,
+    sample: path.join(subState,"sample.json"),
+    tick: "./bin/subagent-watchdog tick --sample …"
+  },
+  docs:{
+    softlock: "docs/agent/host-softlock-watch.md",
+    subagent: "docs/agent/subagent-watchdog.md"
+  }
+};
+process.stdout.write(JSON.stringify(out,null,2)+"\n");
+' "$ROOT" "$soft_state" "$sub_state" "$soft_bin" "$skill" "$soft_active" "$soft_enabled" "$sub_active" "$sub_enabled"
+    return
+  fi
+  cat <<EOF
+watchdog — softlock + subagent
+  skill:     $skill
+  skillRepo: $ROOT/.cursor/skills/watchdog/SKILL.md
+
+softlock (always on)
+  bin:       $soft_bin  (repo ops/diagnostics/host-softlock-watch.sh)
+  install:   ./ops/diagnostics/install-host-softlock-watch.sh
+  systemd:   active=$soft_active enabled=$soft_enabled
+  state:     $soft_state
+  metrics:   $soft_state/metrics.json + metrics.jsonl
+
+subagent (host loop + optional coordinator timer)
+  bin:       $ROOT/bin/subagent-watchdog
+  loop:      ./ops/tooling/subagent-watchdog/install-loop.sh
+  systemd:   active=$sub_active enabled=$sub_enabled (pem-subagent-watchdog.service)
+  sample:    $sub_state/sample.json
+  tick:      ./bin/subagent-watchdog tick --sample …
+  metrics:   ./bin/subagent-watchdog metrics
+  state:     $sub_state
+  docs:      docs/agent/subagent-watchdog.md · docs/agent/host-softlock-watch.md
+EOF
+}
+
 cmd_graphify() {
   if [[ "$JSON" -eq 1 ]]; then
     local out status=0
@@ -518,7 +603,8 @@ const out={
   env: run("env"),
   docker: run("docker"),
   seed: run("seed"),
-  helpers: run("helpers")
+  helpers: run("helpers"),
+  watchdog: run("watchdog")
 };
 process.stdout.write(JSON.stringify(out,null,2)+"\n");
 ' "$ROOT"
@@ -532,6 +618,7 @@ orient — austenstrine_portfolio
   Prefer: ./bin/agent-cli <cmd> over re-reading files / guessing npm or dssh.
   Graphify first: query|path|explain (or MCP) before wide Grep.
   Coord when useful: same-checkout peer contention → agent-coord claim; skip when alone.
+  Watchdogs: skill ~/.agents/skills/watchdog/SKILL.md · ./bin/agent-cli watchdog
 
 EOF
   cmd_layout
@@ -546,10 +633,12 @@ EOF
   echo
   echo "helpers (detected)"
   helper_status_text | sed 's/^/  /'
+  echo
+  cmd_watchdog
   cat <<'EOF'
 
 next
-  ./bin/agent-cli layout|scripts|env|docker|seed|helpers|graphify [--json]
+  ./bin/agent-cli layout|scripts|env|docker|seed|helpers|watchdog|graphify [--json]
   ./bin/agent-cli lint   # prefs + eslint-prefs + tsc (not npm run lint -w …)
   sibling remotes: git ls-remote --symref origin HEAD  (do not trust local branch name alone)
 EOF
@@ -571,6 +660,7 @@ case "$CMD" in
   docker)   cmd_docker ;;
   seed)     cmd_seed ;;
   helpers)  cmd_helpers ;;
+  watchdog) cmd_watchdog ;;
   graphify) cmd_graphify ;;
   lint)     cmd_lint ;;
 esac

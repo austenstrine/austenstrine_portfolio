@@ -19,6 +19,9 @@ Canonical long-form guidance relocated from always-on Cursor rules. Thin `.curso
 | [ultracave-kickoff.md](./ultracave-kickoff.md) | Coordinator paste block — prepend to every CreateAgent / SendToAgent / Task kickoff |
 | [cookie-epoch.md](./cookie-epoch.md) | Session/cookie work: bump `COOKIE_EPOCH_UTC` in `apps/web/src/lib/cookie-epoch.ts`; stamp `pem_cookie_epoch` |
 | [subagent-watchdog.md](./subagent-watchdog.md) | Coordinator stuck-loop poll (1 min while workers active); `./bin/subagent-watchdog` |
+| [host-softlock-watch.md](./host-softlock-watch.md) | Always-on host softlock killer; systemd install + metrics |
+| Skill `watchdog` | `~/.agents/skills/watchdog/SKILL.md` — params/metrics; hooks own start |
+| Project hooks | `.cursor/hooks.json` — sessionStart graphify+watchdog; Task/subagentStart reminders |
 
 Also: `docs/code-style-preferences.md`, `docs/git-commit-preferences.md`, `docs/cursor-rules-progressive-disclosure.md`, `docs/context-compress-tooling.md`.
 

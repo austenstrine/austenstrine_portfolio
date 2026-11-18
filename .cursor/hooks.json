@@ -1,0 +1,24 @@
+{
+  "version": 1,
+  "hooks": {
+    "sessionStart": [
+      {
+        "command": ".cursor/hooks/session-start.sh",
+        "timeout": 90
+      }
+    ],
+    "subagentStart": [
+      {
+        "command": ".cursor/hooks/subagent-start-watchdog.sh",
+        "timeout": 5
+      }
+    ],
+    "postToolUse": [
+      {
+        "command": ".cursor/hooks/post-tool-watchdog.sh",
+        "matcher": "Task",
+        "timeout": 5
+      }
+    ]
+  }
+}
