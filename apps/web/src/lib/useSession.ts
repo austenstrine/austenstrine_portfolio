@@ -6,6 +6,7 @@ import {
 	useCallback,
 	useContext,
 	useEffect,
+	useRef,
 	useState,
 	type ReactNode,
 } from 'react';
@@ -23,12 +24,29 @@ export type SessionValue = {
 	 * After login / 2FA / email-verify, cookies are set but the PeM layout
 	 * SessionProvider stays mounted with a guest seed. Soft `router.push`
 	 * does not re-run the mount probe — adopt the issued user before navigate
-	 * so RequireAccess / header see signed-in (PEM-505).
+	 * so RequireAccess / header see signed-in (PEM-505). Prefer
+	 * `finishSignedInNavigation` so the next document load SSR-reseeds
+	 * (PEM-514).
 	 */
 	adoptSignedIn: (user: AuthUser) => void;
 	signOut: () => Promise<void>;
 	sessionUnavailable: string | null;
 };
+
+/**
+ * Cookies just landed; soft `router.push` keeps the guest SSR seed on the
+ * still-mounted SessionProvider. Adopt for the current tree, then full
+ * document load so layout `getCurrentUser()` / header re-read cookies
+ * (PEM-514).
+ */
+export function finishSignedInNavigation(
+	adoptSignedIn: (user: AuthUser) => void,
+	user: AuthUser,
+	destination: string,
+): void {
+	adoptSignedIn(user);
+	window.location.assign(destination);
+}
 
 const SessionContext = createContext<SessionValue | null>(null);
 
@@ -50,15 +68,22 @@ function useSessionController(options: {
 		() => enabled && (!seeded || initialUser == null),
 	);
 	const [sessionUnavailable, setSessionUnavailable] = useState<string | null>(null);
+	// Bump on adopt so a late guest mount-probe cannot wipe the signed-in user
+	// before the hard remount (PEM-514).
+	const probeGeneration = useRef(0);
 
 	const refresh = useCallback(async (quiet = false) => {
 		if(!enabled) {
 			return;
 		}
+		const generation = probeGeneration.current;
 		if(!quiet) {
 			setLoading(true);
 		}
 		const probe = await probeCurrentUser();
+		if(generation !== probeGeneration.current) {
+			return;
+		}
 		if(probe.status === 'ok') {
 			setUser(probe.user);
 			setSessionUnavailable(null);
@@ -88,10 +113,23 @@ function useSessionController(options: {
 		void refresh(seeded && initialUser != null);
 	}, [enabled, refresh, seeded, initialUser]);
 
+	// SSR seed can catch up after a hard remount / router.refresh without
+	// remounting this fiber — only adopt upward (never clobber signed-in with
+	// a stale null prop).
+	useEffect(() => {
+		if(!enabled || !seeded || initialUser == null) {
+			return;
+		}
+		setUser(initialUser);
+		setSessionUnavailable(null);
+		setLoading(false);
+	}, [enabled, seeded, initialUser]);
+
 	const signOut = useCallback(async () => {
 		if(!enabled) {
 			return;
 		}
+		probeGeneration.current += 1;
 		await logoutUser().catch(() => undefined);
 		setUser(null);
 		setSessionUnavailable(null);
@@ -101,6 +139,7 @@ function useSessionController(options: {
 		if(!enabled) {
 			return;
 		}
+		probeGeneration.current += 1;
 		setUser(next);
 		setSessionUnavailable(null);
 		setLoading(false);

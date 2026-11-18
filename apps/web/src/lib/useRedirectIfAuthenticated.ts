@@ -1,6 +1,5 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { resolvePostAuthDestination, safeNextPath } from './accessGate';
 import { useSession } from './useSession';
@@ -8,9 +7,9 @@ import { useSession } from './useSession';
 /**
  * When a session already exists, leave guest auth pages (login/register)
  * for `next` — same idea as Linear/Notes not showing Sign in while signed in.
+ * Full document load so PeM layout SSR re-reads cookies (PEM-514).
  */
 export function useRedirectIfAuthenticated(nextRaw: string | null | undefined) {
-	const router = useRouter();
 	const { user, loading } = useSession();
 	const nextPath = safeNextPath(nextRaw);
 
@@ -27,12 +26,12 @@ export function useRedirectIfAuthenticated(nextRaw: string | null | undefined) {
 			if(here === destination) {
 				return;
 			}
-			router.replace(destination);
+			window.location.assign(destination);
 		});
 		return () => {
 			cancelled = true;
 		};
-	}, [loading, user, nextPath, router]);
+	}, [loading, user, nextPath]);
 
 	return {
 		user,

@@ -396,7 +396,7 @@ export const ROADMAP_COMPLETED: RoadmapItem[] = [
 		id: 'auth-2fa-session-adopt',
 		title: 'Stay signed in after the email sign-in code',
 		area: 'auth',
-		sourceHint: 'PEM-505',
+		sourceHint: 'PEM-505 / PEM-514',
 		highlight: true,
 	},
 	{

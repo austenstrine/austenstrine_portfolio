@@ -1,6 +1,6 @@
 'use client';
 
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { Suspense, useState, type FormEvent } from 'react';
 import { AuthCard } from '../../../../components/auth/AuthCard';
 import { ErrorText } from '../../../../components/auth/ErrorText';
@@ -13,10 +13,12 @@ import {
 	resolvePostAuthDestination,
 	safeNextPath,
 } from '../../../../lib/accessGate';
-import { useSession } from '../../../../lib/useSession';
+import {
+	finishSignedInNavigation,
+	useSession,
+} from '../../../../lib/useSession';
 
 function VerifyLoginForm() {
-	const router = useRouter();
 	const searchParams = useSearchParams();
 	const { adoptSignedIn } = useSession();
 	const pendingToken = searchParams.get('pendingToken');
@@ -43,11 +45,11 @@ function VerifyLoginForm() {
 
 		try {
 			const session = await verifyLoginOtp(pendingToken, code);
-			adoptSignedIn(session.user);
 			const destination = await resolvePostAuthDestination(
 				nextFromQuery ? nextPath : consumeStashedNext(nextPath),
 			);
-			router.push(destination);
+			// Hard remount: soft push left guest SSR seed on SessionProvider (PEM-514).
+			finishSignedInNavigation(adoptSignedIn, session.user, destination);
 		}
 		catch(submitError) {
 			setError(
@@ -55,8 +57,6 @@ function VerifyLoginForm() {
 					? submitError.message
 					: 'Something went wrong. Please try again.',
 			);
-		}
-		finally {
 			setSubmitting(false);
 		}
 	};
