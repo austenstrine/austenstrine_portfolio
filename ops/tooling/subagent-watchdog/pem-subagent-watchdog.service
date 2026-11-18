@@ -1,5 +1,5 @@
 [Unit]
-Description=PEM subagent stuck-loop watchdog (host keep-alive loop)
+Description=PEM subagent stuck-loop watchdog (forever keep-alive; idle skip when no workers)
 Documentation=file:%h/.agents/skills/watchdog/SKILL.md
 After=default.target
 

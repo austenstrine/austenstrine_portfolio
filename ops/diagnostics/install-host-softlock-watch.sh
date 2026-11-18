@@ -12,6 +12,10 @@ DEST_UNIT="${XDG_CONFIG_HOME:-$HOME/.config}/systemd/user/host-softlock-watch.se
 [[ -f "$SRC_SH" ]] || { echo "missing $SRC_SH" >&2; exit 1; }
 [[ -f "$SRC_UNIT" ]] || { echo "missing $SRC_UNIT" >&2; exit 1; }
 
+if [[ -x "$ROOT/ops/tooling/install-watchdog-skill.sh" ]]; then
+	"$ROOT/ops/tooling/install-watchdog-skill.sh" || true
+fi
+
 mkdir -p "$(dirname "$DEST_BIN")" "$(dirname "$DEST_UNIT")"
 install -m 0755 "$SRC_SH" "$DEST_BIN"
 install -m 0644 "$SRC_UNIT" "$DEST_UNIT"

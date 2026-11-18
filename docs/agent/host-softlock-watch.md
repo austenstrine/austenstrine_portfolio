@@ -35,6 +35,6 @@ Defaults: poll every **5s**; kill preflight older than **10s**; notify cooldown 
 
 | | Softlock | Subagent |
 |--|----------|----------|
-| When | Always (systemd user) | Only while ≥1 active worker (`subscribe_timer`) |
+| When | Always (systemd user) | Forever keep-alive OK; **ticks only while ≥1 active worker** (idle skip) |
 | Binary | `~/.local/bin/host-softlock-watch` | `./bin/subagent-watchdog` |
 | Job | Kill hung sandbox / softlock | Nudge / rotate / pause stuck agents |

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Subagent stuck-loop watchdog — one-shot classify tick (coordinator runtime).
-# No idle daemon. JSON on stdout. Durable metrics under state dir.
+# Subagent stuck-loop watchdog — one-shot classify tick (coordinator / host loop).
+# Host forever loop idle-skips (no tick) when no workers. JSON on stdout. Durable metrics under state dir.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -22,9 +22,9 @@ Options:
   --state DIR     Override state dir (default: ~/.local/state/subagent-watchdog).
   -h, --help
 
-Coordinator: start subscribe_timer (60s) when first worker spawns; each fire run
-`tick`; if should_poll=false, unsubscribe. See docs/agent/subagent-watchdog.md
-Skill: ~/.agents/skills/watchdog/SKILL.md
+Host: install-loop.sh (forever, idle-aware). Optional: subscribe_timer 60s while
+workers active; unsubscribe when should_poll=false. docs/agent/subagent-watchdog.md
+Skill: ~/.agents/skills/watchdog/SKILL.md (./ops/tooling/install-watchdog-skill.sh)
 EOF
 }
 

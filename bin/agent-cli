@@ -513,7 +513,7 @@ const out={
     metricsJson: path.join(subState,"metrics.json"),
     metricsLog: path.join(subState,"metrics.jsonl"),
     metrics: readJson(path.join(subState,"metrics.json")),
-    start: "systemd pem-subagent-watchdog.service (install-loop.sh) + optional subscribe_timer",
+    start: "systemd pem-subagent-watchdog.service idle-aware (install-loop.sh) + optional subscribe_timer; skill via install-watchdog-skill.sh",
     systemdActive: subActive,
     systemdEnabled: subEnabled,
     sample: path.join(subState,"sample.json"),
@@ -540,12 +540,13 @@ softlock (always on)
   state:     $soft_state
   metrics:   $soft_state/metrics.json + metrics.jsonl
 
-subagent (host loop + optional coordinator timer)
+subagent (forever host loop, idle-aware + optional coordinator timer)
   bin:       $ROOT/bin/subagent-watchdog
+  skillPub:  ./ops/tooling/install-watchdog-skill.sh → ~/.agents/skills/watchdog/SKILL.md
   loop:      ./ops/tooling/subagent-watchdog/install-loop.sh
-  systemd:   active=$sub_active enabled=$sub_enabled (pem-subagent-watchdog.service)
+  systemd:   active=$sub_active enabled=$sub_enabled (pem-subagent-watchdog.service; idle skip)
   sample:    $sub_state/sample.json
-  tick:      ./bin/subagent-watchdog tick --sample …
+  tick:      ./bin/subagent-watchdog tick --sample …  (metrics only when active workers)
   metrics:   ./bin/subagent-watchdog metrics
   state:     $sub_state
   docs:      docs/agent/subagent-watchdog.md · docs/agent/host-softlock-watch.md
@@ -568,9 +569,10 @@ process.stdout.write(JSON.stringify({ok:status===0,fresh,status,output:text.trim
 }
 
 cmd_orient() {
-  # Agent-start: wire hooks (Cursor overlay needs post-* → .dispatcher) + cheap graph refresh.
+  # Agent-start: wire hooks (Cursor overlay needs post-* → .dispatcher) + cheap graph refresh + publish watchdog skill.
   if [[ "$JSON" -eq 0 ]]; then
     "$ROOT/ops/tooling/install-graphify-hooks.sh" --quiet || true
+    "$ROOT/ops/tooling/install-watchdog-skill.sh" --quiet || true
     "$ROOT/ops/tooling/graphify-ensure.sh" || true
     echo
   fi
@@ -582,6 +584,7 @@ const root=process.argv[1];
 const bin=root+"/bin/agent-cli";
 const run=(cmd)=>JSON.parse(execFileSync(bin,[cmd,"--json"],{encoding:"utf8"}));
 try { execFileSync(root+"/ops/tooling/install-graphify-hooks.sh",["--quiet"],{encoding:"utf8"}); } catch (_) {}
+try { execFileSync(root+"/ops/tooling/install-watchdog-skill.sh",["--quiet"],{encoding:"utf8"}); } catch (_) {}
 let graphify={ok:false,fresh:false,status:1,output:"skipped"};
 try {
   graphify=JSON.parse(execFileSync(bin,["graphify","--json"],{encoding:"utf8"}));

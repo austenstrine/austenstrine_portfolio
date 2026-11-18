@@ -14,9 +14,11 @@ Read this skill before changing or invoking either watchdog. Two tools:
 | Tool | Job | Lifetime |
 |------|-----|----------|
 | **Host softlock** | Kill hung `cursorsandbox --preflight-only` / react to kernel soft lockup | Always on (systemd `--user`) |
-| **Subagent stuck-loop** | Classify worker samples → nudge / force rotate / budget intervene / pause | Only while ≥1 active worker |
+| **Subagent stuck-loop** | Classify worker samples → nudge / force rotate / budget intervene / pause | Forever keep-alive unit OK; **classify ticks only while ≥1 active worker** (idle → sleep, no metrics) |
 
 Do **not** conflate them. Softlock ≠ agent loop poll.
+
+**Install skill (canonical host path):** `./ops/tooling/install-watchdog-skill.sh` (also from `./bin/agent-cli orient`, `sessionStart`, `install-loop.sh`). Repo mirror stays at `.cursor/skills/watchdog/SKILL.md`.
 
 ## Softlock
 
@@ -69,7 +71,7 @@ Softlock **stays on** across agent sessions. Do not leave it uninstalled after a
 
 | Rule | Value |
 |------|-------|
-| Poll | every **1 min** while ≥1 active worker/subagent; else timer **off** |
+| Poll | every **1 min** while ≥1 active worker; forever host loop **idle-skips** (no tick/metrics) when none; optional coordinator timer still unsubscribes when idle |
 | Same strategy, slight tweaks | intervene at **4+** |
 | Slight variations | max **3**, then force **very different** approach |
 | Very-different failures | **3** → pause worker + ask Project coordinator; stay paused until plan |
@@ -79,22 +81,24 @@ Actions: `ok` | `nudge` | `force_rotate` | `budget_intervene` | `pause_escalate`
 
 ### Start / stop
 
-**Host keep-alive (Raider / local AgentOps):**
+**Host keep-alive (preferred on Raider — forever unit, idle-aware):**
 
 ```bash
+./ops/tooling/install-watchdog-skill.sh   # → ~/.agents/skills/watchdog/SKILL.md
 ./ops/tooling/subagent-watchdog/install-loop.sh
 # unit: pem-subagent-watchdog.service → ~/.local/bin/pem-subagent-watchdog-loop
-# Drop live sample at ~/.local/state/subagent-watchdog/sample.json (else empty heartbeat tick)
+# Drop live sample at ~/.local/state/subagent-watchdog/sample.json
+# No sample / no active workers → idle skip (sleep only; metrics.ticks unchanged)
 systemctl --user status pem-subagent-watchdog.service
 ```
 
-**Coordinator timer (still valid when hooks/MCP available):**
+**Coordinator timer (optional when MCP timer available):**
 
 1. First worker spawn → `subscribe_timer` name `pem-subagent-watchdog`, `delaySeconds: 60`.
 2. Each fire → build sample → `./bin/subagent-watchdog tick --sample …` → apply `actions` via `SendToAgent` / pause.
 3. `should_poll=false` → `unsubscribe` timer. **Do not leave timer forgotten** when no workers active.
 
-Classify rules (strategy flip / budgets) always apply on every `tick`, whether loop or timer.
+Classify rules apply on every real `tick` only (idle host loop does not tick).
 
 ### Metrics / state
 
@@ -124,12 +128,13 @@ Portfolio project hooks (`.cursor/hooks.json`) enforce must-every-time start:
 | `postToolUse` (`Task`) | `.cursor/hooks/post-tool-watchdog.sh` | `additional_context` arm/stop reminder |
 | Git `post-merge` / `post-checkout` | `ops/tooling/git-hooks/*` (via `install-graphify-hooks.sh`) | Refresh graphify after checkout/merge |
 | systemd `host-softlock-watch` | install script | Softlock stays on |
-| systemd `pem-subagent-watchdog` | `install-loop.sh` | Subagent loop stays on (60s) |
+| systemd `pem-subagent-watchdog` | `install-loop.sh` | Forever keep-alive; idle skip when no workers |
 
 Skill keeps **parameters/rules/paths**. Hooks keep **when to start**. Do not re-litigate cadence in always-on rules.
 
 ## Agent duty
 
 - Softlock missing/disabled on Austen host after softlock risk → install/enable.
-- Coordinators with active workers → arm `pem-subagent-watchdog` timer; stop when idle.
+- Prefer host forever loop (`install-loop.sh`) with idle skip. Optional timer: arm while workers active; unsubscribe when idle.
+- Skill missing at `~/.agents/skills/watchdog/SKILL.md` → run `./ops/tooling/install-watchdog-skill.sh`.
 - Claims about measured AgentOps → cite `metrics.json` / `metrics.jsonl` paths above (PEM-538 closed the “spec without binary/metrics” gap).

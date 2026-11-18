@@ -1,12 +1,13 @@
 # Subagent stuck-loop watchdog
 
-Coordinator-side poll + classify. **Params skill:** `~/.agents/skills/watchdog/SKILL.md` (or `.cursor/skills/watchdog/`). **Start rules:** project hooks (`.cursor/hooks.json` — `sessionStart` / `subagentStart` / `postToolUse` Task) beat prose.
+Coordinator-side poll + classify. **Params skill:** `~/.agents/skills/watchdog/SKILL.md` (install: `./ops/tooling/install-watchdog-skill.sh`; repo mirror `.cursor/skills/watchdog/`). **Start rules:** project hooks (`.cursor/hooks.json` — `sessionStart` / `subagentStart` / `postToolUse` Task) beat prose.
 
-Canonical rules also live in Place et Marque Project store: `workflows/subagent-watchdog.md`.
+Canonical Project SOP also lives in Place et Marque store: `workflows/subagent-watchdog.md` (keep aligned: forever host loop is OK when **idle-aware** — no tick/metrics when no workers).
 
 ## Prefer
 
 ```bash
+./ops/tooling/install-watchdog-skill.sh
 ./bin/subagent-watchdog tick --sample /tmp/watchdog-sample.json
 ./bin/subagent-watchdog active --sample /tmp/watchdog-sample.json
 ./bin/subagent-watchdog metrics          # durable counters
@@ -17,14 +18,16 @@ Canonical rules also live in Place et Marque Project store: `workflows/subagent-
 
 ## Start / stop
 
-**Host keep-alive (preferred on Raider for continuous metrics):**
+**Host keep-alive (preferred on Raider — forever unit, idle-aware):**
 
 ```bash
 ./ops/tooling/subagent-watchdog/install-loop.sh
 systemctl --user status pem-subagent-watchdog.service
-# optional live sample:
+# live sample:
 # cp sample.json ~/.local/state/subagent-watchdog/sample.json
 ```
+
+Loop stays enabled. **No sample / no active workers → idle skip** (sleep only; does **not** call `tick`; `metrics.ticks` unchanged). Softlock stays a separate forever unit.
 
 **Coordinator timer (optional when MCP timer available):**
 
@@ -38,7 +41,7 @@ Host softlock (separate): `ops/diagnostics/install-host-softlock-watch.sh`.
 
 | Rule | Value |
 |------|-------|
-| Poll | 1 min while ≥1 active worker; else off |
+| Poll | 1 min while ≥1 active worker; forever host loop idle-skips when none |
 | Same strategy slight tweaks | intervene at **4+** |
 | Slight variations | max **3**, then force very different |
 | Very-different failures | **3** → pause + ask Project coordinator |
@@ -57,5 +60,6 @@ Durable state + metrics (PEM-538):
 | `…/metrics.jsonl` | Append-only tick events |
 | `…/last-tick.json` | Last classify output |
 | `…/worker-*.json` | Per-worker fingerprints / counts |
+| `…/loop-idle-utc.txt` | Last idle skip stamp (host loop) |
 
 Evidence smoke: `./bin/subagent-watchdog tick --sample ops/tooling/subagent-watchdog/fixtures/loop-sample.json` then `./bin/subagent-watchdog metrics`.
