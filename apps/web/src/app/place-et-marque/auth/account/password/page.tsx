@@ -180,8 +180,8 @@ function PasswordForm() {
 }
 
 export default function AccountPasswordPage() {
-	// RequireAccess waits for null-seed probe, then one-shots true guests to login
-	// (same gate as the hub — soft SSR when cookies exist must not hang blank).
+	// SSR layout one-shots true guests; RequireAccess waits for null-seed probe
+	// when cookies exist so soft recovery does not hang blank (PEM-510).
 	return (
 		<RequireAccess reasonKey="account">
 			<PasswordForm />

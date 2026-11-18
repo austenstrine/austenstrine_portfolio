@@ -5,6 +5,14 @@ import {
 	resolveOrdersToFulfillHref,
 } from '../../../../components/catalog/AccountMenu';
 import { NavigateHoverArrow } from '../../../../components/catalog/NavigateHoverArrow';
+import { NavigatePersistentArrow } from '../../../../components/catalog/NavigatePersistentArrow';
+import { PILL_CTA_MOTION_CLASS } from '../../../../components/catalog/pillCta';
+import {
+	accessReason,
+	buildLoginUrl,
+	buildRegisterUrl,
+	pemAuthPath,
+} from '../../../../lib/accessGate';
 import type { VendorSummary } from '../../../../lib/catalog-api';
 import { NOTIFICATIONS_INBOX_PATH } from '../../../../lib/notifications-api';
 import { useSession } from '../../../../lib/useSession';
@@ -90,6 +98,97 @@ function HubSection({
 	);
 }
 
+function GuestAccountPrompt() {
+	const next = pemAuthPath('/account');
+	const reason = accessReason('account', false);
+	const signInHref = buildLoginUrl({ next, reason });
+	const registerHref = buildRegisterUrl({ next, reason });
+
+	return (
+		<div
+			className="
+				mx-auto
+				w-full
+				max-w-xl
+			"
+		>
+			<header className="mb-8">
+				<h1
+					className="
+						text-2xl
+						font-semibold
+						text-ink
+					"
+				>
+					Account
+				</h1>
+				<p
+					className="
+						mt-1
+						text-sm
+						text-slate-600
+					"
+				>
+					{reason}
+				</p>
+			</header>
+			<div
+				className="
+					flex
+					flex-wrap
+					items-center
+					gap-3
+				"
+			>
+				<a
+					className={`
+						group
+						inline-flex
+						items-center
+						gap-1.5
+						rounded-full
+						bg-sky
+						px-5
+						py-2.5
+						text-sm
+						font-semibold
+						text-white
+						${PILL_CTA_MOTION_CLASS}
+						hover:bg-ink
+					`}
+					href={signInHref}
+				>
+					Sign in
+					<NavigatePersistentArrow />
+				</a>
+				<a
+					className={`
+						group
+						inline-flex
+						items-center
+						gap-1.5
+						rounded-full
+						border
+						border-slate-300
+						px-5
+						py-2.5
+						text-sm
+						font-semibold
+						text-ink
+						${PILL_CTA_MOTION_CLASS}
+						hover:border-sky
+						hover:text-sky
+					`}
+					href={registerHref}
+				>
+					Create account
+					<NavigatePersistentArrow />
+				</a>
+			</div>
+		</div>
+	);
+}
+
 function AccountHubBody({
 	vendors,
 }: {
@@ -97,12 +196,16 @@ function AccountHubBody({
 }) {
 	const { user, loading, signOut } = useSession();
 
-	if(loading || !user) {
+	if(loading) {
 		return (
 			<p className="text-sm text-slate-500">
 				Checking access…
 			</p>
 		);
+	}
+
+	if(!user) {
+		return <GuestAccountPrompt />;
 	}
 
 	const accountLinks: HubLink[] = [
