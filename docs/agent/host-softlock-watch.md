@@ -5,7 +5,8 @@ Kernel soft lockup + hung `cursorsandbox --preflight-only` killer, plus **D-stat
 Classic soft lockup watch alone missed Raider stalls where softlock hits stayed 0 while D-state / RCU climbed — this watch covers that class.
 
 **Skill (canonical params):** `~/.agents/skills/watchdog/SKILL.md`  
-**Start:** project `sessionStart` hook checks liveness; install script enables systemd so softlock **stays on**.
+**Start:** project `sessionStart` hook checks liveness; install script enables systemd so softlock **stays on**.  
+**Start cue:** once on daemon start — `notify-send` + `paplay`/`canberra-gtk-play`/`pw-play` via `~/.local/bin/watchdog-start-cue` (not every 5s poll). Incident `notify-send -u critical` path stays separate.
 
 ## Start (stays on)
 
@@ -13,13 +14,15 @@ Classic soft lockup watch alone missed Raider stalls where softlock hits stayed 
 ./ops/diagnostics/install-host-softlock-watch.sh
 # or manually:
 install -m 0755 ops/diagnostics/host-softlock-watch.sh ~/.local/bin/host-softlock-watch
+install -m 0755 ops/tooling/watchdog-start-cue.sh ~/.local/bin/watchdog-start-cue
 install -m 0644 ops/diagnostics/host-softlock-watch.service ~/.config/systemd/user/
 systemctl --user daemon-reload
 systemctl --user enable --now host-softlock-watch.service
 ```
 
 Check: `systemctl --user status host-softlock-watch.service`  
-Agent peek: `./bin/agent-cli watchdog` → `status.json` / `stall-elevated`
+Agent peek: `./bin/agent-cli watchdog` → `status.json` / `stall-elevated`  
+**Caution:** confirm softlock clear (`elevated=0`) before restart/reinstall when possible.
 
 Defaults: poll every **5s**; kill preflight older than **10s**; notify cooldown **60s**; D-state min **2** / stuck **3** polls; clear after **3** clean polls.
 

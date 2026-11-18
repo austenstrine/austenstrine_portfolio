@@ -29,6 +29,8 @@ systemctl --user status pem-subagent-watchdog.service
 
 Loop stays enabled. **No sample / no active workers → idle skip** (sleep only; does **not** call `tick`; `metrics.ticks` unchanged). Softlock stays a separate forever unit.
 
+**Start cue:** once on loop process start / enable / restart — desktop `notify-send` + short system sound (`ops/tooling/watchdog-start-cue.sh`). Idle skips and classify ticks do **not** cue. Disable: `WATCHDOG_START_CUE=0`.
+
 **Coordinator timer (optional when MCP timer available):**
 
 1. On first worker/subagent spawn: `subscribe_timer` name `pem-subagent-watchdog`, `delaySeconds: 60`.

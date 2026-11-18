@@ -32,6 +32,24 @@ idle_skip() {
 }
 
 log "started interval=${INTERVAL_SEC}s idle_interval=${IDLE_INTERVAL_SEC}s state=$STATE_DIR bin=$BIN"
+# Start cue once (daemon start / enable --now / restart). Never every idle skip or tick.
+_start_cue_bin="${SUBAGENT_WATCHDOG_START_CUE:-${WATCHDOG_START_CUE_BIN:-$HOME/.local/bin/watchdog-start-cue}}"
+_repo_cue="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/watchdog-start-cue.sh"
+if [[ "${WATCHDOG_START_CUE:-1}" != "0" ]]; then
+	if command -v watchdog-start-cue >/dev/null 2>&1; then
+		watchdog-start-cue "PEM subagent watchdog" "Started (idle-aware loop)." || true
+		log "start_cue: watchdog-start-cue (notify-send + sound)"
+	elif [[ -x "$_start_cue_bin" ]]; then
+		"$_start_cue_bin" "PEM subagent watchdog" "Started (idle-aware loop)." || true
+		log "start_cue: $_start_cue_bin (notify-send + sound)"
+	elif [[ -x "$_repo_cue" ]]; then
+		"$_repo_cue" "PEM subagent watchdog" "Started (idle-aware loop)." || true
+		log "start_cue: $_repo_cue (notify-send + sound)"
+	else
+		log "start_cue: skipped (no watchdog-start-cue helper)"
+	fi
+fi
+unset _start_cue_bin _repo_cue
 
 while true; do
 	date -u +%Y-%m-%dT%H:%M:%SZ >"$STATE_DIR/loop-last-utc.txt"

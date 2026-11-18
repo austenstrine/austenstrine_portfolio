@@ -18,6 +18,8 @@ Read this skill before changing or invoking either watchdog. Two tools:
 
 Do **not** conflate them. Softlock ≠ agent loop poll.
 
+**Start cue (PEM-604):** on softlock / pem-subagent **daemon start / enable / restart only** — `notify-send` banner + short sound (`paplay` → `canberra-gtk-play` → `pw-play`). **Not** every poll/tick/idle skip. Helper: `ops/tooling/watchdog-start-cue.sh` → `~/.local/bin/watchdog-start-cue` (both install scripts). Disable: `WATCHDOG_START_CUE=0`. Austen hears freedesktop `message-new-instant` (or `WATCHDOG_START_CUE_SOUND`); sees normal desktop notification titled “Host softlock watch” / “PEM subagent watchdog”.
+
 **Install skill (canonical host path):** `./ops/tooling/install-watchdog-skill.sh` (also from `./bin/agent-cli orient`, `sessionStart`, `install-loop.sh`). Repo mirror stays at `.cursor/skills/watchdog/SKILL.md`.
 
 ## Softlock
@@ -57,13 +59,15 @@ Do **not** conflate them. Softlock ≠ agent loop poll.
 ### Start / stop
 
 ```bash
-./ops/diagnostics/install-host-softlock-watch.sh   # enable --now
+./ops/diagnostics/install-host-softlock-watch.sh   # enable --now (+ start cue once)
 systemctl --user status host-softlock-watch.service
 systemctl --user stop host-softlock-watch.service  # rare; keep on by default
 ./bin/agent-cli watchdog                            # status.json / elevated peek
 ```
 
 Softlock **stays on** across agent sessions. Do not leave it uninstalled after a softlock incident.
+
+**Caution before restart:** peek `status.json` / `stall-elevated` first. Prefer clear (`elevated=0`) before `restart` / reinstall. Cue fires once on process start — not a softlock alert.
 
 ### Metrics
 
@@ -109,6 +113,7 @@ Actions: `ok` | `nudge` | `force_rotate` | `budget_intervene` | `pause_escalate`
 # unit: pem-subagent-watchdog.service → ~/.local/bin/pem-subagent-watchdog-loop
 # Drop live sample at ~/.local/state/subagent-watchdog/sample.json
 # No sample / no active workers → idle skip (sleep only; metrics.ticks unchanged)
+# Start cue once on enable/restart (notify-send + sound); idle skips do not cue
 systemctl --user status pem-subagent-watchdog.service
 ```
 

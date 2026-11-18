@@ -251,6 +251,22 @@ elevated=0
 metrics_init
 log "started poll=${POLL_SEC}s preflight_max_age=${PREFLIGHT_MAX_AGE_SEC}s d_min=${D_STATE_MIN} stuck_polls=${D_STATE_STUCK_POLLS} pileon=${DOCKER_PILEON} state=$STATE_DIR"
 metrics_event started "poll=${POLL_SEC}s d_min=${D_STATE_MIN} pileon=${DOCKER_PILEON}"
+# Start cue once (daemon start / enable --now / restart). Never every poll tick.
+_start_cue_bin="${HOST_SOFTLOCK_START_CUE:-${WATCHDOG_START_CUE_BIN:-$HOME/.local/bin/watchdog-start-cue}}"
+if [[ "${WATCHDOG_START_CUE:-1}" != "0" ]]; then
+  if command -v watchdog-start-cue >/dev/null 2>&1; then
+    watchdog-start-cue "Host softlock watch" "Started (softlock + D-state/RCU)." || true
+    log "start_cue: watchdog-start-cue (notify-send + sound)"
+    metrics_event start_cue "bin=watchdog-start-cue"
+  elif [[ -x "$_start_cue_bin" ]]; then
+    "$_start_cue_bin" "Host softlock watch" "Started (softlock + D-state/RCU)." || true
+    log "start_cue: $_start_cue_bin (notify-send + sound)"
+    metrics_event start_cue "bin=$_start_cue_bin"
+  else
+    log "start_cue: skipped (no watchdog-start-cue on PATH / $_start_cue_bin)"
+  fi
+fi
+unset _start_cue_bin
 # Reboot / service restart leaves docker-pileon-pause while in-memory elevated=0,
 # so the elevate→clear transition never runs and dssh launch false-refuses.
 if [[ -f "$PILEON_PAUSE_FLAG" ]]; then
