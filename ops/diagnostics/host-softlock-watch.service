@@ -1,5 +1,5 @@
 [Unit]
-Description=Host softlock watchdog (cursorsandbox preflight / kernel soft lockup)
+Description=Host softlock watchdog (softlock / D-state / RCU stall / cursorsandbox preflight)
 Documentation=file:%h/.local/bin/host-softlock-watch
 After=default.target
 

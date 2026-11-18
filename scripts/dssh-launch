@@ -25,11 +25,15 @@ declare -a TAB_CMDS=()
 
 DRY_RUN=0
 MAP_ONLY=0
+IGNORE_STALL=0
 EXTRA=()
+SOFTLOCK_STATE="${HOST_SOFTLOCK_STATE_DIR:-${XDG_STATE_HOME:-$HOME/.local/state}/host-softlock-watch}"
+# Serialize compose create/build inside tab commands / child dssh (avoid build storms).
+export COMPOSE_PARALLEL_LIMIT="${COMPOSE_PARALLEL_LIMIT:-1}"
 
 usage() {
 	cat <<'EOF'
-Usage: dssh launch [--dry-run] [--map-only] [--confirm|-y] […]
+Usage: dssh launch [--dry-run] [--map-only] [--ignore-stall] [--confirm|-y] […]
 
   Bring up the Place et Marque local stack the same way as
   scripts/port-broadcast-launcher + scripts/port-broadcast-stack.conf:
@@ -40,17 +44,51 @@ Usage: dssh launch [--dry-run] [--map-only] [--confirm|-y] […]
   ops/diagnostics/port-broadcast-stack-map.md), then launches unless
   hops are already listening or --map-only / --dry-run.
 
+  Stall gate: refuses launch when host softlock watch reports elevated
+  D-state / RCU / softlock (see ~/.local/state/host-softlock-watch/status.json).
+  Override: --ignore-stall or DSSH_LAUNCH_IGNORE_STALL=1.
+
+  Compose: COMPOSE_PARALLEL_LIMIT defaults to 1 (serialize create/build).
+
 Options:
-  --dry-run     Write map; pass --dry-run to the launcher (no GUI)
-  --map-only    Write map only; do not invoke the launcher
-  --confirm|-y  Accepted (launch already confirms); forwarded if present
-  -h, --help    Show this help
+  --dry-run       Write map; pass --dry-run to the launcher (no GUI)
+  --map-only      Write map only; do not invoke the launcher
+  --ignore-stall  Bypass D-state/RCU stall gate (dangerous)
+  --confirm|-y    Accepted (launch already confirms); forwarded if present
+  -h, --help      Show this help
 EOF
 }
 
 die() {
 	echo "dssh-launch: $*" >&2
 	exit 1
+}
+
+# Refuse launch during host D-state / RCU stall (softlock watch). Softlock caution.
+stall_gate() {
+	if [[ "${DSSH_LAUNCH_IGNORE_STALL:-0}" == "1" || "$IGNORE_STALL" == "1" ]]; then
+		echo "dssh-launch: stall gate bypassed (--ignore-stall / DSSH_LAUNCH_IGNORE_STALL=1)" >&2
+		return 0
+	fi
+	local flag="$SOFTLOCK_STATE/stall-elevated"
+	local pause="$SOFTLOCK_STATE/docker-pileon-pause"
+	local status="$SOFTLOCK_STATE/status.json"
+	if [[ -f "$flag" || -f "$pause" ]]; then
+		echo "dssh-launch: REFUSE — host stall elevated (D-state/RCU/softlock)." >&2
+		echo "dssh-launch: do not pile on docker create/build; never SIGKILL D-state." >&2
+		if [[ -f "$status" ]]; then
+			echo "dssh-launch: status → $status" >&2
+			node -e '
+try {
+  const s=JSON.parse(require("fs").readFileSync(process.argv[1],"utf8"));
+  if (s.elevated && s.agent_hint) console.error("dssh-launch: "+s.agent_hint);
+  console.error("dssh-launch: reasons="+JSON.stringify(s.reasons||[])+" d_state="+s.d_state_count+" rcu="+s.rcu_recent+" elevated="+!!s.elevated);
+} catch (_) {}
+' "$status" 2>&1 || true
+		fi
+		echo "dssh-launch: wait for clear (./bin/agent-cli watchdog) or override with --ignore-stall" >&2
+		exit 2
+	fi
 }
 
 port_listening() {
@@ -190,6 +228,10 @@ while [[ $# -gt 0 ]]; do
 			MAP_ONLY=1
 			shift
 			;;
+		--ignore-stall)
+			IGNORE_STALL=1
+			shift
+			;;
 		--confirm|-y)
 			# Launch already confirms; accept so `dssh launch --confirm` is harmless.
 			EXTRA+=(--confirm)
@@ -215,6 +257,10 @@ if [[ "$MAP_ONLY" == "1" ]]; then
 	echo "dssh-launch: map-only; not launching Terminal tabs." >&2
 	exit 0
 fi
+
+# Stall gate before real launch (map-only already returned). Dry-run still checks
+# so agents see the refuse path without opening tabs.
+stall_gate
 
 if [[ "$DRY_RUN" != "1" ]] && hops_already_up; then
 	echo "dssh-launch: hops ${BASE_PORT}–$((BASE_PORT + TABS - 1)) already listening; map refreshed, skipping relaunch." >&2

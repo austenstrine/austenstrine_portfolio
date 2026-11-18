@@ -13,7 +13,7 @@ Read this skill before changing or invoking either watchdog. Two tools:
 
 | Tool | Job | Lifetime |
 |------|-----|----------|
-| **Host softlock** | Kill hung `cursorsandbox --preflight-only` / react to kernel soft lockup | Always on (systemd `--user`) |
+| **Host softlock** | Soft lockup + hung preflight + **D-state / RCU stall** detect; pause new docker pile-on | Always on (systemd `--user`) |
 | **Subagent stuck-loop** | Classify worker samples → nudge / force rotate / budget intervene / pause | Forever keep-alive unit OK; **classify ticks only while ≥1 active worker** (idle → sleep, no metrics) |
 
 Do **not** conflate them. Softlock ≠ agent loop poll.
@@ -37,7 +37,22 @@ Do **not** conflate them. Softlock ≠ agent loop poll.
 | Poll interval | **5s** | `HOST_SOFTLOCK_POLL_SEC` |
 | Preflight max age | **10s** | `HOST_SOFTLOCK_PREFLIGHT_MAX_AGE_SEC` |
 | Notify cooldown | **60s** | `HOST_SOFTLOCK_NOTIFY_COOLDOWN_SEC` |
+| D-state min count | **2** | `HOST_SOFTLOCK_D_STATE_MIN` |
+| D-state stuck polls | **3** | `HOST_SOFTLOCK_D_STATE_STUCK_POLLS` |
+| Clear after clean polls | **3** | `HOST_SOFTLOCK_CLEAR_POLLS` |
+| Docker pile-on SIGTERM | **1** (on) | `HOST_SOFTLOCK_DOCKER_PILEON` (`0` = status only) |
+| D-state pattern | glycin/bwrap/runc/docker-proxy/… | `HOST_SOFTLOCK_D_STATE_RE` |
 | State dir | `~/.local/state/host-softlock-watch` | `HOST_SOFTLOCK_STATE_DIR` |
+
+### Detection (beyond classic softlock)
+
+| Signal | Action |
+|--------|--------|
+| Rising/stuck D-state on glycin/bwrap/runc/docker-proxy/kworker netns | Elevate; metrics; optional SIGTERM **non-D** docker create/build |
+| journal/dmesg RCU stall / expedited / `synchronize_rcu_expedited` | Elevate; metrics |
+| Soft lockup / hung preflight | Existing kill path |
+
+**Never SIGKILL D-state.** Agents: read `status.json` / `stall-elevated`. `dssh launch` refuses when elevated (`DSSH_LAUNCH_IGNORE_STALL=1` override).
 
 ### Start / stop
 
@@ -45,6 +60,7 @@ Do **not** conflate them. Softlock ≠ agent loop poll.
 ./ops/diagnostics/install-host-softlock-watch.sh   # enable --now
 systemctl --user status host-softlock-watch.service
 systemctl --user stop host-softlock-watch.service  # rare; keep on by default
+./bin/agent-cli watchdog                            # status.json / elevated peek
 ```
 
 Softlock **stays on** across agent sessions. Do not leave it uninstalled after a softlock incident.
@@ -53,7 +69,10 @@ Softlock **stays on** across agent sessions. Do not leave it uninstalled after a
 
 | File | Contents |
 |------|----------|
-| `…/metrics.json` | `ticks`, `soft_lockup_hits`, `preflight_kills`, `notifies`, `notify_suppressed` |
+| `…/status.json` | Agent-facing: `ok`, `elevated`, `reasons`, `d_state_*`, `rcu_recent`, `docker_pileon_paused`, `agent_hint` |
+| `…/stall-elevated` | Presence = elevated (shell-friendly) |
+| `…/docker-pileon-pause` | Presence = pause new docker create/build |
+| `…/metrics.json` | `ticks`, `soft_lockup_hits`, `d_state_hits`, `rcu_stall_hits`, `docker_pileon_stops`, `preflight_kills`, `notifies`, `notify_suppressed` |
 | `…/metrics.jsonl` | Structured events |
 | `…/events.log` | Human log |
 | `…/watch.pid`, `last-check-utc.txt`, `started-utc.txt` | Liveness |

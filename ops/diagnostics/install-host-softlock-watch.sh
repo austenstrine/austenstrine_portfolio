@@ -26,9 +26,10 @@ systemctl --user restart host-softlock-watch.service
 systemctl --user --no-pager --full status host-softlock-watch.service | head -n 20
 
 echo
-echo "OK: softlock watchdog running"
+echo "OK: softlock watchdog running (softlock + D-state/RCU)"
 echo "  bin:     $DEST_BIN"
 echo "  unit:    $DEST_UNIT"
 echo "  state:   \${XDG_STATE_HOME:-~/.local/state}/host-softlock-watch/"
+echo "  status:  .../status.json (+ stall-elevated / docker-pileon-pause)"
 echo "  metrics: .../metrics.json + metrics.jsonl"
 echo "  skill:   ~/.agents/skills/watchdog/SKILL.md"

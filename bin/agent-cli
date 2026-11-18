@@ -499,11 +499,15 @@ const out={
     binaryInstalled: softBin,
     install: path.join(root,"ops/diagnostics/install-host-softlock-watch.sh"),
     stateDir: softState,
+    statusJson: path.join(softState,"status.json"),
+    stallElevated: fs.existsSync(path.join(softState,"stall-elevated")),
+    dockerPileonPause: fs.existsSync(path.join(softState,"docker-pileon-pause")),
     metricsJson: path.join(softState,"metrics.json"),
     metricsLog: path.join(softState,"metrics.jsonl"),
     eventsLog: path.join(softState,"events.log"),
     systemdActive: softActive,
     systemdEnabled: softEnabled,
+    status: readJson(path.join(softState,"status.json")),
     metrics: readJson(path.join(softState,"metrics.json")),
     start: "stay on via systemd --user; ./ops/diagnostics/install-host-softlock-watch.sh"
   },
@@ -533,11 +537,13 @@ watchdog — softlock + subagent
   skill:     $skill
   skillRepo: $ROOT/.cursor/skills/watchdog/SKILL.md
 
-softlock (always on)
+softlock (always on; softlock + D-state/RCU)
   bin:       $soft_bin  (repo ops/diagnostics/host-softlock-watch.sh)
   install:   ./ops/diagnostics/install-host-softlock-watch.sh
   systemd:   active=$soft_active enabled=$soft_enabled
   state:     $soft_state
+  status:    $soft_state/status.json  (elevated=$( [[ -f $soft_state/stall-elevated ]] && echo 1 || echo 0 ))
+  pileon:    $soft_state/docker-pileon-pause (present=$( [[ -f $soft_state/docker-pileon-pause ]] && echo 1 || echo 0 ))
   metrics:   $soft_state/metrics.json + metrics.jsonl
 
 subagent (forever host loop, idle-aware + optional coordinator timer)
