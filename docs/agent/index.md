@@ -17,6 +17,7 @@ Canonical long-form guidance relocated from always-on Cursor rules. Thin `.curso
 | [new-chat-on-drift.md](./new-chat-on-drift.md) | Subject drift → new chat ask |
 | [context-compress.md](./context-compress.md) | Large context → RTK / ContextPrune / caveman-compress (`./bin/context-compress`) |
 | [ultracave-kickoff.md](./ultracave-kickoff.md) | Coordinator paste block — prepend to every CreateAgent / SendToAgent / Task kickoff |
+| [cookie-epoch.md](./cookie-epoch.md) | PEM-518: bump `COOKIE_EPOCH_UTC` on cookie/session-breaking changes |
 | [subagent-watchdog.md](./subagent-watchdog.md) | Coordinator stuck-loop poll (1 min while workers active); `./bin/subagent-watchdog` |
 
 Also: `docs/code-style-preferences.md`, `docs/git-commit-preferences.md`, `docs/cursor-rules-progressive-disclosure.md`, `docs/context-compress-tooling.md`.
