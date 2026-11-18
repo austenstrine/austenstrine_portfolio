@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+# After merge/ff: refresh graphify-out when HEAD moved.
+ROOT="$(git rev-parse --show-toplevel 2>/dev/null)" || exit 0
+exec "$ROOT/ops/tooling/graphify-ensure.sh"

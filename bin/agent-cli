@@ -15,12 +15,14 @@ Usage: ./bin/agent-cli [<command>] [--json] [--help]
 
 Commands (default: orient):
   orient    High-value map (~one command to start). Alias: default / no args.
+            Also runs graphify-ensure (cheap skip when graph matches HEAD).
   layout    Monorepo paths that matter.
   scripts   Root + workspace npm scripts.
   env       .env locations, examples, backup pointers.
   docker    Compose services + dssh/.dsshrc pointers (alias: dssh).
   seed      Prisma schema/seed/seed-sync paths + commands.
   helpers   Sibling tool-repo consumption status (detected from this tree).
+  graphify  Ensure graphify-out matches git HEAD (ops/tooling/graphify-ensure.sh).
   lint      Fail-closed prefs + ESLint prefs + workspace typecheck (same as npm run lint).
 
 Flags:
@@ -56,7 +58,7 @@ else
 fi
 case "$CMD" in
   orient|default|"") CMD=orient ;;
-  layout|scripts|env|seed|helpers|lint) ;;
+  layout|scripts|env|seed|helpers|lint|graphify) ;;
   docker|dssh) CMD=docker ;;
   *) die "unknown command: $CMD (try --help)" ;;
 esac
@@ -465,7 +467,27 @@ process.stdout.write(JSON.stringify(out,null,2)+"\n");
   helper_status_text
 }
 
+cmd_graphify() {
+  if [[ "$JSON" -eq 1 ]]; then
+    local out status=0
+    out="$("$ROOT/ops/tooling/graphify-ensure.sh" 2>&1)" || status=$?
+    node -e '
+const text=process.argv[1];
+const status=Number(process.argv[2]);
+const fresh=/fresh \(HEAD/.test(text);
+process.stdout.write(JSON.stringify({ok:status===0,fresh,status,output:text.trimEnd()},null,2)+"\n");
+' "$out" "$status"
+    return "$status"
+  fi
+  "$ROOT/ops/tooling/graphify-ensure.sh"
+}
+
 cmd_orient() {
+  # Agent-start: cheap graph refresh (skip when stamp matches HEAD; fail-open if no CLI).
+  if [[ "$JSON" -eq 0 ]]; then
+    "$ROOT/ops/tooling/graphify-ensure.sh" || true
+    echo
+  fi
   if [[ "$JSON" -eq 1 ]]; then
     # Compose a single object from the other commands.
     node -e '
@@ -473,14 +495,22 @@ const {execFileSync}=require("child_process");
 const root=process.argv[1];
 const bin=root+"/bin/agent-cli";
 const run=(cmd)=>JSON.parse(execFileSync(bin,[cmd,"--json"],{encoding:"utf8"}));
+let graphify={ok:false,fresh:false,status:1,output:"skipped"};
+try {
+  graphify=JSON.parse(execFileSync(bin,["graphify","--json"],{encoding:"utf8"}));
+} catch (e) {
+  graphify={ok:false,fresh:false,status:(e.status||1),output:String(e.stderr||e.message||e)};
+}
 const out={
   project: "austenstrine_portfolio (Place et Marque marketplace demo)",
   integrationBranch: "development",
   defaultBranch: "master",
   rule: "Run ./bin/agent-cli orient first; prefer subcommands over re-reading files.",
+  graphifyFirst: "Hard: graphify query|path|explain (or MCP) before wide Grep; Grep only if graph insufficient.",
   coord: "Optional same-checkout claims via agent-coord when peers may touch the same paths; skip when alone (./bin/agent-coord or ~/.local/bin/agent-coord).",
   sameVm: "git worktree add before edits; do not edit shared /agent/repos checkouts in place",
   branching: "feature/<user>/development/<name> → merge to development (no PR); master only when asked",
+  graphify,
   layout: run("layout"),
   scripts: run("scripts"),
   env: run("env"),
@@ -498,6 +528,7 @@ orient — austenstrine_portfolio
   Branches: integrate on development (based on master); features feature/<user>/development/<name>.
   Same-VM: git worktree before edits (do not mutate shared checkouts in place).
   Prefer: ./bin/agent-cli <cmd> over re-reading files / guessing npm or dssh.
+  Graphify first: query|path|explain (or MCP) before wide Grep.
   Coord when useful: same-checkout peer contention → agent-coord claim; skip when alone.
 
 EOF
@@ -516,7 +547,7 @@ EOF
   cat <<'EOF'
 
 next
-  ./bin/agent-cli layout|scripts|env|docker|seed|helpers [--json]
+  ./bin/agent-cli layout|scripts|env|docker|seed|helpers|graphify [--json]
   ./bin/agent-cli lint   # prefs + eslint-prefs + tsc (not npm run lint -w …)
   sibling remotes: git ls-remote --symref origin HEAD  (do not trust local branch name alone)
 EOF
@@ -531,12 +562,13 @@ cmd_lint() {
 }
 
 case "$CMD" in
-  orient)  cmd_orient ;;
-  layout)  cmd_layout ;;
-  scripts) cmd_scripts ;;
-  env)     cmd_env ;;
-  docker)  cmd_docker ;;
-  seed)    cmd_seed ;;
-  helpers) cmd_helpers ;;
-  lint)    cmd_lint ;;
+  orient)   cmd_orient ;;
+  layout)   cmd_layout ;;
+  scripts)  cmd_scripts ;;
+  env)      cmd_env ;;
+  docker)   cmd_docker ;;
+  seed)     cmd_seed ;;
+  helpers)  cmd_helpers ;;
+  graphify) cmd_graphify ;;
+  lint)     cmd_lint ;;
 esac

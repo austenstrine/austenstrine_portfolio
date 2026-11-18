@@ -6,6 +6,7 @@ alwaysApply: true
 # Portfolio essentials
 
 - Stack: Nest API (`apps/api`) + Next web (`apps/web`) + CRM (`apps/crm`) + Docker/dssh + Go CDN. Orient: `./bin/agent-cli orient`.
+- Graphify first: `query|path|explain` (or MCP) before wide Grep; Grep only if graph insufficient. Fresh: `./bin/agent-cli graphify`.
 - Package manager: npm workspaces. Prefer `./bin/agent-cli` over guessing npm/dssh.
 - Git: feature `feature/<user>/development/<name>` → merge **`development`** (no feature PR). Never land on `master` unless asked. Local branch required. Same-VM: `git worktree add`. After push/merge of `development`, sync Austen’s main `development` checkout. Details: `docs/git-commit-preferences.md`.
 - Lint: `./bin/agent-cli lint` (fail-closed prefs). Workspace `lint -w apps/*` skips prefs.

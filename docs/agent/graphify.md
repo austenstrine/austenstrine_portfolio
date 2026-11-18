@@ -1,25 +1,37 @@
 # Graphify
 
-This project has a local Graphify knowledge graph at `graphify-out/` (OSS CLI `graphify` / package `graphifyy`; optional MCP `graphify-mcp`).
+Keep in sync with `.cursor/rules/graphify.mdc`.
 
-**Orientation order:** `./bin/agent-cli orient` first (when in this repo), then Graphify for structural questions before wide Grep/Glob.
+Local graph: `graphify-out/` (OSS CLI `graphify` / package `graphifyy`; optional MCP `graphify-mcp`).
 
-For architecture, call graphs, module ownership, and “what connects X to Y”:
+**Hard rule:** `graphify query|path|explain` (or MCP) **before** wide Grep/Glob. Grep only after graph insufficient.
+
+**Orientation:** `./bin/agent-cli orient` first (also refreshes graph when stale), then Graphify for structure.
+
+## Commands
 
 - `graphify query "<question>"` — scoped subgraph
 - `graphify path "<A>" "<B>"` — dependency path between symbols/files
 - `graphify explain "<concept>"` — node + neighbors
 
-Prefer these over blind repo-wide Grep. Pass the same guidance to subagents that explore code.
+## Keep graph current (cheap)
 
-Skip Graphify (use Read/Grep/Glob normally) when:
+Prefer incremental ensure — **not** a full rebuild every time:
 
-1. `graphify-out/graph.json` is missing and you cannot rebuild (common on cloud VMs — rebuild with `graphify extract . --code-only` if `graphify` is on PATH, else skip)
-2. You already oriented via Graphify and need specific line edits/debug
-3. The question is non-structural (exact string, one known file, env value)
+| Path | What |
+|------|------|
+| `./bin/agent-cli graphify` | `ops/tooling/graphify-ensure.sh` — skip when `graphify-out/.agent_graphify_head` == `git HEAD`; else `graphify update .` (or `extract . --code-only` if missing) |
+| `./bin/agent-cli orient` | Agent-start: runs ensure (fail-open if CLI missing) |
+| `ops/tooling/git-hooks/post-merge` + `post-checkout` | After merge/checkout; install: `ops/tooling/install-graphify-hooks.sh` (symlinks into `.git/hooks`; Cursor overlay still chains them) |
 
-Keep the graph current on the host after meaningful code edits: `graphify update .` (AST-only, no API key).
+Stamp is vs **git HEAD** (SHA), not file mtime — `graphify update` does not always bump `graph.json` mtime. AST-only; no API key. `graphify-out/` stays gitignored.
 
-Local MCP (free, no Graphify cloud account): `.cursor/mcp.json` runs `graphify-mcp` against `graphify-out/graph.json`. Hosted `api.graphify.com` is optional and not required here.
+## Skip Graphify when
+
+1. `graphify-out/graph.json` missing and cannot rebuild (`graphify` not on PATH — common on cloud VMs)
+2. Already oriented via Graphify; need specific line edits/debug
+3. Non-structural (exact string, one known file, env value)
+
+Local MCP: `.cursor/mcp.json` → `graphify-mcp` against `graphify-out/graph.json`. Hosted `api.graphify.com` optional.
 
 Also: Place et Marque `workflows/graphify.md`.

@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# After checkout: refresh graphify-out when HEAD moved.
+# args: prev_head new_head flag (1=branch)
+ROOT="$(git rev-parse --show-toplevel 2>/dev/null)" || exit 0
+prev="${1:-}"; new="${2:-}"; flag="${3:-}"
+# File checkout (flag=0): skip. Same HEAD: skip.
+[[ "$flag" == "0" ]] && exit 0
+[[ -n "$prev" && -n "$new" && "$prev" == "$new" ]] && exit 0
+exec "$ROOT/ops/tooling/graphify-ensure.sh"

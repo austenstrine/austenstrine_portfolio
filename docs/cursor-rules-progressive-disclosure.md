@@ -43,7 +43,7 @@ Re-measure after landing (see Verify). Target: always-on prefix still near **≤
 | `dssh-backend-ownership.mdc` | Intelligent | `docs/agent/dssh-backend-ownership.md` |
 | `dssh-launch.mdc` | Intelligent | `docs/agent/dssh-launch.md` |
 | `git-commit-preferences.mdc` | Intelligent | `docs/git-commit-preferences.md` |
-| `graphify.mdc` | Intelligent | `docs/agent/graphify.md` |
+| `graphify.mdc` | Intelligent (hard rule also one-liner in `portfolio-essentials` + `AGENTS.md`) | `docs/agent/graphify.md` |
 | `local-first.mdc` | Intelligent | `docs/agent/local-first.md` |
 | `new-chat-on-drift.mdc` | Intelligent | `docs/agent/new-chat-on-drift.md` |
 | `out-of-scope-handoff.mdc` | Intelligent | `docs/agent/out-of-scope-handoff.md` |

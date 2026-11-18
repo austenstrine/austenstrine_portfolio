@@ -4,7 +4,7 @@ Canonical long-form guidance relocated from always-on Cursor rules. Thin `.curso
 
 | Doc | When |
 |-----|------|
-| [graphify.md](./graphify.md) | Architecture / call-graph questions |
+| [graphify.md](./graphify.md) | Architecture / call-graph; hard: before wide Grep; `./bin/agent-cli graphify` |
 | [local-first.md](./local-first.md) | Where to edit; sync after `development` push |
 | [dssh-launch.md](./dssh-launch.md) | Day-to-day local stack bring-up |
 | [dssh-backend-ownership.md](./dssh-backend-ownership.md) | Restart Nest API / CRM |

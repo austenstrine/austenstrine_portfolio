@@ -2,13 +2,14 @@
 
 Start here for this repo.
 
-1. Run `./bin/agent-cli` (or `./bin/agent-cli orient`) once before exploring.
+1. Run `./bin/agent-cli` (or `./bin/agent-cli orient`) once before exploring (orient also refreshes graphify when stale).
 2. Prefer `./bin/agent-cli <subcommand> [--json]` over re-reading `package.json`, `.dsshrc`, compose, seed paths, or guessing npm/dssh.
-3. Subcommands: `orient` `layout` `scripts` `env` `docker` `seed` `helpers` — see `./bin/agent-cli --help`.
-4. **Git (this portfolio):** integrate on **`development`**; features `feature/<user>/development/<name>` (user usually `als`); local branch required; merge features → `development` **no PR**; leave `master` alone unless asked; same-VM → `git worktree add`. Full: `docs/git-commit-preferences.md`.
-5. **Fail-closed lint:** `./bin/agent-cli lint` (prefs + ESLint prefs + typecheck). Workspace `npm run lint -w apps/*` skips prefs.
-6. **Rules map / progressive disclosure:** `docs/cursor-rules-progressive-disclosure.md`. Always-on: `portfolio-essentials.mdc` + `voice-modes.mdc`. Most other `.cursor/rules/*.mdc` are intelligent, globs, or manual — not always-on. Read the named doc when the task matches.
-7. **Ultracave forever:** every agent/worker/subagent uses ultracave (repo `.cursor/rules/voice-modes.mdc`, alwaysApply). Skill attach not required / not reliable. **Coordinators MUST prepend** this paste (verbatim; also in `docs/agent/ultracave-kickoff.md`) to every `CreateAgent` / `SendToAgent` / `Task` kickoff (cloud + local):
+3. Subcommands: `orient` `layout` `scripts` `env` `docker` `seed` `helpers` `graphify` — see `./bin/agent-cli --help`.
+4. **Hard — Graphify before Grep:** `graphify query|path|explain` (or MCP) **before** wide Grep. Grep only if graph insufficient. Fresh: `./bin/agent-cli graphify`. Full: `docs/agent/graphify.md` / `.cursor/rules/graphify.mdc`.
+5. **Git (this portfolio):** integrate on **`development`**; features `feature/<user>/development/<name>` (user usually `als`); local branch required; merge features → `development` **no PR**; leave `master` alone unless asked; same-VM → `git worktree add`. Full: `docs/git-commit-preferences.md`.
+6. **Fail-closed lint:** `./bin/agent-cli lint` (prefs + ESLint prefs + typecheck). Workspace `npm run lint -w apps/*` skips prefs.
+7. **Rules map / progressive disclosure:** `docs/cursor-rules-progressive-disclosure.md`. Always-on: `portfolio-essentials.mdc` + `voice-modes.mdc`. Most other `.cursor/rules/*.mdc` are intelligent, globs, or manual — not always-on. Read the named doc when the task matches.
+8. **Ultracave forever:** every agent/worker/subagent uses ultracave (repo `.cursor/rules/voice-modes.mdc`, alwaysApply). Skill attach not required / not reliable. **Coordinators MUST prepend** this paste (verbatim; also in `docs/agent/ultracave-kickoff.md`) to every `CreateAgent` / `SendToAgent` / `Task` kickoff (cloud + local):
 
 ```text
 /ultracave
