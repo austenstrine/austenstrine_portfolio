@@ -766,7 +766,7 @@ export function CatalogSearchExperience({
 									</div>
 								)
 								: (
-									<div className={`grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-3 ${loading ? 'opacity-70' : ''}`}>
+									<div className={`grid grid-cols-2 gap-x-12 gap-y-3 pr-12 sm:gap-x-14 sm:gap-y-5 lg:grid-cols-3 ${loading ? 'opacity-70' : ''}`}>
 										{results.map((product) => (
 											<ProductCard key={product.id} product={product} />
 										))}

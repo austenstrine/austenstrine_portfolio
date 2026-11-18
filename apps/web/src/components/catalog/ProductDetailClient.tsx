@@ -960,18 +960,9 @@ export function ProductDetailClient({
 						)
 						: null
 					}
-					<div
-						className="
-							mt-2
-							flex
-							flex-wrap
-							items-start
-							justify-between
-							gap-3
-						"
-					>
+					<div className="relative mt-2 min-w-0 overflow-visible">
 						<InPlaceFieldSurface
-							className="min-w-0 flex-1"
+							className="min-w-0"
 							display={
 								<h1
 									className="
@@ -1013,16 +1004,18 @@ export function ProductDetailClient({
 							? (
 								<div
 									className="
-										mt-2
+										absolute
+										left-full
+										top-0
+										z-20
+										ml-1.5
 										flex
-										shrink-0
-										flex-wrap
-										items-center
-										gap-3
+										flex-col
+										gap-1.5
 									"
 								>
-									<InPlaceCardEditToggle productId={product.id} />
 									<InPlaceFullEditLink product={product} />
+									<InPlaceCardEditToggle productId={product.id} />
 								</div>
 							)
 							: null

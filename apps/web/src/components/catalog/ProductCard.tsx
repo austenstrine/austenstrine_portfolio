@@ -4,7 +4,6 @@ import {
 	useEffect,
 	useId,
 	useState,
-	type ReactNode,
 } from 'react';
 import type { CatalogProductSummary } from '../../lib/catalog-api';
 import { formatAvailableQty } from '../../lib/uom-qty';
@@ -17,17 +16,16 @@ import {
 	type InPlaceFieldName,
 } from './EditableVendorsProvider';
 import {
-	InPlaceCardEditToggle,
 	InPlaceCategorySelect,
 	InPlaceError,
 	InPlaceFieldSurface,
-	InPlaceFullEditLink,
 	InPlaceImageActions,
 	InPlacePriceInput,
 	InPlaceQtyInput,
 	InPlaceSaveControls,
 	InPlaceTitleInput,
 	InPlaceUomSelect,
+	ProductCardSideActions,
 	applyDetailToSummary,
 	useInPlaceProductEdit,
 } from './InPlaceProductFields';
@@ -90,12 +88,8 @@ function ImageFallback({ vendorName }: { vendorName: string }) {
 
 function BuyerProductCard({
 	product,
-	onActivateCard,
-	onActivateField,
 }: {
 	product: CatalogProductSummary;
-	onActivateCard?: () => void;
-	onActivateField?: (field: InPlaceFieldName) => void;
 }) {
 	const prices = product.offerings.map((row) => row.priceCents);
 	const min = prices.length ? Math.min(...prices) : product.primaryPriceCents;
@@ -124,23 +118,6 @@ function BuyerProductCard({
 		? `${low ? 'Low stock · ' : ''}${qtyCopy} available`
 		: 'Currently unavailable';
 
-	const wrapField = (
-		field: InPlaceFieldName,
-		label: string,
-		node: ReactNode,
-	) => {
-		if(!onActivateField) {
-			return node;
-		}
-		return (
-			<InPlaceFieldSurface
-				display={node}
-				label={label}
-				onActivate={() => onActivateField(field)}
-			/>
-		);
-	};
-
 	return (
 		<article
 			className="
@@ -159,41 +136,6 @@ function BuyerProductCard({
 				hover:shadow-[0_8px_24px_rgba(13,27,42,0.08)]
 			"
 		>
-			{onActivateCard
-				? (
-					<button
-						aria-label="Edit this card"
-						className="
-							absolute
-							right-3
-							top-3
-							z-30
-							rounded-full
-							border
-							border-slate-300
-							bg-white/95
-							px-2.5
-							py-1
-							text-[10px]
-							font-semibold
-							uppercase
-							tracking-wide
-							text-ink
-							hover:border-asgreen
-							hover:text-asgreen
-						"
-						onClick={(event) => {
-							event.preventDefault();
-							event.stopPropagation();
-							onActivateCard();
-						}}
-						type="button"
-					>
-						Edit card
-					</button>
-				)
-				: null
-			}
 			<div
 				className="
 					relative
@@ -208,58 +150,13 @@ function BuyerProductCard({
 					alt={product.title}
 					fallback={<ImageFallback vendorName={product.vendor.name} />}
 				/>
-				{onActivateField
-					? (
-						<button
-							aria-label="Edit images"
-							className="
-								absolute
-								right-3
-								top-3
-								z-30
-								inline-flex
-								h-9
-								w-9
-								items-center
-								justify-center
-								rounded-full
-								border
-								border-slate-300
-								bg-white/95
-								text-ink
-								opacity-0
-								shadow-[0_4px_12px_rgba(13,27,42,0.12)]
-								transition-opacity
-								duration-150
-								pointer-events-none
-								group-hover:pointer-events-auto
-								group-hover:opacity-100
-								focus-visible:pointer-events-auto
-								focus-visible:opacity-100
-								hover:border-asgreen
-								hover:text-asgreen
-								[@media(hover:none)]:pointer-events-auto
-								[@media(hover:none)]:opacity-100
-							"
-							onClick={(event) => {
-								event.preventDefault();
-								event.stopPropagation();
-								onActivateField('images');
-							}}
-							type="button"
-						>
-							<PencilIcon className="h-3.5 w-3.5" />
-						</button>
-					)
-					: null
-				}
 				{inStock
 					? null
 					: (
 						<span
 							className="
 								absolute
-								right-3
+								left-3
 								top-3
 								z-20
 								rounded-full
@@ -278,207 +175,91 @@ function BuyerProductCard({
 					)
 				}
 			</div>
-			{onActivateField
-				? (
-					<div
+			<a
+				className="
+					flex
+					flex-1
+					flex-col
+					gap-1
+					px-3
+					pb-4
+					pt-3
+				"
+				href={href}
+			>
+				<p
+					className="
+						text-[11px]
+						font-medium
+						uppercase
+						tracking-[0.14em]
+						text-slate-500
+					"
+				>
+					{categoryLabel}
+				</p>
+				<h2
+					className="
+						line-clamp-2
+						min-h-[2.5rem]
+						text-[15px]
+						font-medium
+						leading-snug
+						text-ink
+						group-hover:underline
+						group-hover:decoration-slate-300
+						group-hover:underline-offset-4
+					"
+				>
+					{product.title}
+				</h2>
+				<p
+					className="
+						text-[12px]
+						text-slate-500
+					"
+				>
+					Sold by {product.vendor.name}
+				</p>
+				<div className="mt-auto pt-2">
+					<p
 						className="
-							flex
-							flex-1
-							flex-col
-							gap-1
-							px-3
-							pb-4
-							pt-3
+							text-[17px]
+							font-semibold
+							tabular-nums
+							text-ink
 						"
 					>
-						{wrapField(
-							'category',
-							'Edit category',
-							<p
-								className="
-									text-[11px]
-									font-medium
-									uppercase
-									tracking-[0.14em]
-									text-slate-500
-								"
-							>
-								{categoryLabel}
-							</p>,
-						)}
-						{wrapField(
-							'title',
-							'Edit title',
-							<h2
-								className="
-									line-clamp-2
-									min-h-[2.5rem]
-									text-[15px]
-									font-medium
-									leading-snug
-									text-ink
-								"
-							>
-								{product.title}
-							</h2>,
-						)}
-						<p
-							className="
-								text-[12px]
-								text-slate-500
-							"
-						>
-							Sold by {product.vendor.name}
-						</p>
-						<div className="mt-auto pt-2">
-							{wrapField(
-								'price',
-								'Edit price',
-								<p
+						{priceLabel}
+						{uom && min != null
+							? (
+								<span
 									className="
-										text-[17px]
-										font-semibold
-										tabular-nums
-										text-ink
+										ml-1
+										text-[12px]
+										font-medium
+										text-slate-500
 									"
 								>
-									{priceLabel}
-									{uom && min != null
-										? (
-											<span
-												className="
-													ml-1
-													text-[12px]
-													font-medium
-													text-slate-500
-												"
-											>
-												/ {uom}
-											</span>
-										)
-										: null
-									}
-								</p>,
-							)}
-							{wrapField(
-								'qty',
-								'Edit quantity',
-								<p
-									className={
-										low
-											? 'mt-0.5 text-[12px] text-amber-800'
-											: inStock
-												? 'mt-0.5 text-[12px] text-slate-500'
-												: 'mt-0.5 text-[12px] text-signal'
-									}
-								>
-									{stockLabel}
-								</p>,
-							)}
-						</div>
-						<a
-							className="
-								mt-2
-								self-start
-								text-[12px]
-								font-semibold
-								text-slate-500
-								hover:text-sky
-							"
-							href={href}
-						>
-							Open
-						</a>
-					</div>
-				)
-				: (
-					<a
-						className="
-							flex
-							flex-1
-							flex-col
-							gap-1
-							px-3
-							pb-4
-							pt-3
-						"
-						href={href}
+									/ {uom}
+								</span>
+							)
+							: null
+						}
+					</p>
+					<p
+						className={
+							low
+								? 'mt-0.5 text-[12px] text-amber-800'
+								: inStock
+									? 'mt-0.5 text-[12px] text-slate-500'
+									: 'mt-0.5 text-[12px] text-signal'
+						}
 					>
-						<p
-							className="
-								text-[11px]
-								font-medium
-								uppercase
-								tracking-[0.14em]
-								text-slate-500
-							"
-						>
-							{categoryLabel}
-						</p>
-						<h2
-							className="
-								line-clamp-2
-								min-h-[2.5rem]
-								text-[15px]
-								font-medium
-								leading-snug
-								text-ink
-								group-hover:underline
-								group-hover:decoration-slate-300
-								group-hover:underline-offset-4
-							"
-						>
-							{product.title}
-						</h2>
-						<p
-							className="
-								text-[12px]
-								text-slate-500
-							"
-						>
-							Sold by {product.vendor.name}
-						</p>
-						<div className="mt-auto pt-2">
-							<p
-								className="
-									text-[17px]
-									font-semibold
-									tabular-nums
-									text-ink
-								"
-							>
-								{priceLabel}
-								{uom && min != null
-									? (
-										<span
-											className="
-												ml-1
-												text-[12px]
-												font-medium
-												text-slate-500
-											"
-										>
-											/ {uom}
-										</span>
-									)
-									: null
-								}
-							</p>
-							<p
-								className={
-									low
-										? 'mt-0.5 text-[12px] text-amber-800'
-										: inStock
-											? 'mt-0.5 text-[12px] text-slate-500'
-											: 'mt-0.5 text-[12px] text-signal'
-								}
-							>
-								{stockLabel}
-							</p>
-						</div>
-					</a>
-				)
-			}
+						{stockLabel}
+					</p>
+				</div>
+			</a>
 		</article>
 	);
 }
@@ -546,111 +327,133 @@ function SellerProductCard({
 			className="
 				group
 				relative
+				z-0
 				flex
 				h-full
 				flex-col
-				overflow-hidden
+				overflow-visible
 				rounded-2xl
 				border
 				border-slate-200
 				bg-white
 				transition
+				hover:z-20
 				hover:border-ink/20
 				hover:shadow-[0_8px_24px_rgba(13,27,42,0.08)]
+				focus-within:z-20
 			"
 		>
+			<ProductCardSideActions
+				openHref={href}
+				product={display}
+				showCardEdit={editTier !== 'page'}
+			/>
 			<div
 				className="
 					relative
 					aspect-square
-					overflow-hidden
-					bg-canvas
+					overflow-visible
 				"
 			>
-				<ProductCardImageCarousel
-					alt={display.title}
-					editable={fieldOpen('images')}
-					fallback={<ImageFallback vendorName={display.vendor.name} />}
-					images={display.imageUrls ?? []}
-				/>
-				{fieldOpen('images')
-					? <InPlaceImageActions edit={edit} />
-					: onActivateField
+				<div
+					className="
+						absolute
+						inset-0
+						overflow-hidden
+						rounded-t-2xl
+						bg-canvas
+					"
+				>
+					<ProductCardImageCarousel
+						alt={display.title}
+						editable={fieldOpen('images')}
+						fallback={<ImageFallback vendorName={display.vendor.name} />}
+						images={display.imageUrls ?? []}
+					/>
+					{fieldOpen('images')
+						? <InPlaceImageActions edit={edit} />
+						: null
+					}
+					{!inStock
 						? (
-							<button
-								aria-label="Edit images"
+							<span
 								className="
 									absolute
-									right-3
+									left-3
 									top-3
-									z-30
-									inline-flex
-									h-9
-									w-9
-									items-center
-									justify-center
+									z-20
 									rounded-full
-									border
-									border-slate-300
 									bg-white/95
+									px-2
+									py-0.5
+									text-[10px]
+									font-semibold
+									uppercase
+									tracking-wide
 									text-ink
-									opacity-0
-									shadow-[0_4px_12px_rgba(13,27,42,0.12)]
-									transition-opacity
-									duration-150
-									pointer-events-none
-									group-hover:pointer-events-auto
-									group-hover:opacity-100
-									focus-visible:pointer-events-auto
-									focus-visible:opacity-100
-									hover:border-asgreen
-									hover:text-asgreen
-									[@media(hover:none)]:pointer-events-auto
-									[@media(hover:none)]:opacity-100
 								"
-								onClick={(event) => {
-									event.preventDefault();
-									event.stopPropagation();
-									onActivateField('images');
-								}}
-								type="button"
 							>
-								<PencilIcon className="h-3.5 w-3.5" />
-							</button>
+								Sold out
+							</span>
 						)
 						: null
-				}
-				{!inStock
+					}
+				</div>
+				{!fieldOpen('images') && onActivateField
 					? (
-						<span
+						<button
+							aria-label="Edit images"
 							className="
 								absolute
-								left-3
-								top-3
-								z-20
+								bottom-3
+								left-full
+								z-30
+								ml-1.5
+								inline-flex
+								h-9
+								w-9
+								items-center
+								justify-center
 								rounded-full
+								border
+								border-slate-300
 								bg-white/95
-								px-2
-								py-0.5
-								text-[10px]
-								font-semibold
-								uppercase
-								tracking-wide
 								text-ink
+								opacity-0
+								shadow-[0_4px_12px_rgba(13,27,42,0.12)]
+								transition-opacity
+								duration-150
+								pointer-events-none
+								group-hover:pointer-events-auto
+								group-hover:opacity-100
+								focus-visible:pointer-events-auto
+								focus-visible:opacity-100
+								hover:border-asgreen
+								hover:text-asgreen
+								[@media(hover:none)]:pointer-events-auto
+								[@media(hover:none)]:opacity-100
 							"
+							onClick={(event) => {
+								event.preventDefault();
+								event.stopPropagation();
+								onActivateField('images');
+							}}
+							type="button"
 						>
-							Sold out
-						</span>
+							<PencilIcon className="h-3.5 w-3.5" />
+						</button>
 					)
 					: null
 				}
 			</div>
 			<div
 				className="
+					relative
 					flex
 					flex-1
 					flex-col
 					gap-1
+					overflow-visible
 					px-3
 					pb-4
 					pt-3
@@ -873,60 +676,62 @@ function SellerProductCard({
 						onExit={fieldMode ? exitField : undefined}
 					/>
 				</div>
-				<InPlaceError
-					className="mt-2"
-					error={edit.error}
-				/>
-				{showCardSave
+				{edit.error
 					? (
-						<InPlaceSaveControls
-							className="mt-2"
-							dirty={edit.dirty}
-							onDiscard={() => {
-								edit.discard();
-							}}
-							onSave={() => {
-								void edit.saveAll();
-							}}
-							saving={edit.saving}
-							scope="card"
-						/>
+						<div
+							className="
+								pointer-events-none
+								absolute
+								inset-x-3
+								bottom-3
+								z-30
+							"
+						>
+							<InPlaceError
+								className="
+									pointer-events-auto
+									rounded-md
+									bg-white/95
+									px-2
+									py-1
+									shadow-[0_4px_12px_rgba(13,27,42,0.12)]
+								"
+								error={edit.error}
+							/>
+						</div>
 					)
 					: null
 				}
-				<div
-					className="
-						mt-2
-						flex
-						flex-wrap
-						items-center
-						gap-3
-					"
-				>
-					<a
-						className="
-							self-start
-							text-[12px]
-							font-semibold
-							text-slate-500
-							hover:text-sky
-						"
-						href={href}
-					>
-						Open
-					</a>
-					<InPlaceFullEditLink product={display} />
-					{editTier !== 'page'
-						? (
-							<InPlaceCardEditToggle
-								className="text-[12px]"
-								productId={display.id}
-							/>
-						)
-						: null
-					}
-				</div>
 			</div>
+			{showCardSave && (edit.dirty || edit.saving)
+				? (
+					<div
+						className="
+							pointer-events-none
+							absolute
+							inset-x-0
+							bottom-0
+							z-30
+							p-3
+						"
+					>
+						<div className="pointer-events-auto">
+							<InPlaceSaveControls
+								dirty={edit.dirty}
+								onDiscard={() => {
+									edit.discard();
+								}}
+								onSave={() => {
+									void edit.saveAll();
+								}}
+								saving={edit.saving}
+								scope="card"
+							/>
+						</div>
+					</div>
+				)
+				: null
+			}
 		</article>
 	);
 }
