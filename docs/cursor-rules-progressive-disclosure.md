@@ -57,11 +57,12 @@ Re-measure after landing (see Verify). Target: always-on prefix still near **≤
 
 Long bodies live under `docs/agent/` (index: `docs/agent/index.md`).
 
-## Caveman / ultracave (PEM-490)
+## Caveman / ultracave (PEM-490 → PEM-497)
 
-- **Default:** ultracave **on** every turn for all agents/subagents via always-on `voice-modes.mdc`.
-- **Opt out:** “stop caveman”, “normal mode”, “stop ultracave”.
-- **Skill attach not required** for kickoffs or children.
+- **Default:** ultracave **on** every turn for every agent/worker/subagent via always-on `voice-modes.mdc` (first line = mandatory mandate).
+- **Opt out only:** “stop caveman”, “normal mode”, “stop ultracave”.
+- **Skill attach not required** — `disable-model-invocation` skill does not reach children; cloud may miss host `~/.cursor/rules`.
+- **PEM-497:** coordinators **MUST** prepend `docs/agent/ultracave-kickoff.md` paste to every CreateAgent / SendToAgent / Task kickoff (cloud + local). Host `~/.cursor/rules/token-save.mdc` + `voice-modes.mdc` mirror for local kids.
 - `/caveman` → host caveman skill; `/ultracave` / `/caveman ultra` keep ultracave; `/caveman status` reports only.
 
 ## Skills recommendation

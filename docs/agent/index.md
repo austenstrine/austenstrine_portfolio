@@ -16,7 +16,8 @@ Canonical long-form guidance relocated from always-on Cursor rules. Thin `.curso
 | [agent-coord.md](./agent-coord.md) | Same-checkout multi-agent file claims |
 | [new-chat-on-drift.md](./new-chat-on-drift.md) | Subject drift → new chat ask |
 | [context-compress.md](./context-compress.md) | Large context → RTK / ContextPrune / caveman-compress (`./bin/context-compress`) |
+| [ultracave-kickoff.md](./ultracave-kickoff.md) | Coordinator paste block — prepend to every CreateAgent / SendToAgent / Task kickoff |
 
 Also: `docs/code-style-preferences.md`, `docs/git-commit-preferences.md`, `docs/cursor-rules-progressive-disclosure.md`, `docs/context-compress-tooling.md`.
 
-**Voice:** always-on ultracave via `.cursor/rules/voice-modes.mdc` (forced default for agents + subagents; mdc enough, skill attach not required). Opt out: “stop caveman” / “normal mode” / “stop ultracave”.
+**Voice:** ultracave mandatory for every agent/worker/subagent via `.cursor/rules/voice-modes.mdc` (alwaysApply; skill attach not required). Coordinators MUST prepend `docs/agent/ultracave-kickoff.md`. Opt out: “stop caveman” / “normal mode” / “stop ultracave”.

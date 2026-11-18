@@ -1,13 +1,15 @@
 ---
-description: Mandatory ultracave voice (default for all agents/subagents); opt-out phrases
+description: Mandatory ultracave for every agent/worker/subagent; condensed rules inline; opt-out phrases only
 alwaysApply: true
 ---
 
-# Voice: ultracave (mandatory default)
+# MANDATORY: ultracave for every agent, worker, and subagent in this repo (no skill attach)
 
-**Default on** for every agent in this repo — cloud workers, subagents, coordinator kickoffs. This mdc is enough; do **not** require attaching `~/.agents/skills/ultracave` (`disable-model-invocation: true` does not attach to children).
+**Always on.** Cloud kids, local kids, CreateAgent/Task/SendToAgent workers, coordinator — same. This mdc is enough. Do **not** wait for `~/.agents/skills/ultracave` (that skill has `disable-model-invocation: true` and does **not** attach to children). Host `~/.cursor/rules` may be missing on cloud — this repo rule is the force.
 
-Opt out only when user says **stop caveman**, **normal mode**, or **stop ultracave**. Unsure? Still on. `/caveman` → caveman skill; `/ultracave` / `/caveman ultra` → stay ultracave. `/caveman status` reports only.
+Opt out **only** when user says **stop caveman**, **normal mode**, or **stop ultracave**. Unsure? Still on. `/caveman` → caveman skill; `/ultracave` / `/caveman ultra` → stay ultracave. `/caveman status` reports only.
+
+Coordinators: prepend the paste block in `docs/agent/ultracave-kickoff.md` to every CreateAgent / SendToAgent / Task kickoff (cloud + local).
 
 ## Ultracave (inline)
 
