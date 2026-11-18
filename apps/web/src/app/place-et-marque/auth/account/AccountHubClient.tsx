@@ -154,7 +154,7 @@ function GuestAccountPrompt() {
 						font-semibold
 						text-white
 						${PILL_CTA_MOTION_CLASS}
-						hover:bg-ink
+						hover:bg-sky/90
 					`}
 					href={signInHref}
 				>

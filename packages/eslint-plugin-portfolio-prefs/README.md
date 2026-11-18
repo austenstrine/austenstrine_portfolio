@@ -17,7 +17,7 @@ Rule ids: `portfolio-prefs/<kebab-name>`. Do not fork a second plugin.
 | `no-king-and-i` | error | Never list The King and I on CV |
 | `inplace-edit-default-off` | error | In-place edit defaults to off |
 | `no-raw-svg-in-pages` | error | Icons under `components/icons/` |
-| `session-aware-sign-in` | error | Account hub `page.tsx` uses `RequireAccess` |
+| `session-aware-sign-in` | error | Account subpages (e.g. password) use `RequireAccess`; hub may be ungated |
 | `no-sketch-parens` | error | No `(change >)` sketch strings |
 | `no-directional-caret` | error | Arrow* + ChevronLeft/RightIcon; no lone ›/←/→ text |
 | `no-ink-as-surface` | error | No `bg-ink` / gradient ink fills |

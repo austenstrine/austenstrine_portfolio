@@ -96,14 +96,25 @@ tester.run('no-king-and-i', plugin.rules['no-king-and-i'], {
 tester.run('session-aware-sign-in', plugin.rules['session-aware-sign-in'], {
 	valid: [
 		{
-			code: 'import { RequireAccess } from \'x\';\nexport default function Page(){ return <RequireAccess><div /></RequireAccess>; }\n',
+			// Hub ungated (PEM-510 soft guest CTA).
+			code: 'export default function Page(){ return <div>Account</div>; }\n',
 			filename: path.join(process.cwd(), 'apps/web/src/app/place-et-marque/auth/account/page.tsx'),
+		},
+		{
+			code: 'import { RequireAccess } from \'x\';\nexport default function Page(){ return <RequireAccess><div /></RequireAccess>; }\n',
+			filename: path.join(
+				process.cwd(),
+				'apps/web/src/app/place-et-marque/auth/account/password/page.tsx',
+			),
 		},
 	],
 	invalid: [
 		{
-			code: 'export default function Page(){ return <div>Sign in</div>; }\n',
-			filename: path.join(process.cwd(), 'apps/web/src/app/place-et-marque/auth/account/page.tsx'),
+			code: 'export default function Page(){ return <div>Password</div>; }\n',
+			filename: path.join(
+				process.cwd(),
+				'apps/web/src/app/place-et-marque/auth/account/password/page.tsx',
+			),
 			errors: [
 				{
 					messageId: 'needRequireAccess',
