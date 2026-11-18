@@ -17,10 +17,11 @@ const PORTFOLIO_HOME = 'https://austenstrine.dev/';
  *    hovering anywhere on the box keeps the full reveal so it does not snap
  *    shut on small pointer moves.
  *
- * End state still shows back arrow + icon mid-left of the mark with
- * “Portfolio” under; click opens the portfolio site. The edge pad is
- * clickthrough for the brand link above it. Keyboard focus-within opens
- * the full peek.
+ * Peek box vertical size matches the edge/parent strip (`-top-3 bottom-0`
+ * on `group/edge`). End state still shows back arrow + icon mid-left of
+ * the mark with “Portfolio” under; click opens the portfolio site. The
+ * edge pad is clickthrough for the brand link above it. Keyboard
+ * focus-within opens the full peek.
  */
 export function HeaderPortraitLink({ children }: { children: ReactNode }) {
 	return (
@@ -51,18 +52,19 @@ export function HeaderPortraitLink({ children }: { children: ReactNode }) {
 			/>
 			{/*
 			  Outer: stage-1 slide (−100% → −75% = right-most 25% visible).
+			  Vertical: same strip as data-peek-edge (−top-3 bottom-0).
 			  Inner shared box: stage-2 hover adds +75% so net translate is 0
 			  (full reveal) without fighting the outer group-hover transform.
 			*/}
 			<div
 				className="
 					absolute
+					-top-3
+					bottom-0
 					right-full
-					top-1/2
 					z-10
 					mr-1.5
 					-translate-x-full
-					-translate-y-1/2
 					opacity-0
 					pointer-events-none
 					transition-[transform,opacity]
@@ -79,7 +81,10 @@ export function HeaderPortraitLink({ children }: { children: ReactNode }) {
 			>
 				<div
 					className="
+						flex
+						h-full
 						translate-x-0
+						items-center
 						transition-transform
 						duration-300
 						ease-out
@@ -92,6 +97,7 @@ export function HeaderPortraitLink({ children }: { children: ReactNode }) {
 						aria-label={`${SITE_NAME} — austenstrine.dev`}
 						className="
 							flex
+							h-full
 							items-center
 							gap-1
 							outline-none
