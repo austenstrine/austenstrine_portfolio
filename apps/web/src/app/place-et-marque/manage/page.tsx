@@ -366,16 +366,27 @@ function cssVarPx(name: string): number {
 	return 0;
 }
 
-function manageBottomPaneInsetPx(): number {
-	return cssVarPx('--seller-bottom-pane-stack');
+/**
+ * Dock hysteresis for list-end ↔ bottom harvest. Live
+ * `--seller-bottom-pane-stack` goes to 0px while the pane is scroll-hidden
+ * (PEM-404). Observers must keep the manage floor or the sentinel re-enters
+ * and flips inline ↔ harvest (bar shift loop).
+ */
+function manageBottomDockInsetPx(): number {
+	const floor = cssVarPx('--seller-bottom-pane-stack-manage');
+	const live = cssVarPx('--seller-bottom-pane-stack');
+	return Math.max(live, floor);
 }
 
+/**
+ * Pin hysteresis for Filter–Show. Header scroll-hide publishes
+ * `--catalog-header-h: 0`; keep the reserved seller-context floor so pin
+ * does not flip with the chrome show/hide.
+ */
 function manageTopChromeInsetPx(): number {
+	const reserved = cssVarPx('--catalog-header-h-with-seller-context');
 	const measured = cssVarPx('--catalog-header-h');
-	if(measured > 0) {
-		return measured;
-	}
-	return cssVarPx('--catalog-header-h-base');
+	return Math.max(measured, reserved) || cssVarPx('--catalog-header-h-base');
 }
 
 function ManageListControls({
@@ -803,8 +814,7 @@ function PlaceEtMarqueManageContent() {
 		let raf = 0;
 		const connect = () => {
 			observer?.disconnect();
-			// Hidden/cleared stack publishes 0px — use that, never a stale fallback.
-			const bottomInset = manageBottomPaneInsetPx();
+			const bottomInset = manageBottomDockInsetPx();
 			observer = new IntersectionObserver(
 				([entry]) => {
 					setBottomActionsInline(Boolean(entry?.isIntersecting));
@@ -1037,14 +1047,10 @@ function PlaceEtMarqueManageContent() {
 			{showListControls
 				? (
 					<div
-						className={
-							listControlsPinned
-								? `
-									${LIST_CONTROLS_ROW_CLASS}
-									min-h-[4.5rem]
-								`
-								: LIST_CONTROLS_ROW_CLASS
-						}
+						className={`
+							${LIST_CONTROLS_ROW_CLASS}
+							min-h-[4.5rem]
+						`}
 						ref={setListControlsEl}
 					>
 						<div className={LIST_CONTROLS_LEFT_CLASS}>

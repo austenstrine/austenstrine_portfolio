@@ -22,7 +22,7 @@
   --catalog-header-h-with-bar: 7.4375rem;
   --catalog-header-h-with-seller-context: 11.4375rem;
   --catalog-header-h: var(--catalog-header-h-base);
-  /* Manage bottom pane floor before layout sync (min-h 3.5rem + 8px gap). */
+  /* Manage bottom pane floor before layout sync (fixed h 3.5rem + 8px gap). */
   --seller-bottom-pane-stack-manage: 4rem;
 }
 

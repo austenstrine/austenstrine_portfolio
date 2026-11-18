@@ -72,12 +72,15 @@ function cssVarPx(name: string): number {
 	return 0;
 }
 
+/**
+ * Pin hysteresis for Filter/Status. Header scroll-hide publishes
+ * `--catalog-header-h: 0`; keep the reserved seller-context floor so pin
+ * does not flip with the chrome show/hide.
+ */
 function ordersTopChromeInsetPx(): number {
+	const reserved = cssVarPx('--catalog-header-h-with-seller-context');
 	const measured = cssVarPx('--catalog-header-h');
-	if(measured > 0) {
-		return measured;
-	}
-	return cssVarPx('--catalog-header-h-base');
+	return Math.max(measured, reserved) || cssVarPx('--catalog-header-h-base');
 }
 
 function VendorOrdersPageContent() {
@@ -293,14 +296,10 @@ function VendorOrdersPageContent() {
 			</div>
 
 			<div
-				className={
-					listControlsPinned
-						? `
-							${LIST_CONTROLS_ROW_CLASS}
-							min-h-[4.5rem]
-						`
-						: LIST_CONTROLS_ROW_CLASS
-				}
+				className={`
+					${LIST_CONTROLS_ROW_CLASS}
+					min-h-[4.5rem]
+				`}
 				ref={setListControlsEl}
 			>
 				<div />

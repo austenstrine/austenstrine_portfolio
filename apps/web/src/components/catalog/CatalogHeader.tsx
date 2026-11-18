@@ -98,8 +98,8 @@ export function CatalogHeader({
 	const lastScrollY = useRef(0);
 	const sellerChrome = pathUsesSellerChrome(pathname);
 	const authGuest = pathIsPemAuthGuest(pathname);
-	// Manage: reserve top + bottom before paint (PEM-440). Vendor orders:
-	// reserve top only for Filter/Status harvest (PEM-445).
+	// Manage: reserve top + bottom before paint (PEM-440 / PEM-504). Vendor
+	// orders: reserve top only for Filter/Status harvest (PEM-445).
 	const reserveManageContext = pathReservesManageContextBars(pathname);
 	const reserveTopContext = pathReservesSellerTopContext(pathname);
 	const showInPlaceEditToggle = !sellerChrome

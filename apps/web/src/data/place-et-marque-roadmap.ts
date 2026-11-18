@@ -74,15 +74,6 @@ export const ROADMAP_PLANNED: RoadmapPlannedItem[] = [
 		sourceHint: 'PEM-246 / PEM-240',
 	},
 	{
-		id: 'planned-manage-pane',
-		title: 'Seller tools bar still settling',
-		summary:
-			'The bottom seller tools and pinned Filter–Show controls keep shifting; empty states and pin placement still need a final polish.',
-		area: 'manage',
-		status: 'known-issue',
-		sourceHint: 'PEM-395 / PEM-427',
-	},
-	{
 		id: 'planned-persona-pass',
 		title: 'Visitor walkthrough on new pages',
 		summary:
@@ -254,6 +245,13 @@ export const ROADMAP_COMPLETED: RoadmapItem[] = [
 		title: 'Manage top bars keep their space so the page does not jump',
 		area: 'manage',
 		sourceHint: 'PEM-440',
+	},
+	{
+		id: 'mng-seller-tools-bar',
+		title: 'Seller tools bar and Filter–Show stay put while you scroll',
+		area: 'manage',
+		sourceHint: 'PEM-504',
+		highlight: true,
 	},
 	{
 		id: 'mng-frost-menus',

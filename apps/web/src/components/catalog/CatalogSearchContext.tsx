@@ -544,23 +544,41 @@ export function PageBottomPanePortal({
 	if(!hasContent && !reserveEmpty) {
 		return null;
 	}
+	// reserveEmpty (manage): fill the fixed host height (h-3.5rem) with py-2
+	// only — sm:py-2.5 was growing past the CLS floor and shifting stack pad.
+	const shellClassName = reserveEmpty
+		? `
+			mx-auto
+			grid
+			h-full
+			w-full
+			max-w-7xl
+			grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]
+			items-center
+			gap-x-2
+			gap-y-2
+			px-gutter
+			py-2
+			sm:gap-x-3
+		`
+		: `
+			mx-auto
+			grid
+			min-h-10
+			w-full
+			max-w-7xl
+			grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]
+			gap-x-2
+			gap-y-2
+			px-gutter
+			py-2
+			sm:gap-x-3
+			sm:py-2.5
+		`;
 	return createPortal(
 		<div
 			aria-label="Page actions"
-			className="
-				mx-auto
-				grid
-				min-h-10
-				w-full
-				max-w-7xl
-				grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]
-				gap-x-2
-				gap-y-2
-				px-gutter
-				py-2
-				sm:gap-x-3
-				sm:py-2.5
-			"
+			className={shellClassName}
 			data-pane-filled={hasContent ? 'true' : 'false'}
 			role="region"
 		>

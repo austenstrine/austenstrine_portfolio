@@ -15,11 +15,14 @@ const PANE_SHOW_TOP = 16;
 
 /**
  * Manage-only: keep geometry mounted while empty (transparent clickthrough).
+ * Fixed h-[3.5rem] matches --seller-bottom-pane-stack-manage floor (3.5rem +
+ * 8px gap) so harvest opacity cannot grow the bar and shift page pad / JumpToTop.
  * When portal marks data-pane-filled=true, opacity fades up and pointer-events
  * turn on immediately (Tailwind has-; not gated on transition end).
  */
 const MANAGE_HARVEST_PANE_CLASSNAME = `
-	min-h-[3.5rem]
+	h-[3.5rem]
+	overflow-hidden
 	border-transparent
 	bg-transparent
 	opacity-0
@@ -55,8 +58,10 @@ const FILLED_PANE_CHROME_CLASSNAME = `
  *
  * Manage reserves the bar before paint (PEM-440; pathReservesManageContextBars)
  * so harvested controls pin into already-present chrome — no post-load pop.
- * Host is always full viewport width; portal padding aligns controls with
- * page content. Other seller routes still use empty:hidden.
+ * Fixed host height + dock/pin hysteresis (PEM-504) stop scroll-hide from
+ * flipping harvest/pin and shifting page pad. Host is always full viewport
+ * width; portal padding aligns controls with page content. Other seller
+ * routes still use empty:hidden.
  *
  * Stack height uses layout metrics (offsetHeight + CSS bottom), not
  * getBoundingClientRect, so CSS hide/show transforms do not collapse the
