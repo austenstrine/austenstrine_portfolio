@@ -1,29 +1,84 @@
-# Dependencies and build output
-node_modules/
-dist/
-.next/
-apps/web/out/
-coverage/
-*.tsbuildinfo
+# Agent-context ignores only (prefer over .gitignore for bloat).
+# Keep source / SVG / lockfiles readable. Skip package-lock.json.
+
+# --- Dependencies / package-manager caches ---
+**/node_modules/
+.npm/
+**/.npm/
+.yarn/
+**/.yarn/
+**/.yarn/cache/
+.pnpm-store/
+**/.pnpm-store/
+**/.pnpm/
+.bun/
+**/.bun/
+
+# --- Build / toolchain outputs ---
+**/.next/
+**/dist/
+**/out/
+**/build/
+**/coverage/
+**/*.tsbuildinfo
+**/.turbo/
+**/.cache/
+**/.parcel-cache/
+**/.eslintcache
+**/.vite/
+**/.vercel/
+**/.swc/
+**/.rspack-cache/
+**/storybook-static/
+**/tmp/
+**/temp/
+.nyc_output/
+**/nyc_output/
+
+# Next/static export leftovers at repo root
 /www/
 /_next/
 /index.html
 /404.html
 
-# Env and local secrets
+# Generated API client / Prisma emit (also gitignored)
+apps/api/generated/
+
+# --- Graphify (generated; rebuild with graphify extract) ---
+graphify-out/
+
+# --- Playwright / test / screenshot dumps ---
+**/playwright-report/
+**/test-results/
+**/blob-report/
+**/playwright/.cache/
+**/.playwright/
+**/__screenshots__/
+**/screenshots/
+**/screenshot-dumps/
+**/artifacts/screenshots/
+**/test-results/**/*.png
+**/test-results/**/*.webm
+
+# --- Env / secrets / local ops junk ---
 .env
 .env.local
 .env.*.local
+.env.bak-*
+apps/api/.env.bak-*
 ops/nginx/certs/
-
-# Ops caches and lockfiles
-ops/cdn/data/cache/
-ops/cdn/data/origin/
-ops/diagnostics/*
-!ops/diagnostics/rlog.sh
+.dsshrc.local
+docker-compose.override.yml
 .dssh-docker.lock
 
-# Logs and OS junk
+# Ops caches / diagnostics noise
+ops/cdn/data/cache/
+ops/cdn/data/origin/
+ops/cdn/src/
+ops/diagnostics/*
+!ops/diagnostics/rlog.sh
+
+# --- Logs / OS junk ---
 *.log
 npm-debug.log*
 yarn-debug.log*
@@ -31,6 +86,61 @@ yarn-error.log*
 pnpm-debug.log*
 .DS_Store
 __MACOSX/
+Thumbs.db
 
-# Large binaries the agent does not need to index
-linkedin-recommendations/**/*.pdf
+# --- Common binaries (keep source SVG / code) ---
+# Images
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.webp
+*.ico
+*.avif
+*.bmp
+*.tif
+*.tiff
+*.heic
+*.heif
+# Docs / archives
+*.pdf
+*.zip
+*.gz
+*.tgz
+*.bz2
+*.xz
+*.7z
+*.rar
+# Native / wasm / packages
+*.wasm
+*.so
+*.dylib
+*.dll
+*.exe
+*.bin
+*.o
+*.a
+*.obj
+*.lib
+*.jar
+*.apk
+*.dmg
+*.iso
+*.deb
+*.rpm
+# Media
+*.mp4
+*.webm
+*.mov
+*.avi
+*.mkv
+*.mp3
+*.wav
+*.flac
+*.ogg
+# Fonts (woff*); keep editable SVG elsewhere
+*.woff
+*.woff2
+*.ttf
+*.otf
+*.eot
