@@ -24,9 +24,11 @@ ops/cdn/data/origin/**
 # Cloned golang-image-cdn checkout (ops/cdn/ensure-source.sh)
 ops/cdn/src/
 
-# rlog snapshots, history, pid, and stream files (keep the sampler script)
+# rlog snapshots, history, pid, and stream files (keep sampler + softlock watch)
 ops/diagnostics/*
 !ops/diagnostics/rlog.sh
+!ops/diagnostics/host-softlock-watch.sh
+!ops/diagnostics/host-softlock-watch.service
 
 # Serializes dssh docker build/stop/run across terminals
 .dssh-docker.lock

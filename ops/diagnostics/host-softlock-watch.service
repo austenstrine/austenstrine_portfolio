@@ -1,0 +1,15 @@
+[Unit]
+Description=Host softlock watchdog (cursorsandbox preflight / kernel soft lockup)
+Documentation=file:%h/.local/bin/host-softlock-watch
+After=default.target
+
+[Service]
+Type=simple
+ExecStart=%h/.local/bin/host-softlock-watch
+Restart=always
+RestartSec=3
+Nice=5
+# journalctl -k needs membership in adm/systemd-journal (already typical on desktop).
+
+[Install]
+WantedBy=default.target
