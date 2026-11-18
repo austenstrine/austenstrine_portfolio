@@ -4,6 +4,7 @@ import {
 	useEffect,
 	useRef,
 	useState,
+	type FocusEvent,
 	type KeyboardEvent,
 	type ReactNode,
 } from 'react';
@@ -1301,6 +1302,11 @@ export function InPlacePageSaveBar() {
 	);
 }
 
+/**
+ * Absolute field save/discard — never in-flow (no CLS). Prefer
+ * {@link InPlaceFieldSurface} blur-commit for element tier; keep this for
+ * explicit overlay actions when needed.
+ */
 export function InPlaceFieldSaveButton({
 	edit,
 	field,
@@ -1311,25 +1317,226 @@ export function InPlaceFieldSaveButton({
 	className?: string;
 }) {
 	const dirty = edit.dirtyFields.has(field);
-	if(!dirty) {
+	if(!dirty && !edit.saving) {
 		return null;
 	}
 	return (
-		<InPlaceSaveControls
-			className={className}
-			dirty={dirty}
-			onDiscard={() => {
-				edit.discardField(field);
-			}}
-			onSave={() => {
-				void edit.saveField(field);
-			}}
-			saving={edit.saving}
-			scope="field"
-		/>
+		<div
+			className={`
+				pointer-events-auto
+				absolute
+				right-0
+				top-0
+				z-30
+				-translate-y-[calc(100%+0.25rem)]
+				${className}
+			`}
+		>
+			<InPlaceSaveControls
+				dirty={dirty}
+				onDiscard={() => {
+					edit.discardField(field);
+				}}
+				onSave={() => {
+					void edit.saveField(field);
+				}}
+				saving={edit.saving}
+				scope="field"
+			/>
+		</div>
 	);
 }
 
+/**
+ * Sole per-element edit chrome: hover pencil (absolute, right) → same-box
+ * editor. Display stays in-flow (invisible while editing) so size never shifts.
+ * Element tier: blur commits dirty field; Escape discards and exits.
+ */
+export function InPlaceFieldSurface({
+	label,
+	editing = false,
+	onActivate,
+	onExit,
+	display,
+	editor,
+	edit,
+	field,
+	className = '',
+}: {
+	label: string;
+	editing?: boolean;
+	onActivate?: () => void;
+	/** Clear active field after commit / discard (element tier). */
+	onExit?: () => void;
+	display: ReactNode;
+	editor?: ReactNode;
+	edit?: InPlaceProductEditState;
+	field?: InPlaceFieldName;
+	className?: string;
+}) {
+	const rootRef = useRef<HTMLDivElement>(null);
+
+	useEffect(() => {
+		if(!editing) {
+			return;
+		}
+		const node = rootRef.current?.querySelector<
+			HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+		>('input, textarea, select');
+		node?.focus();
+		if(node && 'select' in node && node.tagName === 'INPUT') {
+			node.select();
+		}
+	}, [editing]);
+
+	const commitAndExit = () => {
+		const saveEdit = edit;
+		const saveField = field;
+		const dirty = Boolean(
+			saveEdit
+			&& saveField
+			&& saveEdit.dirtyFields.has(saveField),
+		);
+		/* Exit sync before await so a click on another field’s pencil can win. */
+		onExit?.();
+		if(dirty && saveEdit && saveField) {
+			void saveEdit.saveField(saveField);
+		}
+	};
+
+	const discardAndExit = () => {
+		if(edit && field) {
+			edit.discardField(field);
+		}
+		onExit?.();
+	};
+
+	const onSurfaceBlur = (event: FocusEvent<HTMLDivElement>) => {
+		if(!editing) {
+			return;
+		}
+		const next = event.relatedTarget;
+		if(next instanceof Node && event.currentTarget.contains(next)) {
+			return;
+		}
+		commitAndExit();
+	};
+
+	const onSurfaceKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+		if(!editing || event.key !== 'Escape') {
+			return;
+		}
+		event.preventDefault();
+		event.stopPropagation();
+		discardAndExit();
+	};
+
+	return (
+		<div
+			className={`
+				group/inplace
+				relative
+				min-w-0
+				${className}
+			`}
+			onBlur={onSurfaceBlur}
+			onKeyDown={onSurfaceKeyDown}
+			ref={rootRef}
+		>
+			<div
+				aria-hidden={editing || undefined}
+				className={
+					editing
+						? 'invisible'
+						: undefined
+				}
+			>
+				{display}
+			</div>
+			{editing && editor
+				? (
+					<div
+						className="
+							absolute
+							inset-0
+							z-10
+							flex
+							min-h-0
+							min-w-0
+							flex-col
+						"
+					>
+						{editor}
+					</div>
+				)
+				: null
+			}
+			{!editing && onActivate
+				? (
+					<button
+						aria-label={label}
+						className="
+							absolute
+							inset-y-[-0.25rem]
+							right-0
+							z-20
+							flex
+							w-10
+							translate-x-[0.35rem]
+							items-center
+							justify-end
+							pr-0.5
+							opacity-0
+							transition-opacity
+							duration-150
+							ease-out
+							pointer-events-none
+							group-hover/inplace:pointer-events-auto
+							group-hover/inplace:opacity-100
+							group-focus-within/inplace:pointer-events-auto
+							group-focus-within/inplace:opacity-100
+							focus-visible:pointer-events-auto
+							focus-visible:opacity-100
+							motion-reduce:transition-none
+							[@media(hover:none)]:pointer-events-auto
+							[@media(hover:none)]:opacity-100
+						"
+						onClick={(event) => {
+							event.preventDefault();
+							event.stopPropagation();
+							onActivate();
+						}}
+						type="button"
+					>
+						<span
+							className="
+								inline-flex
+								h-7
+								w-7
+								shrink-0
+								items-center
+								justify-center
+								rounded-full
+								border
+								border-slate-300
+								bg-white/95
+								text-ink
+								shadow-[0_4px_12px_rgba(13,27,42,0.12)]
+								hover:border-asgreen
+								hover:text-asgreen
+							"
+						>
+							<PencilIcon className="h-3.5 w-3.5" />
+						</span>
+					</button>
+				)
+				: null
+			}
+		</div>
+	);
+}
+
+/** @deprecated Use {@link InPlaceFieldSurface}. */
 export function InPlaceActivateHint({
 	children,
 	onActivate,
@@ -1340,29 +1547,11 @@ export function InPlaceActivateHint({
 	label: string;
 }) {
 	return (
-		<button
-			aria-label={label}
-			className="
-				block
-				w-full
-				rounded-sm
-				border
-				border-transparent
-				bg-transparent
-				p-0
-				text-left
-				hover:border-dashed
-				hover:border-slate-300
-			"
-			onClick={(event) => {
-				event.preventDefault();
-				event.stopPropagation();
-				onActivate();
-			}}
-			type="button"
-		>
-			{children}
-		</button>
+		<InPlaceFieldSurface
+			display={children}
+			label={label}
+			onActivate={onActivate}
+		/>
 	);
 }
 

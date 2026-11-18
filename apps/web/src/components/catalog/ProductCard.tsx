@@ -17,10 +17,9 @@ import {
 	type InPlaceFieldName,
 } from './EditableVendorsProvider';
 import {
-	InPlaceActivateHint,
 	InPlaceCategorySelect,
 	InPlaceError,
-	InPlaceFieldSaveButton,
+	InPlaceFieldSurface,
 	InPlaceFullEditLink,
 	InPlaceImageActions,
 	InPlacePriceInput,
@@ -31,6 +30,7 @@ import {
 	applyDetailToSummary,
 	useInPlaceProductEdit,
 } from './InPlaceProductFields';
+import { PencilIcon } from '../icons/PencilIcon';
 import { ProductCardImageCarousel } from './ProductCardImageCarousel';
 
 function formatPrice(cents: number) {
@@ -132,12 +132,11 @@ function BuyerProductCard({
 			return node;
 		}
 		return (
-			<InPlaceActivateHint
+			<InPlaceFieldSurface
+				display={node}
 				label={label}
 				onActivate={() => onActivateField(field)}
-			>
-				{node}
-			</InPlaceActivateHint>
+			/>
 		);
 	};
 
@@ -214,10 +213,32 @@ function BuyerProductCard({
 							aria-label="Edit images"
 							className="
 								absolute
-								inset-0
-								z-20
-								cursor-pointer
-								bg-transparent
+								right-3
+								top-3
+								z-30
+								inline-flex
+								h-9
+								w-9
+								items-center
+								justify-center
+								rounded-full
+								border
+								border-slate-300
+								bg-white/95
+								text-ink
+								opacity-0
+								shadow-[0_4px_12px_rgba(13,27,42,0.12)]
+								transition-opacity
+								duration-150
+								pointer-events-none
+								group-hover:pointer-events-auto
+								group-hover:opacity-100
+								focus-visible:pointer-events-auto
+								focus-visible:opacity-100
+								hover:border-asgreen
+								hover:text-asgreen
+								[@media(hover:none)]:pointer-events-auto
+								[@media(hover:none)]:opacity-100
 							"
 							onClick={(event) => {
 								event.preventDefault();
@@ -225,7 +246,9 @@ function BuyerProductCard({
 								onActivateField('images');
 							}}
 							type="button"
-						/>
+						>
+							<PencilIcon className="h-3.5 w-3.5" />
+						</button>
 					)
 					: null
 				}
@@ -463,11 +486,14 @@ function SellerProductCard({
 	product,
 	onUpdated,
 	editableFields,
+	onActivateField,
 }: {
 	product: CatalogProductSummary;
 	onUpdated: (next: CatalogProductSummary) => void;
 	/** When set, only these fields render as inputs (element tier). */
 	editableFields?: ReadonlySet<InPlaceFieldName> | 'all';
+	/** Element tier: hover-pencil activate for fields that are not open. */
+	onActivateField?: (field: InPlaceFieldName) => void;
 }) {
 	const titleId = useId();
 	const {
@@ -503,7 +529,13 @@ function SellerProductCard({
 	const fieldOpen = (field: InPlaceFieldName) =>
 		allOpen || (editableFields?.has(field) ?? false);
 	const showCardSave = editTier === 'card';
-	const showFieldSave = editTier === 'element';
+	const exitField = () => {
+		setActiveFieldKey(null);
+	};
+	const categoryLabel = display.category?.name ?? 'Uncategorized';
+	const priceLabel = display.primaryPriceCents != null
+		? formatPrice(display.primaryPriceCents)
+		: 'Price on request';
 
 	return (
 		<article
@@ -541,7 +573,50 @@ function SellerProductCard({
 				/>
 				{fieldOpen('images')
 					? <InPlaceImageActions edit={edit} />
-					: null
+					: onActivateField
+						? (
+							<button
+								aria-label="Edit images"
+								className="
+									absolute
+									right-3
+									top-3
+									z-30
+									inline-flex
+									h-9
+									w-9
+									items-center
+									justify-center
+									rounded-full
+									border
+									border-slate-300
+									bg-white/95
+									text-ink
+									opacity-0
+									shadow-[0_4px_12px_rgba(13,27,42,0.12)]
+									transition-opacity
+									duration-150
+									pointer-events-none
+									group-hover:pointer-events-auto
+									group-hover:opacity-100
+									focus-visible:pointer-events-auto
+									focus-visible:opacity-100
+									hover:border-asgreen
+									hover:text-asgreen
+									[@media(hover:none)]:pointer-events-auto
+									[@media(hover:none)]:opacity-100
+								"
+								onClick={(event) => {
+									event.preventDefault();
+									event.stopPropagation();
+									onActivateField('images');
+								}}
+								type="button"
+							>
+								<PencilIcon className="h-3.5 w-3.5" />
+							</button>
+						)
+						: null
 				}
 				{!inStock
 					? (
@@ -579,31 +654,8 @@ function SellerProductCard({
 					pt-3
 				"
 			>
-				{fieldOpen('category')
-					? (
-						<>
-							<InPlaceCategorySelect
-								className="
-									text-[11px]
-									font-medium
-									uppercase
-									tracking-[0.14em]
-									text-slate-500
-								"
-								edit={edit}
-							/>
-							{showFieldSave
-								? (
-									<InPlaceFieldSaveButton
-										edit={edit}
-										field="category"
-									/>
-								)
-								: null
-							}
-						</>
-					)
-					: (
+				<InPlaceFieldSurface
+					display={
 						<p
 							className="
 								text-[11px]
@@ -613,36 +665,34 @@ function SellerProductCard({
 								text-slate-500
 							"
 						>
-							{display.category?.name ?? 'Uncategorized'}
+							{categoryLabel}
 						</p>
-					)
-				}
-				{fieldOpen('title')
-					? (
-						<>
-							<InPlaceTitleInput
-								className="
-									min-h-[2.5rem]
-									text-[15px]
-									font-medium
-									leading-snug
-									text-ink
-								"
-								edit={edit}
-								id={titleId}
-							/>
-							{showFieldSave
-								? (
-									<InPlaceFieldSaveButton
-										edit={edit}
-										field="title"
-									/>
-								)
-								: null
-							}
-						</>
-					)
-					: (
+					}
+					edit={edit}
+					editing={fieldOpen('category')}
+					editor={
+						<InPlaceCategorySelect
+							className="
+								text-[11px]
+								font-medium
+								uppercase
+								tracking-[0.14em]
+								text-slate-500
+							"
+							edit={edit}
+						/>
+					}
+					field="category"
+					label="Edit category"
+					onActivate={
+						onActivateField && !fieldOpen('category')
+							? () => onActivateField('category')
+							: undefined
+					}
+					onExit={editTier === 'element' ? exitField : undefined}
+				/>
+				<InPlaceFieldSurface
+					display={
 						<h2
 							className="
 								line-clamp-2
@@ -656,8 +706,31 @@ function SellerProductCard({
 						>
 							{display.title}
 						</h2>
-					)
-				}
+					}
+					edit={edit}
+					editing={fieldOpen('title')}
+					editor={
+						<InPlaceTitleInput
+							className="
+								min-h-[2.5rem]
+								text-[15px]
+								font-medium
+								leading-snug
+								text-ink
+							"
+							edit={edit}
+							id={titleId}
+						/>
+					}
+					field="title"
+					label="Edit title"
+					onActivate={
+						onActivateField && !fieldOpen('title')
+							? () => onActivateField('title')
+							: undefined
+					}
+					onExit={editTier === 'element' ? exitField : undefined}
+				/>
 				<p
 					className="
 						text-[12px]
@@ -675,8 +748,23 @@ function SellerProductCard({
 							gap-1
 						"
 					>
-						{fieldOpen('price')
-							? (
+						<InPlaceFieldSurface
+							className="min-w-0"
+							display={
+								<p
+									className="
+										text-[17px]
+										font-semibold
+										tabular-nums
+										text-ink
+									"
+								>
+									{priceLabel}
+								</p>
+							}
+							edit={edit}
+							editing={fieldOpen('price')}
+							editor={
 								<InPlacePriceInput
 									className="
 										w-[6.75rem]
@@ -687,25 +775,36 @@ function SellerProductCard({
 									"
 									edit={edit}
 								/>
-							)
-							: (
-								<p
-									className="
-										text-[17px]
-										font-semibold
-										tabular-nums
-										text-ink
-									"
-								>
-									{display.primaryPriceCents != null
-										? formatPrice(display.primaryPriceCents)
-										: 'Price on request'
-									}
-								</p>
-							)
-						}
-						{fieldOpen('uom')
-							? (
+							}
+							field="price"
+							label="Edit price"
+							onActivate={
+								onActivateField && !fieldOpen('price')
+									? () => onActivateField('price')
+									: undefined
+							}
+							onExit={editTier === 'element' ? exitField : undefined}
+						/>
+						<InPlaceFieldSurface
+							className="min-w-0"
+							display={
+								uomCode
+									? (
+										<span
+											className="
+												text-[12px]
+												font-medium
+												text-slate-500
+											"
+										>
+											/ {uomCode}
+										</span>
+									)
+									: null
+							}
+							edit={edit}
+							editing={fieldOpen('uom')}
+							editor={
 								<InPlaceUomSelect
 									className="
 										w-auto
@@ -716,94 +815,61 @@ function SellerProductCard({
 									"
 									edit={edit}
 								/>
-							)
-							: uomCode
-								? (
-									<span
-										className="
-											text-[12px]
-											font-medium
-											text-slate-500
-										"
-									>
-										/ {uomCode}
-									</span>
-								)
-								: null
-						}
+							}
+							field="uom"
+							label="Edit unit"
+							onActivate={
+								onActivateField && !fieldOpen('uom')
+									? () => onActivateField('uom')
+									: undefined
+							}
+							onExit={editTier === 'element' ? exitField : undefined}
+						/>
 					</div>
-					{showFieldSave && (fieldOpen('price') || fieldOpen('uom'))
-						? (
-							<div className="mt-1 flex flex-wrap gap-2">
-								{fieldOpen('price')
-									? (
-										<InPlaceFieldSaveButton
-											edit={edit}
-											field="price"
-										/>
-									)
-									: null
-								}
-								{fieldOpen('uom')
-									? (
-										<InPlaceFieldSaveButton
-											edit={edit}
-											field="uom"
-										/>
-									)
-									: null
-								}
-							</div>
-						)
-						: null
-					}
-					<div
+					<InPlaceFieldSurface
 						className={
 							low
-								? 'mt-0.5 flex flex-wrap items-baseline gap-1 text-[12px] text-amber-800'
+								? 'mt-0.5 text-[12px] text-amber-800'
 								: inStock
-									? 'mt-0.5 flex flex-wrap items-baseline gap-1 text-[12px] text-slate-500'
-									: 'mt-0.5 flex flex-wrap items-baseline gap-1 text-[12px] text-signal'
+									? 'mt-0.5 text-[12px] text-slate-500'
+									: 'mt-0.5 text-[12px] text-signal'
 						}
-					>
-						{fieldOpen('qty')
-							? (
-								<>
-									<InPlaceQtyInput
-										className="
-											w-[4.5rem]
-											tabular-nums
-										"
-										edit={edit}
-									/>
-									<span>
-										{inStock
-											? `${low ? 'Low stock · ' : ''}${qtySuffix}`
-											: 'Currently unavailable'
-										}
-									</span>
-								</>
-							)
-							: (
+						display={
+							<span>
+								{inStock
+									? `${low ? 'Low stock · ' : ''}${qtyCopy} available`
+									: 'Currently unavailable'
+								}
+							</span>
+						}
+						edit={edit}
+						editing={fieldOpen('qty')}
+						editor={
+							<div className="flex flex-wrap items-baseline gap-1">
+								<InPlaceQtyInput
+									className="
+										w-[4.5rem]
+										tabular-nums
+									"
+									edit={edit}
+								/>
 								<span>
 									{inStock
-										? `${low ? 'Low stock · ' : ''}${qtyCopy} available`
+										? `${low ? 'Low stock · ' : ''}${qtySuffix}`
 										: 'Currently unavailable'
 									}
 								</span>
-							)
+							</div>
 						}
-					</div>
-					{showFieldSave && fieldOpen('qty')
-						? (
-							<InPlaceFieldSaveButton
-								className="mt-1"
-								edit={edit}
-								field="qty"
-							/>
-						)
-						: null
-					}
+						field="qty"
+						label="Edit quantity"
+						onActivate={
+							onActivateField && !fieldOpen('qty')
+								? () => onActivateField('qty')
+								: undefined
+						}
+						onExit={editTier === 'element' ? exitField : undefined}
+					/>
 				</div>
 				<InPlaceError
 					className="mt-2"
@@ -865,23 +931,6 @@ function SellerProductCard({
 						)
 						: null
 					}
-					{editTier === 'element'
-						? (
-							<button
-								className="
-									text-[12px]
-									font-semibold
-									text-slate-500
-									hover:text-sky
-								"
-								onClick={() => setActiveFieldKey(null)}
-								type="button"
-							>
-								Done
-							</button>
-						)
-						: null
-					}
 				</div>
 			</div>
 		</article>
@@ -924,18 +973,7 @@ export function ProductCard({ product }: { product: CatalogProductSummary }) {
 		);
 	}
 
-	if(editTier === 'element' && !open) {
-		return (
-			<BuyerProductCard
-				onActivateField={(field) => {
-					setActiveFieldKey(inPlaceFieldKey(display.id, field));
-				}}
-				product={display}
-			/>
-		);
-	}
-
-	if(editTier === 'element' && open) {
+	if(editTier === 'element') {
 		const fields = new Set<InPlaceFieldName>();
 		for(const field of [
 			'title',
@@ -954,7 +992,7 @@ export function ProductCard({ product }: { product: CatalogProductSummary }) {
 				activeFieldKey,
 			)) {
 				fields.add(field);
-				// Price chip also exposes uom when activating price from buyer card.
+				// Price chip also exposes uom when activating price.
 				if(field === 'price') {
 					fields.add('uom');
 				}
@@ -963,6 +1001,9 @@ export function ProductCard({ product }: { product: CatalogProductSummary }) {
 		return (
 			<SellerProductCard
 				editableFields={fields}
+				onActivateField={(field) => {
+					setActiveFieldKey(inPlaceFieldKey(display.id, field));
+				}}
 				onUpdated={setDisplay}
 				product={display}
 			/>

@@ -85,6 +85,9 @@ export function uomIdForCode(
 
 /** Quiet chrome so in-place controls read as listing/PDP copy until focused. */
 export const inPlaceQuietFieldClassName = `
+	box-border
+	h-full
+	min-h-0
 	w-full
 	rounded-sm
 	border
