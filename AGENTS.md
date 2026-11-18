@@ -25,11 +25,14 @@ Opt out only: “stop caveman” / “normal mode” / “stop ultracave”.
 - Do not silently `docker stop|rm|kill|restart portfolio-api` / `portfolio-crm` (use user-terminal `dssh backend|crm restart; dssh logs …`).
 - Do not fake out-of-scope forge/repo/env access — hand off instead.
 
+If working on session/cookie, read this: docs/agent/cookie-epoch.md
+
 ## Read when needed
 
 | Topic | Doc / rule |
 |-------|------------|
 | Orient / layout / docker | `./bin/agent-cli` |
+| Cookie / session stamp | `docs/agent/cookie-epoch.md` (`COOKIE_EPOCH_UTC`, `pem_cookie_epoch`) |
 | Code style (TS/TSX) | `docs/code-style-preferences.md` |
 | Graphify | `docs/agent/graphify.md` |
 | Local-first / sync `development` | `docs/agent/local-first.md` |
