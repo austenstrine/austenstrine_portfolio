@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # sessionStart: graphify ensure + fail-closed watchdog auto-arm (no flap) + session cue once.
 # Softlock always-on; pem-subagent forever idle-skip. Never restart active units.
-# Cue: once per session (stamp). Cloud/no-systemctl → soft reminder only (host units unreachable).
+# Cue: once per session — clear stamp here so ensure --cue-session can fire again
+# (stamp alone would be once-forever). Cloud/no-systemctl → soft reminder only.
 set -u
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
@@ -10,6 +11,10 @@ HOOK_DIR="$(cd "$(dirname "$0")" && pwd)"
 STATE_DIR="${HOOK_DIR}/state"
 mkdir -p "${STATE_DIR}" 2>/dev/null || true
 LOG="${STATE_DIR}/watchdog-session.log"
+CUE_STAMP="${XDG_STATE_HOME:-$HOME/.local/state}/pem-watchdog-ensure/session-cue.stamp"
+
+# New Cursor session → allow one cue. Clear before ensure --cue-session.
+rm -f "$CUE_STAMP" 2>/dev/null || true
 
 # Drain stdin (session payload).
 cat >/dev/null 2>&1 || true
@@ -74,7 +79,7 @@ const lines = [
   `- NEVER: reinstall/restart units when already active; stop softlock; unsubscribe timer while workers still alive (check live count → 0 first).`,
   `- Cloud coordinators: host systemd unreachable — arm subscribe_timer pem-subagent-watchdog delaySeconds=60 on first worker; unsubscribe only when active workers=0. Host forever-loop covers Raider.`,
   `- Params: ${process.env.PEM_HOOK_SKILL} · status: ./bin/agent-cli watchdog · ensure: ./ops/tooling/watchdog-ensure-armed.sh --json`,
-  `- Verify cue: ~/.local/state/pem-watchdog-ensure/session-cue.stamp + desktop notify "PEM watchdogs armed".`,
+  `- Verify cue: after sessionStart, stamp exists + desktop "PEM watchdogs armed". Stamp cleared each sessionStart then rewritten by --cue-session.`,
 ];
 if (host && !armed) {
   lines.unshift(

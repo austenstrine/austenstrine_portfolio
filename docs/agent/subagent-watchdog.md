@@ -29,7 +29,7 @@ systemctl --user status pem-subagent-watchdog.service
 
 Loop stays enabled. **No sample / no active workers → idle skip** (sleep only; does **not** call `tick`; `metrics.ticks` unchanged). Softlock stays a separate forever unit.
 
-**Start cue:** daemon start/restart (install) **or** session once via `./ops/tooling/watchdog-ensure-armed.sh --cue-session` (stamp `~/.local/state/pem-watchdog-ensure/session-cue.stamp`). Idle skips / ticks / CreateAgent do **not** cue. Disable: `WATCHDOG_START_CUE=0`.
+**Start cue:** daemon start/restart (install) **or** session once: `session-start.sh` clears stamp then `--cue-session` fires. Stamp alone is not enough (would stick forever). `--json` alone never cues / never sets `cue.skipped`. Idle skips / ticks / CreateAgent do **not** cue. Disable: `WATCHDOG_START_CUE=0`.
 
 **No-flap:** softlock always-on; subagent unit start-if-inactive only; unsubscribe timer only when live workers = 0; forever idle-skip preferred over stop/start.
 
