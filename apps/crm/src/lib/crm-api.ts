@@ -155,3 +155,40 @@ export function applyUomMerge(token: string): Promise<{
 		`/catalog/uom-merges/apply?token=${encodeURIComponent(token)}`,
 	);
 }
+
+export type RoadmapSuggestionQueueItem = {
+	id: string;
+	body: string;
+	name?: string | null;
+	email?: string | null;
+	userId?: string | null;
+	userEmail?: string | null;
+	userAgent?: string | null;
+	status: 'PENDING' | 'APPROVED' | 'REJECTED';
+	reviewReason?: string | null;
+	createdAt: string;
+	reviewedAt?: string | null;
+};
+
+export function listRoadmapSuggestions(
+	status = 'PENDING',
+): Promise<RoadmapSuggestionQueueItem[]> {
+	return crmRequest(
+		`/roadmap/suggestions?status=${encodeURIComponent(status)}`,
+	);
+}
+
+export function reviewRoadmapSuggestion(
+	suggestionId: string,
+	payload: { decision: 'approve' | 'reject'; reason?: string },
+): Promise<{
+	id: string;
+	status: string;
+	reviewReason?: string | null;
+	reviewedAt?: string | null;
+}> {
+	return crmRequest(`/roadmap/suggestions/${suggestionId}/review`, {
+		method: 'POST',
+		body: JSON.stringify(payload),
+	});
+}

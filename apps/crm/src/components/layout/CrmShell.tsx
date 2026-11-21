@@ -6,6 +6,7 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { CategoryIcon } from '../icons/CategoryIcon';
 import { HomeIcon } from '../icons/HomeIcon';
 import { LinkNameIcon } from '../icons/LinkNameIcon';
+import { RoadmapIcon } from '../icons/RoadmapIcon';
 import { UomIcon } from '../icons/UomIcon';
 import {
 	logoutUser,
@@ -16,6 +17,7 @@ import {
 const NAV = [
 	{ href: '/', label: 'Home', Icon: HomeIcon },
 	{ href: '/link-names', label: 'Link names', Icon: LinkNameIcon },
+	{ href: '/roadmap-suggestions', label: 'Suggestions', Icon: RoadmapIcon },
 	{ href: '/categories', label: 'Categories', Icon: CategoryIcon },
 	{ href: '/uoms', label: 'Units', Icon: UomIcon },
 ] as const;

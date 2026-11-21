@@ -6,3 +6,5 @@ alwaysApply: false
 # `dssh launch`
 
 Prefer `dssh launch` from the portfolio root (then `dssh logs <target>`). Full: `docs/agent/dssh-launch.md`. Backend/CRM replace still follows `docs/agent/dssh-backend-ownership.md`.
+
+Build throttle: `COMPOSE_PARALLEL_LIMIT=1`, `BUILDKIT_MAX_PARALLELISM=1`, `DOCKER_BUILDKIT=1`; launch prebuild `backend`→`frontend`→`crm` then tabs `-nobuild`. Stall gate + softlock caution — skill `~/.agents/skills/dssh-launch/SKILL.md`.

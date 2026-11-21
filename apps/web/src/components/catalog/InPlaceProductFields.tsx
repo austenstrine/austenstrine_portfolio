@@ -4,6 +4,7 @@ import {
 	useEffect,
 	useRef,
 	useState,
+	type FocusEvent,
 	type KeyboardEvent,
 	type ReactNode,
 } from 'react';
@@ -27,16 +28,41 @@ import {
 	uomIdForCode,
 } from '../../lib/inplace-product-edit';
 import { productEditHref } from '../../lib/vendor-ref';
-import { NavigatePersistentArrow } from './NavigatePersistentArrow';
-import { CaretDownIcon } from '../icons/CaretDownIcon';
+import { ExternalLinkIcon } from '../icons/ExternalLinkIcon';
+import { EyeIcon } from '../icons/EyeIcon';
 import { PencilIcon } from '../icons/PencilIcon';
 import { PlusIcon } from '../icons/PlusIcon';
 import { TrashIcon } from '../icons/TrashIcon';
 import {
-	type InPlaceEditTier,
 	type InPlaceFieldName,
 	useEditableVendors,
 } from './EditableVendorsProvider';
+
+/** Shared chrome for hover side-bubbles + field pencils — no in-flow shift. */
+export const inplaceActionBubbleClassName = `
+	relative
+	inline-flex
+	h-9
+	w-9
+	shrink-0
+	items-center
+	justify-center
+	rounded-full
+	border
+	border-slate-300
+	bg-white/95
+	text-ink
+	shadow-[0_4px_12px_rgba(13,27,42,0.12)]
+	transition
+	duration-150
+	ease-out
+	motion-reduce:transition-none
+	hover:border-asgreen
+	hover:text-asgreen
+	focus-visible:border-asgreen
+	focus-visible:text-asgreen
+	focus-visible:outline-none
+`;
 
 export type InPlaceLookups = {
 	categories: CatalogCategoryRow[];
@@ -962,6 +988,9 @@ export function InPlaceImageActions({
 	);
 }
 
+/**
+ * Full product editor — pencil with external-link badge (no text label).
+ */
 export function InPlaceFullEditLink({
 	product,
 	className = '',
@@ -971,188 +1000,198 @@ export function InPlaceFullEditLink({
 }) {
 	return (
 		<a
+			aria-label="Open full product editor"
 			className={`
-				group
-				inline-flex
-				items-center
-				gap-1.5
-				text-xs
-				font-semibold
-				text-sky
+				${inplaceActionBubbleClassName}
 				${className}
 			`}
 			href={productEditHref({
 				vendorSlug: product.vendor.slug,
 				productSlug: product.slug,
 			})}
+			onClick={(event) => {
+				event.stopPropagation();
+			}}
 		>
-			Full edit
-			<NavigatePersistentArrow />
+			<PencilIcon className="h-3.5 w-3.5" />
+			<span
+				aria-hidden
+				className="
+					absolute
+					-right-0.5
+					-top-0.5
+					inline-flex
+					h-3.5
+					w-3.5
+					items-center
+					justify-center
+					rounded-full
+					border
+					border-slate-200
+					bg-white
+					text-sky
+					shadow-sm
+				"
+			>
+				<ExternalLinkIcon className="h-2 w-2" />
+			</span>
 		</a>
 	);
 }
 
-const TIER_OPTIONS: Array<{
-	tier: Exclude<InPlaceEditTier, 'off'>;
-	label: string;
-	hint: string;
-}> = [
-	{ tier: 'page', label: 'Page', hint: 'All fields on this page' },
-	{ tier: 'card', label: 'Card', hint: 'One product card at a time' },
-	{ tier: 'element', label: 'Field', hint: 'One field at a time' },
-];
+const SCOPE_TOGGLE_CLASS = `
+	inline-flex
+	items-center
+	gap-1.5
+	rounded-full
+	border
+	px-3
+	py-1.5
+	text-xs
+	font-semibold
+	transition
+`;
 
-/** Opt into tiered in-place edits (off by default). */
-export function InPlaceEditToggle({
-	tier,
-	onChange,
+/** Toggle bulk edit for the whole search-results / page grid. */
+export function InPlaceResultsEditToggle({
 	className = '',
 }: {
-	tier: InPlaceEditTier;
-	onChange: (tier: InPlaceEditTier) => void;
 	className?: string;
 }) {
-	const [open, setOpen] = useState(false);
-	const active = tier !== 'off';
-	const activeLabel = TIER_OPTIONS.find((row) => row.tier === tier)?.label;
+	const { editTier, setEditTier } = useEditableVendors();
+	const active = editTier === 'page';
 
+	return (
+		<button
+			aria-label={active ? 'Stop editing results' : 'Edit all results'}
+			aria-pressed={active}
+			className={
+				`
+					${SCOPE_TOGGLE_CLASS}
+					${active
+						? 'border-asgreen/40 bg-asgreen/10 text-asgreen'
+						: 'border-slate-300 bg-white text-ink hover:border-sky hover:text-sky'
+					}
+					${className}
+				`
+			}
+			onClick={() => {
+				setEditTier(active ? 'field' : 'page');
+			}}
+			type="button"
+		>
+			<PencilIcon className="h-3.5 w-3.5 shrink-0" />
+			{active
+				? 'Editing results'
+				: 'Edit results'
+			}
+		</button>
+	);
+}
+
+/** Toggle bulk edit for one product card (or the PDP as a card) — icon bubble. */
+export function InPlaceCardEditToggle({
+	productId,
+	className = '',
+}: {
+	productId: string;
+	className?: string;
+}) {
+	const {
+		editTier,
+		activeCardId,
+		setEditTier,
+		setActiveCardId,
+	} = useEditableVendors();
+	const active = editTier === 'card' && activeCardId === productId;
+
+	return (
+		<button
+			aria-label={active ? 'Stop editing this card' : 'Edit this card'}
+			aria-pressed={active}
+			className={
+				`
+					${inplaceActionBubbleClassName}
+					${active
+						? 'border-asgreen/40 bg-asgreen/10 text-asgreen'
+						: ''
+					}
+					${className}
+				`
+			}
+			onClick={(event) => {
+				event.preventDefault();
+				event.stopPropagation();
+				if(active) {
+					setEditTier('field');
+					return;
+				}
+				setEditTier('card');
+				setActiveCardId(productId);
+			}}
+			type="button"
+		>
+			<PencilIcon className="h-3.5 w-3.5" />
+		</button>
+	);
+}
+
+/**
+ * Hover stack outside the card’s right edge — Open / full-edit / card-edit.
+ * Absolute only (zero CLS). Touch: always visible.
+ */
+export function ProductCardSideActions({
+	openHref,
+	product,
+	showCardEdit,
+	className = '',
+}: {
+	openHref: string;
+	product: Pick<CatalogProductSummary, 'id' | 'slug' | 'vendor'>;
+	showCardEdit?: boolean;
+	className?: string;
+}) {
 	return (
 		<div
 			className={`
-				relative
-				inline-flex
+				absolute
+				left-full
+				top-3
+				z-40
+				ml-1.5
+				flex
+				flex-col
+				gap-1.5
+				opacity-0
+				transition-opacity
+				duration-150
+				ease-out
+				pointer-events-none
+				motion-reduce:transition-none
+				group-hover:pointer-events-auto
+				group-hover:opacity-100
+				group-focus-within:pointer-events-auto
+				group-focus-within:opacity-100
+				focus-within:pointer-events-auto
+				focus-within:opacity-100
+				[@media(hover:none)]:pointer-events-auto
+				[@media(hover:none)]:opacity-100
 				${className}
 			`}
 		>
-			<button
-				aria-expanded={open}
-				aria-haspopup="menu"
-				aria-pressed={active}
-				className={
-					`
-						inline-flex
-						items-center
-						gap-1.5
-						rounded-full
-						border
-						px-3
-						py-1.5
-						text-xs
-						font-semibold
-						transition
-						${active
-							? 'border-asgreen/40 bg-asgreen/10 text-asgreen'
-							: 'border-slate-300 bg-white text-ink hover:border-sky hover:text-sky'
-						}
-					`
-				}
-				onClick={() => setOpen((value) => !value)}
-				type="button"
+			<a
+				aria-label="Open product"
+				className={inplaceActionBubbleClassName}
+				href={openHref}
+				onClick={(event) => {
+					event.stopPropagation();
+				}}
 			>
-				<PencilIcon className="h-3.5 w-3.5 shrink-0" />
-				{active
-					? `Edit · ${activeLabel}`
-					: 'Edit'
-				}
-				<CaretDownIcon
-					className={
-						open
-							? `
-								h-3
-								w-3
-								shrink-0
-								rotate-180
-								transition
-							`
-							: `
-								h-3
-								w-3
-								shrink-0
-								transition
-							`
-					}
-				/>
-			</button>
-			{open
-				? (
-					<div
-						className="
-							absolute
-							right-0
-							top-full
-							z-40
-							mt-1.5
-							min-w-[12.5rem]
-							rounded-xl
-							border
-							border-slate-200
-							bg-white
-							p-1.5
-							shadow-[0_12px_28px_rgba(13,27,42,0.12)]
-						"
-						role="menu"
-					>
-						{TIER_OPTIONS.map((option) => (
-							<button
-								aria-checked={tier === option.tier}
-								className={
-									`
-										flex
-										w-full
-										flex-col
-										items-start
-										rounded-lg
-										px-2.5
-										py-2
-										text-left
-										${tier === option.tier
-											? 'bg-asgreen/10 text-asgreen'
-											: 'text-ink hover:bg-frost'
-										}
-									`
-								}
-								key={option.tier}
-								onClick={() => {
-									onChange(option.tier);
-									setOpen(false);
-								}}
-								role="menuitemradio"
-								type="button"
-							>
-								<span className="text-xs font-semibold">
-									{option.label}
-								</span>
-								<span className="text-[11px] font-medium text-slate-500">
-									{option.hint}
-								</span>
-							</button>
-						))}
-						<button
-							className="
-								mt-0.5
-								flex
-								w-full
-								items-center
-								rounded-lg
-								px-2.5
-								py-2
-								text-left
-								text-xs
-								font-semibold
-								text-slate-600
-								hover:bg-frost
-							"
-							onClick={() => {
-								onChange('off');
-								setOpen(false);
-							}}
-							role="menuitem"
-							type="button"
-						>
-							Done
-						</button>
-					</div>
-				)
+				<EyeIcon className="h-3.5 w-3.5" />
+			</a>
+			<InPlaceFullEditLink product={product} />
+			{showCardEdit
+				? <InPlaceCardEditToggle productId={product.id} />
 				: null
 			}
 		</div>
@@ -1301,6 +1340,11 @@ export function InPlacePageSaveBar() {
 	);
 }
 
+/**
+ * Absolute field save/discard — never in-flow (no CLS). Prefer
+ * {@link InPlaceFieldSurface} blur-commit for element tier; keep this for
+ * explicit overlay actions when needed.
+ */
 export function InPlaceFieldSaveButton({
 	edit,
 	field,
@@ -1311,25 +1355,240 @@ export function InPlaceFieldSaveButton({
 	className?: string;
 }) {
 	const dirty = edit.dirtyFields.has(field);
-	if(!dirty) {
+	if(!dirty && !edit.saving) {
 		return null;
 	}
 	return (
-		<InPlaceSaveControls
-			className={className}
-			dirty={dirty}
-			onDiscard={() => {
-				edit.discardField(field);
-			}}
-			onSave={() => {
-				void edit.saveField(field);
-			}}
-			saving={edit.saving}
-			scope="field"
-		/>
+		<div
+			className={`
+				pointer-events-auto
+				absolute
+				right-0
+				top-0
+				z-30
+				-translate-y-[calc(100%+0.25rem)]
+				${className}
+			`}
+		>
+			<InPlaceSaveControls
+				dirty={dirty}
+				onDiscard={() => {
+					edit.discardField(field);
+				}}
+				onSave={() => {
+					void edit.saveField(field);
+				}}
+				saving={edit.saving}
+				scope="field"
+			/>
+		</div>
 	);
 }
 
+/**
+ * Sole per-element edit chrome: light-blue hover border + pencil to the RIGHT
+ * of the field (left-full, outside content — never overlaid). Editor is an
+ * absolute overlay on reserved display height → zero CLS. Blur commits;
+ * Escape discards and exits.
+ */
+export function InPlaceFieldSurface({
+	label,
+	editing = false,
+	onActivate,
+	onExit,
+	display,
+	editor,
+	edit,
+	field,
+	className = '',
+}: {
+	label: string;
+	editing?: boolean;
+	onActivate?: () => void;
+	/** Clear active field after commit / discard (field mode). */
+	onExit?: () => void;
+	display: ReactNode;
+	editor?: ReactNode;
+	edit?: InPlaceProductEditState;
+	field?: InPlaceFieldName;
+	className?: string;
+}) {
+	const rootRef = useRef<HTMLDivElement>(null);
+
+	useEffect(() => {
+		if(!editing) {
+			return;
+		}
+		const node = rootRef.current?.querySelector<
+			HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+		>('input, textarea, select');
+		node?.focus();
+		if(node && 'select' in node && node.tagName === 'INPUT') {
+			node.select();
+		}
+	}, [editing]);
+
+	const commitAndExit = () => {
+		const saveEdit = edit;
+		const saveField = field;
+		const dirty = Boolean(
+			saveEdit
+			&& saveField
+			&& saveEdit.dirtyFields.has(saveField),
+		);
+		/* Exit sync before await so a click on another field’s pencil can win. */
+		onExit?.();
+		if(dirty && saveEdit && saveField) {
+			void saveEdit.saveField(saveField);
+		}
+	};
+
+	const discardAndExit = () => {
+		if(edit && field) {
+			edit.discardField(field);
+		}
+		onExit?.();
+	};
+
+	const onSurfaceBlur = (event: FocusEvent<HTMLDivElement>) => {
+		if(!editing) {
+			return;
+		}
+		const next = event.relatedTarget;
+		if(next instanceof Node && event.currentTarget.contains(next)) {
+			return;
+		}
+		commitAndExit();
+	};
+
+	const onSurfaceKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+		if(!editing || event.key !== 'Escape') {
+			return;
+		}
+		event.preventDefault();
+		event.stopPropagation();
+		discardAndExit();
+	};
+
+	const showPencil = Boolean(!editing && onActivate);
+	const hoverChrome = Boolean(onActivate || onExit);
+
+	return (
+		<div
+			className={`
+				group/inplace
+				relative
+				min-w-0
+				overflow-visible
+				rounded-md
+				border
+				border-transparent
+				transition-[border-color,box-shadow]
+				duration-150
+				ease-out
+				motion-reduce:transition-none
+				${hoverChrome && !editing
+					? `
+						hover:border-blue-300
+						focus-within:border-blue-300
+						[@media(hover:none)]:border-blue-200
+					`
+					: ''
+				}
+				${editing
+					? 'border-blue-300'
+					: ''
+				}
+				${className}
+			`}
+			onBlur={onSurfaceBlur}
+			onKeyDown={onSurfaceKeyDown}
+			ref={rootRef}
+		>
+			<div
+				aria-hidden={editing || undefined}
+				className={
+					editing
+						? 'invisible'
+						: undefined
+				}
+			>
+				{display}
+			</div>
+			{editing && editor
+				? (
+					<div
+						className="
+							absolute
+							inset-0
+							z-10
+							flex
+							min-h-0
+							min-w-0
+							flex-col
+						"
+					>
+						{editor}
+					</div>
+				)
+				: null
+			}
+			{showPencil
+				? (
+					<button
+						aria-label={label}
+						className="
+							absolute
+							left-full
+							top-1/2
+							z-20
+							ml-1.5
+							inline-flex
+							h-7
+							w-7
+							-translate-y-1/2
+							items-center
+							justify-center
+							rounded-full
+							border
+							border-slate-300
+							bg-white/95
+							text-ink
+							opacity-0
+							shadow-[0_4px_12px_rgba(13,27,42,0.12)]
+							transition-opacity
+							duration-150
+							ease-out
+							pointer-events-none
+							group-hover/inplace:pointer-events-auto
+							group-hover/inplace:opacity-100
+							group-focus-within/inplace:pointer-events-auto
+							group-focus-within/inplace:opacity-100
+							focus-visible:pointer-events-auto
+							focus-visible:opacity-100
+							hover:border-asgreen
+							hover:text-asgreen
+							motion-reduce:transition-none
+							[@media(hover:none)]:pointer-events-auto
+							[@media(hover:none)]:opacity-100
+						"
+						onClick={(event) => {
+							event.preventDefault();
+							event.stopPropagation();
+							onActivate?.();
+						}}
+						type="button"
+					>
+						<PencilIcon className="h-3.5 w-3.5" />
+					</button>
+				)
+				: null
+			}
+		</div>
+	);
+}
+
+/** @deprecated Use {@link InPlaceFieldSurface}. */
 export function InPlaceActivateHint({
 	children,
 	onActivate,
@@ -1340,29 +1599,11 @@ export function InPlaceActivateHint({
 	label: string;
 }) {
 	return (
-		<button
-			aria-label={label}
-			className="
-				block
-				w-full
-				rounded-sm
-				border
-				border-transparent
-				bg-transparent
-				p-0
-				text-left
-				hover:border-dashed
-				hover:border-slate-300
-			"
-			onClick={(event) => {
-				event.preventDefault();
-				event.stopPropagation();
-				onActivate();
-			}}
-			type="button"
-		>
-			{children}
-		</button>
+		<InPlaceFieldSurface
+			display={children}
+			label={label}
+			onActivate={onActivate}
+		/>
 	);
 }
 

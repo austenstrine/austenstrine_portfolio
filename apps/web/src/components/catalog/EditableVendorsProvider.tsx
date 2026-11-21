@@ -15,8 +15,12 @@ import { useSession } from '../../lib/useSession';
 
 const IN_PLACE_EDIT_TIER_KEY = 'pem:inplace-edit-tier';
 
-/** Scope of what becomes editable. Off by default (PEM-245). */
-export type InPlaceEditTier = 'off' | 'page' | 'card' | 'element';
+/**
+ * Bulk edit scope on top of always-on per-field edit when the seller can edit.
+ * field = per-field pencils only (default); page = entire results/page;
+ * card = one card fully open.
+ */
+export type InPlaceEditTier = 'field' | 'page' | 'card';
 
 export type InPlaceFieldName =
 	| 'title'
@@ -40,17 +44,17 @@ type EditableVendorsContextValue = {
 	canEditVendor: (vendorId: string | undefined | null) => boolean;
 	ready: boolean;
 	/**
-	 * Tiered in-place edit scope. Off keeps buyer layout (PEM-239/245).
-	 * page = all editable fields on the page; card = one card; element = one field.
+	 * Bulk scope only. Per-field edit is always available when canEditVendor.
+	 * page = all editable fields on the page/results; card = one card.
 	 */
 	editTier: InPlaceEditTier;
 	setEditTier: (tier: InPlaceEditTier) => void;
-	/** True when editTier is not off. */
+	/** True when bulk page or card scope is on (not field-only). */
 	inPlaceEditActive: boolean;
 	/** Focused product card when editTier === 'card'. */
 	activeCardId: string | null;
 	setActiveCardId: (id: string | null) => void;
-	/** Focused field key (`productId:field`) when editTier === 'element'. */
+	/** Focused field key (`productId:field`) while editing one field. */
 	activeFieldKey: string | null;
 	setActiveFieldKey: (key: string | null) => void;
 	registerEditor: (registration: EditorRegistration) => void;
@@ -64,7 +68,7 @@ type EditableVendorsContextValue = {
 const EditableVendorsContext = createContext<EditableVendorsContextValue | null>(null);
 
 const EDITOR_ROLES = new Set(['OWNER', 'EDITOR']);
-const VALID_TIERS = new Set<InPlaceEditTier>(['off', 'page', 'card', 'element']);
+const VALID_TIERS = new Set<InPlaceEditTier>(['field', 'page', 'card']);
 
 /** Vendor ids where the signed-in user can in-place edit (OWNER/EDITOR). */
 export function editableVendorIdsFromMine(
@@ -98,12 +102,26 @@ export function parseInPlaceFieldKey(key: string | null): {
 	return { productId, field };
 }
 
-/** Whether this product's fields may be shown as editable under the current tier. */
+/** Normalize legacy sessionStorage tiers (off/element → field). */
+function normalizeEditTier(raw: string | null): InPlaceEditTier {
+	if(!raw) {
+		return 'field';
+	}
+	if(raw === 'off' || raw === 'element') {
+		return 'field';
+	}
+	if(VALID_TIERS.has(raw as InPlaceEditTier)) {
+		return raw as InPlaceEditTier;
+	}
+	return 'field';
+}
+
+/** Whether this product's fields may open under the current bulk scope. */
 export function productEditOpen(
 	tier: InPlaceEditTier,
 	productId: string,
 	activeCardId: string | null,
-	activeFieldKey: string | null,
+	_activeFieldKey: string | null,
 ) {
 	if(tier === 'page') {
 		return true;
@@ -111,13 +129,10 @@ export function productEditOpen(
 	if(tier === 'card') {
 		return activeCardId === productId;
 	}
-	if(tier === 'element') {
-		return activeFieldKey?.startsWith(`${productId}:`) ?? false;
-	}
 	return false;
 }
 
-/** Whether a single field is editable under the current tier. */
+/** Whether a single field is open for input under the current scope. */
 export function fieldEditOpen(
 	tier: InPlaceEditTier,
 	productId: string,
@@ -131,29 +146,26 @@ export function fieldEditOpen(
 	if(tier === 'card') {
 		return activeCardId === productId;
 	}
-	if(tier === 'element') {
-		return activeFieldKey === inPlaceFieldKey(productId, field);
-	}
-	return false;
+	return activeFieldKey === inPlaceFieldKey(productId, field);
 }
 
 function readStoredEditTier(): InPlaceEditTier {
 	if(typeof window === 'undefined') {
-		return 'off';
+		return 'field';
 	}
 	try {
 		const raw = window.sessionStorage.getItem(IN_PLACE_EDIT_TIER_KEY);
-		if(raw && VALID_TIERS.has(raw as InPlaceEditTier)) {
-			return raw as InPlaceEditTier;
+		if(raw) {
+			return normalizeEditTier(raw);
 		}
-		// Legacy PEM-239 boolean flag
+		// Legacy PEM-239 boolean flag → treat as results/page bulk
 		if(window.sessionStorage.getItem('pem:inplace-edit') === '1') {
 			return 'page';
 		}
-		return 'off';
+		return 'field';
 	}
 	catch {
-		return 'off';
+		return 'field';
 	}
 }
 
@@ -162,7 +174,7 @@ function writeStoredEditTier(tier: InPlaceEditTier) {
 		return;
 	}
 	try {
-		if(tier === 'off') {
+		if(tier === 'field') {
 			window.sessionStorage.removeItem(IN_PLACE_EDIT_TIER_KEY);
 			window.sessionStorage.removeItem('pem:inplace-edit');
 		}
@@ -193,7 +205,7 @@ export function EditableVendorsProvider({
 		() => new Set(initialEditableVendorIds ?? []),
 	);
 	const [ready, setReady] = useState(() => ssrSeeded);
-	const [editTier, setEditTierState] = useState<InPlaceEditTier>('off');
+	const [editTier, setEditTierState] = useState<InPlaceEditTier>('field');
 	const [activeCardId, setActiveCardId] = useState<string | null>(null);
 	const [activeFieldKey, setActiveFieldKey] = useState<string | null>(null);
 	const [editorTick, setEditorTick] = useState(0);
@@ -210,8 +222,8 @@ export function EditableVendorsProvider({
 		}
 		if(!user) {
 			setEditableVendorIds(new Set());
-			setEditTierState('off');
-			writeStoredEditTier('off');
+			setEditTierState('field');
+			writeStoredEditTier('field');
 			setActiveCardId(null);
 			setActiveFieldKey(null);
 			setReady(true);
@@ -247,12 +259,13 @@ export function EditableVendorsProvider({
 	}, [sessionLoading, ssrSeeded, user]);
 
 	const setEditTier = useCallback((tier: InPlaceEditTier) => {
-		setEditTierState(tier);
-		writeStoredEditTier(tier);
-		if(tier !== 'card') {
+		const next = normalizeEditTier(tier);
+		setEditTierState(next);
+		writeStoredEditTier(next);
+		if(next !== 'card') {
 			setActiveCardId(null);
 		}
-		if(tier !== 'element') {
+		if(next !== 'field') {
 			setActiveFieldKey(null);
 		}
 	}, []);
@@ -310,7 +323,7 @@ export function EditableVendorsProvider({
 		ready,
 		editTier,
 		setEditTier,
-		inPlaceEditActive: editTier !== 'off',
+		inPlaceEditActive: editTier !== 'field',
 		activeCardId,
 		setActiveCardId,
 		activeFieldKey,

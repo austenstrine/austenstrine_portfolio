@@ -13,6 +13,8 @@ import {
 	SearchExtrasPortal,
 	useCatalogSearch,
 } from './CatalogSearchContext';
+import { useEditableVendors } from './EditableVendorsProvider';
+import { InPlaceResultsEditToggle } from './InPlaceProductFields';
 import { NavigatePersistentArrow } from './NavigatePersistentArrow';
 import { CatalogSortMenu } from './CatalogSortMenu';
 import {
@@ -127,6 +129,12 @@ export function CatalogSearchExperience({
 		setPageDock,
 		setPageExtras,
 	} = useCatalogSearch();
+	const {
+		editableVendorIds,
+		ready: editableVendorsReady,
+	} = useEditableVendors();
+	const showResultsEditToggle = editableVendorsReady
+		&& editableVendorIds.size > 0;
 
 	const searchKey = searchParams.toString();
 	const committed = useMemo(() => parseSearchUrl(new URLSearchParams(searchKey)), [searchKey]);
@@ -658,6 +666,10 @@ export function CatalogSearchExperience({
 										</button>
 									)
 									: null}
+								{showResultsEditToggle
+									? <InPlaceResultsEditToggle className="shrink-0" />
+									: null
+								}
 							</div>
 							<div
 								className="
@@ -754,7 +766,7 @@ export function CatalogSearchExperience({
 									</div>
 								)
 								: (
-									<div className={`grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-3 ${loading ? 'opacity-70' : ''}`}>
+									<div className={`grid grid-cols-2 gap-x-12 gap-y-3 pr-12 sm:gap-x-14 sm:gap-y-5 lg:grid-cols-3 ${loading ? 'opacity-70' : ''}`}>
 										{results.map((product) => (
 											<ProductCard key={product.id} product={product} />
 										))}

@@ -1,9 +1,22 @@
-import { Body, Controller, Headers, Post, Req, UseGuards } from '@nestjs/common';
+import {
+	Body,
+	Controller,
+	Get,
+	Headers,
+	Param,
+	Post,
+	Query,
+	Req,
+	UseGuards,
+} from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import type { Request } from 'express';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { OptionalJwtAuthGuard } from '../auth/guards/optional-jwt-auth.guard';
+import { CrmOriginGuard } from '../catalog/guards/crm-origin.guard';
 import { CreateRoadmapSuggestionDto } from './dto/create-roadmap-suggestion.dto';
+import { ReviewRoadmapSuggestionDto } from './dto/review-roadmap-suggestion.dto';
 import { RoadmapService } from './roadmap.service';
 
 type AuthedRequest = Request & { user?: { id: string } };
@@ -25,5 +38,30 @@ export class RoadmapController {
 			userId: req.user?.id,
 			userAgent,
 		});
+	}
+
+	/** Public: approved suggestions for the visitor roadmap page. */
+	@Get('suggestions/approved')
+	listApprovedSuggestions() {
+		return this.roadmap.listApproved();
+	}
+
+	@UseGuards(JwtAuthGuard, CrmOriginGuard)
+	@Get('suggestions')
+	listSuggestions(
+		@Req() req: AuthedRequest,
+		@Query('status') status?: string,
+	) {
+		return this.roadmap.listSuggestions(req.user!.id, status);
+	}
+
+	@UseGuards(JwtAuthGuard, CrmOriginGuard)
+	@Post('suggestions/:suggestionId/review')
+	reviewSuggestion(
+		@Req() req: AuthedRequest,
+		@Param('suggestionId') suggestionId: string,
+		@Body() dto: ReviewRoadmapSuggestionDto,
+	) {
+		return this.roadmap.reviewSuggestion(req.user!.id, suggestionId, dto);
 	}
 }

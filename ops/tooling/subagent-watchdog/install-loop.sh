@@ -5,11 +5,14 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 SRC_LOOP="$ROOT/ops/tooling/subagent-watchdog/loop.sh"
 SRC_UNIT="$ROOT/ops/tooling/subagent-watchdog/pem-subagent-watchdog.service"
+SRC_CUE="$ROOT/ops/tooling/watchdog-start-cue.sh"
 DEST_BIN="${SUBAGENT_WATCHDOG_LOOP_BIN:-$HOME/.local/bin/pem-subagent-watchdog-loop}"
+DEST_CUE="${WATCHDOG_START_CUE_BIN:-$HOME/.local/bin/watchdog-start-cue}"
 DEST_UNIT="${XDG_CONFIG_HOME:-$HOME/.config}/systemd/user/pem-subagent-watchdog.service"
 
 [[ -f "$SRC_LOOP" ]] || { echo "missing $SRC_LOOP" >&2; exit 1; }
 [[ -f "$SRC_UNIT" ]] || { echo "missing $SRC_UNIT" >&2; exit 1; }
+[[ -f "$SRC_CUE" ]] || { echo "missing $SRC_CUE" >&2; exit 1; }
 
 # Canonical skill path agents read.
 if [[ -x "$ROOT/ops/tooling/install-watchdog-skill.sh" ]]; then
@@ -23,6 +26,7 @@ export SUBAGENT_WATCHDOG_BIN="$ROOT/bin/subagent-watchdog"
 exec bash "$ROOT/ops/tooling/subagent-watchdog/loop.sh" "\$@"
 EOF
 chmod 0755 "$DEST_BIN"
+install -m 0755 "$SRC_CUE" "$DEST_CUE"
 install -m 0644 "$SRC_UNIT" "$DEST_UNIT"
 
 systemctl --user daemon-reload
