@@ -24,11 +24,13 @@ export class CreateRoadmapSuggestionDto {
 	@MaxLength(120)
 	name?: string;
 
-	@ApiPropertyOptional()
-	@IsOptional()
+	@ApiProperty({
+		description: 'Email for status updates',
+		maxLength: 254,
+	})
 	@IsEmail()
 	@MaxLength(254)
-	email?: string;
+	email!: string;
 
 	/** Honeypot — leave empty. Non-empty submissions are silently dropped. */
 	@ApiPropertyOptional()
