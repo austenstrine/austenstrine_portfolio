@@ -5,8 +5,8 @@ Kernel soft lockup + hung `cursorsandbox --preflight-only` killer, plus **D-stat
 Classic soft lockup watch alone missed Raider stalls where softlock hits stayed 0 while D-state / RCU climbed — this watch covers that class.
 
 **Skill (canonical params):** `~/.agents/skills/watchdog/SKILL.md`  
-**Start:** project `sessionStart` hook checks liveness; install script enables systemd so softlock **stays on**.  
-**Start cue:** once on daemon start — `notify-send` + `paplay`/`canberra-gtk-play`/`pw-play` via `~/.local/bin/watchdog-start-cue` (not every 5s poll). Incident `notify-send -u critical` path stays separate.
+**Start:** `sessionStart` / Task / subagentStart hooks call `ops/tooling/watchdog-ensure-armed.sh` (enable `--now` only if inactive; **never** restart/stop for worker churn). Install script enables systemd so softlock **stays on**.  
+**Start cue:** daemon start **or** session once (`--cue-session` stamp). Not every 5s poll / CreateAgent. Incident `notify-send -u critical` path stays separate.
 
 ## Start (stays on)
 

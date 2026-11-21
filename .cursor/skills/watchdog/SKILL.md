@@ -18,7 +18,7 @@ Read this skill before changing or invoking either watchdog. Two tools:
 
 Do **not** conflate them. Softlock ≠ agent loop poll.
 
-**Start cue (PEM-604):** on softlock / pem-subagent **daemon start / enable / restart only** — `notify-send` banner + short sound (`paplay` → `canberra-gtk-play` → `pw-play`). **Not** every poll/tick/idle skip. Helper: `ops/tooling/watchdog-start-cue.sh` → `~/.local/bin/watchdog-start-cue` (both install scripts). Disable: `WATCHDOG_START_CUE=0`. Austen hears freedesktop `message-new-instant` (or `WATCHDOG_START_CUE_SOUND`); sees normal desktop notification titled “Host softlock watch” / “PEM subagent watchdog”.
+**Start cue (PEM-604):** (1) daemon start/enable/restart via install scripts — `notify-send` + sound; (2) **session cue once** via `ops/tooling/watchdog-ensure-armed.sh --cue-session` (stamp `~/.local/state/pem-watchdog-ensure/session-cue.stamp`). **Not** every poll/tick/idle skip / CreateAgent / Task. Helper: `ops/tooling/watchdog-start-cue.sh` → `~/.local/bin/watchdog-start-cue`. Disable: `WATCHDOG_START_CUE=0`. Titles: “PEM watchdogs armed” (session) or “Host softlock watch” / “PEM subagent watchdog” (daemon).
 
 **Install skill (canonical host path):** `./ops/tooling/install-watchdog-skill.sh` (also from `./bin/agent-cli orient`, `sessionStart`, `install-loop.sh`). Repo mirror stays at `.cursor/skills/watchdog/SKILL.md`.
 
@@ -142,24 +142,37 @@ Default dir: `~/.local/state/subagent-watchdog/` (`SUBAGENT_WATCHDOG_DIR`).
 ./bin/subagent-watchdog reset            # worker state only; metrics kept
 ```
 
-## Hooks (prefer over prose)
-
-Portfolio project hooks (`.cursor/hooks.json`) enforce must-every-time start:
+## Hooks (fail-closed auto-arm — prefer over prose)
 
 | Event | Script | Does |
 |-------|--------|------|
-| `sessionStart` | `.cursor/hooks/session-start.sh` | `install-graphify-hooks` + `graphify-ensure`; softlock liveness; inject start hints + env |
-| `subagentStart` | `.cursor/hooks/subagent-start-watchdog.sh` | Allow + remind arm timer / ensure loop unit |
-| `postToolUse` (`Task`) | `.cursor/hooks/post-tool-watchdog.sh` | `additional_context` arm/stop reminder |
-| Git `post-merge` / `post-checkout` | `ops/tooling/git-hooks/*` (via `install-graphify-hooks.sh`) | Refresh graphify after checkout/merge |
-| systemd `host-softlock-watch` | install script | Softlock stays on |
-| systemd `pem-subagent-watchdog` | `install-loop.sh` | Forever keep-alive; idle skip when no workers |
+| `sessionStart` | `.cursor/hooks/session-start.sh` | `watchdog-ensure-armed.sh --cue-session --json`; HARD `additional_context` if host units inactive; session cue once |
+| `subagentStart` | `.cursor/hooks/subagent-start-watchdog.sh` | ensure (no cue); HARD context if inactive; allow |
+| `postToolUse` (`Task`) | `.cursor/hooks/post-tool-watchdog.sh` | ensure (no cue); HARD context if inactive |
+| Ensure helper | `ops/tooling/watchdog-ensure-armed.sh` | `enable --now` **only if inactive**; never restart active; never stop softlock; never stop subagent |
+| systemd softlock | install script | Softlock stays on |
+| systemd pem-subagent | `install-loop.sh` | Forever keep-alive; idle skip when no workers |
 
-Skill keeps **parameters/rules/paths**. Hooks keep **when to start**. Do not re-litigate cadence in always-on rules.
+### No-flap rules (async subagents)
+
+1. Softlock **always-on** — never stop/disable/restart for worker churn.
+2. Subagent unit: arm once when inactive; **do not** reinstall/restart/re-cue on every CreateAgent / short-lived subagent.
+3. Before unsubscribe/stop of anything that tracks workers: check live agents (coordinator kids + host sample) — only when count **0**.
+4. Session cue: **once per session** (stamp); never per-spawn.
+5. Forever host loop idle-skip preferred over stop/start thrash.
+
+### Cloud vs host
+
+| Surface | Duty |
+|---------|------|
+| **Raider / host** | Hooks + `watchdog-ensure-armed.sh` keep units active; forever loop idle-skips. Austen verifies stamp + `systemctl --user is-active host-softlock-watch pem-subagent-watchdog` — no agent ask. |
+| **Cloud coordinator** | Host systemd unreachable. Still `subscribe_timer` `pem-subagent-watchdog` `delaySeconds: 60` on first worker; unsubscribe **only** when active workers = 0. |
+
+Skill keeps **parameters/rules/paths**. Hooks keep **when to arm**. Do not re-litigate cadence in always-on rules.
 
 ## Agent duty
 
-- Softlock missing/disabled on Austen host after softlock risk → install/enable.
-- Prefer host forever loop (`install-loop.sh`) with idle skip. Optional timer: arm while workers active; unsubscribe when idle.
+- Softlock missing/disabled on Austen host → install/enable (then leave on).
+- Prefer host forever loop with idle skip. Optional timer: arm once while workers active; unsubscribe only at zero.
 - Skill missing at `~/.agents/skills/watchdog/SKILL.md` → run `./ops/tooling/install-watchdog-skill.sh`.
-- Claims about measured AgentOps → cite `metrics.json` / `metrics.jsonl` paths above (PEM-538 closed the “spec without binary/metrics” gap).
+- Claims about measured AgentOps → cite `metrics.json` / `metrics.jsonl` paths above (PEM-538).

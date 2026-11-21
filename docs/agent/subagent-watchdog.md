@@ -1,8 +1,8 @@
 # Subagent stuck-loop watchdog
 
-Coordinator-side poll + classify. **Params skill:** `~/.agents/skills/watchdog/SKILL.md` (install: `./ops/tooling/install-watchdog-skill.sh`; repo mirror `.cursor/skills/watchdog/`). **Start rules:** project hooks (`.cursor/hooks.json` — `sessionStart` / `subagentStart` / `postToolUse` Task) beat prose.
+Coordinator-side poll + classify. **Params skill:** `~/.agents/skills/watchdog/SKILL.md` (install: `./ops/tooling/install-watchdog-skill.sh`; repo mirror `.cursor/skills/watchdog/`). **Start rules:** fail-closed hooks + `ops/tooling/watchdog-ensure-armed.sh` beat prose (ensure active units; never restart when already on; session cue once).
 
-Canonical Project SOP also lives in Place et Marque store: `workflows/subagent-watchdog.md` (keep aligned: forever host loop is OK when **idle-aware** — no tick/metrics when no workers).
+Canonical Project SOP: Place et Marque store `workflows/subagent-watchdog.md` (forever host loop OK when **idle-aware**).
 
 ## Prefer
 
@@ -29,15 +29,17 @@ systemctl --user status pem-subagent-watchdog.service
 
 Loop stays enabled. **No sample / no active workers → idle skip** (sleep only; does **not** call `tick`; `metrics.ticks` unchanged). Softlock stays a separate forever unit.
 
-**Start cue:** once on loop process start / enable / restart — desktop `notify-send` + short system sound (`ops/tooling/watchdog-start-cue.sh`). Idle skips and classify ticks do **not** cue. Disable: `WATCHDOG_START_CUE=0`.
+**Start cue:** daemon start/restart (install) **or** session once via `./ops/tooling/watchdog-ensure-armed.sh --cue-session` (stamp `~/.local/state/pem-watchdog-ensure/session-cue.stamp`). Idle skips / ticks / CreateAgent do **not** cue. Disable: `WATCHDOG_START_CUE=0`.
 
-**Coordinator timer (optional when MCP timer available):**
+**No-flap:** softlock always-on; subagent unit start-if-inactive only; unsubscribe timer only when live workers = 0; forever idle-skip preferred over stop/start.
 
-1. On first worker/subagent spawn: `subscribe_timer` name `pem-subagent-watchdog`, `delaySeconds: 60`.
-2. Each fire: build sample, run `tick`, apply `actions` via `SendToAgent` / pause.
-3. If `should_poll=false`: `unsubscribe` the timer — do not leave forgotten.
+**Coordinator timer (cloud / optional when MCP timer available):**
 
-Host softlock (separate): `ops/diagnostics/install-host-softlock-watch.sh`.
+1. First worker: `subscribe_timer` name `pem-subagent-watchdog`, `delaySeconds: 60` (once — not per short-lived subagent).
+2. Each fire: build sample, `tick`, apply `actions`.
+3. Unsubscribe **only** when active workers = 0 (check coordinator kids + host sample first).
+
+Host softlock (separate, always-on): `ops/diagnostics/install-host-softlock-watch.sh`. Auto-arm: hooks call `watchdog-ensure-armed.sh`.
 
 ## Rules (short)
 
