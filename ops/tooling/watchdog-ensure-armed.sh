@@ -1,12 +1,13 @@
 #!/usr/bin/env bash
 # Ensure softlock + pem-subagent units active. No flap: never restart when already active.
-# Session start cue: only with --cue-session; stamp gates re-cue within a session.
-# session-start.sh clears the stamp at session start (else once-forever). Never per-spawn.
+# Session start cue: only with --cue-session; stamp + wall-clock cooldown gate re-cue.
+# session-start clears stamp only after cooldown (never unlimited clear-on-sessionStart).
 # Softlock: always-on; never stop/disable from this helper.
 # Subagent: prefer forever idle-aware unit; start only if inactive; never stop here.
 # Usage: watchdog-ensure-armed.sh [--cue-session] [--json]
 # --json alone never cues and leaves cue.skipped empty (only --cue-session sets skipped).
-# Env: WATCHDOG_START_CUE=0 disables cue. WATCHDOG_ENSURE_DRY=1 skip systemctl start.
+# Env: WATCHDOG_START_CUE=0 disables cue. WATCHDOG_START_CUE_COOLDOWN_SEC (default 3600).
+#      WATCHDOG_ENSURE_DRY=1 skip systemctl start.
 set -u
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
@@ -14,6 +15,8 @@ SOFT_UNIT="host-softlock-watch.service"
 SUB_UNIT="pem-subagent-watchdog.service"
 STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/pem-watchdog-ensure"
 SESSION_STAMP="${STATE_DIR}/session-cue.stamp"
+CUE_LAST="${XDG_STATE_HOME:-$HOME/.local/state}/watchdog-start-cue/last-cue.utc"
+COOLDOWN_SEC="${WATCHDOG_START_CUE_COOLDOWN_SEC:-3600}"
 CUE_BIN="${WATCHDOG_START_CUE_BIN:-$HOME/.local/bin/watchdog-start-cue}"
 REPO_CUE="$ROOT/ops/tooling/watchdog-start-cue.sh"
 WANT_CUE=0
@@ -94,11 +97,46 @@ armed=0
 host_capable=0
 command -v systemctl >/dev/null 2>&1 && host_capable=1
 
+cue_in_cooldown() {
+	[[ -f "$CUE_LAST" ]] || return 1
+	local last_raw last_epoch now_epoch
+	last_raw="$(tr -d '[:space:]' <"$CUE_LAST" 2>/dev/null || true)"
+	last_epoch=""
+	if [[ "$last_raw" =~ ^[0-9]+$ ]]; then
+		last_epoch="$last_raw"
+	elif [[ -n "$last_raw" ]]; then
+		last_epoch="$(date -u -d "$last_raw" +%s 2>/dev/null || true)"
+	fi
+	[[ -n "${last_epoch:-}" ]] || return 1
+	now_epoch="$(date -u +%s)"
+	(( now_epoch - last_epoch < COOLDOWN_SEC ))
+}
+
+run_start_cue() {
+	local title="$1" body="$2" rc=0
+	if command -v watchdog-start-cue >/dev/null 2>&1; then
+		watchdog-start-cue "$title" "$body" >/dev/null 2>&1
+		rc=$?
+	elif [[ -x "$CUE_BIN" ]]; then
+		"$CUE_BIN" "$title" "$body" >/dev/null 2>&1
+		rc=$?
+	elif [[ -x "$REPO_CUE" ]]; then
+		"$REPO_CUE" "$title" "$body" >/dev/null 2>&1
+		rc=$?
+	else
+		return 2
+	fi
+	return "$rc"
+}
+
 cue_fired=0
 cue_skipped_reason=""
 if [[ "$WANT_CUE" -eq 1 ]]; then
 	if [[ "${WATCHDOG_START_CUE:-1}" == "0" ]]; then
 		cue_skipped_reason="disabled"
+	elif cue_in_cooldown; then
+		cue_skipped_reason="cooldown"
+		date -u +%Y-%m-%dT%H:%M:%SZ >"$SESSION_STAMP" 2>/dev/null || true
 	elif [[ -f "$SESSION_STAMP" ]]; then
 		cue_skipped_reason="already_cued_this_session"
 	elif [[ "$armed" -ne 1 ]]; then
@@ -106,18 +144,18 @@ if [[ "$WANT_CUE" -eq 1 ]]; then
 	else
 		date -u +%Y-%m-%dT%H:%M:%SZ >"$SESSION_STAMP" 2>/dev/null || true
 		body="Softlock + pem-subagent armed (session). Softlock always-on; subagent idle-skips when no workers."
-		if command -v watchdog-start-cue >/dev/null 2>&1; then
-			watchdog-start-cue "PEM watchdogs armed" "$body" >/dev/null 2>&1 || true
+		cue_rc=0
+		run_start_cue "PEM watchdogs armed" "$body" || cue_rc=$?
+		if [[ "$cue_rc" -eq 0 ]]; then
 			cue_fired=1
-		elif [[ -x "$CUE_BIN" ]]; then
-			"$CUE_BIN" "PEM watchdogs armed" "$body" >/dev/null 2>&1 || true
-			cue_fired=1
-		elif [[ -x "$REPO_CUE" ]]; then
-			"$REPO_CUE" "PEM watchdogs armed" "$body" >/dev/null 2>&1 || true
-			cue_fired=1
-		else
+		elif [[ "$cue_rc" -eq 3 ]]; then
+			cue_skipped_reason="cooldown"
+		elif [[ "$cue_rc" -eq 2 ]]; then
 			cue_skipped_reason="no_cue_helper"
 			rm -f "$SESSION_STAMP" 2>/dev/null || true
+		else
+			# Helper fail-open: treat as fired attempt without claiming success notify.
+			cue_skipped_reason="cue_helper_error"
 		fi
 	fi
 fi

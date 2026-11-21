@@ -18,7 +18,7 @@ Read this skill before changing or invoking either watchdog. Two tools:
 
 Do **not** conflate them. Softlock ≠ agent loop poll.
 
-**Start cue (PEM-604):** (1) daemon start/enable/restart via install scripts — `notify-send` + sound; (2) **session cue once** — `session-start.sh` clears `~/.local/state/pem-watchdog-ensure/session-cue.stamp`, then `watchdog-ensure-armed.sh --cue-session` fires and restamps. Without clear, stamp would be once-forever. `--json` alone never cues and does **not** set `cue.skipped` (only `--cue-session` does: `already_cued_this_session` / `disabled` / …). **Not** every poll/tick/idle skip / CreateAgent / Task. Helper: `ops/tooling/watchdog-start-cue.sh`. Disable: `WATCHDOG_START_CUE=0`.
+**Start cue (PEM-604):** (1) daemon start/enable/restart via install scripts — `notify-send` + sound; (2) **session cue** — `session-start.sh` clears `~/.local/state/pem-watchdog-ensure/session-cue.stamp` **only after** wall-clock cooldown, then `watchdog-ensure-armed.sh --cue-session`. Hard rate-limit in `watchdog-start-cue.sh`: default **3600s** (`WATCHDOG_START_CUE_COOLDOWN_SEC`), stamp `~/.local/state/watchdog-start-cue/last-cue.utc` — sessionStart re-entry / stamp clears / unit restarts cannot re-fire rapidly. `--json` alone never cues and does **not** set `cue.skipped` (only `--cue-session` does: `already_cued_this_session` / `cooldown` / `disabled` / …). **Not** every poll/tick/idle skip / CreateAgent / Task. Disable: `WATCHDOG_START_CUE=0`.
 
 **Install skill (canonical host path):** `./ops/tooling/install-watchdog-skill.sh` (also from `./bin/agent-cli orient`, `sessionStart`, `install-loop.sh`). Repo mirror stays at `.cursor/skills/watchdog/SKILL.md`.
 
@@ -146,7 +146,7 @@ Default dir: `~/.local/state/subagent-watchdog/` (`SUBAGENT_WATCHDOG_DIR`).
 
 | Event | Script | Does |
 |-------|--------|------|
-| `sessionStart` | `.cursor/hooks/session-start.sh` | clear session-cue stamp → `watchdog-ensure-armed.sh --cue-session --json`; HARD context if unarmed; one cue per session |
+| `sessionStart` | `.cursor/hooks/session-start.sh` | clear session-cue stamp only if cooldown expired → `watchdog-ensure-armed.sh --cue-session --json`; HARD context if unarmed; wall-clock cue cooldown |
 | `subagentStart` | `.cursor/hooks/subagent-start-watchdog.sh` | ensure (no cue); HARD context if inactive; allow |
 | `postToolUse` (`Task`) | `.cursor/hooks/post-tool-watchdog.sh` | ensure (no cue); HARD context if inactive |
 | Ensure helper | `ops/tooling/watchdog-ensure-armed.sh` | `enable --now` **only if inactive**; never restart active; never stop softlock; never stop subagent |
@@ -158,7 +158,7 @@ Default dir: `~/.local/state/subagent-watchdog/` (`SUBAGENT_WATCHDOG_DIR`).
 1. Softlock **always-on** — never stop/disable/restart for worker churn.
 2. Subagent unit: arm once when inactive; **do not** reinstall/restart/re-cue on every CreateAgent / short-lived subagent.
 3. Before unsubscribe/stop of anything that tracks workers: check live agents (coordinator kids + host sample) — only when count **0**.
-4. Session cue: **once per session** (stamp); never per-spawn.
+4. Session cue: wall-clock cooldown + stamp; never per-spawn; never unlimited clear-on-sessionStart.
 5. Forever host loop idle-skip preferred over stop/start thrash.
 
 ### Cloud vs host

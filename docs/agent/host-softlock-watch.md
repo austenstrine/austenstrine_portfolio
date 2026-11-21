@@ -6,7 +6,7 @@ Classic soft lockup watch alone missed Raider stalls where softlock hits stayed 
 
 **Skill (canonical params):** `~/.agents/skills/watchdog/SKILL.md`  
 **Start:** `sessionStart` / Task / subagentStart hooks call `ops/tooling/watchdog-ensure-armed.sh` (enable `--now` only if inactive; **never** restart/stop for worker churn). Install script enables systemd so softlock **stays on**.  
-**Start cue:** daemon start **or** session once (`session-start` clears stamp → `--cue-session`). `--json` alone does not cue. Not every 5s poll / CreateAgent. Incident `notify-send -u critical` path stays separate.
+**Start cue:** daemon start **or** session (`session-start` clears stamp only after cooldown → `--cue-session`). Hard rate-limit **3600s** (`WATCHDOG_START_CUE_COOLDOWN_SEC`) via `last-cue.utc`. `--json` alone does not cue. Not every 5s poll / CreateAgent. Incident `notify-send -u critical` path stays separate.
 
 ## Start (stays on)
 

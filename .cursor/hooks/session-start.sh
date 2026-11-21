@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
-# sessionStart: graphify ensure + fail-closed watchdog auto-arm (no flap) + session cue once.
+# sessionStart: graphify ensure + fail-closed watchdog auto-arm (no flap) + session cue.
 # Softlock always-on; pem-subagent forever idle-skip. Never restart active units.
-# Cue: once per session — clear stamp here so ensure --cue-session can fire again
-# (stamp alone would be once-forever). Cloud/no-systemctl → soft reminder only.
+# Cue: wall-clock cooldown (default 3600s via watchdog-start-cue). Cursor re-fires
+# sessionStart often — never clear stamp while cooldown active (that was spam).
+# Clear session stamp only when cooldown expired so --cue-session can fire once then.
+# Cloud/no-systemctl → soft reminder only.
 set -u
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
@@ -12,9 +14,30 @@ STATE_DIR="${HOOK_DIR}/state"
 mkdir -p "${STATE_DIR}" 2>/dev/null || true
 LOG="${STATE_DIR}/watchdog-session.log"
 CUE_STAMP="${XDG_STATE_HOME:-$HOME/.local/state}/pem-watchdog-ensure/session-cue.stamp"
+CUE_LAST="${XDG_STATE_HOME:-$HOME/.local/state}/watchdog-start-cue/last-cue.utc"
+COOLDOWN_SEC="${WATCHDOG_START_CUE_COOLDOWN_SEC:-3600}"
 
-# New Cursor session → allow one cue. Clear before ensure --cue-session.
-rm -f "$CUE_STAMP" 2>/dev/null || true
+# Allow one re-cue only after wall-clock cooldown. Never unlimited clear-on-sessionStart.
+_clear_session_stamp=0
+if [[ ! -f "$CUE_LAST" ]]; then
+	_clear_session_stamp=1
+else
+	_last_raw="$(tr -d '[:space:]' <"$CUE_LAST" 2>/dev/null || true)"
+	_last_epoch=""
+	if [[ "${_last_raw}" =~ ^[0-9]+$ ]]; then
+		_last_epoch="${_last_raw}"
+	elif [[ -n "${_last_raw}" ]]; then
+		_last_epoch="$(date -u -d "${_last_raw}" +%s 2>/dev/null || true)"
+	fi
+	_now_epoch="$(date -u +%s)"
+	if [[ -n "${_last_epoch}" ]] && (( _now_epoch - _last_epoch >= COOLDOWN_SEC )); then
+		_clear_session_stamp=1
+	fi
+fi
+if [[ "${_clear_session_stamp}" -eq 1 ]]; then
+	rm -f "$CUE_STAMP" 2>/dev/null || true
+fi
+unset _clear_session_stamp _last_raw _last_epoch _now_epoch
 
 # Drain stdin (session payload).
 cat >/dev/null 2>&1 || true
@@ -75,11 +98,11 @@ const lines = [
   `- Graphify: prefer query|path|explain before wide Grep. Ensure status=${process.env.PEM_HOOK_GRAPHIFY}.`,
   `- Softlock: ALWAYS ON. Never stop/restart for worker churn. active=${softA} enabled=${softE}.`,
   `- Subagent: forever pem-subagent-watchdog (idle skip). active=${subA} enabled=${subE}. Prefer idle-skip over stop/start.`,
-  `- Armed=${armed} cue_fired=${cue}${cueSkip ? ` cue_skip=${cueSkip}` : ''}. Session cue once (stamp); never per-spawn.`,
+  `- Armed=${armed} cue_fired=${cue}${cueSkip ? ` cue_skip=${cueSkip}` : ''}. Cue wall-clock cooldown (default 3600s); never per-spawn.`,
   `- NEVER: reinstall/restart units when already active; stop softlock; unsubscribe timer while workers still alive (check live count → 0 first).`,
   `- Cloud coordinators: host systemd unreachable — arm subscribe_timer pem-subagent-watchdog delaySeconds=60 on first worker; unsubscribe only when active workers=0. Host forever-loop covers Raider.`,
   `- Params: ${process.env.PEM_HOOK_SKILL} · status: ./bin/agent-cli watchdog · ensure: ./ops/tooling/watchdog-ensure-armed.sh --json`,
-  `- Verify cue: after sessionStart, stamp exists + desktop "PEM watchdogs armed". Stamp cleared each sessionStart then rewritten by --cue-session.`,
+  `- Verify cue: last-cue.utc + session stamp; second cue within cooldown → cue_skip=cooldown (no notify).`,
 ];
 if (host && !armed) {
   lines.unshift(
