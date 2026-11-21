@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # Keep graphify-out current vs git HEAD (cheap skip when fresh).
 # Fail-open when graphify missing (common on cloud VMs).
+# Soft-fail on rebuild errors (upstream TypeError Graph>float / extract bugs)
+# so post-merge/post-checkout never paint merges red.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
@@ -16,6 +18,9 @@ Usage: ops/tooling/graphify-ensure.sh [--force]
 
 Skip when graphify-out matches git HEAD (stamp). Else run graphify update .
 (or extract . --code-only if graph missing). No LLM / API key.
+
+Rebuild failures soft-exit 0 (warn, leave stamp untouched) so git hooks
+never fail the merge/checkout. Re-run with --force after fixing graphifyy.
 EOF
 }
 
@@ -55,13 +60,38 @@ if [[ "$stale" -eq 0 ]]; then
 fi
 
 mkdir -p graphify-out
+
+# Soft-fail wrapper: upstream graphifyy rebuild can raise TypeError
+# ('>' not supported between instances of 'Graph' and 'float') and similar.
+# Capture output; never propagate non-zero to git hooks.
+run_rebuild() {
+	local cmd=("$@")
+	local out rc
+	set +e
+	out="$("${cmd[@]}" 2>&1)"
+	rc=$?
+	set -e
+	printf '%s\n' "$out"
+	if [[ "$rc" -ne 0 ]]; then
+		echo "graphify-ensure: warn — rebuild failed (exit $rc); leaving stamp untouched; soft-exit 0" >&2
+		# Surface the first TypeError/Rebuild-failed line if present (Activity Log).
+		printf '%s\n' "$out" | grep -E "Rebuild failed|TypeError|tree_sitter_sql|not supported between" >&2 || true
+		return 0
+	fi
+	# graphify update can print failure while still exiting 0; treat as soft fail.
+	if printf '%s\n' "$out" | grep -Eq "Rebuild failed|Nothing to update or rebuild failed"; then
+		echo "graphify-ensure: warn — rebuild reported failure; leaving stamp untouched; soft-exit 0" >&2
+		return 0
+	fi
+	printf '%s\n' "$head_sha" >"$STAMP"
+	echo "graphify-ensure: ok (stamped ${head_sha:0:12})"
+	return 0
+}
+
 if [[ ! -f "$GRAPH" ]]; then
 	echo "graphify-ensure: missing graph — extract . --code-only"
-	graphify extract . --code-only
+	run_rebuild graphify extract . --code-only
 else
 	echo "graphify-ensure: stale vs HEAD ${head_sha:0:12} — update ."
-	graphify update .
+	run_rebuild graphify update .
 fi
-
-printf '%s\n' "$head_sha" >"$STAMP"
-echo "graphify-ensure: ok (stamped ${head_sha:0:12})"

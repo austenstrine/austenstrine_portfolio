@@ -27,6 +27,10 @@ Prefer incremental ensure — **not** a full rebuild every time:
 
 Stamp is vs **git HEAD** (SHA), not file mtime — `graphify update` does not always bump `graph.json` mtime. AST-only; no API key. `graphify-out/` stays gitignored.
 
+**Soft-fail:** `graphify-ensure.sh` exits **0** on rebuild errors (upstream `graphifyy` TypeError / `Rebuild failed`, missing `tree_sitter_sql` warnings alone are non-fatal). Leaves stamp untouched so the next ensure retries. Git post-merge/post-checkout never fail the merge.
+
+CLI install (host): `uv tool install 'graphifyy[sql]' --force` (or upgrade) — silences SQL extractor warn; does not replace the soft-fail wrapper.
+
 Manual: `ops/tooling/install-graphify-hooks.sh`.
 
 ## Skip Graphify when
