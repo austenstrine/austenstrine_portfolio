@@ -289,11 +289,14 @@ export default function RoadmapSuggestionsPage() {
 															<button
 																type="button"
 																className="
+																	inline-flex
+																	min-h-11
+																	items-center
+																	justify-center
 																	rounded-lg
 																	border
 																	border-line
 																	px-4
-																	py-2
 																	text-sm
 																	font-semibold
 																	text-mist
@@ -306,12 +309,13 @@ export default function RoadmapSuggestionsPage() {
 																type="button"
 																className="
 																	inline-flex
+																	min-h-11
 																	items-center
+																	justify-center
 																	gap-2
 																	rounded-lg
 																	bg-warn
 																	px-4
-																	py-2
 																	text-sm
 																	font-semibold
 																	text-rail
@@ -344,23 +348,20 @@ export default function RoadmapSuggestionsPage() {
 														>
 															<button
 																type="button"
-																aria-label="Reject"
-																title="Reject"
 																className="
 																	inline-flex
+																	min-h-11
 																	items-center
 																	justify-center
 																	gap-2
 																	rounded-lg
 																	border
 																	border-line
-																	px-3
-																	py-2
+																	px-4
 																	text-sm
 																	font-semibold
 																	text-mist
 																	disabled:opacity-60
-																	md:px-4
 																"
 																disabled={busyId === item.id}
 																onClick={() => {
@@ -374,33 +375,23 @@ export default function RoadmapSuggestionsPage() {
 																		w-4
 																	"
 																/>
-																<span
-																	className="
-																		hidden
-																		md:inline
-																	"
-																>
-																	Reject
-																</span>
+																<span>Reject</span>
 															</button>
 															<button
 																type="button"
-																aria-label="Approve"
-																title="Approve"
 																className="
 																	inline-flex
+																	min-h-11
 																	items-center
 																	justify-center
 																	gap-2
 																	rounded-lg
 																	bg-glow
-																	px-3
-																	py-2
+																	px-4
 																	text-sm
 																	font-semibold
 																	text-rail
 																	disabled:opacity-60
-																	md:px-4
 																"
 																disabled={busyId === item.id}
 																onClick={() => {
@@ -413,14 +404,7 @@ export default function RoadmapSuggestionsPage() {
 																		w-4
 																	"
 																/>
-																<span
-																	className="
-																		hidden
-																		md:inline
-																	"
-																>
-																	Approve
-																</span>
+																<span>Approve</span>
 															</button>
 														</div>
 													)
