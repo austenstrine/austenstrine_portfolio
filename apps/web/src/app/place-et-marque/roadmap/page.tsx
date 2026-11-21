@@ -5,6 +5,7 @@ import {
 	completedByArea,
 	completedHighlights,
 } from '../../../data/place-et-marque-roadmap';
+import { fetchApprovedRoadmapSuggestions } from '../../../lib/roadmap-api';
 
 const sectionNav = [
 	{ id: 'planned', label: 'Planned' },
@@ -20,9 +21,10 @@ const sectionScrollClassName = `
 	gap-4
 `;
 
-export default function PlaceEtMarqueRoadmapPage() {
+export default async function PlaceEtMarqueRoadmapPage() {
 	const completedGroups = completedByArea();
 	const highlights = completedHighlights();
+	const approved = await fetchApprovedRoadmapSuggestions();
 
 	return (
 		<div
@@ -127,7 +129,8 @@ export default function PlaceEtMarqueRoadmapPage() {
 							text-slate-600
 						"
 					>
-						Active refine work and rough edges we already know about.
+						Active refine work, rough edges we already know about, and
+						visitor ideas we took on.
 					</p>
 				</div>
 				<ul
@@ -140,11 +143,10 @@ export default function PlaceEtMarqueRoadmapPage() {
 					{ROADMAP_PLANNED.map((item) => (
 						<li
 							className="
-								rounded-2xl
-								border
-								border-slate-200
-								bg-white
-								p-5
+								border-l-2
+								border-sky
+								pl-4
+								py-1
 							"
 							key={item.id}
 						>
@@ -179,13 +181,64 @@ export default function PlaceEtMarqueRoadmapPage() {
 								? (
 										<p
 											className="
-												mt-2
+												mt-1
 												text-sm
 												leading-relaxed
 												text-slate-600
 											"
 										>
 											{item.summary}
+										</p>
+									)
+								: null
+							}
+						</li>
+					))}
+					{approved.map((item) => (
+						<li
+							className="
+								border-l-2
+								border-asgreen
+								pl-4
+								py-1
+							"
+							key={item.id}
+						>
+							<div
+								className="
+									flex
+									flex-wrap
+									items-baseline
+									justify-between
+									gap-2
+								"
+							>
+								<p className="text-base font-semibold leading-snug">
+									{item.body}
+								</p>
+								<span
+									className="
+										shrink-0
+										text-xs
+										font-semibold
+										uppercase
+										tracking-[0.12em]
+										text-slate-500
+									"
+								>
+									Visitor idea
+								</span>
+							</div>
+							{item.name
+								? (
+										<p
+											className="
+												mt-1
+												text-sm
+												text-slate-500
+											"
+										>
+											{item.name}
 										</p>
 									)
 								: null
@@ -235,12 +288,6 @@ export default function PlaceEtMarqueRoadmapPage() {
 				className={`
 					${sectionScrollClassName}
 					max-w-2xl
-					rounded-2xl
-					border
-					border-slate-200
-					bg-white
-					p-5
-					sm:p-6
 				`}
 				id="suggestions"
 			>
@@ -261,8 +308,7 @@ export default function PlaceEtMarqueRoadmapPage() {
 						text-slate-600
 					"
 				>
-					Signed in or not — send a short idea. We rate-limit submissions
-					and ignore obvious spam.
+					Send a short idea. We email you when it is reviewed.
 				</p>
 				<div className="mt-5">
 					<RoadmapSuggestionForm />

@@ -49,7 +49,7 @@ model RoadmapSuggestion {
   id               String                   @id @default(uuid())
   body             String
   name             String?
-  email            String?
+  email            String
   userId           String?
   userAgent        String?
   status           RoadmapSuggestionStatus  @default(PENDING)

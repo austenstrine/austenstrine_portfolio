@@ -5,9 +5,17 @@ import { authedFetch } from './auth-api';
 export type SubmitRoadmapSuggestionInput = {
 	body: string;
 	name?: string;
-	email?: string;
+	email: string;
 	/** Honeypot — must stay empty. */
 	website?: string;
+};
+
+export type ApprovedRoadmapSuggestion = {
+	id: string;
+	body: string;
+	name: string | null;
+	reviewedAt: string | null;
+	createdAt: string;
 };
 
 export class RoadmapApiError extends Error {
@@ -41,6 +49,24 @@ export async function submitRoadmapSuggestion(
 	}
 
 	return { ok: true };
+}
+
+export async function fetchApprovedRoadmapSuggestions(): Promise<
+	ApprovedRoadmapSuggestion[]
+> {
+	try {
+		const response = await fetch(`${API_BASE_URL}/roadmap/suggestions/approved`, {
+			cache: 'no-store',
+			signal: apiTimeoutSignal(),
+		});
+		if(!response.ok) {
+			return [];
+		}
+		return (await response.json()) as ApprovedRoadmapSuggestion[];
+	}
+	catch {
+		return [];
+	}
 }
 
 /** Dev-only sanity: base used by SSR helpers if needed later. */

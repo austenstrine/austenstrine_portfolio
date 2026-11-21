@@ -34,8 +34,15 @@ export function RoadmapSuggestionForm() {
 	const [error, setError] = useState<string | null>(null);
 	const [sent, setSent] = useState(false);
 
+	const emailTrimmed = email.trim();
+	const canSubmit = body.trim().length >= 8 && emailTrimmed.length > 0;
+
 	const onSubmit = async (event: FormEvent) => {
 		event.preventDefault();
+		if(!canSubmit) {
+			setError('Email is required.');
+			return;
+		}
 		setBusy(true);
 		setError(null);
 		setSent(false);
@@ -43,7 +50,7 @@ export function RoadmapSuggestionForm() {
 			await submitRoadmapSuggestion({
 				body: body.trim(),
 				name: name.trim() || undefined,
-				email: email.trim() || undefined,
+				email: emailTrimmed,
 				website: website.trim() || undefined,
 			});
 			setSent(true);
@@ -129,11 +136,11 @@ export function RoadmapSuggestionForm() {
 					autoComplete="name"
 				/>
 				<FormField
-					label="Email (optional)"
+					label="Email"
 					type="email"
 					value={email}
 					onChange={setEmail}
-					required={false}
+					required
 					maxLength={254}
 					autoComplete="email"
 					inputMode="email"
@@ -205,7 +212,7 @@ export function RoadmapSuggestionForm() {
 						${PILL_CTA_MOTION_CLASS}
 					`}
 					type="submit"
-					disabled={busy || body.trim().length < 8}
+					disabled={busy || !canSubmit}
 				>
 					{busy
 						? 'Sending…'

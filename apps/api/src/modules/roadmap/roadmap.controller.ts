@@ -40,6 +40,12 @@ export class RoadmapController {
 		});
 	}
 
+	/** Public: approved suggestions for the visitor roadmap page. */
+	@Get('suggestions/approved')
+	listApprovedSuggestions() {
+		return this.roadmap.listApproved();
+	}
+
 	@UseGuards(JwtAuthGuard, CrmOriginGuard)
 	@Get('suggestions')
 	listSuggestions(
