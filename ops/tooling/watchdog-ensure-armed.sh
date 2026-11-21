@@ -1,9 +1,11 @@
 #!/usr/bin/env bash
 # Ensure softlock + pem-subagent units active. No flap: never restart when already active.
-# Session start cue: once per session (stamp). Never per-spawn.
+# Session start cue: only with --cue-session; stamp gates re-cue within a session.
+# session-start.sh clears the stamp at session start (else once-forever). Never per-spawn.
 # Softlock: always-on; never stop/disable from this helper.
 # Subagent: prefer forever idle-aware unit; start only if inactive; never stop here.
 # Usage: watchdog-ensure-armed.sh [--cue-session] [--json]
+# --json alone never cues and leaves cue.skipped empty (only --cue-session sets skipped).
 # Env: WATCHDOG_START_CUE=0 disables cue. WATCHDOG_ENSURE_DRY=1 skip systemctl start.
 set -u
 
