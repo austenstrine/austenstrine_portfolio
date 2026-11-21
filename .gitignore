@@ -46,3 +46,10 @@ apps/api/.env.bak-*
 
 # Graphify local knowledge graph (generated; rebuild with graphify extract . --code-only)
 graphify-out/
+
+# Local Cursor runtime (keep hooks/*.sh, hooks.json, rules, skills, mcp tracked)
+.cursor/hooks/state/
+.cursor/settings.json
+
+# Generic logs (diagnostics + hook state covered; catch stray worktree logs)
+*.log
