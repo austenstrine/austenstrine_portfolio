@@ -3,7 +3,7 @@
 # and install a certbot deploy hook so renewals re-copy automatically.
 #
 # Default (CERTBOT_AUTH=http): HTTP-01 standalone expand for
-#   austenstrine.dev + www + cdn + crm
+#   austenstrine.dev + www + cdn + crm + sip + custodian
 #   Needs :80 free (live.sh stops host nginx + compose proxy first).
 #
 # Optional wildcard (CERTBOT_AUTH=dns-namecheap): DNS-01 for
@@ -27,7 +27,7 @@ if [[ "$AUTH" == "dns-namecheap" ]]; then
 	# Wildcard covers every subdomain (crm, www, cdn, …). Apex is separate.
 	DOMAINS=(austenstrine.dev '*.austenstrine.dev')
 else
-	DOMAINS=(austenstrine.dev www.austenstrine.dev cdn.austenstrine.dev crm.austenstrine.dev)
+	DOMAINS=(austenstrine.dev www.austenstrine.dev cdn.austenstrine.dev crm.austenstrine.dev sip.austenstrine.dev custodian.austenstrine.dev)
 fi
 
 # LE live dir is root-only (0700); never use bare [[ -f ]] as the deploy user.
