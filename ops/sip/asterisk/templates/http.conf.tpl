@@ -1,5 +1,6 @@
-; Generated — AuLorSt Custodian SIP (GSSA-28)
+; Generated — AuLorSt Custodian SIP (GSSA-28 / GSSA-100)
 ; TLS for WSS terminates on portfolio-proxy (sip.austenstrine.dev → WS :8088).
+; Port 8088 is compose expose-only (docker net); not published on host.
 
 [general]
 enabled=yes
