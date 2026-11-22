@@ -1,5 +1,5 @@
 #!/bin/sh
-# Render Asterisk conf from env, then exec asterisk foreground.
+# Render Asterisk conf from env, then exec asterisk foreground (non-root).
 set -eu
 
 need() {
@@ -24,6 +24,13 @@ SIP_UDP_PORT="${SIP_UDP_PORT:-5060}"
 SIP_KID_USER="${SIP_KID_USER:-kid}"
 SIP_CUSTODIAN_USER="${SIP_CUSTODIAN_USER:-custodian}"
 SIP_CONTEXT="${SIP_CONTEXT:-custodian-internal}"
+
+# Refuse accidental root (compose should set user 1000:999).
+uid="$(id -u)"
+if [ "$uid" = "0" ]; then
+	echo "entrypoint: refusing to run as root (GSSA-100); set compose user 1000:999" >&2
+	exit 1
+fi
 
 # Seed defaults from image, then overlay static + rendered templates.
 if [ -d /etc/asterisk ] && [ ! -f /etc/asterisk/.custodian-seeded ]; then
@@ -61,4 +68,5 @@ render /templates/extensions.conf.tpl /etc/asterisk/extensions.conf
 # Drop secrets from process environment before exec (conf already written).
 unset SIP_KID_SECRET SIP_CUSTODIAN_SECRET
 
+# Already non-root; do not pass -U (would require root to drop).
 exec asterisk -f -vvv

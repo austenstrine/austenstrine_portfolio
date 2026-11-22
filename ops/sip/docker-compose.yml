@@ -5,6 +5,8 @@
 #
 # Joins external html_default so portfolio-proxy can reach WS at
 # custodian-asterisk:8088. SIP/RTP published on host for gray-cloud DNS clients.
+#
+# GSSA-100: non-root (asterisk uid 1000), cap_drop ALL, no-new-privileges.
 
 name: custodian-sip
 
@@ -13,6 +15,11 @@ services:
     image: andrius/asterisk@sha256:9dd770172add68dd06eaf62396d74890b0df427906619c1cf0813afe0c5e4421
     container_name: custodian-asterisk
     restart: unless-stopped
+    user: "1000:999"
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
     env_file:
       - .env
     environment:
