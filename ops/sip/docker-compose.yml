@@ -1,0 +1,56 @@
+# AuLorSt Custodian SIP — isolated from portfolio compose.
+# Do NOT merge into docker-compose.prod.yml. Project name: custodian-sip.
+#
+#   cd ops/sip && docker compose --env-file .env up -d
+#
+# Joins external html_default so portfolio-proxy can reach WS at
+# custodian-asterisk:8088. SIP/RTP published on host for gray-cloud DNS clients.
+
+name: custodian-sip
+
+services:
+  asterisk:
+    image: andrius/asterisk@sha256:9dd770172add68dd06eaf62396d74890b0df427906619c1cf0813afe0c5e4421
+    container_name: custodian-asterisk
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      SIP_PUBLIC_HOST: ${SIP_PUBLIC_HOST:-sip.austenstrine.dev}
+      SIP_EXTERNAL_MEDIA_ADDRESS: ${SIP_EXTERNAL_MEDIA_ADDRESS}
+      SIP_EXTERNAL_SIGNALING_ADDRESS: ${SIP_EXTERNAL_SIGNALING_ADDRESS}
+      SIP_RTP_START: ${SIP_RTP_START:-10000}
+      SIP_RTP_END: ${SIP_RTP_END:-10100}
+      SIP_HTTP_BIND: ${SIP_HTTP_BIND:-0.0.0.0}
+      SIP_HTTP_PORT: ${SIP_HTTP_PORT:-8088}
+      SIP_UDP_PORT: ${SIP_UDP_PORT:-5060}
+      SIP_KID_USER: ${SIP_KID_USER:-kid}
+      SIP_KID_SECRET: ${SIP_KID_SECRET}
+      SIP_CUSTODIAN_USER: ${SIP_CUSTODIAN_USER:-custodian}
+      SIP_CUSTODIAN_SECRET: ${SIP_CUSTODIAN_SECRET}
+      SIP_CONTEXT: ${SIP_CONTEXT:-custodian-internal}
+    ports:
+      - "5060:5060/udp"
+      - "5060:5060/tcp"
+      - "10000-10100:10000-10100/udp"
+    expose:
+      - "8088"
+    volumes:
+      - ./asterisk/templates:/templates:ro
+      - ./asterisk/static:/static:ro
+    entrypoint: ["/bin/sh", "/templates/entrypoint.sh"]
+    networks:
+      portfolio:
+        aliases:
+          - custodian-asterisk
+    healthcheck:
+      test: ["CMD", "asterisk", "-rx", "core show version"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+networks:
+  portfolio:
+    external: true
+    name: html_default
