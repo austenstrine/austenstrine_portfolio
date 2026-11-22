@@ -50,6 +50,10 @@ Deploy-on-box, not ECR/Fargate. Images build on the instance.
 - **CI:** `.github/workflows/deploy.yml` SSHs to the box, `git reset --hard
   origin/master`, then runs `live.sh` (native x86_64 build). Ship live by
   merging `development` → `master` first; deploy always tracks `master`.
+  `TARGET_DIR` must be the portfolio checkout only (typically `/var/www/html`);
+  the workflow refuses `/var/www` so sibling apps (Custodian companion under
+  `/var/www/custodian`, SIP sidecar under `ops/sip`) are not chown’d or reset.
+  Shared-host contract: [`docs/ops/custodian-coexistence.md`](ops/custodian-coexistence.md).
 - **Live `.env` keys (CRM / cookies / CORS / TLS):** `live.sh` refuses to
   roll without these non-empty values:
 
