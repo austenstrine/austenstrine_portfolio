@@ -53,3 +53,5 @@ graphify-out/
 
 # Generic logs (diagnostics + hook state covered; catch stray worktree logs)
 *.log
+ops/sip/.env
+ops/sip/runtime/
