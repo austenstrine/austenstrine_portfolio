@@ -69,3 +69,11 @@ ssh -i ~/.ssh/id_ed25519 ubuntu@<host> 'cd /var/www/html && ./ops/deploy/ensure-
 
 `dssh rnano prod_env` still soft-runs `ops/tooling/env-backup.sh` after nano
 when `${alias}_repo` is set — the wrapper forwards to the extracted tool.
+
+## Shared EC2 + Custodian companion
+
+Same host may also hold `/var/www/custodian/.env`. Keep portfolio
+`prod_env_*` pointed at `/var/www/html/.env`; use a separate `custodian_env_*`
+rnano alias for the sibling checkout. Do not fold companion paths into the
+default portfolio `ENV_BACKUP_FILES` unless the host timer explicitly lists
+both files. Full contract: [`docs/ops/custodian-coexistence.md`](../ops/custodian-coexistence.md).

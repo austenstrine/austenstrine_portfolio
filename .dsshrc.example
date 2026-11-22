@@ -46,6 +46,13 @@
 #   prod_env_path=/var/www/html/.env
 #   prod_env_key=~/.ssh/id_ed25519
 #   prod_env_repo=/var/www/html
+#
+# Custodian companion on the same EC2 (sibling checkout — do not reuse prod_env_*):
+#   custodian_env_host=ubuntu@ec2-….compute.amazonaws.com
+#   custodian_env_path=/var/www/custodian/.env
+#   custodian_env_key=~/.ssh/id_ed25519
+#   custodian_env_repo=/var/www/custodian
+# See docs/ops/custodian-coexistence.md
 
 # Encrypted .env backup (via linux-gdrive-dotenv-backup-recovery):
 #   docs/tooling/env-backup.md
