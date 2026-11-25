@@ -39,14 +39,37 @@ export const REDO_SENIOR_STAFF_SKILL_SET: readonly SkillTag[] = [
 	'nodejs',
 	'react',
 	'ecommerce',
-	'aws',
 	'mobile',
 	'delivery',
-	'product-collaboration',
+];
+
+/** Explicit SE pre-expand: GoGreen + Lumber only (not mentorship spill to theater/sales/edu). */
+export const REDO_PRE_EXPAND_HIGHLIGHT_IDS: readonly string[] = [
+	'lumber-h0',
+	'lumber-h1',
+	'lumber-h2',
+	'lumber-h3',
+	'lumber-h4',
+	'lumber-h5',
+	'gogreen-h0',
+	'gogreen-h1',
+	'gogreen-h2',
+	'gogreen-h3',
+	'gogreen-h4',
+	'gogreen-h5',
+	'gogreen-h6',
+	'gogreen-h7',
+	'gogreen-h8',
+	'gogreen-h9',
+	'gogreen-h10',
+	'gogreen-h11',
+	'gogreen-h12',
+	'gogreen-h13',
+	'gogreen-h14',
 ];
 
 const REDO_BLURB =
-	'I\'m targeting Senior Software Engineer roles with evidenced strength in full-stack web apps, API integrations, and mentoring. At GO Green Enterprises I was Senior Application Developer on production e-commerce sites (plumbersstock.com, adamsandco.net, swplumbing.com), owned Unbxd/Elasticsearch search integrations, mentored juniors, and helped establish pull-request culture — including an in-house iOS order app. At Lumber Marketplace I rebuilt core product surfaces end-to-end and shipped Prisma/API tooling. I also work in TypeScript, Node.js, and React. I live in Parowan, Utah; I\'m in Murray Mondays and Tuesdays; relocating to Murray full-time in January 2027. Open to on-site and hybrid in the Salt Lake Valley.';
+	'I\'m targeting Senior Software Engineer roles with evidenced strength in full-stack web apps, API integrations, and mentoring. At GO Green Enterprises I was Senior Application Developer on production e-commerce sites (plumbersstock.com, adamsandco.net, swplumbing.com), owned Unbxd/Elasticsearch search integrations, mentored juniors, and helped establish pull-request culture. I was also sole/lead developer for an in-house iOS order-processing app. At Lumber Marketplace I rebuilt core product surfaces end-to-end and shipped Prisma/API tooling. During the GoGreen period I also used TypeScript, Node.js, and React. I live in Parowan, Utah; I\'m in Murray Mondays and Tuesdays; relocating to Murray full-time in January 2027. Open to on-site and hybrid in the Salt Lake Valley.';
 
 export const FOR_TARGETS: Record<string, ForTargetConfig> = {
 	'REDO-Senior-Staff-Software-Engineer': {
@@ -54,6 +77,7 @@ export const FOR_TARGETS: Record<string, ForTargetConfig> = {
 		headline: 'Senior Software Engineer',
 		blurb: REDO_BLURB,
 		skillSet: REDO_SENIOR_STAFF_SKILL_SET,
+		preExpandHighlightIds: REDO_PRE_EXPAND_HIGHLIGHT_IDS,
 	},
 };
 
