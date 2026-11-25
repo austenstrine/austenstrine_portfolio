@@ -207,7 +207,7 @@ export function CvDocument() {
 							Built a Redis cache ORM (remember/set/get/delete) that sped up certain pages by about 5×–7×.
 						</li>
 						<li>
-							On adamsandco.net: built a session click-recorder admin tool so CRM could view customer sessions and click paths to see what customers may have been doing wrong and diagnose issues customers could not describe—including reports days after the fact.
+							On adamsandco.net: built a session click-path viewer so CRM could inspect customer paths and diagnose issues customers could not describe—including reports days after the fact.
 						</li>
 						<li>
 							On adamsandco.net: built an admin tool for seasonal homepage layout and content changes so staff no longer needed a programmer ~9+ times a year.

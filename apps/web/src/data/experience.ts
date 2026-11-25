@@ -213,8 +213,8 @@ export const professionalExperience: ExperienceRole[] = [
 			),
 			richHighlight(
 				'gogreen-h10',
-				'On adamsandco.net: built a session click-recorder admin tool so CRM could view customer sessions…',
-				'On adamsandco.net: built a session click-recorder admin tool so CRM could view customer sessions and click paths to see what customers may have been doing wrong and diagnose issues customers could not describe—including reports days after the fact.',
+				'On adamsandco.net: built a session click-path viewer so CRM could inspect customer paths…',
+				'On adamsandco.net: built a session click-path viewer so CRM could inspect customer paths and diagnose issues customers could not describe—including reports days after the fact.',
 				['ecommerce'],
 			),
 			richHighlight(
