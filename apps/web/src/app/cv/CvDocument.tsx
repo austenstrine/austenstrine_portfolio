@@ -183,10 +183,40 @@ export function CvDocument() {
 							Sole/lead developer for adamsandco.net and in-house iOS order processing app (Swift, SQLite).
 						</li>
 						<li>
-							Sole/lead developer for in-house and third-party search (Elasticsearch, Unbxd). Junior server admin (Apache/Ubuntu, Bash) and junior database admin (MySQL, MongoDB).
+							Sole/lead developer for in-house and third-party search (Elasticsearch, Unbxd): normalized plumbersstock.com product data into the Unbxd API; kept the Unbxd integration script updated, functional, and compatible with other site scripts after the team moved plumbersstock.com search off a prior in-house Elasticsearch implementation.
 						</li>
 						<li>
-							Helped establish pull-request culture; routinely mentored junior developers. Also used Dart/Flutter, TypeScript, Node.js, and React during this period.
+							Inherited Elasticsearch and Unbxd ownership when the previous search developer left; kept Elasticsearch working regularly and reliably for sites such as adamsandco.net so it stayed stable and fast.
+						</li>
+						<li>
+							Built reporting tools that used Elasticsearch indexes to pull sales and inventory data and visualize them with Chart.js.
+						</li>
+						<li>
+							Junior server admin (Apache/Ubuntu, Bash) and junior database admin (MySQL, MongoDB). Helped establish pull-request culture; routinely mentored junior developers.
+						</li>
+						<li>
+							Migrated plumbersstock.com MongoDB product data from abandoned zizaco/mongolid (ext-mongo only) to leroy-merlin-br/mongolid by wrapping the new ODM in a light zizaco-like layer so the Laravel app could upgrade PHP without rewriting every mongolid-style call (jenssegers/mongodb was not an option).
+						</li>
+						<li>
+							Optimized that ODM wrapper’s document access (including optional select-style retrieval) to about 9× the original zizaco performance; MySQL copies remained messy Epicor Eclipse dump/CSV mirrors of the source of truth.
+						</li>
+						<li>
+							Fixed a widespread Laravel app() helper pattern that constructed a heavy default instance on every class lookup by adding a static singleton (with -&gt;fresh() for a new instance; later cheap clones); measured about 20% aggregate backend speedup and built a benchmark/logging suite to prove it.
+						</li>
+						<li>
+							Built a Redis cache ORM (remember/set/get/delete) that sped up certain pages by about 5×–7×.
+						</li>
+						<li>
+							On adamsandco.net: built a session click-recorder admin tool so CRM could replay customer sessions to diagnose issues customers could not describe—including reports days after the fact.
+						</li>
+						<li>
+							On adamsandco.net: built an admin tool for seasonal homepage layout and content changes so staff no longer needed a programmer ~9+ times a year.
+						</li>
+						<li>
+							On plumbersstock.com: built a system to push a cookie/session clear to clients so stale cookie or session problems could be wiped before they caused issues.
+						</li>
+						<li>
+							Also used Dart/Flutter, TypeScript, Node.js, and React during this period.
 						</li>
 						<li>
 							Maintained decades-old production systems that the company still depended on.
