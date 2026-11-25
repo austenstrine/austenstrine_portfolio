@@ -709,7 +709,9 @@ export const extracurricularExperienceRoles = professionalExperience.filter(
 );
 
 export {
+	filterPreExpandWithoutLorem,
 	highlightEffectiveTags,
+	highlightHasLorem,
 	highlightMatchesSkillSet,
 	isLoremIpsum,
 	matchingHighlightIds,

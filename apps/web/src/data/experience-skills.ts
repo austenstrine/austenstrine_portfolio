@@ -68,6 +68,30 @@ export function loremIdFromText(text: string): string | null {
 	return text.slice('LOREM_IPSUM:'.length);
 }
 
+/** True when any detail leaf is still a LOREM_IPSUM placeholder. */
+export function highlightHasLorem(
+	highlight: ExperienceHighlight,
+): boolean {
+	return highlight.details.some((detail) => isLoremIpsum(detail.text));
+}
+
+/**
+ * Hard guard: never pre-expand highlights whose expanded body is lorem.
+ * Tailored `/for` must not open LOREM_IPSUM panels by default.
+ */
+export function filterPreExpandWithoutLorem(
+	ids: readonly string[],
+	highlightsById: ReadonlyMap<string, ExperienceHighlight>,
+): string[] {
+	return ids.filter((id) => {
+		const highlight = highlightsById.get(id);
+		if(!highlight) {
+			return false;
+		}
+		return !highlightHasLorem(highlight);
+	});
+}
+
 /** Tags declared on this highlight plus tags on its detail leaves. */
 export function highlightEffectiveTags(
 	highlight: ExperienceHighlight,

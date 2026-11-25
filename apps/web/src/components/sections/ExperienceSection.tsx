@@ -6,6 +6,7 @@ import { CaretDownIcon } from '../icons/CaretDownIcon';
 import {
 	educationExperienceRoles,
 	extracurricularExperienceRoles,
+	highlightHasLorem,
 	isLoremIpsum,
 	professionalExperience,
 	workExperienceRoles,
@@ -437,7 +438,10 @@ function ExperienceRoleCard({
 					>
 						{role.highlights.map((highlight) => (
 							<ExperienceHighlightRow
-								defaultOpen={preExpand.has(highlight.id)}
+								defaultOpen={
+									preExpand.has(highlight.id)
+									&& !highlightHasLorem(highlight)
+								}
 								highlight={highlight}
 								key={highlight.id}
 							/>

@@ -6,7 +6,6 @@ import {
 	getForTarget,
 	listForTargetSlugs,
 } from '../../../data/for-targets';
-import { SITE_NAME } from '../../../lib/site';
 
 type ForPageProps = {
 	params: Promise<{
@@ -30,8 +29,9 @@ export async function generateMetadata({
 			title: 'Not found',
 		};
 	}
+	// Layout title template already appends ` · Austen Strine`.
 	return {
-		title: `${target.headline} · ${SITE_NAME}`,
+		title: target.headline,
 		description: target.blurb,
 		alternates: {
 			canonical: `/for/${slug}`,

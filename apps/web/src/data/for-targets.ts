@@ -1,9 +1,21 @@
 import {
+	filterPreExpandWithoutLorem,
 	matchingHighlightIds,
+	type ExperienceHighlight,
 	type SkillTag,
 } from './experience-skills';
 import { professionalExperience } from './experience';
 import { SITE_BLURB, SITE_HEADLINE } from '../lib/site';
+
+function experienceHighlightsById(): Map<string, ExperienceHighlight> {
+	const map = new Map<string, ExperienceHighlight>();
+	for(const role of professionalExperience) {
+		for(const highlight of role.highlights) {
+			map.set(highlight.id, highlight);
+		}
+	}
+	return map;
+}
 
 export type ForTargetConfig = {
 	slug: string;
@@ -43,14 +55,16 @@ export const REDO_SENIOR_STAFF_SKILL_SET: readonly SkillTag[] = [
 	'delivery',
 ];
 
-/** Explicit SE pre-expand: GoGreen + Lumber only (not mentorship spill to theater/sales/edu). */
+/**
+ * Explicit SE pre-expand: GoGreen + Lumber only (not mentorship spill).
+ * Omit thin/lorem highlights (lumber-h2, lumber-h5, gogreen-h14, …).
+ * Runtime also strips any id whose detail is still LOREM_IPSUM.
+ */
 export const REDO_PRE_EXPAND_HIGHLIGHT_IDS: readonly string[] = [
 	'lumber-h0',
 	'lumber-h1',
-	'lumber-h2',
 	'lumber-h3',
 	'lumber-h4',
-	'lumber-h5',
 	'gogreen-h0',
 	'gogreen-h1',
 	'gogreen-h2',
@@ -65,7 +79,6 @@ export const REDO_PRE_EXPAND_HIGHLIGHT_IDS: readonly string[] = [
 	'gogreen-h11',
 	'gogreen-h12',
 	'gogreen-h13',
-	'gogreen-h14',
 ];
 
 const REDO_BLURB =
@@ -87,9 +100,10 @@ export function preExpandIdsForSkillSet(
 	if(skillSet.length === 0) {
 		return [];
 	}
-	return professionalExperience.flatMap((role) =>
+	const raw = professionalExperience.flatMap((role) =>
 		matchingHighlightIds(role, skillSet),
 	);
+	return filterPreExpandWithoutLorem(raw, experienceHighlightsById());
 }
 
 export function resolveHomepageTailor(
@@ -99,13 +113,17 @@ export function resolveHomepageTailor(
 		return DEFAULT_HOMEPAGE_TAILOR;
 	}
 	const skillSet = partial.skillSet ?? DEFAULT_HOMEPAGE_TAILOR.skillSet;
-	const preExpandHighlightIds =
+	const rawPreExpand =
 		partial.preExpandHighlightIds
 		?? (
 			skillSet.length > 0
 				? preExpandIdsForSkillSet(skillSet)
 				: DEFAULT_HOMEPAGE_TAILOR.preExpandHighlightIds
 		);
+	const preExpandHighlightIds = filterPreExpandWithoutLorem(
+		rawPreExpand,
+		experienceHighlightsById(),
+	);
 	return {
 		headline: partial.headline ?? DEFAULT_HOMEPAGE_TAILOR.headline,
 		blurb: partial.blurb ?? DEFAULT_HOMEPAGE_TAILOR.blurb,
