@@ -2,7 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
-import type { ExperienceRole } from '../../data/experience';
+import {
+	rolePrintBullets,
+	type ExperienceRole,
+} from '../../data/experience';
 import {
 	CV_SKILL_GROUPS,
 	CV_SUMMARY_PARAGRAPHS,
@@ -42,10 +45,10 @@ function PrintRoleArticle({
 					? ` · ${role.location}`
 					: null}
 			</p>
-			{role.bullets.length > 0
+			{rolePrintBullets(role).length > 0
 				? (
 					<ul>
-						{role.bullets.map((bullet) => (
+						{rolePrintBullets(role).map((bullet) => (
 							<li key={bullet}>
 								{bullet}
 							</li>

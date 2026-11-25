@@ -2,14 +2,18 @@
 
 import { useLayoutEffect, useRef, useState } from 'react';
 import { PrinterIcon } from '../icons/PrinterIcon';
+import { CaretDownIcon } from '../icons/CaretDownIcon';
 import {
 	educationExperienceRoles,
 	extracurricularExperienceRoles,
+	isLoremIpsum,
 	professionalExperience,
 	workExperienceRoles,
+	type ExperienceHighlight,
 	type ExperienceKind,
 	type ExperienceRole,
 } from '../../data/experience';
+import { useHomepageTailor } from '../../lib/homepage-tailor';
 import {
 	ExperiencePrintSheet,
 	printSelectedExperience,
@@ -234,6 +238,114 @@ function PeekToggle({
 	);
 }
 
+function ExperienceHighlightRow({
+	highlight,
+	defaultOpen,
+}: {
+	highlight: ExperienceHighlight;
+	defaultOpen: boolean;
+}) {
+	const [open, setOpen] = useState(defaultOpen);
+	const detailText = highlight.details
+		.map((detail) => detail.text)
+		.join('\n\n');
+	const panelId = `${highlight.id}-detail`;
+
+	return (
+		<li className="list-none">
+			<div
+				className="
+					flex
+					items-start
+					justify-between
+					gap-3
+				"
+			>
+				<p
+					className="
+						min-w-0
+						flex-1
+						text-sm
+						leading-relaxed
+						text-slate-700
+					"
+				>
+					{highlight.summary}
+				</p>
+				<button
+					aria-controls={panelId}
+					aria-expanded={open}
+					className="
+						inline-flex
+						h-8
+						w-8
+						shrink-0
+						items-center
+						justify-center
+						rounded-full
+						border
+						border-slate-200
+						bg-white
+						text-slate-600
+						transition
+						hover:border-sky
+						hover:text-sky
+					"
+					onClick={() => setOpen((prev) => !prev)}
+					type="button"
+				>
+					<span className="sr-only">
+						{open
+							? 'Collapse detail'
+							: 'Expand detail'}
+					</span>
+					<CaretDownIcon
+						className={`
+							h-3.5
+							w-3.5
+							transition-transform
+							${open
+								? 'rotate-180'
+								: ''}
+						`}
+					/>
+				</button>
+			</div>
+			{open
+				? (
+					<div
+						className="
+							mt-2
+							border-l-2
+							border-slate-200
+							pl-3
+							text-sm
+							leading-relaxed
+							text-slate-600
+							whitespace-pre-wrap
+						"
+						id={panelId}
+					>
+						{isLoremIpsum(detailText)
+							? (
+								<span
+									className="
+										font-mono
+										text-xs
+										text-slate-400
+									"
+								>
+									{detailText}
+								</span>
+							)
+							: detailText}
+					</div>
+				)
+				: null}
+		</li>
+	);
+}
+
 function ExperienceRoleCard({
 	className = '',
 	role,
@@ -242,6 +354,8 @@ function ExperienceRoleCard({
 	role: ExperienceRole;
 }) {
 	const { duration } = splitRoleDates(role.dates);
+	const { preExpandHighlightIds } = useHomepageTailor();
+	const preExpand = new Set(preExpandHighlightIds);
 
 	return (
 		<article
@@ -313,24 +427,20 @@ function ExperienceRoleCard({
 					</p>
 				)
 				: null}
-			{role.bullets.length > 0
+			{role.highlights.length > 0
 				? (
 					<ul
 						className="
 							mt-4
-							list-disc
-							space-y-2
-							pl-5
-							text-sm
-							leading-relaxed
-							text-slate-700
-							max-[399px]:pl-4
+							space-y-3
 						"
 					>
-						{role.bullets.map((bullet) => (
-							<li key={bullet}>
-								{bullet}
-							</li>
+						{role.highlights.map((highlight) => (
+							<ExperienceHighlightRow
+								defaultOpen={preExpand.has(highlight.id)}
+								highlight={highlight}
+								key={highlight.id}
+							/>
 						))}
 					</ul>
 				)

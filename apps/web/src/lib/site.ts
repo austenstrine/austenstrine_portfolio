@@ -22,6 +22,10 @@ export const SITE_DESCRIPTION =
 export const SITE_HEADLINE =
 	'Senior Product, Catalog, and Search Software Engineer';
 
+/** Default hero self-description (untailored `/`). */
+export const SITE_BLURB =
+	'I\'m a Senior Product, Catalog, and Search Software Engineer who has been programming (and loving it) for the past 10 years (since 2016), including 6 1/2 years of professional experience developing several production e-commerce sites. I live in Parowan, Utah. I\'m in Murray Mondays and Tuesdays, and I\'m moving there full-time in January 2027. I\'m open to on-site and hybrid roles in the Salt Lake Valley.';
+
 export const SITE_OG_IMAGE = '/pp1_sq_sm.jpg';
 
 export const GUIDED_DEMO_PRODUCT = {

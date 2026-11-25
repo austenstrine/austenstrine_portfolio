@@ -1,9 +1,13 @@
+'use client';
+
 import { CdnImg } from '../CdnImg';
 import { NavigatePersistentArrow } from '../catalog/NavigatePersistentArrow';
 import { PILL_CTA_BASE_CLASS } from '../catalog/pillCta';
-import { SITE_HEADLINE } from '../../lib/site';
+import { useHomepageTailor } from '../../lib/homepage-tailor';
 
 export function HeroSection() {
+	const { headline, blurb } = useHomepageTailor();
+
 	return (
 		<section
 			className="
@@ -83,7 +87,7 @@ export function HeroSection() {
 							text-slate-100
 						"
 					>
-						{SITE_HEADLINE}
+						{headline}
 					</p>
 					<p
 						className="
@@ -93,12 +97,7 @@ export function HeroSection() {
 							text-slate-100
 						"
 					>
-						I&apos;m a Senior Product, Catalog, and Search Software Engineer who has
-						been programming (and loving it) for the past 10 years (since 2016),
-						including 6 1/2 years of professional experience developing several
-						production e-commerce sites. I live in Parowan, Utah. I&apos;m in Murray
-						Mondays and Tuesdays, and I&apos;m moving there full-time in January
-						2027. I&apos;m open to on-site and hybrid roles in the Salt Lake Valley.
+						{blurb}
 					</p>
 					<div
 						className="
