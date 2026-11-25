@@ -13,7 +13,7 @@ export type CvSkillGroup = {
 export const CV_SKILL_GROUPS: CvSkillGroup[] = [
 	{
 		label: 'Frontend',
-		list: 'Next.js, React, TypeScript, Tailwind CSS, MUI, HTML5, CSS3',
+		list: 'Next.js, React, TypeScript, Tailwind CSS, MUI, HTML5, CSS3, Chart.js',
 	},
 	{
 		label: 'Backend',
@@ -21,7 +21,7 @@ export const CV_SKILL_GROUPS: CvSkillGroup[] = [
 	},
 	{
 		label: 'Data & search',
-		list: 'PostgreSQL (Postgres), MySQL, MongoDB, Elasticsearch, OpenSearch',
+		list: 'PostgreSQL (Postgres), MySQL, MongoDB, Elasticsearch, OpenSearch, Unbxd, Redis',
 	},
 	{
 		label: 'Mobile',

@@ -1,7 +1,7 @@
 const skills = [
 	{
 		title: 'Frontend',
-		summary: 'Next.js, React, TypeScript, Tailwind CSS, MUI, HTML5, CSS3',
+		summary: 'Next.js, React, TypeScript, Tailwind CSS, MUI, HTML5, CSS3, Chart.js',
 	},
 	{
 		title: 'Backend',
@@ -9,7 +9,8 @@ const skills = [
 	},
 	{
 		title: 'Data and search',
-		summary: 'PostgreSQL (Postgres), MySQL, MongoDB, Elasticsearch, OpenSearch',
+		summary:
+			'PostgreSQL (Postgres), MySQL, MongoDB, Elasticsearch, OpenSearch, Unbxd, Redis',
 	},
 	{
 		title: 'Cloud and operations',
