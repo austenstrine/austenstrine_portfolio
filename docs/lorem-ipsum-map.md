@@ -41,4 +41,4 @@ Truth-only gaps. Tokens render in expanded experience detail until replaced with
 
 Total: **34** placeholders.
 
-Regenerate by scanning `apps/web/src/data/experience.ts` for `LOREM_IPSUM:` after edits.
+Tokens are emitted at runtime by `thinHighlight()` in `apps/web/src/data/experience-skills.ts` (`LOREM_IPSUM:${id}-d0`). Call sites are the `thinHighlight(...)` rows in `apps/web/src/data/experience.ts` — not raw `LOREM_IPSUM:` string literals in that file.
